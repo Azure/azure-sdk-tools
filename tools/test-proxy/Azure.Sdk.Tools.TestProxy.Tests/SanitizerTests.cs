@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
@@ -6,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,6 +17,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -20,7 +25,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     {
         public OAuthResponseSanitizer OAuthResponseSanitizer = new OAuthResponseSanitizer();
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
+        private readonly ITestOutputHelper _output;
 
+        public SanitizerTests(ITestOutputHelper output)
+        {
+            _output = output;
+        }
 
         public string oauthRegex = "\"/oauth2(?:/v2.0)?/token\"";
         public string lookaheadReplaceRegex = @"[a-z]+(?=\.(?:table|blob|queue)\.core\.windows\.net)";
@@ -174,8 +184,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(sanitizer is RegexEntrySanitizer);
 
 
-            var sanitizerTarget = (string)typeof(RegexEntrySanitizer).GetField("section", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
-            var regex = (Regex)typeof(RegexEntrySanitizer).GetField("rx", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
+            var sanitizerTarget = (string)typeof(RegexEntrySanitizer).GetField("_section", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
+            var regex = (Regex)typeof(RegexEntrySanitizer).GetField("_rx", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
         }
 
 
@@ -433,7 +443,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: headerForRemoval);
             await session.Session.Sanitize(removeHeaderSanitizer);
 
-            foreach(var header in headerForRemoval.Split(",").Select(x => x.Trim()))
+            foreach (var header in headerForRemoval.Split(",").Select(x => x.Trim()))
             {
                 Assert.False(targetEntry.Request.Headers.ContainsKey(header));
             }
@@ -507,6 +517,308 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.DoesNotContain(replacementValue, newValue);
             Assert.Equal(originalValue, newValue);
+        }
+
+        [Theory]
+        [InlineData("{\"number\":1,\"secret\":\"value\"}", "$.number", "1", "{\"number\":1,\"secret\":\"Sanitized\"}")]
+        [InlineData("{\"number\":1,\"secret\":\"value\"}", "$.*", "1", "{\"number\":\"1\",\"secret\":\"Sanitized\"}")]
+        [InlineData("{\"first\":\"value\",\"empty\":{},\"secret\":\"value\"}", "$.*", "changed", "{\"first\":\"value\",\"empty\":{},\"secret\":\"Sanitized\"}")]
+        [InlineData("{\"secret\":\"value\"}", "$.secret", "intermediate", "{\"secret\":\"Sanitized\"}")]
+        [InlineData("[{\"secret\":\"value\"},{\"secret\":null}]", "$..secret", "intermediate", "[{\"secret\":\"intermediate\"},{\"secret\":null}]")]
+        [InlineData("{\"timestamp\":\"2026-09-18T10:00:00-07:00\",\"secret\":\"value\"}", "$.secret", "intermediate", "{\"timestamp\":\"2026-09-18T10:00:00-07:00\",\"secret\":\"Sanitized\"}")]
+        [InlineData("{ \"other\": null }", "$.missing", "changed", "{ \"other\": null }")]
+        [InlineData("null", "$", "changed", "null")]
+        [InlineData("\"value\"", "$", "changed", "\"value\"")]
+        [InlineData("not json", "$.missing", "changed", "not json")]
+        public async Task BodyKeySanitizerSequencePreservesEachRuleSemantics(string body, string firstPath, string firstValue, string expectedBody)
+        {
+            var entry = new RecordEntry();
+            entry.Request.Headers.Add("Content-Type", new[] { "application/json" });
+            entry.Request.Headers.Add("Content-Length", new[] { Encoding.UTF8.GetByteCount(body).ToString() });
+            entry.Request.Body = Encoding.UTF8.GetBytes(body);
+            entry.Response.Headers.Add("Content-Type", new[] { "application/json" });
+            entry.Response.Body = Encoding.UTF8.GetBytes(body);
+
+            var sequentialEntry = entry.Clone();
+            var sanitizers = new RecordedTestSanitizer[]
+            {
+                new BodyKeySanitizer(firstPath, value: firstValue),
+                new BodyKeySanitizer("$.secret")
+            };
+            foreach (var sanitizer in sanitizers)
+            {
+                sanitizer.Sanitize(sequentialEntry);
+            }
+
+            var session = new RecordSession();
+            session.Entries.Add(entry);
+            await session.Sanitize(sanitizers);
+
+            Assert.Equal(expectedBody, Encoding.UTF8.GetString(entry.Request.Body));
+            Assert.Equal(sequentialEntry.Request.Body, entry.Request.Body);
+            Assert.Equal(sequentialEntry.Response.Body, entry.Response.Body);
+            Assert.Equal(sequentialEntry.Request.Headers["Content-Length"], entry.Request.Headers["Content-Length"]);
+        }
+
+        [Fact]
+        public void BodyKeySanitizerBatchCorrectlyHandlesDuplicates()
+        {
+            var secretSanitizer = new BodyKeySanitizer("$.secret", value: "SANITIZED");
+            var batched = BodyKeySanitizer.Batch([secretSanitizer, secretSanitizer]);
+            var body = "{\"secret\":\"foo-bar\"}";
+
+            foreach (var sanitizer in batched)
+            {
+                body = sanitizer.SanitizeTextBody("application/json", body);
+            }
+
+            Assert.Equal("{\"secret\":\"SANITIZED\"}", body);
+        }
+
+        [Fact]
+        public void BodyKeySanitizerBatchPreservesUnchangedBodyBytes()
+        {
+            var requestBody = Encoding.UTF8.GetBytes("{\"secret\":\"Sanitized\"}");
+            var responseBody = Encoding.UTF8.GetBytes("{\"secret\":\"Sanitized\"}");
+            var entry = new RecordEntry { RequestMethod = Core.RequestMethod.Post };
+            entry.Request.Headers.Add("Content-Type", ["application/json"]);
+            entry.Request.Body = requestBody;
+            entry.Response.Headers.Add("Content-Type", ["application/json"]);
+            entry.Response.Body = responseBody;
+            var sanitizer = Assert.Single(BodyKeySanitizer.Batch(
+            [
+                new BodyKeySanitizer("$.secret"),
+                new BodyKeySanitizer("$.missing")
+            ]));
+
+            sanitizer.Sanitize(entry);
+
+            Assert.Same(requestBody, entry.Request.Body);
+            Assert.Same(responseBody, entry.Response.Body);
+        }
+
+        [Theory]
+        [InlineData("NaN")]
+        [InlineData("Infinity")]
+        [InlineData("-Infinity")]
+        [InlineData("1e400")]
+        public void BodyKeySanitizerBatchPreservesJsonRoundTrips(string number)
+        {
+            var body = $"[{{\"number\":{number},\"secret\":\"initial\"}}]";
+            var sanitizers = new BodyKeySanitizer[]
+            {
+                new BodyKeySanitizer("$..secret", value: "intermediate"),
+                new BodyKeySanitizer("$[?(@.number === 'NaN' || @.number === 'Infinity' || @.number === '-Infinity')].secret", value: "final")
+            };
+            var expected = body;
+            foreach (var sanitizer in sanitizers)
+            {
+                expected = sanitizer.SanitizeTextBody("application/json", expected);
+            }
+
+            var batched = Assert.Single(BodyKeySanitizer.Batch(sanitizers));
+            Assert.Contains("\"secret\":\"final\"", expected);
+            Assert.Equal(expected, batched.SanitizeTextBody("application/json", body));
+        }
+
+        [Fact]
+        public void BodyKeySanitizerBatchPreservesMixedRuleOrder()
+        {
+            var conditional = new BodyKeySanitizer("$.other", value: "incorrect", condition: new ApplyCondition { UriRegex = "does-not-match" });
+            var legacy = new BodyKeySanitizer("$.secret", value: "legacy") { LegacyConvertJsonDateTokens = true };
+            var derived = new DerivedBodyKeySanitizer();
+            var bodyRegex = new BodyRegexSanitizer(regex: "second", value: "after-regex");
+            var sanitizers = new RecordedTestSanitizer[]
+            {
+                new BodyKeySanitizer("$.secret", value: "first"),
+                new BodyKeySanitizer("$.secret", regex: "first", value: "second"),
+                bodyRegex,
+                conditional,
+                legacy,
+                derived,
+                new BodyKeySanitizer("$.secret", regex: "derived", value: "final"),
+                new BodyKeySanitizer("$.missing")
+            };
+            var batched = BodyKeySanitizer.Batch(sanitizers).ToArray();
+            Assert.Equal(6, batched.Length);
+            Assert.Same(bodyRegex, batched[1]);
+            Assert.Same(conditional, batched[2]);
+            Assert.Same(legacy, batched[3]);
+            Assert.Same(derived, batched[4]);
+
+            var entry = new RecordEntry { RequestUri = "https://localhost/" };
+            entry.Request.Headers.Add("Content-Type", new[] { "application/json" });
+            entry.Request.Body = Encoding.UTF8.GetBytes("{\"secret\":\"initial\",\"other\":\"unchanged\",\"date\":\"2026-09-18T10:00:00-07:00\"}");
+            var sequential = entry.Clone();
+            foreach (var sanitizer in sanitizers)
+            {
+                sanitizer.Sanitize(sequential);
+            }
+            foreach (var sanitizer in batched)
+            {
+                sanitizer.Sanitize(entry);
+            }
+
+            Assert.Equal(sequential.Request.Body, entry.Request.Body);
+            Assert.Contains("\"secret\":\"final\"", Encoding.UTF8.GetString(entry.Request.Body));
+            Assert.Contains("\"other\":\"unchanged\"", Encoding.UTF8.GetString(entry.Request.Body));
+        }
+
+        [Theory]
+        [InlineData("post_delete_get_content.json")]
+        [InlineData("request_with_binary_content.json")]
+        [InlineData("response_with_xml_body.json")]
+        [InlineData("multipart_request.json")]
+        public async Task BodyKeySanitizerBatchMatchesSequentialRecordings(string recording)
+        {
+            var sequential = TestHelpers.LoadRecordSession($"Test.RecordEntries/{recording}").Session;
+            var batched = TestHelpers.LoadRecordSession($"Test.RecordEntries/{recording}").Session;
+            var sanitizers = new RecordedTestSanitizer[]
+            {
+                new BodyKeySanitizer("$..TableName", value: "SanitizedTable"),
+                new BodyKeySanitizer("$..PartitionKey", value: "SanitizedPartition"),
+                new BodyKeySanitizer("$..RowKey", value: "SanitizedRow")
+            };
+            foreach (var sanitizer in sanitizers)
+            {
+                await sequential.Sanitize(sanitizer);
+            }
+            await batched.Sanitize(sanitizers);
+
+            Assert.Equal(sequential.Entries.Count, batched.Entries.Count);
+            for (int index = 0; index < sequential.Entries.Count; index++)
+            {
+                Assert.Equal(sequential.Entries[index].Request.Body, batched.Entries[index].Request.Body);
+                Assert.Equal(sequential.Entries[index].Response.Body, batched.Entries[index].Response.Body);
+                Assert.Equal(
+                    System.Text.Json.JsonSerializer.Serialize(sequential.Entries[index].Request.Headers),
+                    System.Text.Json.JsonSerializer.Serialize(batched.Entries[index].Request.Headers));
+                Assert.Equal(
+                    System.Text.Json.JsonSerializer.Serialize(sequential.Entries[index].Response.Headers),
+                    System.Text.Json.JsonSerializer.Serialize(batched.Entries[index].Response.Headers));
+            }
+        }
+
+        [Fact]
+        public async Task BodyKeySanitizerBatchPreservesNestedMultipart()
+        {
+            var body = string.Join("\r\n", new[]
+            {
+                "--outer",
+                "Content-Type: multipart/mixed; boundary=inner",
+                "",
+                "--inner",
+                "Content-Type: application/json",
+                "Content-Length: 20",
+                "",
+                "{\"secret\":\"initial\"}",
+                "--inner--",
+                "",
+                "--outer--",
+                ""
+            });
+            var entry = new RecordEntry();
+            entry.Request.Headers.Add("Content-Type", new[] { "multipart/mixed; boundary=outer" });
+            entry.Request.Body = Encoding.UTF8.GetBytes(body);
+            var sequential = entry.Clone();
+            var sanitizers = new RecordedTestSanitizer[]
+            {
+                new BodyKeySanitizer("$.secret", value: "intermediate"),
+                new BodyKeySanitizer("$.secret", regex: "intermediate", value: "final")
+            };
+            foreach (var sanitizer in sanitizers)
+            {
+                sanitizer.Sanitize(sequential);
+            }
+
+            var session = new RecordSession();
+            session.Entries.Add(entry);
+            await session.Sanitize(sanitizers);
+
+            Assert.Equal(sequential.Request.Body, entry.Request.Body);
+            Assert.Contains("{\"secret\":\"final\"}", Encoding.UTF8.GetString(entry.Request.Body));
+            Assert.Contains("Content-Length: 18", Encoding.UTF8.GetString(entry.Request.Body));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void BodyKeySanitizerBatchRespectsBodyMatching(bool compareBodies)
+        {
+            var request = new RecordEntry { RequestUri = "https://localhost/", RequestMethod = Core.RequestMethod.Post };
+            request.Request.Headers.Add("Content-Type", new[] { "application/json" });
+            request.Request.Body = Encoding.UTF8.GetBytes("{\"secret\":\"original\"}");
+            var recorded = request.Clone();
+            recorded.RequestMethod = request.RequestMethod;
+            recorded.Request.Body = Encoding.UTF8.GetBytes("{\"secret\":\"final\"}");
+            var session = new RecordSession();
+            session.Entries.Add(recorded);
+            var sanitizers = new RecordedTestSanitizer[]
+            {
+                new BodyKeySanitizer("$.secret", value: "intermediate"),
+                new BodyKeySanitizer("$.secret", regex: "intermediate", value: "final")
+            };
+
+            Assert.Same(recorded, session.Lookup(request, new RecordMatcher(compareBodies: compareBodies), sanitizers, remove: false));
+            Assert.Equal(compareBodies ? "{\"secret\":\"final\"}" : "{\"secret\":\"original\"}", Encoding.UTF8.GetString(request.Request.Body));
+        }
+
+        [Theory]
+        [InlineData("access_token", "Sanitized")]
+        [InlineData("sasUri", "https://example.com/no-signature")]
+        public void BodyKeySanitizerBatchReducesAllocationsForMatchedNoOp(string key, string value)
+        {
+            var sanitizers = new SanitizerDictionary().DefaultSanitizerList
+                .Select(registered => registered.Sanitizer)
+                .OfType<BodyKeySanitizer>()
+                .ToArray();
+            var batched = BodyKeySanitizer.Batch(sanitizers).ToArray();
+            Assert.Single(batched);
+            var body = $"{{\"{key}\":\"{value}\",\"payload\":\"{new string('a', 4096)}\"}}";
+            var entry = new RecordEntry();
+            entry.Request.Headers.Add("Content-Type", new[] { "application/json" });
+            entry.Request.Body = Encoding.UTF8.GetBytes(body);
+            const int iterations = 20;
+
+            (long AllocatedBytes, double Milliseconds) Measure(RecordedTestSanitizer[] pipeline)
+            {
+                var stopwatch = new Stopwatch();
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                stopwatch.Start();
+                for (int iteration = 0; iteration < iterations; iteration++)
+                {
+                    foreach (var sanitizer in pipeline)
+                    {
+                        sanitizer.Sanitize(entry);
+                    }
+                }
+                stopwatch.Stop();
+                return (GC.GetAllocatedBytesForCurrentThread() - before, stopwatch.Elapsed.TotalMilliseconds);
+            }
+
+            Measure(sanitizers);
+            Measure(batched);
+            var sequentialResult = Measure(sanitizers);
+            var batchedResult = Measure(batched);
+
+            _output.WriteLine($"{sanitizers.Length} rules, {Encoding.UTF8.GetByteCount(body)}-byte JSON body, {iterations} iterations:");
+            _output.WriteLine($"Sequential: {sequentialResult.AllocatedBytes / iterations:N0} bytes/op, {sequentialResult.Milliseconds / iterations:F3} ms/op");
+            _output.WriteLine($"Batched: {batchedResult.AllocatedBytes / iterations:N0} bytes/op, {batchedResult.Milliseconds / iterations:F3} ms/op");
+            Assert.Equal(body, Encoding.UTF8.GetString(entry.Request.Body));
+            Assert.True(batchedResult.AllocatedBytes < sequentialResult.AllocatedBytes / 4,
+                $"Expected batching to reduce allocations by at least 75%; sequential: {sequentialResult.AllocatedBytes}, batched: {batchedResult.AllocatedBytes}.");
+        }
+
+        private class DerivedBodyKeySanitizer : BodyKeySanitizer
+        {
+            public DerivedBodyKeySanitizer() : base("$.secret")
+            {
+            }
+
+            public override string SanitizeTextBody(string contentType, string body)
+            {
+                return body.Replace("legacy", "derived");
+            }
         }
 
 

@@ -206,6 +206,7 @@ resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   scope: logsStorageAccount
   properties:{
     principalId: appIdentityPrincipalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: blobContributorRoleDefinition.id
     description: 'Blob Contributor for PipelineWitness'
   }
@@ -216,6 +217,7 @@ resource kustoStorageAssignment 'Microsoft.Authorization/roleAssignments@2022-04
   scope: logsStorageAccount
   properties:{
     principalId: kustoCluster.identity.principalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: blobContributorRoleDefinition.id
     description: 'Blob Contributor for Kusto ingestion'
   }
@@ -242,6 +244,7 @@ resource devOpsKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments
   scope: devOpsEventHubNamespace
   properties:{
     principalId: kustoCluster.identity.principalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: eventHubsDataReceiverRoleDefinition.id
     description: 'Blob Contributor for Kusto ingestion'
   }
@@ -252,6 +255,7 @@ resource gitHubKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments
   scope: gitHubEventHubNamespace
   properties:{
     principalId: kustoCluster.identity.principalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: eventHubsDataReceiverRoleDefinition.id
     description: 'Blob Contributor for Kusto ingestion'
   }
@@ -262,6 +266,7 @@ resource devOpsEventGridEventHubsAssignment 'Microsoft.Authorization/roleAssignm
   scope: devOpsEventHubNamespace
   properties:{
     principalId: eventGridTopic.identity.principalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: eventHubsDataSenderRoleDefinition.id
     description: 'Event Hubs Data Sender'
   }
@@ -272,6 +277,7 @@ resource gitHubEventGridEventHubsAssignment 'Microsoft.Authorization/roleAssignm
   scope: gitHubEventHubNamespace
   properties:{
     principalId: eventGridTopic.identity.principalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: eventHubsDataSenderRoleDefinition.id
     description: 'Event Hubs Data Sender'
   }

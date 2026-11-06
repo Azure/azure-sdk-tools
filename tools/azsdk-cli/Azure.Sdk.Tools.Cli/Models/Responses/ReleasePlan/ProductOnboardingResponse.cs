@@ -30,9 +30,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         [JsonPropertyName("service_name")]
         public string ServiceName { get; set; } = string.Empty;
 
-        [JsonPropertyName("needs_sdk")]
-        public bool NeedsSDK { get; set; } = false;
-
         [JsonPropertyName("data_plane")]
         public DataPlaneApplicability DataPlane { get; set; } = DataPlaneApplicability.Unknown;
 
@@ -66,6 +63,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
                 result.AppendLine($"Data Plane: {ProductOnboardingDetails.DataPlane}");
                 result.AppendLine($"Management Plane: {ProductOnboardingDetails.ManagementPlane}");
                 result.AppendLine($"Submitter: {ProductOnboardingDetails.Submitter}");
+                result.AppendLine();
+                result.AppendLine($"Data Plane Attestation Status: {ProductOnboardingDetails.DataPlaneAttestationStatus}");
+                result.AppendLine($"Management Plane Attestation Status: {ProductOnboardingDetails.ManagementPlaneAttestationStatus}");
             }
             else
             {

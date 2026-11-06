@@ -20,6 +20,7 @@ export type ExecutionReport = {
 export type PackageReport = {
   serviceName?: string;
   packageName?: string;
+  packageRootPath: string;
   result: SDKAutomationState;
   artifactPaths?: string[];
   readmeMd?: string[];

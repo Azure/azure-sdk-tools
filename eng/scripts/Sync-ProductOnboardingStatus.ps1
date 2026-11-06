@@ -19,9 +19,6 @@ param(
    [string] $ServiceName,
 
    [Parameter(Mandatory=$true)]
-   [bool] $NeedsSDK,
-
-   [Parameter(Mandatory=$true)]
    [string] $DataPlane,
 
    [Parameter(Mandatory=$true)]
@@ -49,7 +46,6 @@ Write-Host "Syncing product onboarding status:" `
   "`n`tService ID:        '$ServiceID'" `
   "`n`tService Name:      '$ServiceName'" `
   "`n`n" `
-  "`n`tNeeds SDK:         '$NeedsSDK'" `
   "`n`tData Plane:        '$DataPlane'" `
   "`n`tManagement Plane:  '$MgmtPlane'" `
   "`n`n" `
@@ -78,7 +74,6 @@ try {
     --product-lifecycle "$ProductLifecycle" `
     --service-id "$ServiceID" `
     --service-name "$ServiceName" `
-    --needs-sdk $NeedsSDK `
     --data-plane "$DataPlane" `
     --management-plane "$MgmtPlane" `
     --submitter "$Submitter"

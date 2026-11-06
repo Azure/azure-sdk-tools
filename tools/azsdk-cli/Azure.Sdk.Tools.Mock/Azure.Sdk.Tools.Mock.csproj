@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>azsdk-mock</AssemblyName>
     <NoWarn>ASP0000</NoWarn>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -3,6 +3,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
@@ -28,6 +29,14 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         [JsonPropertyName("result")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public object? Result { get; set; }
+
+        /// <summary>
+        /// Breaking-change operation outcome, including incomplete evaluation and failures.
+        /// Absent for other package operations. Consult this before treating a false hasBreakingChange as a pass.
+        /// </summary>
+        [JsonPropertyName("breaking_change_status")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public SdkBreakingChangeStatus? BreakingChangeStatus { get; set; }
 
         [JsonPropertyName("duration")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

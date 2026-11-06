@@ -1,9 +1,9 @@
 """Entry point: run QA bot evaluation on the Foundry OpenAI-evals surface.
 
 We call the bot ``/completion`` endpoint **concurrently** (bounded by
-``--max_concurrency``), collect each answer + retrieved context + references, then
-grade them as inline eval data where the builtin LLM evaluators read
-``{{item.response}}`` / ``{{item.context}}``. Parallelizing the slow
+``--max_concurrency``), collect each answer + context + references, retrieve its
+stored Hosted Agent response, then grade the data inline. The builtin LLM evaluators
+read ``{{item.response}}`` / ``{{item.context}}``. Parallelizing the slow
 answer-generation step is the main lever for evaluation speed.
 
 Examples:
@@ -153,23 +153,29 @@ def main(argv: list[str] | None = None) -> int:
     all_results: dict[str, Any] = {}
 
     try:
-        with AIProjectClient(endpoint=endpoint, credential=credential) as project_client:
-            openai_client = project_client.get_openai_client()
-
-            records, scenario = resolve_records(args.dataset, script_dir=script_dir)
-            logging.info("Resolved %d records for scenario=%s", len(records), scenario)
+        records, scenario = resolve_records(args.dataset, script_dir=script_dir)
+        logging.info("Resolved %d records for scenario=%s", len(records), scenario)
+        tenant_map = None
+        try:
+            tenant_map = retrieve_channel_tenant_map(credential)
+        except Exception as exc:  # noqa: BLE001
+            logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
+        tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
+        with (
+            AIProjectClient(endpoint=endpoint, credential=credential, allow_preview=True) as project_client,
+            project_client.get_openai_client() as evals_client,
+        ):
             # Stable evaluation name = dataset identity + run context (local / pipeline),
             # so the Foundry list is not flooded with date/build/random-suffixed entries.
             dataset_label = _dataset_label(args.dataset, scenario)
             name = f"{dataset_label}-{args.run_context}"
-            tenant_map = None
-            try:
-                tenant_map = retrieve_channel_tenant_map(credential)
-            except Exception as exc:  # noqa: BLE001
-                logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
-            tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
             all_results = runner.evaluate_run_completion(
-                openai_client, records, scenario, tenant_id=tenant_id, evaluation_name=name
+                evals_client,
+                records,
+                scenario,
+                tenant_id=tenant_id,
+                evaluation_name=name,
+                project_client=project_client,
             )
 
         _cache_results(args.cache_result, script_dir, all_results, metrics, suppression, evals_result)

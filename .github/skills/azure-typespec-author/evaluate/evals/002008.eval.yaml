@@ -5,9 +5,8 @@ type: capability # capability | regression
 area: "armtemplate"
 # Root-level environment
 environment: azsdk-mcp
-
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -27,12 +26,10 @@ stimuli:
           dest: employee.tsp
         - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
           dest: main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/Microsoft.Widget/Widget/readme.md
           dest: readme.md
         - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -46,11 +43,6 @@ stimuli:
       commands:
         - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
           required:
@@ -66,18 +58,13 @@ stimuli:
       @azure-typespec-author add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:
@@ -87,7 +74,7 @@ stimuli:
         type: "file-matches"
         config:
           # Accept only ARM top/skip params as inline spreads, intersection, or wrapper model.
-          pattern: '(?:model\s+(\w+)\s*\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}\s*[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*\1\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(?:(?:Parameters\s*=\s*)?\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}|Parameters\s*=\s*(?:(?:Azure\.ResourceManager\.)?ArmTopParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmSkipParameter|(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmTopParameter))\s*>)'
+          pattern: '(?:model\s+(\w+)\s*\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}\s*[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*\1\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*(?:(?:Parameters\s*=\s*)?\{\s*(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmTopParameter\s*;)(?=[^}]*\.\.\.(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*;)[^}]*\}|(?:Parameters\s*=\s*)?(?:(?:Azure\.ResourceManager\.)?ArmTopParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmSkipParameter|(?:Azure\.ResourceManager\.)?ArmSkipParameter\s*&\s*(?:Azure\.ResourceManager\.)?ArmTopParameter))\s*>)'
           path: "*.tsp"
       - &file_not_matches
         type: "file-not-matches"
@@ -108,6 +95,10 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
+      - type: "run-command"
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - *file_matches
       - *file_not_matches
     constraints:

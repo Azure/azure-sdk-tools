@@ -42,9 +42,25 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Message { get; set; }
 
+        [JsonPropertyName("warnings")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? Warnings { get; set; }
+
         [JsonPropertyName("release_plan_finished")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool ReleasePlanFinished { get; set; }
+
+        [JsonPropertyName("release_plan_automation_triggered")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool ReleasePlanAutomationTriggered { get; set; }
+
+        [JsonPropertyName("queued_release_plan_id")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int QueuedReleasePlanId { get; set; }
+
+        [JsonPropertyName("release_plan_automation_pipeline_url")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ReleasePlanAutomationPipelineUrl { get; set; }
 
         public void SetLanguage(string language)
         {
@@ -92,6 +108,14 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
             if (ReleasePlanFinished)
             {
                 result.AppendLine("Release plan has been marked as Finished.");
+            }
+            if (ReleasePlanAutomationTriggered)
+            {
+                result.AppendLine($"Queued release plan {QueuedReleasePlanId} for SDK generation: {ReleasePlanAutomationPipelineUrl}");
+            }
+            foreach (var warning in Warnings ?? [])
+            {
+                result.AppendLine($"[WARNING] {warning}");
             }
             return result.ToString();
         }

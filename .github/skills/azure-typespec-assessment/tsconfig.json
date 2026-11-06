@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "esModuleInterop": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2024",
+    "types": ["node"],
+    "verbatimModuleSyntax": true
+  },
+  "include": ["eslint.config.js", "scripts/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
+}

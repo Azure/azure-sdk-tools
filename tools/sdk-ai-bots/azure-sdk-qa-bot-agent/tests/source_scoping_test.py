@@ -5,6 +5,9 @@ from __future__ import annotations
 from pytest import MonkeyPatch
 
 from config.tenant_config import (
+    SRC_AZURE_SDK_DOCS_ENG,
+    SRC_AZURE_SDK_FOR_NET_DOCS,
+    SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
     SRC_TYPESPEC_DOCS,
     TenantConfig,
     TenantID,
@@ -26,6 +29,51 @@ _WIKI_CONCEPT = "wiki_concept"
 def test_internal_wiki_contexts_are_not_registered_sources():
     assert get_knowledge_source(_WIKI_ENTITY) is None
     assert get_knowledge_source(_WIKI_CONCEPT) is None
+
+
+def test_dotnet_sources_include_branded_and_upstream_unbranded_docs():
+    tenant = TenantID.DOTNET_CHANNEL_QA_BOT.value
+    names = _source_names(tenant, None)
+    assert SRC_AZURE_SDK_FOR_NET_DOCS in names
+    assert SRC_TYPESPEC_CSHARP_EMITTER_DOCS in names
+    filters = _resolve_source_filters(names, tenant)
+    assert filters[SRC_AZURE_SDK_FOR_NET_DOCS] == (
+        "context_id eq 'azure_sdk_for_net_docs'"
+    )
+    assert filters[SRC_TYPESPEC_CSHARP_EMITTER_DOCS] == (
+        "context_id eq 'typespec_csharp_emitter_docs'"
+    )
+
+    for plane in ("data-plane", "management-plane"):
+        plane_filters = _resolve_source_filters(names, tenant, plane)
+        assert plane_filters[SRC_TYPESPEC_CSHARP_EMITTER_DOCS] == (
+            "context_id eq 'typespec_csharp_emitter_docs' and "
+            f"(service_type eq '{plane}' or service_type eq null)"
+        )
+
+
+def test_dotnet_source_citations_preserve_repository_paths():
+    azure = get_knowledge_source(SRC_AZURE_SDK_FOR_NET_DOCS)
+    upstream = get_knowledge_source(SRC_TYPESPEC_CSHARP_EMITTER_DOCS)
+    assert azure is not None and upstream is not None
+    assert azure.get_link("eng#packages#http-client-csharp-mgmt#docs#emitter.md") == (
+        "https://github.com/Azure/azure-sdk-for-net/blob/main/"
+        "eng/packages/http-client-csharp-mgmt/docs/emitter.md"
+    )
+    assert upstream.get_link("customization.md") == (
+        "https://github.com/microsoft/typespec/blob/main/"
+        "packages/http-client-csharp/.tspd/docs/customization.md"
+    )
+
+
+def test_other_language_tenants_do_not_gain_upstream_csharp_source():
+    for tenant in (
+        TenantID.PYTHON_CHANNEL_QA_BOT,
+        TenantID.GOLANG_CHANNEL_QA_BOT,
+        TenantID.JAVA_CHANNEL_QA_BOT,
+        TenantID.JAVASCRIPT_CHANNEL_QA_BOT,
+    ):
+        assert SRC_TYPESPEC_CSHARP_EMITTER_DOCS not in _source_names(tenant.value, None)
 
 
 def test_source_names_drop_internal_wiki_contexts():
@@ -102,6 +150,17 @@ def test_unknown_source_still_produces_a_filter():
     # Dropping it would leave the caller with an empty, i.e. unscoped, filter.
     got = _resolve_source_filters(["not_a_registered_source"], _TENANT)
     assert got == {"not_a_registered_source": "context_id eq 'not_a_registered_source'"}
+
+
+def test_azure_mcp_internal_docs_are_scoped_to_mcp_title_tokens():
+    got = _resolve_source_filters(
+        [SRC_AZURE_SDK_DOCS_ENG], TenantID.AZURE_MCP_SERVER.value
+    )
+
+    assert got[SRC_AZURE_SDK_DOCS_ENG] == (
+        "context_id eq 'azure-sdk-docs-eng' and "
+        "(search.ismatch('mcp*', 'title'))"
+    )
 
 
 def test_combined_source_filters_keep_or_clauses_grouped():

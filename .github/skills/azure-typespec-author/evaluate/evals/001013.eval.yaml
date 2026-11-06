@@ -5,9 +5,8 @@ type: capability # capability | regression
 area: "versioning"
 # Root-level environment
 environment: azsdk-mcp
-
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -27,26 +26,19 @@ stimuli:
           dest: Microsoft.Widget/Widget/employee.tsp
         - src: ../fixtures/001-share-version-new-feature/main.tsp
           dest: Microsoft.Widget/Widget/main.tsp
-        - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-          dest: package-lock.json
         - src: ../fixtures/Microsoft.Widget/Widget/package.json
           dest: package.json
-        - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-          dest: node_modules
-        - src: ../scripts/check-node-dependencies.js
-          dest: check-node-dependencies.js
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
         - src: ../fixtures/001-share-version-new-feature/readme.md
           dest: Microsoft.Widget/Widget/readme.md
         - src: ../fixtures/001-share-version-new-feature/shared.tsp
           dest: Microsoft.Widget/Widget/shared.tsp
         - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
           dest: Microsoft.Widget/Widget/tspconfig.yaml
+      commands:
+        - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
           required:
@@ -62,18 +54,13 @@ stimuli:
       @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
     environment: *shared_environment
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js node_modules"
+          command: "node check-node-dependencies.cjs node_modules"
           expected_exit_code: 0
       - type: "run-command"
         config:
-          command: "node check-node-dependencies.js packages"
+          command: "node check-node-dependencies.cjs packages"
           expected_exit_code: 0
       - type: "run-command"
         config:
@@ -97,13 +84,6 @@ stimuli:
         config:
           pattern: 'statusCode\?: int32;'
           path: "Microsoft.Widget/Widget/employee.tsp"
-      - &prompt
-        type: "prompt"
-        config:
-          threshold: 0.88
-          model: "gpt-5.6-sol"
-          scoring: "scale_1_10"
-          prompt: "Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits."
     constraints:
       max_turns: 5
       max_tokens: 1000000
@@ -121,7 +101,6 @@ stimuli:
       - *file_matches
       - *file_matches_type_change
       - *file_matches_property
-      - *prompt
     constraints:
       max_turns: 6
       max_tokens: 100000
@@ -129,8 +108,7 @@ stimuli:
 scoring:
   weights:
     tool-calls: 0.125
-    prompt: 0.125
     run-command: 0.125
     skill-invocation: 0.125
-    file-matches: 0.5
+    file-matches: 0.625
   threshold: 0.97

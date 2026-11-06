@@ -40,7 +40,196 @@ async def test_technical_question_should_respond(service: IntentionService) -> N
         ),
     )
     resp = await service.classify(req)
+    assert resp.reason != "llm_error_default_respond", resp.reason
     assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize(
+    "content",
+    [
+        pytest.param(
+            "how can I permanently suppress an avocado error?",
+            id="avocado-suppression",
+        ),
+        pytest.param(
+            "Suppress avocado error\n\nhow can I permanently suppress an avocado error?",
+            id="avocado-suppression-with-title",
+        ),
+        pytest.param(
+            "How do I fix an AutoRest failure while generating my SDK?",
+            id="autorest-generation",
+        ),
+        pytest.param(
+            "How can I suppress a Swagger validation warning for a legacy API?",
+            id="swagger-validation",
+        ),
+        pytest.param(
+            "TypeSpec-Validation is failing on my PR. Please help me diagnose the error.",
+            id="typespec-validation-help",
+        ),
+        pytest.param(
+            "How do I use Azure SDK Tools (azsdk CLI/MCP) to validate my generated SDK?",
+            id="azsdk-sdk-validation",
+        ),
+        pytest.param(
+            "SDK validation is failing in my Azure SDK PR. How do I troubleshoot it?",
+            id="sdk-validation-help",
+        ),
+        pytest.param(
+            "The widgetlint tool in my Azure SDK CI reports error W123. How can I configure a permanent suppression?",
+            id="unfamiliar-tool",
+        ),
+        pytest.param(
+            "<at>Alex</at> any idea why my Azure SDK release pipeline fails during TypeSpec generation?",
+            id="domain-question-with-mention",
+        ),
+        pytest.param(
+            "<at>API Spec Review</at> how can I permanently suppress an avocado error?",
+            id="avocado-question-with-team-mention",
+        ),
+    ],
+)
+async def test_ecosystem_technical_asks_should_respond(
+    service: IntentionService, content: str
+) -> None:
+    """Ecosystem technical asks should trigger a live-model reply without tenant context."""
+    req = IntentionRequest(message=Message(role="user", content=content))
+
+    resp = await service.classify(req)
+
+    assert resp.reason != "llm_error_default_respond", resp.reason
+    assert resp.should_respond is True, resp.reason
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize(
+    "content",
+    [
+        pytest.param(
+            "How do I debug a PostgreSQL deadlock?",
+            id="outside-domain-database",
+        ),
+        pytest.param(
+            "Why does my React component render twice in development mode?",
+            id="outside-domain-frontend",
+        ),
+        pytest.param(
+            "My Linux service fails to start after reboot. Please help me troubleshoot it.",
+            id="outside-domain-help-without-question-mark",
+        ),
+        pytest.param(
+            "How do I resolve a Git merge conflict in my personal React app?",
+            id="personal-react-app-merge-conflict",
+        ),
+        pytest.param(
+            "<at>Alex</at> any idea why my PostgreSQL migration fails with a deadlock?",
+            id="outside-domain-question-with-mention",
+        ),
+        pytest.param(
+            "Azure SDK QA Bot, please explain why my React component renders twice.",
+            id="outside-domain-direct-ask",
+        ),
+        pytest.param(
+            "Please review my React frontend PR for unnecessary component renders.",
+            id="outside-domain-pr-review",
+        ),
+    ],
+)
+async def test_outside_domain_technical_asks_should_not_respond(
+    service: IntentionService, content: str
+) -> None:
+    """Technical intent, direct asks, reviews, and mentions must not bypass scope."""
+    req = IntentionRequest(message=Message(role="user", content=content))
+
+    resp = await service.classify(req)
+
+    assert resp.reason != "llm_error_default_respond", resp.reason
+    assert resp.should_respond is False, resp.reason
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize(
+    "content",
+    [
+        pytest.param(
+            "FYI: the avocado validation error is now suppressed. No help needed.",
+            id="avocado-status-update",
+        ),
+        pytest.param(
+            "AutoRest has been upgraded and Swagger validation is passing. Just a heads up.",
+            id="engineering-tools-announcement",
+        ),
+        pytest.param(
+            "FYI: the PostgreSQL migration completed successfully. No action needed.",
+            id="outside-domain-status-update",
+        ),
+        pytest.param(
+            "cc <at>API Spec Review</at> fyi",
+            id="team-routing-only",
+        ),
+        pytest.param(
+            "I made avocado toast for lunch. Happy Friday!",
+            id="avocado-social-message",
+        ),
+    ],
+)
+async def test_technical_keywords_without_an_ask_should_not_respond(
+    service: IntentionService, content: str
+) -> None:
+    """Ecosystem coverage must not turn keywords or routing into technical asks."""
+    req = IntentionRequest(message=Message(role="user", content=content))
+
+    resp = await service.classify(req)
+
+    assert resp.reason != "llm_error_default_respond", resp.reason
+    assert resp.should_respond is False, resp.reason
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize(
+    "content",
+    [
+        (
+            "Azure MCP Server fails to authenticate when running remotely with "
+            "on-behalf-of credentials. How can I troubleshoot the token exchange?"
+        ),
+        (
+            "What validation and integration tests are required when contributing "
+            "a new tool to Azure MCP Server?"
+        ),
+    ],
+)
+async def test_azure_mcp_technical_questions_should_respond(
+    service: IntentionService, content: str
+) -> None:
+    """Azure MCP technical support questions should trigger a bot response."""
+    req = IntentionRequest(message=Message(role="user", content=content))
+
+    resp = await service.classify(req)
+
+    assert resp.reason != "llm_error_default_respond", resp.reason
+    assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_azure_mcp_release_announcement_should_not_respond(
+    service: IntentionService,
+) -> None:
+    """An Azure MCP release announcement without an ask should not trigger a reply."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content=(
+                "FYI: Azure MCP Server version 2.4 is now available. The release "
+                "notes and updated installation package have been published."
+            ),
+        )
+    )
+
+    resp = await service.classify(req)
+
+    assert resp.should_respond is False
 
 
 @pytest.mark.asyncio(loop_scope="module")
@@ -77,6 +266,7 @@ async def test_pr_review_request_should_respond(service: IntentionService) -> No
         ),
     )
     resp = await service.classify(req)
+    assert resp.reason != "llm_error_default_respond", resp.reason
     assert resp.should_respond is True
 
 
@@ -133,7 +323,7 @@ async def test_human_approval_request_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -168,6 +358,7 @@ async def test_pr_help_review_should_respond(service: IntentionService) -> None:
         ),
     )
     resp = await service.classify(req)
+    assert resp.reason != "llm_error_default_respond", resp.reason
     assert resp.should_respond is True
 
 
@@ -192,6 +383,7 @@ async def test_domain_question_with_user_mention_should_respond(
         ),
     )
     resp = await service.classify(req)
+    assert resp.reason != "llm_error_default_respond", resp.reason
     assert resp.should_respond is True
 
 
@@ -253,7 +445,7 @@ async def test_bot_no_reply_nudge_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -298,6 +490,7 @@ async def test_troubleshooting_help_should_respond(service: IntentionService) ->
         ),
     )
     resp = await service.classify(req)
+    assert resp.reason != "llm_error_default_respond", resp.reason
     assert resp.should_respond is True
 
 
@@ -331,10 +524,43 @@ async def test_rhetorical_comment_should_not_respond(service: IntentionService) 
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_followup_to_bot_reply_should_respond(
-    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    "content, should_respond, prior_question",
+    [
+        pytest.param(
+            "Still seeing no Python output after adding that emitter.",
+            True,
+            "How do I enable the Python SDK emitter in my tspconfig.yaml?",
+            id="ecosystem-followup",
+        ),
+        pytest.param(
+            "widgetlint reports W123. How do I fix it?",
+            True,
+            "I use widgetlint to validate my generated Azure SDK in CI. How do I configure it?",
+            id="unfamiliar-tool-from-thread-context",
+        ),
+        pytest.param(
+            "Now how do I debug a PostgreSQL deadlock in my unrelated personal app?",
+            False,
+            "How do I enable the Python SDK emitter in my tspconfig.yaml?",
+            id="outside-domain-followup-question",
+        ),
+        pytest.param(
+            "My unrelated personal React app still renders twice after disabling StrictMode.",
+            False,
+            "How do I enable the Python SDK emitter in my tspconfig.yaml?",
+            id="outside-domain-followup-detail",
+        ),
+    ],
+)
+async def test_followup_to_bot_reply_respects_scope(
+    service: IntentionService,
+    monkeypatch: pytest.MonkeyPatch,
+    content: str,
+    should_respond: bool,
+    prior_question: str,
 ) -> None:
-    """A non-question follow-up that continues the bot's technical thread should be answered."""
+    """Only follow-ups within the ecosystem should be answered, even after a bot reply."""
     user_id = "user-789"
     conversation_id = "conv-follow"
     conversation_type = ConversationType.teams_channel
@@ -344,7 +570,7 @@ async def test_followup_to_bot_reply_should_respond(
         sender_role=Role.User,
         sender_id=user_id,
         sender_name="Dave",
-        content="How do I enable the Python SDK emitter in my tspconfig.yaml?",
+        content=prior_question,
         created_at=datetime.now(timezone.utc),
         conversation_id=conversation_id,
         conversation_type=conversation_type,
@@ -358,6 +584,8 @@ async def test_followup_to_bot_reply_should_respond(
         content=(
             "Add `@azure-tools/typespec-python` under the `emit` section of your "
             "tspconfig.yaml and configure its options under `options`."
+            if "emitter" in prior_question
+            else "Check the widgetlint configuration used by your SDK validation pipeline."
         ),
         created_at=datetime.now(timezone.utc),
         conversation_id=conversation_id,
@@ -376,7 +604,7 @@ async def test_followup_to_bot_reply_should_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -384,13 +612,14 @@ async def test_followup_to_bot_reply_should_respond(
         message=Message(
             role=Role.User,
             user_id=user_id,
-            content="Still seeing no Python output after adding that emitter.",
+            content=content,
         ),
         conversation_id=conversation_id,
         conversation_type=conversation_type,
     )
     resp = await service.classify(req)
-    assert resp.should_respond is True
+    assert resp.reason != "llm_error_default_respond", resp.reason
+    assert resp.should_respond is should_respond, resp.reason
 
 
 @pytest.mark.asyncio(loop_scope="module")
@@ -436,7 +665,7 @@ async def test_pushback_on_bot_answer_should_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -453,6 +682,7 @@ async def test_pushback_on_bot_answer_should_respond(
         conversation_type=conversation_type,
     )
     resp = await service.classify(req)
+    assert resp.reason != "llm_error_default_respond", resp.reason
     assert resp.should_respond is True
 
 
@@ -488,7 +718,7 @@ async def test_thank_you_closure_after_bot_reply_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -535,7 +765,7 @@ async def test_pre_deployment_thread_reply_should_not_respond(
 
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -605,7 +835,7 @@ async def test_human_assistance_plea_after_bot_reply_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -673,7 +903,7 @@ async def test_cc_routing_addendum_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 
@@ -756,7 +986,7 @@ async def test_assistance_plea_after_cc_ping_should_not_respond(
     )
     monkeypatch.setattr(
         service._conversation_service,
-        "get_messages_by_conversation",
+        "get_messages_by_conversation_id",
         fake_get_messages_by_conversation,
     )
 

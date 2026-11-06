@@ -116,8 +116,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         {
             Instructions = instructions,
             Tools = tools,
-            MaxIterations = maxIterations,
-            Model = "claude-opus-4.5"
+            MaxIterations = maxIterations
         };
 
         logger.LogInformation("Running TypeSpecCustomization copilot agent with {ToolCount} tools and max {MaxIterations} iterations...",

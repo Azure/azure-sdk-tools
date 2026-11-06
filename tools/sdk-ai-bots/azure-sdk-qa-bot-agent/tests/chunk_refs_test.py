@@ -60,6 +60,17 @@ def test_wiki_fields_normalize_null_values():
         assert KnowledgeChunk.model_validate(source).chunk_refs == []
 
 
+def test_search_fields_normalize_null_ordinal_position():
+    chunk = KnowledgeChunk.model_validate(
+        {
+            "chunk_id": "raw",
+            "ordinal_position": None,
+        }
+    )
+
+    assert chunk.ordinal_position == 0
+
+
 def test_malformed_chunk_refs_str_is_ignored():
     c = KnowledgeChunk.model_validate({"chunk_id": "m1", "chunk_refs_str": "not-json"})
     assert c.chunk_refs == []

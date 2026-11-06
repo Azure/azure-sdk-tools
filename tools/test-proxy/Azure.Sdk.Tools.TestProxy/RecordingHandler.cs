@@ -864,7 +864,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
 
                         var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
-                        cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
+                        cert = X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null);
                         clientHandler.ClientCertificates.Add(cert);
                     }
                     catch (Exception e)

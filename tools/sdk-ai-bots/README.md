@@ -4,7 +4,7 @@ This folder contains AI-powered components that work together to provide intelli
 
 ## Architecture Overview
 
-The system consists of five main components that work together to provide support for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
+The system consists of four main components that work together to provide support for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
 
 ```mermaid
 flowchart TB
@@ -12,7 +12,6 @@ flowchart TB
         direction LR
         teams["Teams Bot<br/>(TypeScript)<br/>azure-sdk-qa-bot/"]
         agent["Chat Agent<br/>(Python)<br/>azure-sdk-qa-bot-agent/"]
-        func["Azure Function<br/>(TypeScript)<br/>azure-sdk-qa-bot-function/"]
         sync["Knowledge Sync<br/>(TypeScript)<br/>azure-sdk-qa-bot-knowledge-sync/"]
     end
     eval["Evaluation Framework<br/>(Python)<br/>azure-sdk-qa-bot-evaluation/"]
@@ -29,15 +28,11 @@ An intelligent assistant that operates within Microsoft Teams to help developers
 
 A next-generation AI chat agent built on the Microsoft Agent Framework with Azure AI Foundry. It generates AI-powered responses for the bot — receiving user questions, processing them through AI models, and managing user feedback — with rich retrieval, Foundry Memory for conversation context, and a two-component architecture (agent + FastAPI server).
 
-### 3. Azure Function (`azure-sdk-qa-bot-function/`)
-
-A serverless component that handles bot analytics and activity conversion. It processes Teams bot interactions and provides monitoring capabilities for the system.
-
-### 4. Evaluation Framework (`azure-sdk-qa-bot-evaluation/`)
+### 3. Evaluation Framework (`azure-sdk-qa-bot-evaluation/`)
 
 A quality assurance system that continuously monitors and evaluates the performance of the AI bot's responses. It runs automated tests to measure response accuracy, relevance, and quality to ensure the bot maintains high standards of assistance.
 
-### 5. Knowledge Sync Service (`azure-sdk-qa-bot-knowledge-sync/`)
+### 4. Knowledge Sync Service (`azure-sdk-qa-bot-knowledge-sync/`)
 
 A standalone TypeScript application that processes documentation from various repositories and maintains the knowledge base. It clones repositories, processes markdown files and TypeSpec Spector test files, uploads processed content to Azure Blob Storage, and updates the Azure AI Search index. This service maintains change detection for efficient processing and serves as the primary knowledge management component for the system.
 
@@ -79,14 +74,6 @@ pip install -r requirements-dev.txt
 ```
 
 See [azure-sdk-qa-bot-agent/README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/README.md) for full setup instructions, including VS Code debugging with AI Toolkit.
-
-#### Azure Function
-
-```bash
-cd azure-sdk-qa-bot-function
-npm install
-npm start
-```
 
 #### Knowledge Sync Service
 

@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public enum DataPlaneApplicability
 {
     Unknown,
-    NotApplicable,
+    Unsure,
     No,
     Yes,
 }
@@ -15,21 +15,21 @@ public static class DataPlaneApplicabilityExtensions
 {
     private static IReadOnlyDictionary<string, DataPlaneApplicability> userInputToDataPlaneApplicability
         = new List<(string Key, DataPlaneApplicability Value)>{
-            ( "N/A", DataPlaneApplicability.NotApplicable ),
+            ( "I don't know", DataPlaneApplicability.Unsure ),
             ( "No", DataPlaneApplicability.No ),
             ( "Yes", DataPlaneApplicability.Yes ),
         }.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
 
     private static IReadOnlyDictionary<string, DataPlaneApplicability> adoFieldValueToDataPlaneApplicability
         = new List<(string Key, DataPlaneApplicability Value)>{
-            ( "unsure", DataPlaneApplicability.NotApplicable ),
+            ( "unsure", DataPlaneApplicability.Unsure ),
             ( "No", DataPlaneApplicability.No ),
             ( "Yes", DataPlaneApplicability.Yes ),
         }.ToDictionary(kv => kv.Key, kv => kv.Value);
 
     private static IReadOnlyDictionary<DataPlaneApplicability, string> dataPlaneApplicabilityToAdoFieldValue
         = new List<(DataPlaneApplicability Key, string Value)>{
-            ( DataPlaneApplicability.NotApplicable, "unsure" ),
+            ( DataPlaneApplicability.Unsure, "unsure" ),
             ( DataPlaneApplicability.No, "No" ),
             ( DataPlaneApplicability.Yes , "Yes" ),
         }.ToDictionary(kv => kv.Key, kv => kv.Value);

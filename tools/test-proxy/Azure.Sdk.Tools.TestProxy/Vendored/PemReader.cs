@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.TestProxy.Vendored
             {
                 if (allowCertificateOnly)
                 {
-                    return new X509Certificate2(cer, (string)null, keyStorageFlags);
+                    return X509CertificateLoader.LoadCertificate(cer);
                 }
 
                 throw new InvalidDataException("The certificate is missing the private key");
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.TestProxy.Vendored
                     privateKey = LightweightPkcs8Decoder.DecodeRSAPkcs8(key);
                 }
 
-                using X509Certificate2 certificateWithoutPrivateKey = new X509Certificate2(cer, (string)null, keyStorageFlags);
+                using X509Certificate2 certificateWithoutPrivateKey = X509CertificateLoader.LoadCertificate(cer);
 
                 X509Certificate2 certificate = (X509Certificate2)s_rsaCopyWithPrivateKeyMethod.Invoke(null, new object[] { certificateWithoutPrivateKey, privateKey });
                 // On .NET Framework the PrivateKey member is not initialized after calling CopyWithPrivateKey.

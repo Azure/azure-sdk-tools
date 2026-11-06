@@ -38,17 +38,21 @@ def tool(fn):
 
 
 def truncating_mcp_parser(result):
-    """Parse MCP tool results and truncate oversized text content.
+    """Parse MCP text and embedded text resources, truncating oversized content.
 
     Returns a ``str`` so the agent framework treats it as a single text
-    result.  This keeps MCP tool outputs from inflating the context window.
+    result. Resource URIs are retained alongside their text, and each item
+    is bounded to keep MCP tool outputs from inflating the context window.
     """
     from mcp import types as mcp_types
 
     parts: list[str] = []
     for item in result.content:
-        if isinstance(item, mcp_types.TextContent):
-            text = item.text or ""
+        content = item.resource if isinstance(item, mcp_types.EmbeddedResource) else item
+        if isinstance(content, (mcp_types.TextContent, mcp_types.TextResourceContents)):
+            text = content.text or ""
+            if isinstance(content, mcp_types.TextResourceContents):
+                text = f"Resource URI: {content.uri}\n{text}"
             if len(text) > _MCP_MAX_OUTPUT_CHARS:
                 logger.info(
                     "Truncating MCP text content from %d to %d chars",

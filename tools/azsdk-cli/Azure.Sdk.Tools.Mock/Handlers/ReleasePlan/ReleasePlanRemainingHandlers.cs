@@ -43,37 +43,48 @@ internal static class ReleasePlanMockResponses
 public class AbandonReleasePlanHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_abandon_release_plan";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) =>
-        ReleasePlanMockResponses.Workflow("Abandoned", "Release plan abandoned (mock)");
+    public CommandResponse Handle(Dictionary<string, object?>? arguments)
+    {
+        if (arguments?.ContainsKey("workItemId") == true)
+        {
+            return new ReleaseWorkflowResponse { ResponseError = "workItemId is not supported; supply releasePlanId." };
+        }
+        var value = arguments?.GetValueOrDefault("releasePlanId");
+        var releasePlanId = value is int id ? id
+            : value is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.Number
+                && element.TryGetInt32(out var wireId) ? wireId : 0;
+        if (releasePlanId <= 0)
+        {
+            return new ReleaseWorkflowResponse { ResponseError = "A positive Release Plan ID is required to abandon a release plan." };
+        }
+        return ReleasePlanMockResponses.Workflow("Success", $"Release plan {releasePlanId} abandoned (mock)");
+    }
 }
 
 /// <summary>Mock handler for azsdk_update_release_plan.</summary>
 public class UpdateReleasePlanHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_update_release_plan";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new ReleasePlanResponse
+    public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {
-        TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
-        PackageType = SdkType.Dataplane,
-        Message = "Release plan updated successfully (mock)",
-        ReleasePlanDetails = ReleasePlanMockResponses.ContosoWorkItem()
-    };
-}
-
-/// <summary>Mock handler for azsdk_get_release_plan_for_spec_pr.</summary>
-public class GetReleasePlanForSpecPrHandler : IMockToolHandler
-{
-    public string ToolName => "azsdk_get_release_plan_for_spec_pr";
-    // Deterministic "not found" — keeps the create-release-plan flow honest in
-    // eval scenarios. Stimuli that target an existing plan pass the work-item
-    // ID directly and call azsdk_get_release_plan instead.
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new ReleasePlanResponse
-    {
-        TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
-        PackageType = SdkType.Dataplane,
-        Message = "No release plan found for the given spec PR (mock)",
-        ReleasePlanDetails = null
-    };
+        var plan = ReleasePlanMockResponses.ContosoWorkItem();
+        plan.SpecCommitSHA = arguments?.GetValueOrDefault("specCommitSha")?.ToString() ?? "";
+        if (!int.TryParse(arguments?.GetValueOrDefault("workItemId")?.ToString(), out var workItemId) || workItemId <= 0)
+        {
+            return new ReleasePlanResponse { ResponseError = "A positive work item ID is required to update a release plan." };
+        }
+        if (workItemId != plan.WorkItemId)
+        {
+            return new ReleasePlanResponse { ResponseError = $"No release plan found for work item ID {workItemId}. No other plan was selected." };
+        }
+        return new ReleasePlanResponse
+        {
+            TypeSpecProject = "specification/contosowidgetmanager/Contoso.WidgetManager",
+            PackageType = SdkType.Dataplane,
+            Message = "Release plan updated successfully (mock)",
+            ReleasePlanDetails = plan
+        };
+    }
 }
 
 /// <summary>Mock handler for azsdk_check_api_spec_ready_for_sdk.</summary>

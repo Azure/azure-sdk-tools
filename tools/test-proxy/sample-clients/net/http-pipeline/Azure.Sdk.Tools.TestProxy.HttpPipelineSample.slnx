@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Azure.Sdk.Tools.TestProxy.HttpPipelineSample/Azure.Sdk.Tools.TestProxy.HttpPipelineSample.csproj" />
+  <Project Path="Azure.Sdk.Tools.TestProxy.HttpPipelineTestsExample/Azure.Sdk.Tools.TestProxy.HttpPipelineTestsExample.csproj" />
+</Solution>

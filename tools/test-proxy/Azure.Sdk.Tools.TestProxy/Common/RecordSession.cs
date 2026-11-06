@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -10,8 +9,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -104,6 +103,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, string sessionId = null)
         {
+            if (!DebugLogger.CheckLogLevel(LogLevel.Debug))
+            {
+                // Only apply batch sanitization if we're not debug logging during execution.
+                // Debug logging uses sequential processing so a clearer view of modifications is available.
+                sanitizers = BodyKeySanitizer.Batch(sanitizers);
+            }
+
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
                 RecordEntry reqEntryPreSanitize = null;
@@ -183,7 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     else
                     {
                         for (int i = 0; i < entriesPreSanitize.Length; i++)
-                        { 
+                        {
                             LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
                         }
                     }
@@ -207,6 +213,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             try
             {
+                if (!DebugLogger.CheckLogLevel(LogLevel.Debug))
+                {
+                    // Only apply batch sanitization if we're not debug logging during execution.
+                    // Debug logging uses sequential processing so a clearer view of modifications is available.
+                    sanitizers = BodyKeySanitizer.Batch(sanitizers);
+                }
+
                 foreach (var sanitizer in sanitizers)
                 {
                     var entriesPreSanitize = Array.Empty<RecordEntry>();

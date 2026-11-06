@@ -23,5 +23,10 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
         [JsonPropertyName("hasBreakingChange")]
         [JsonRequired]
         public bool HasBreakingChange { get; set; }
+
+        /// <summary>Optional native detector evidence and baseline provenance, not AI classification.</summary>
+        [JsonPropertyName("details")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public SdkChangeDetails? Details { get; set; }
     }
 }

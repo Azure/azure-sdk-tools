@@ -74,6 +74,10 @@ def _is_content_filter_error(ex: BadRequestError) -> bool:
     return False
 
 
+def _is_session_not_ready_error(ex: APIStatusError) -> bool:
+    return ex.status_code == 424 and ex.code == "session_not_ready"
+
+
 def _build_content_safety_response() -> OpenAIResponse:
     """Build a synthetic completed response carrying the content-safety message."""
     text = ResponseOutputText.model_construct(
@@ -113,11 +117,15 @@ class HostedAgentClient:
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
         stream_timeout: float = STREAM_COMPLETE_TIMEOUT_SECS,
+        session_ready_max_attempts: int = 1,
     ) -> None:
+        if session_ready_max_attempts < 1:
+            raise ValueError("session_ready_max_attempts must be at least 1")
         self._client = openai_client
         self._max_retries = max_retries
         self._retry_delay = retry_delay
         self._stream_timeout = stream_timeout
+        self._session_ready_max_attempts = session_ready_max_attempts
 
     async def invoke(
         self,
@@ -144,13 +152,31 @@ class HostedAgentClient:
                 extra_body["agent_session_id"] = agent_session_id
             stream = None
             try:
-                stream = await self._client.responses.create(
-                    input=conversation_items,
-                    store=True,
-                    stream=True,
-                    extra_body=extra_body,
-                    **kwargs,
-                )
+                # Only this explicit pre-execution rejection is safe to retry
+                # independently of the invocation's side-effect retry policy.
+                for ready_attempt in range(1, self._session_ready_max_attempts + 1):
+                    try:
+                        stream = await self._client.responses.create(
+                            input=conversation_items,
+                            store=True,
+                            stream=True,
+                            extra_body=extra_body,
+                            **kwargs,
+                        )
+                        break
+                    except APIStatusError as ex:
+                        if (
+                            not _is_session_not_ready_error(ex)
+                            or ready_attempt >= self._session_ready_max_attempts
+                        ):
+                            raise
+                        logger.warning(
+                            "Hosted agent session is not ready (attempt %d/%d): %s",
+                            ready_attempt,
+                            self._session_ready_max_attempts,
+                            ex,
+                        )
+                        await asyncio.sleep(self._retry_delay * ready_attempt)
                 # Bound the wait for the stream to complete.
                 response = await asyncio.wait_for(
                     self._consume_stream(stream, agent_conversation_id),
@@ -167,6 +193,9 @@ class HostedAgentClient:
                 trace_id = self._extract_trace_id(stream)
                 await self.close_stream(stream)
                 return trace_id, response
+            except asyncio.CancelledError:
+                await self.close_stream(stream)
+                raise
             except (NotFoundError, BadRequestError) as ex:
                 last_error = ex
                 await self.close_stream(stream)
@@ -183,7 +212,9 @@ class HostedAgentClient:
                     return None, _build_content_safety_response()
                 # Rejected cached session: drop it and retry without one.
                 if agent_session_id:
-                    set_stateless_session_id(None)
+                    set_stateless_session_id(
+                        agent_ref["name"], agent_ref["version"], None
+                    )
                     agent_session_id = None
                     continue
                 logger.warning(
@@ -195,7 +226,7 @@ class HostedAgentClient:
                     ex,
                     exc_info=True,
                 )
-            except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
+            except (APIConnectionError, APITimeoutError, APIStatusError, JSONDecodeError) as ex:
                 last_error = ex
                 await self.close_stream(stream)
                 logger.warning(
@@ -250,7 +281,8 @@ class HostedAgentClient:
 
         raise RuntimeError(
             f"Failed to obtain an agent response after "
-            f"{self._max_retries} attempts (conversation={agent_conversation_id})"
+            f"{self._max_retries} attempts (conversation={agent_conversation_id}): "
+            f"{last_error}"
         ) from last_error
 
     async def close_stream(self, stream) -> None:
@@ -285,52 +317,29 @@ class HostedAgentClient:
         stream,
         agent_conversation_id: str | None,
     ) -> OpenAIResponse:
-        """Consume a responses stream until the ``response.completed`` event.
-
-        If Foundry returns malformed SSE after exposing a response ID, recover
-        the completed result from storage instead of rerunning the agent.
-        """
+        """Consume a responses stream until the ``response.completed`` event."""
         response: OpenAIResponse | None = None
-        latest_response: OpenAIResponse | None = None
         last_event_type: str | None = None
-        try:
-            async for event in stream:
-                logger.debug("Stream event: type=%s, content=%s", event.type, event)
-                last_event_type = event.type
-                event_response = getattr(event, "response", None)
-                if event_response is not None:
-                    latest_response = event_response
-                if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
-                    response = event.response
-                    break
-                if event.type in (
-                    STREAM_EVENT_RESPONSE_FAILED,
-                    STREAM_EVENT_RESPONSE_INCOMPLETE,
-                ):
-                    failed = getattr(event, "response", None)
-                    logger.error(
-                        "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
-                        "conversation=%s",
-                        event.type,
-                        getattr(failed, "error", None),
-                        getattr(failed, "incomplete_details", None),
-                        getattr(failed, "status", None),
-                        agent_conversation_id,
-                    )
-        except JSONDecodeError as ex:
-            if latest_response is None:
-                raise RuntimeError(
-                    "Agent stream contained malformed SSE before a response ID "
-                    "was observed"
-                ) from ex
-            logger.warning(
-                "Agent stream contained malformed SSE; retrieving stored response: "
-                "response=%s, conversation=%s, error=%s",
-                latest_response.id,
-                agent_conversation_id,
-                ex,
-            )
-            return await self._poll_response(latest_response)
+        async for event in stream:
+            logger.debug("Stream event: type=%s, content=%s", event.type, event)
+            last_event_type = event.type
+            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
+                response = event.response
+                break
+            if event.type in (
+                STREAM_EVENT_RESPONSE_FAILED,
+                STREAM_EVENT_RESPONSE_INCOMPLETE,
+            ):
+                failed = getattr(event, "response", None)
+                logger.error(
+                    "Agent stream %s: error=%s, incomplete_details=%s, status=%s, "
+                    "conversation=%s",
+                    event.type,
+                    getattr(failed, "error", None),
+                    getattr(failed, "incomplete_details", None),
+                    getattr(failed, "status", None),
+                    agent_conversation_id,
+                )
 
         if response is None:
             raise RuntimeError(

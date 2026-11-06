@@ -1,5 +1,9 @@
 # Release
 
+## 2026-10-02 - 0.33.2
+
+- Prefer `main.tsp` over `client.tsp` when discovering a project entrypoint while preserving support for projects containing only `client.tsp`.
+
 ## 2026-04-30 - 0.33.1
 
 - Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.

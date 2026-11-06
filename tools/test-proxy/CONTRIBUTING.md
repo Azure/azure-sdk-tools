@@ -128,9 +128,9 @@ dotnet --list-sdks
 7.0.101 [C:\Program Files\dotnet\sdk]
 ```
 
-Find a version starting with a `6`, if you don't have one on your system, [install it!](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+Find a version starting with a `6`, if you don't have one on your system, [install it!](https://dotnet.microsoft.com/download/dotnet/6.0)
 
-Once you have that, find the [`global.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json) at root of this repo.
+Once you have that, find the [`global.json`](https://learn.microsoft.com/dotnet/core/tools/global-json) at root of this repo.
 
 ```json
 {

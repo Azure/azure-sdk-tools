@@ -16,9 +16,52 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
 
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
+
+        [JsonPropertyName("dry_run")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool DryRun { get; set; }
+
+        /// <summary>
+        /// Eligibility reasons for previewed or successfully abandoned plans, keyed by Azure DevOps work item ID.
+        /// </summary>
+        [JsonPropertyName("eligibility_reasons")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<int, string>? EligibilityReasons { get; set; }
+
+        [JsonPropertyName("preview_summary")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ReleasePlanPreviewSummary? PreviewSummary { get; set; }
+
+        /// <summary>
+        /// Skipped-plan dashboard links keyed by release plan ID, falling back to work item ID.
+        /// </summary>
+        [JsonPropertyName("skipped_plans")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<int, string>? SkippedPlans { get; set; }
+
+        public override string ToString()
+        {
+            // Preserve partial results and summaries alongside errors in either mode.
+            return OperationStatus == Status.Failed && (ReleasePlanDetailsList != null || !string.IsNullOrWhiteSpace(Message))
+                ? Format() + Environment.NewLine + base.ToString()
+                : base.ToString();
+        }
+
         protected override string Format()
         {
             var result = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(Message))
+            {
+                result.AppendLine(Message);
+            }
+            if (PreviewSummary != null)
+            {
+                result.AppendLine($"Scanned: {PreviewSummary.Scanned}; Eligible: {PreviewSummary.Eligible}; Skipped: {PreviewSummary.Skipped}; Evaluation errors: {PreviewSummary.EvaluationErrors}");
+                foreach (var (category, count) in PreviewSummary.SkippedByReason)
+                {
+                    result.AppendLine($"  {category}: {count}");
+                }
+            }
             if (ReleasePlanDetailsList != null && ReleasePlanDetailsList.Count > 0)
             {
                 result.AppendLine($"Total Release Plans: {ReleasePlanDetailsList.Count}");
@@ -27,17 +70,33 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
                 for (int i = 0; i < ReleasePlanDetailsList.Count; i++)
                 {
                     var rp = ReleasePlanDetailsList[i];
-                    result.AppendLine($"[{i + 1}] Release Plan ID: {rp.ReleasePlanId}");
+                    var planId = rp.ReleasePlanId > 0 ? rp.ReleasePlanId : rp.WorkItemId;
+                    result.AppendLine($"[{i + 1}] Release Plan ID: {planId}");
                     result.AppendLine($"Title: {rp.Title}");
                     result.AppendLine($"Status: {rp.Status}");
                     result.AppendLine($"Owner: {rp.Owner}");
                     result.AppendLine($"SDK Release Month: {rp.SDKReleaseMonth}");
+                    result.AppendLine($"Release Plan Link: {rp.ReleasePlanLink}");
+                    if (EligibilityReasons?.TryGetValue(rp.WorkItemId, out var reason) == true)
+                    {
+                        result.AppendLine($"{(DryRun ? "Eligibility" : "Abandonment")} Reason: {reason}");
+                    }
                     result.AppendLine(new string('-', 40));
                 }
             }
             else
             {
-                result.AppendLine("No release plan details available.");
+                result.AppendLine(ReleasePlanDetailsList != null && EligibilityReasons != null
+                    ? (DryRun ? "No eligible release plans found." : "No release plans were abandoned.")
+                    : "No release plan details available.");
+            }
+            if (SkippedPlans?.Count > 0)
+            {
+                result.AppendLine("Skipped release plans:");
+                foreach (var (planId, link) in SkippedPlans)
+                {
+                    result.AppendLine($"- Release Plan ID: {planId} | Release Plan Link: {link}");
+                }
             }
             return result.ToString();
         }

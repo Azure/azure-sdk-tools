@@ -32,10 +32,6 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
-          Azure/typespec-azure:
-            TargetRepos:
-              Azure/typespec-azure-pr:
-
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
         GH_TOKEN: $(GH_TOKEN_Azure)
@@ -45,11 +41,6 @@ jobs:
             Branch: main
             TargetBranches:
               RPSaaSMaster:
-                Theirs: '@("**")'
-                Ours: '@("specification")'
-                Merge: '@("specification/common-types")'
-                AcceptTheirsForFinalMerge: true
-              RPSaaSCanary:
                 Theirs: '@("**")'
                 Ours: '@("specification")'
                 Merge: '@("specification/common-types")'
@@ -112,16 +103,6 @@ jobs:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
-
-          Azure/azure-sdk-for-ios:
-            TargetRepos:
-              Azure/azure-sdk-for-ios-pr:
-              azure-sdk/azure-sdk-for-ios:
-
-          Azure/azure-sdk-for-android:
-            TargetRepos:
-              Azure/azure-sdk-for-android-pr:
-              azure-sdk/azure-sdk-for-android:
 
           Azure/azure-sdk-for-rust:
             TargetRepos:

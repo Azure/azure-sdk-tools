@@ -6,6 +6,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     public class MockGitHubService : IGitHubService
     {
+        // When set, controls whether pull requests returned by GetPullRequestAsync report as merged.
+        public bool ConfiguredPullRequestMerged { get; set; }
+
+        // When set, GetPullRequestAsync throws to simulate a GitHub lookup failure.
+        public bool ThrowOnGetPullRequest { get; set; }
+
         public string GetAuthToken() => "mock-github-token";
 
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main", CancellationToken ct = default)
@@ -36,9 +42,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
+            if (ThrowOnGetPullRequest)
+            {
+                throw new InvalidOperationException("Simulated GitHub lookup failure.");
+            }
+
             // Create a minimal pull request mock
             var pr = CreateMockPullRequest(repoOwner, repoName, pullRequestNumber);
             return Task.FromResult(pr);
+        }
+
+        public Task<PullRequest> GetPullRequestAsync(string url, CancellationToken ct)
+        {
+            var parts = new Uri(url).AbsolutePath.Trim('/').Split('/');
+            return GetPullRequestAsync(parts[0], parts[1], int.Parse(parts[3], System.Globalization.CultureInfo.InvariantCulture), ct);
+        }
+
+        public Task<bool> IsPullRequestApprovedAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult(true);
         }
 
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName, CancellationToken ct)
@@ -197,8 +219,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 body: "This is a test pull request",
                 createdAt: DateTimeOffset.Now.AddDays(-1),
                 updatedAt: DateTimeOffset.Now,
-                closedAt: null,
-                mergedAt: null,
+                closedAt: ConfiguredPullRequestMerged ? DateTimeOffset.Now : (DateTimeOffset?)null,
+                mergedAt: ConfiguredPullRequestMerged ? DateTimeOffset.Now : (DateTimeOffset?)null,
                 head: CreateMockGitReference($"{repoOwner}:feature-branch", "feature-branch", "abc123", user),
                 @base: CreateMockGitReference($"{repoOwner}:main", "main", "def456", user),
                 user: user,
@@ -207,8 +229,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 draft: false,
                 mergeable: true,
                 mergeableState: MergeableState.Clean,
-                mergedBy: null,
-                mergeCommitSha: null,
+                mergedBy: ConfiguredPullRequestMerged ? user : null,
+                mergeCommitSha: ConfiguredPullRequestMerged ? "abc123" : null,
                 comments: 0,
                 maintainerCanModify: true,
                 commits: 3,
@@ -403,6 +425,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
             return Task.FromResult<IReadOnlyList<IssueComment>>([]);
+        }
+
+        public Task<PullRequest> ClosePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct, string? comment = null)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.FromResult(new PullRequest());
         }
 
         public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)

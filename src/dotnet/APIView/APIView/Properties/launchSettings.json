@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "TypeList": {
-      "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\TestLibrary\\Debug\\netcoreapp2.1\\TestLibrary.dll"
-    }
-  }
-}

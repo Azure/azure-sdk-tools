@@ -1246,7 +1246,7 @@ void AstNamedNode::DumpDocumentation(AstDumper* dumper, DumpNodeOptions const& o
 // If the customer gave us a source URL for the ApiView, include a link to the type.
 void AstNamedNode::DumpSourceComment(AstDumper* dumper, DumpNodeOptions const& options) const
 {
-  if (options.NeedsSourceComment)
+  if (options.NeedsSourceComment && dumper->IncludeSourceComments())
   {
     dumper->AddSkipDiffRangeStart();
     if (options.NeedsLeadingNewline)

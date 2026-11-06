@@ -1,5 +1,17 @@
 # Release
 
+## 2026-11-02 - 0.9.10
+
+- Added optional `typespecEmitter` to the `generateInput.json` contract, supplied through `--typespec-emitter` or programmatic workflow options. Existing behavior is preserved when omitted.
+
+## 2026-10-26 - 0.9.9
+
+- Fixed YAML quoting and escaping of SDK breaking-change suppression suggestions, preserving exact message text when copied into `sdk-suppressions.yaml`.
+
+## 2026-09-04 - 0.9.8
+
+- Added 'packageRootPath' to each package in the execution report
+
 ## 2026-04-07 - 0.9.7
 
 - Made 'sdk-release-type' parameter optional, same as 'api-version'

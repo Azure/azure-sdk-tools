@@ -8,14 +8,9 @@ using Azure.Sdk.Tools.Cli.Models.Responses;
 namespace Azure.Sdk.Tools.Mock.Handlers.Pipeline;
 
 /// <summary>
-/// Mock handler for azsdk_analyze_pipeline. Returns the canonical fixture failure:
-/// the Storage QueueClientOptions / ShareClientOptions TryGetServiceVersion parser is missing the
-/// two newest service-version cases, "2026-10-06" (V2026_10_06) and "2026-12-06" (V2026_12_06) —
-/// a real, identifiable code bug. Because TryGetServiceVersion_ParsesAllServiceVersions iterates
-/// every enum value, a complete fix must add BOTH cases; adding only one leaves the test red. This
-/// is the same bug the evals/fixtures/analyze-pipeline/QueueClientOptionsTests fixture overlays for the
-/// fixer, so a single fixture drives both the analyze and fix quality evals. See
-/// evals/workflows/mock/ and evals/fixtures/analyze-pipeline/QueueClientOptionsTests.
+/// Mock handler for azsdk_analyze_pipeline. Build 6455504 returns the canonical Storage
+/// QueueClientOptions parser failure used by the analysis and fixer quality evals; other builds
+/// return the generic WidgetClientLiveTests failure used by tool-routing scenarios.
 /// </summary>
 public class AnalyzePipelineHandler : IMockToolHandler
 {
@@ -26,6 +21,13 @@ public class AnalyzePipelineHandler : IMockToolHandler
         var buildId = MockPipelineIdentifier.GetBuildId(arguments) ?? "90001";
         var buildIdValue = int.TryParse(buildId, out var parsed) ? parsed : 90001;
         var pipelineUrl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
+        var isVersionParserFixture = buildId == "6455504";
+        var failedTestTitle = isVersionParserFixture
+            ? "Azure.Storage.Queues.Tests.QueueClientOptionsTests.TryGetServiceVersion_ParsesAllServiceVersions"
+            : "WidgetClientLiveTests.GetWidget";
+        var errorMessage = isVersionParserFixture
+            ? "QueueClientOptions.TryGetServiceVersion is missing mappings for service versions 2026-10-06 (V2026_10_06) and 2026-12-06 (V2026_12_06)"
+            : "Test WidgetClientLiveTests.GetWidget failed: expected 200 got 404";
         return new AnalyzePipelineResponse
         {
             AzurePipelineAnalyses = new List<AzurePipelineAnalysis>
@@ -41,7 +43,7 @@ public class AnalyzePipelineHandler : IMockToolHandler
                             Platform = "Ubuntu2404_NET80_PackageRef_Debug",
                             FailedTestTitles =
                             [
-                                "WidgetClientLiveTests.GetWidget"
+                                failedTestTitle
                             ]
                         }
                     },
@@ -54,7 +56,7 @@ public class AnalyzePipelineHandler : IMockToolHandler
                             {
                                 File = "logs/test.log",
                                 Line = 128,
-                                Message = "Test WidgetClientLiveTests.GetWidget failed: expected 200 got 404"
+                                Message = errorMessage
                             }
                         ]
                     }

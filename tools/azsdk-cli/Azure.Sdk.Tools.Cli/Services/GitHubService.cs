@@ -136,6 +136,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
+        public Task<PullRequest> GetPullRequestAsync(string url, CancellationToken ct);
+        public Task<bool> IsPullRequestApprovedAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName, CancellationToken ct);
         public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true, CancellationToken ct = default);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -163,6 +165,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<IReadOnlyList<WorkflowJob>> GetWorkflowRunJobsAsync(string owner, string repo, long runId, CancellationToken ct);
         public Task<List<PrCheckRun>> GetPrCheckRunsAsync(string owner, string repo, int prNumber, CancellationToken ct);
         public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
+        public Task<PullRequest> ClosePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct, string? comment = null);
         public Task<IReadOnlyList<PullRequestCommit>> GetPullRequestCommitsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct);
         public Task<string> GetBranchHeadShaAsync(string repoOwner, string repoName, string branchName, CancellationToken ct);
@@ -199,6 +202,55 @@ namespace Azure.Sdk.Tools.Cli.Services
             // anonymously for public repositories, so try anonymously first and only prompt for auth if needed.
             var pullRequest = await ReadWithAnonymousFallbackAsync(client => client.PullRequest.Get(repoOwner, repoName, pullRequestNumber), ct);
             return pullRequest;
+        }
+
+        public Task<PullRequest> GetPullRequestAsync(string url, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            ArgumentNullException.ThrowIfNull(url);
+            var match = Regex.Match(url,
+                @"\Ahttps://github\.com/(?<owner>(?=[A-Za-z0-9-]{1,39}/)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)/(?<repo>(?!\.{1,2}/)[A-Za-z0-9_.-]{1,100})/pull/(?<number>[0-9]+)/?\z",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+            if (!match.Success || !int.TryParse(match.Groups["number"].Value,
+                System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var number) || number <= 0)
+            {
+                throw new ArgumentException("Expected a GitHub pull request URL with a positive Int32 pull request number.", nameof(url));
+            }
+            // Parse the web URL, but send requests only through the fixed Octokit API client.
+            return GetPullRequestAsync(match.Groups["owner"].Value, match.Groups["repo"].Value, number, ct);
+        }
+
+        /// <summary>
+        /// Reads GitHub's current aggregate review decision for an open PR, not historical approvals.
+        /// An unavailable decision or a PR that changed state must not authorize automatic cleanup.
+        /// </summary>
+        public async Task<bool> IsPullRequestApprovedAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            const string query = """
+                query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    pullRequest(number: $number) { state reviewDecision }
+                  }
+                }
+                """;
+            using var doc = await PostGraphQLAsync(query, new { owner = repoOwner, repo = repoName, number = pullRequestNumber }, ct);
+            if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object
+                || !data.TryGetProperty("repository", out var repository) || repository.ValueKind != JsonValueKind.Object
+                || !repository.TryGetProperty("pullRequest", out var pr) || pr.ValueKind != JsonValueKind.Object
+                || !pr.TryGetProperty("state", out var state) || state.ValueKind != JsonValueKind.String
+                || state.GetString() != "OPEN"
+                || !pr.TryGetProperty("reviewDecision", out var decision) || decision.ValueKind != JsonValueKind.String)
+            {
+                throw new InvalidOperationException($"Could not verify current approval for open PR {repoOwner}/{repoName}#{pullRequestNumber}.");
+            }
+
+            return decision.GetString() switch
+            {
+                "APPROVED" => true,
+                "REVIEW_REQUIRED" or "CHANGES_REQUESTED" => false,
+                _ => throw new InvalidOperationException($"Unrecognized review decision for {repoOwner}/{repoName}#{pullRequestNumber}.")
+            };
         }
 
         public async Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state, CancellationToken ct)
@@ -1061,6 +1113,22 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
         {
             ct.ThrowIfCancellationRequested();
             return await gitHubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pullRequestNumber);
+        }
+
+        public async Task<PullRequest> ClosePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct, string? comment = null)
+        {
+            ct.ThrowIfCancellationRequested();
+            // Octokit has no cancellation-token support. Await each accepted request, then check cancellation.
+            // Close first with state only; never retry either write or overwrite a PR's title/body.
+            var pullRequest = await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber,
+                new PullRequestUpdate { State = ItemState.Closed });
+            ct.ThrowIfCancellationRequested();
+            if (!string.IsNullOrEmpty(comment))
+            {
+                await gitHubClient.Issue.Comment.Create(repoOwner, repoName, pullRequestNumber, comment);
+                ct.ThrowIfCancellationRequested();
+            }
+            return pullRequest;
         }
 
         public async Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)

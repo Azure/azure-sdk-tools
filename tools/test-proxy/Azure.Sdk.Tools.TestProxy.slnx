@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="ci.yml" />
+  </Folder>
+  <Project Path="Azure.Sdk.Tools.TestProxy.Tests/Azure.Sdk.Tools.TestProxy.Tests.csproj" />
+  <Project Path="Azure.Sdk.Tools.TestProxy/Azure.Sdk.Tools.TestProxy.csproj" />
+</Solution>

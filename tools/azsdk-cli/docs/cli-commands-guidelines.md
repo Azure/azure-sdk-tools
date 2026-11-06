@@ -106,6 +106,6 @@ For TypeSpec-related operations:
 - `tsp convert --swagger-file ./swagger.json`
 - `tsp init --name MyService`
 - `tsp validate --project-path ./typespec`
-- `tsp client customized-update --package-path ./sdk/storage --update-commit-sha <sha>`
+- `tsp client customized-update --package-path <package-root> --edit-scope CustomCode --customization-request "Repair custom-code build errors" --max-attempts 3`
 - `tsp project modified-projects --repo-root ./azure-rest-api-specs`
 - `tsp delegate-apiview-feedback <apiview-url> [--repo owner/repo] [--dry-run]`

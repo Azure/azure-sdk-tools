@@ -303,7 +303,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                 return ReadOnlySequence<byte>.Empty;
             }
 
-            if (boundary == null || boundary.Length == 0)
+            if (boundary.IsEmpty)
             {
                 return new ReadOnlySequence<byte>(body);
             }

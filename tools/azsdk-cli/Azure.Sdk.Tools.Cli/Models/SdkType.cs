@@ -15,3 +15,10 @@ public enum SdkType
     [JsonStringEnumMemberName("functions")]
     Functions
 }
+
+public static class SdkTypeExtensions
+{
+    public static bool IsDataPlane(this SdkType sdkType) =>
+        sdkType is SdkType.Dataplane or SdkType.Spring or SdkType.Functions;
+
+}

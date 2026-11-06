@@ -102,6 +102,7 @@ public:
     outfile << m_json;
   }
   nlohmann::json const& GetJson() { return m_json; }
+  virtual bool IncludeSourceComments() const override { return false; }
 
   // Each ApiView node has 4 mandatory members:
   //

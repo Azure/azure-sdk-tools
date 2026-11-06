@@ -348,6 +348,7 @@ resource vaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
   scope: keyVault
   properties:{
     principalId: webApp.identity.principalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: secretsUserRoleDefinition.id
     description: 'Key Vault Secrets User for PipelineWitness'
   }
@@ -367,6 +368,7 @@ resource queueRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
   scope: appStorageAccount
   properties:{
     principalId: webApp.identity.principalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: queueContributorRoleDefinition.id
     description: 'Queue Contributor for PipelineWitness'
   }

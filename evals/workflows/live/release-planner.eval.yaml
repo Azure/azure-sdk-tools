@@ -109,6 +109,9 @@ stimuli:
         If generation is still queued or running, wait 60 seconds between
         checks and continue; do not finish with only a pending status or
         trigger another generation run.
+        Make at most 15 polling checks, using the full pipeline URL and the
+        internal project. If it is still pending after the final check,
+        report a generation timeout explicitly rather than claiming success.
     constraints:
       max_turns: 40
       max_tokens: 30000

@@ -1416,6 +1416,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         [TestCase(false)]
         [TestCase(true)]
+        [NonParallelizable]
+        public async Task GetReleasePlanByTypeSpecProjectPathAsync_ScopesExistingPlanLookupToEnvironment(bool testMode)
+        {
+            var original = Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING");
+            try
+            {
+                Environment.SetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING", testMode ? "true" : "false");
+
+                var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(
+                    "specification/contosowidgetmanager/Contoso.WidgetManager",
+                    apiReleaseType: ApiReleaseType.PublicPreview,
+                    ct: CancellationToken.None);
+
+                Assert.That(result, Is.Null);
+                Assert.That(_connection.LastCapturedQuery, Does.Contain(testMode
+                    ? "[System.Tags] CONTAINS 'Release Planner App Test'"
+                    : "[System.Tags] NOT CONTAINS 'Release Planner App Test'"));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING", original);
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
         public async Task GetReleasePlanAsync_IncludeAbandonedControlsQueryAndPreservesMapping(bool includeAbandoned)
         {
             _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(35000, 100, "Abandoned"));

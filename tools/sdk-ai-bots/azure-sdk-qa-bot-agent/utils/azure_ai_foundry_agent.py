@@ -74,6 +74,10 @@ def _is_content_filter_error(ex: BadRequestError) -> bool:
     return False
 
 
+def _is_session_not_ready_error(ex: APIStatusError) -> bool:
+    return ex.status_code == 424 and ex.code == "session_not_ready"
+
+
 def _build_content_safety_response() -> OpenAIResponse:
     """Build a synthetic completed response carrying the content-safety message."""
     text = ResponseOutputText.model_construct(
@@ -113,11 +117,15 @@ class HostedAgentClient:
         max_retries: int = STREAM_CREATE_MAX_RETRIES,
         retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
         stream_timeout: float = STREAM_COMPLETE_TIMEOUT_SECS,
+        session_ready_max_attempts: int = 1,
     ) -> None:
+        if session_ready_max_attempts < 1:
+            raise ValueError("session_ready_max_attempts must be at least 1")
         self._client = openai_client
         self._max_retries = max_retries
         self._retry_delay = retry_delay
         self._stream_timeout = stream_timeout
+        self._session_ready_max_attempts = session_ready_max_attempts
 
     async def invoke(
         self,
@@ -144,13 +152,31 @@ class HostedAgentClient:
                 extra_body["agent_session_id"] = agent_session_id
             stream = None
             try:
-                stream = await self._client.responses.create(
-                    input=conversation_items,
-                    store=True,
-                    stream=True,
-                    extra_body=extra_body,
-                    **kwargs,
-                )
+                # Only this explicit pre-execution rejection is safe to retry
+                # independently of the invocation's side-effect retry policy.
+                for ready_attempt in range(1, self._session_ready_max_attempts + 1):
+                    try:
+                        stream = await self._client.responses.create(
+                            input=conversation_items,
+                            store=True,
+                            stream=True,
+                            extra_body=extra_body,
+                            **kwargs,
+                        )
+                        break
+                    except APIStatusError as ex:
+                        if (
+                            not _is_session_not_ready_error(ex)
+                            or ready_attempt >= self._session_ready_max_attempts
+                        ):
+                            raise
+                        logger.warning(
+                            "Hosted agent session is not ready (attempt %d/%d): %s",
+                            ready_attempt,
+                            self._session_ready_max_attempts,
+                            ex,
+                        )
+                        await asyncio.sleep(self._retry_delay * ready_attempt)
                 # Bound the wait for the stream to complete.
                 response = await asyncio.wait_for(
                     self._consume_stream(stream, agent_conversation_id),
@@ -255,7 +281,8 @@ class HostedAgentClient:
 
         raise RuntimeError(
             f"Failed to obtain an agent response after "
-            f"{self._max_retries} attempts (conversation={agent_conversation_id})"
+            f"{self._max_retries} attempts (conversation={agent_conversation_id}): "
+            f"{last_error}"
         ) from last_error
 
     async def close_stream(self, stream) -> None:

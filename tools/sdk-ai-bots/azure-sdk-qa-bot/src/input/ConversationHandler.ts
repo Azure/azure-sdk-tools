@@ -253,11 +253,14 @@ export class ConversationHandler {
    */
   private messageToEntity(message: ConversationMessage): MessageEntity {
     const timestamp = message.timestamp || new Date();
+    // Exclude inline image bytes from Table Storage to avoid property/entity size limits; retain remote URLs.
+    const storedImages = message.prompt?.images?.filter((image) => !image.startsWith('data:'));
 
     // Serialize prompt, handling Date objects properly
     const promptToStore = message.prompt
       ? {
           ...message.prompt,
+          images: storedImages,
           timestamp: message.prompt.timestamp?.toISOString(),
         }
       : undefined;

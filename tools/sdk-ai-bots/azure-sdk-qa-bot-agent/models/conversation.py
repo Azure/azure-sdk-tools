@@ -8,6 +8,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+MAX_TEAMS_BACKFILL_PAGES = 1000
+
 
 class Role(str, Enum):
     """Message roles in the conversation."""
@@ -107,15 +109,18 @@ class SaveConversationMessageResponse(BaseModel):
 
 
 class TeamsBackfillRequest(BaseModel):
-    """Ask the server to import historical posts from the configured channels.
+    """Ask the server to import historical posts from one Teams channel.
 
-    Both fields narrow an otherwise complete run: ``channel_id`` restricts it
-    to one channel of the collection allowlist, and ``start_time`` drops every
-    thread whose post is older than that instant.
+    ``tenant_key`` determines the tenant attribution in stored messages.
+    ``start_time`` drops every thread whose post is older than that instant.
+    ``max_pages`` optionally overrides the default page limit.
     """
 
-    channel_id: str | None = Field(default=None, max_length=500)
+    team_id: str = Field(min_length=1, max_length=100)
+    channel_id: str = Field(min_length=1, max_length=500)
+    tenant_key: str = Field(min_length=1, max_length=200)
     start_time: str | None = Field(default=None, max_length=100)
+    max_pages: int | None = Field(default=None, ge=1, le=MAX_TEAMS_BACKFILL_PAGES)
 
 
 class TeamsBackfillStatus(str, Enum):

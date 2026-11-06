@@ -1,8 +1,8 @@
 # Deployment pipeline for the Azure SDK QA Bot Logic Apps.
 # Deploys a Logic App ARM template with environment-specific parameters.
 #
-# The teams-collection workflow reads the backend server's identity from
-# $(APP_NAME), because backfill runs there rather than in a hosted agent.
+# The teams-collection template resolves the backend server identity from its
+# existing user-assigned identity resource during ARM deployment.
 # Dev/test use the shared Azure SDK listener; production uses the selected team.
 
 name: Deploy Azure SDK QA Bot Logic App
@@ -112,35 +112,6 @@ extends:
                         exit 1
                       fi
 
-                      # Suppress Azure CLI welcome banner on fresh CI agents.
-                      export AZURE_CORE_WELCOME_MESSAGE=false
-                      az version > /dev/null 2>&1 || true
-                      az config set core.welcome_message=false 2>/dev/null || true
-
-                      # Backfill runs on the backend server, so the Logic App
-                      # admits that App Service identity and nothing else.
-                      CLIENT_ID=$(az webapp config appsettings list \
-                        --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" \
-                        --query "[?name=='AZURE_CLIENT_ID'].value | [0]" -o tsv)
-                      if [ -n "$CLIENT_ID" ]; then
-                        BACKFILL_PRINCIPAL_ID=$(az webapp identity show \
-                          --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" \
-                          --query "values(userAssignedIdentities)[?clientId=='$CLIENT_ID'].principalId | [0]" \
-                          -o tsv)
-                      else
-                        BACKFILL_PRINCIPAL_ID=$(az webapp identity show \
-                          --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" \
-                          --query principalId -o tsv)
-                      fi
-                      if [ -z "$BACKFILL_PRINCIPAL_ID" ]; then
-                        echo "Could not resolve the backend server identity for $(APP_NAME)."
-                        exit 1
-                      fi
-                      if [[ ! "$BACKFILL_PRINCIPAL_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
-                        echo "Resolved backend identity is not a valid object ID."
-                        exit 1
-                      fi
-
                       TEMPLATE_FILE="pipelines/teams-collection/template.json"
                       PARAMS_FILE="pipelines/teams-collection/parameters.azure_sdk.${{ parameters.environment }}.json"
                       echo "Deploying Teams backfill Logic App to $(RESOURCE_GROUP) using $PARAMS_FILE"
@@ -149,7 +120,7 @@ extends:
                         --name "teams-collection-${{ parameters.environment }}-$(Build.BuildId)" \
                         --mode Incremental \
                         --template-file "$TEMPLATE_FILE" \
-                        --parameters "@$PARAMS_FILE" "backfillPrincipalId=$BACKFILL_PRINCIPAL_ID" \
+                        --parameters "@$PARAMS_FILE" \
                         --query "properties.outputs.workflowResourceId.value" \
                         --output tsv)
                       if [[ ! "$WORKFLOW_RESOURCE_ID" =~ ^/subscriptions/[^/]+/resourceGroups/[^/]+/providers/Microsoft\.Logic/workflows/[^/]+$ ]]; then

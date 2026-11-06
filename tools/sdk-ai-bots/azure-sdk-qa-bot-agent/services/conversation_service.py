@@ -19,7 +19,6 @@ import os
 from collections import OrderedDict
 from datetime import datetime, timezone
 from html.parser import HTMLParser
-from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import UUID, uuid4
 
@@ -39,6 +38,7 @@ from models.conversation import (
     ConversationMessageImage,
     ConversationMessageItem,
     ConversationType,
+    MAX_TEAMS_BACKFILL_PAGES,
     Role,
     TeamsBackfillJob,
     TeamsBackfillRequest,
@@ -492,9 +492,6 @@ class ConversationService:
 # ---------------------------------------------------------------------------
 
 _TEAMS_CONVERSATION_TYPE = ConversationType.teams_channel.value
-_TEAMS_COLLECTION_CONFIG_PATH = (
-    Path(__file__).resolve().parents[1] / "config" / "teams_collection_config.json"
-)
 _MAX_TRACKED_BACKFILL_JOBS = 50
 
 _FORWARDED_CONTENT_TYPE = "forwardedMessageReference"
@@ -523,7 +520,7 @@ def parse_timestamp(value: object, field: str) -> datetime:
 
 def validate_channels(channels: list[dict]) -> None:
     if not isinstance(channels, list) or not channels:
-        raise ValueError("At least one Teams channel must be configured.")
+        raise ValueError("At least one Teams channel must be supplied.")
     seen = set()
     for channel in channels:
         UUID(channel["teamId"])
@@ -541,22 +538,6 @@ def validate_channels(channels: list[dict]) -> None:
         if identity in seen:
             raise ValueError("Duplicate Teams channel configuration.")
         seen.add(identity)
-
-
-def select_channels(channels: list[dict], channel_id: str | None) -> list[dict]:
-    validate_channels(channels)
-    if channel_id is None:
-        return channels
-    selected = [channel for channel in channels if channel["channelId"] == channel_id]
-    if not selected:
-        raise ValueError("Channel is not in the configured collection allowlist.")
-    return selected
-
-
-def _with_start_time(channels: list[dict], start_time: str | None) -> list[dict]:
-    if start_time is None:
-        return channels
-    return [{**channel, "startTime": start_time} for channel in channels]
 
 
 def teams_conversation_id(channel_id: str, root_id: str) -> str:
@@ -825,9 +806,11 @@ def message_document(channel: dict, message: dict, root_id: str) -> dict:
 class TeamsCollectionService:
     """Backfill a channel's history without disturbing what the bot already owns."""
 
-    def __init__(self, fetch_page, store, max_pages: int = 1000):
-        if not 1 <= max_pages <= 1000:
-            raise ValueError("max_pages must be between 1 and 1000.")
+    def __init__(self, fetch_page, store, max_pages: int = MAX_TEAMS_BACKFILL_PAGES):
+        if not 1 <= max_pages <= MAX_TEAMS_BACKFILL_PAGES:
+            raise ValueError(
+                f"max_pages must be between 1 and {MAX_TEAMS_BACKFILL_PAGES}."
+            )
         self._fetch_page = fetch_page
         self._store = store
         self._max_pages = max_pages
@@ -944,7 +927,7 @@ class LogicAppPageClient:
 
     async def fetch_page(self, channel, message_id, skip_token):
         if channel not in self._channels:
-            raise ValueError("Channel is not in the configured collection allowlist.")
+            raise ValueError("Channel is not part of this backfill request.")
         payload = {"teamId": channel["teamId"], "channelId": channel["channelId"],
                    "operation": "replies" if message_id is not None else "messages"}
         if message_id is not None:
@@ -1049,17 +1032,16 @@ async def _message_store():
     return store
 
 
-async def backfill_configured_channels(config, settings, channel_id=None, start_time=None):
-    channels = _with_start_time(select_channels(config["channels"], channel_id), start_time)
-    validate_channels(channels)
+async def backfill_channel(channel, settings, max_pages=MAX_TEAMS_BACKFILL_PAGES):
+    validate_channels([channel])
     store = await _message_store()
     async with httpx.AsyncClient() as client:
         pages = LogicAppPageClient(
             client, get_credential(), settings("TEAMS_COLLECTION_LOGIC_APP_URL", ""),
-            "https://management.core.windows.net/", channels,
+            "https://management.core.windows.net/", [channel],
         )
-        service = TeamsCollectionService(pages.fetch_page, store, config["maxPages"])
-        return await service.backfill(channels)
+        service = TeamsCollectionService(pages.fetch_page, store, max_pages)
+        return await service.backfill([channel])
 
 
 class BackfillInProgressError(RuntimeError):
@@ -1075,9 +1057,7 @@ class TeamsBackfillService:
     page the same channels into the same shared container for no gain.
     """
 
-    def __init__(self, config_path: Path = _TEAMS_COLLECTION_CONFIG_PATH,
-                 runner=backfill_configured_channels):
-        self._config_path = config_path
+    def __init__(self, runner=backfill_channel):
         self._runner = runner
         self._jobs: OrderedDict[str, TeamsBackfillJob] = OrderedDict()
         self._running: str | None = None
@@ -1085,10 +1065,14 @@ class TeamsBackfillService:
 
     async def start(self, request: TeamsBackfillRequest) -> TeamsBackfillJob:
         """Accept or refuse a run before a single Teams page is fetched."""
-        config = json.loads(self._config_path.read_text(encoding="utf-8"))
-        select_channels(config["channels"], request.channel_id)
+        channel = {
+            "teamId": request.team_id,
+            "channelId": request.channel_id,
+            "tenantKey": request.tenant_key,
+        }
         if request.start_time is not None:
-            parse_timestamp(request.start_time, "start_time")
+            channel["startTime"] = request.start_time
+        validate_channels([channel])
         async with self._lock:
             if self._running is not None:
                 raise BackfillInProgressError(
@@ -1106,7 +1090,7 @@ class TeamsBackfillService:
                 self._jobs.popitem(last=False)
             self._running = job.job_id
         BackgroundTaskTracker.instance().track(
-            asyncio.create_task(self._run(job, config, request))
+                asyncio.create_task(self._run(job, channel, request))
         )
         return job
 
@@ -1115,12 +1099,14 @@ class TeamsBackfillService:
         return self._jobs.get(job_id)
 
     async def _run(
-        self, job: TeamsBackfillJob, config: dict, request: TeamsBackfillRequest
+        self, job: TeamsBackfillJob, channel: dict, request: TeamsBackfillRequest
     ) -> None:
         try:
             settings = await app_config.load(os.environ.get("AZURE_APPCONFIG_ENDPOINT", ""))
             job.summary = await self._runner(
-                config, settings.get, request.channel_id, request.start_time
+                channel, settings.get,
+                request.max_pages if request.max_pages is not None
+                else MAX_TEAMS_BACKFILL_PAGES,
             )
             job.status = TeamsBackfillStatus.succeeded
         except asyncio.CancelledError:

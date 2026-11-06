@@ -251,8 +251,8 @@ Backfill imports configured Teams channel history into the existing `conversatio
 - Deploy with [pipelines/logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml), selecting `workflow: teams-collection` and the target environment. The backend server must already be deployed; the pipeline uses its App Service identity as the only caller admitted by the Logic App.
 - The pipeline writes the Logic App's SAS-free callback URL to `TEAMS_COLLECTION_LOGIC_APP_URL` in the environment's App Configuration store.
 - Each backfill job loads a fresh App Configuration snapshot before reading the callback URL. Publishing or updating the URL through the pipeline or manual deployment does not require restarting the backend.
-- The Teams API connection is an existing delegated connection and is not created or reauthorized by this pipeline. Its identity must be able to read every configured channel.
-- Review [config/teams_collection_config.json](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/teams_collection_config.json) for the tenant, allowed team/channel IDs, per-channel `tenantKey`, optional `startTime`, and `maxPages`. `tenantKey` must match the channel's entry in `bot-configs/channel.yaml` (mirrored at [azure-sdk-qa-bot/config/channel.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot/config/channel.yaml)); a mismatch files history under the wrong tenant. A configured `startTime` must include a timezone; `null` means all available roots.
+- The Teams API connection is an existing delegated connection and is not created or reauthorized by this pipeline. Its identity must be able to read the requested channel.
+- Backfill requests provide the team ID, channel ID, and `tenant_key`; the tenant key is written as `tenant_id` on each stored message and must match the channel's tenant in `bot-configs/channel.yaml` (mirrored at [azure-sdk-qa-bot/config/channel.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot/config/channel.yaml)).
 - The deployment service connection needs Logic App deployment permissions and App Configuration data write access. No Cosmos role assignment is needed here: the backend identity already writes live messages to `conversation-messages`.
 
 #### Backfill a Channel
@@ -262,14 +262,17 @@ Backfill is a deliberate, operator-driven import with no schedule behind it. It 
 ```powershell
 $token = az account get-access-token --resource api://azure-sdk-qa-bot-dev --query accessToken -o tsv
 $body = @{
+   team_id = "3e17dcb0-4257-4a30-b843-77f47f1d4121"
   channel_id = "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype"
+   tenant_key = "typespec_channel_qa_bot"
   start_time = "2026-01-01T00:00:00Z"
+   max_pages = 500
 } | ConvertTo-Json
 $job = Invoke-RestMethod -Method Post -Uri "https://azuresdkqabot-dev-server.azurewebsites.net/teams/backfill" `
   -Headers @{ Authorization = "Bearer $token" } -ContentType "application/json" -Body $body
 ```
 
-`channel_id` must be in the configured allowlist. Omit it to backfill every configured channel, and omit `start_time` to use each channel's configured `startTime`. An unknown channel or a timestamp without a timezone is rejected with `422` before any Teams page is fetched.
+Each request targets one channel, and the Logic App accepts any channel the Teams connection can read. `max_pages` is optional and defaults to 1000; its accepted range is 1–1000. Omit `start_time` to include all available roots. Missing channel fields, an invalid team ID, an out-of-range page limit, or a timestamp without a timezone is rejected with `422` before any Teams page is fetched.
 
 A full channel takes far longer than an HTTP request may wait, so the server accepts the run and returns `202` with a `job_id` and `status: running` instead of the import counters. Poll it with:
 
@@ -284,7 +287,7 @@ Backfill is safe to repeat. For every Teams message it either creates the docume
 
 #### Verify Import
 
-Acceptance only means the background request was queued, so poll the backfill job until it reaches `succeeded`. Its `summary` contains the `messagesCreated`, `messagesUpdated`, `messagesUnchanged`, and `messagesSkipped` counters; `channelsCompleted` should match the number of configured channels targeted.
+Acceptance only means the background request was queued, so poll the backfill job until it reaches `succeeded`. Its `summary` contains the `messagesCreated`, `messagesUpdated`, `messagesUnchanged`, and `messagesSkipped` counters; `channelsCompleted` should be 1.
 
 In Cosmos Data Explorer, confirm backfilled messages landed in `azure-sdk-qa-bot/conversation-messages` alongside live traffic:
 
@@ -297,7 +300,7 @@ ORDER BY c.created_at DESC
 
 A thread is one partition: `teams_channel:<channelId>;messageid=<rootId>`, holding the root post and every reply as separate documents. Forwarded attachments are expanded and the post title is prefixed as `title: ...` exactly as the real-time workflow does, so re-running backfill on unchanged content reports `messagesUnchanged` rather than rewriting documents.
 
-For a failed run, check the backend server logs and the dedicated Logic App's run history. A `403 MisMatchingOAuthClaims` means the deployed `backfillPrincipalId` is not the identity the server actually runs as. Logic App request/response content is secured.
+For a failed run, check the backend server logs and the dedicated Logic App's run history. A `403 MisMatchingOAuthClaims` means the `serverIdentityResourceId` parameter does not identify the managed identity used by the backend server. Logic App request/response content is secured.
 
 ### Server Deploy
 

@@ -6,9 +6,8 @@
     "location": { "type": "string" },
     "teamsConnectionResourceId": { "type": "string" },
     "tenantId": { "type": "string" },
-    "backfillPrincipalId": { "type": "string" },
-    "localDevPrincipalId": { "type": "string", "defaultValue": "" },
-    "allowedChannels": { "type": "array", "minLength": 1 }
+    "serverIdentityResourceId": { "type": "string" },
+    "localDevPrincipalId": { "type": "string", "defaultValue": "" }
   },
   "variables": {
     "backfillPolicy": {
@@ -17,7 +16,7 @@
         "claims": [
           { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
           { "name": "aud", "value": "https://management.core.windows.net" },
-          { "name": "oid", "value": "[parameters('backfillPrincipalId')]" }
+          { "name": "oid", "value": "[reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId]" }
         ]
       }
     },
@@ -53,8 +52,7 @@
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "contentVersion": "1.0.0.0",
           "parameters": {
-            "$connections": { "type": "Object" },
-            "allowedChannels": { "type": "Array" }
+            "$connections": { "type": "Object" }
           },
           "triggers": {
             "manual": {
@@ -80,9 +78,9 @@
             }
           },
           "actions": {
-            "Authorize_channel": {
+            "Validate_request": {
               "type": "If",
-              "expression": "@and(contains(parameters('allowedChannels'), concat(triggerBody()?['teamId'], '|', triggerBody()?['channelId'])), or(equals(triggerBody()?['operation'], 'messages'), and(equals(triggerBody()?['operation'], 'replies'), not(empty(triggerBody()?['messageId'])))))",
+              "expression": "@or(equals(triggerBody()?['operation'], 'messages'), and(equals(triggerBody()?['operation'], 'replies'), not(empty(triggerBody()?['messageId']))))",
               "actions": {
                 "Select_operation": {
                   "type": "Switch",
@@ -186,7 +184,7 @@
                   "Reject_request": {
                     "type": "Response",
                     "kind": "Http",
-                    "inputs": { "statusCode": 403, "body": { "error": "Channel or operation is not allowed" } },
+                    "inputs": { "statusCode": 400, "body": { "error": "Invalid operation request" } },
                     "runAfter": {}
                   }
                 }
@@ -197,7 +195,6 @@
           "outputs": {}
         },
         "parameters": {
-          "allowedChannels": { "value": "[parameters('allowedChannels')]" },
           "$connections": {
             "value": {
               "teams": {

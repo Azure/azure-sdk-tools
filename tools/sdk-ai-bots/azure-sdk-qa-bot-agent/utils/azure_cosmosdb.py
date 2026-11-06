@@ -95,11 +95,7 @@ async def _get_client() -> CosmosClient:
                     )
                 ),
             )
-            try:
-                await client.__aenter__()
-            except BaseException:
-                await client.close()
-                raise
+            await client.__aenter__()
             _client = client
             logger.info("Initialized Azure Cosmos DB client for %s", _get_endpoint())
 

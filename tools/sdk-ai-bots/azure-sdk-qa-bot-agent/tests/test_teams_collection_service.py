@@ -40,8 +40,13 @@ def graph_message(values):
     return message
 
 
-def config_with(**overrides):
-    return {"channels": [CHANNEL], "maxPages": 100, **overrides}
+def backfill_payload(**overrides):
+    return {
+        "team_id": CHANNEL["teamId"],
+        "channel_id": CHANNEL["channelId"],
+        "tenant_key": TENANT_KEY,
+        **overrides,
+    }
 
 
 class MemoryStore:
@@ -117,6 +122,8 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         template = json.loads((project / "pipelines/teams-collection/template.json").read_text())
         self.assertEqual([resource["type"] for resource in template["resources"]],
                          ["Microsoft.Logic/workflows"])
+        self.assertNotIn("backfillPrincipalId", template["parameters"])
+        self.assertIn("serverIdentityResourceId", template["parameters"])
         self.assertNotIn("collectorPrincipalId", template["parameters"])
         self.assertNotIn("cosmosAccountName", template["parameters"])
 
@@ -125,25 +132,17 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(triggers["sasAuthenticationPolicy"]["state"], "Disabled")
         policies = triggers["openAuthenticationPolicies"]["policies"]
         backfill_claims = template["variables"]["backfillPolicy"]["backfill"]["claims"]
-        self.assertIn("[parameters('backfillPrincipalId')]",
+        self.assertIn("[reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId]",
                   [claim["value"] for claim in backfill_claims])
         definition = workflow["properties"]["definition"]
-        authorize = definition["actions"]["Authorize_channel"]
-        self.assertIn("contains(parameters('allowedChannels')", authorize["expression"])
-        cases = authorize["actions"]["Select_operation"]["cases"]
+        self.assertNotIn("allowedChannels", json.dumps(template))
+        validate = definition["actions"]["Validate_request"]
+        self.assertIn("not(empty(triggerBody()?['messageId']))", validate["expression"])
+        cases = validate["actions"]["Select_operation"]["cases"]
         self.assertEqual(set(cases), {"messages", "replies"})
 
-    def test_backfill_parameter_files_match_configured_channels(self):
+    def test_backfill_parameter_files_do_not_restrict_channels(self):
         project = Path(__file__).resolve().parents[1]
-        config = json.loads((project / "config/teams_collection_config.json").read_text())
-        allowed = [f"{channel['teamId']}|{channel['channelId']}"
-                   for channel in config["channels"]]
-        dev_dump_channels = [
-            "3e17dcb0-4257-4a30-b843-77f47f1d4121|"
-            "19:acbd512e57bd475198ea6bf4564599e3@thread.skype",
-            "3e17dcb0-4257-4a30-b843-77f47f1d4121|"
-            "19:7b87fb348f224b37b6206fa9d89a105b@thread.skype",
-        ]
         expected = {
             "dev": ("azuresdkqabot-dev-teams-collection", "azure-sdk-qa-bot-dev"),
             "test": ("azuresdkqabot-test-teams-collection", "azure-sdk-qa-bot"),
@@ -153,12 +152,20 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(environment=environment):
                 path = project / f"pipelines/teams-collection/parameters.azure_sdk.{environment}.json"
                 parameters = json.loads(path.read_text())["parameters"]
+                existing_logicapp = json.loads(
+                    (project / f"pipelines/logicapp/parameters.azure_sdk.{environment}.json")
+                    .read_text()
+                )["parameters"]
                 self.assertEqual(parameters["logicAppName"]["value"], workflow_name)
                 self.assertIn(f"/resourceGroups/{resource_group}/",
                               parameters["teamsConnectionResourceId"]["value"])
                 self.assertTrue(parameters["tenantId"]["value"])
-                self.assertEqual(parameters["allowedChannels"]["value"],
-                                 allowed + (dev_dump_channels if environment == "dev" else []))
+                self.assertEqual(
+                    parameters["serverIdentityResourceId"]["value"],
+                    existing_logicapp["serverIdentityResourceId"]["value"],
+                )
+                self.assertNotIn("allowedChannels", parameters)
+                self.assertNotIn("backfillPrincipalId", parameters)
                 self.assertNotIn("collectorPrincipalId", parameters)
                 self.assertNotIn("cosmosAccountName", parameters)
 
@@ -178,40 +185,15 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                          logicapp_pipeline)
         self.assertNotIn("PipAuthenticate", logicapp_pipeline)
         self.assertNotIn("collectorPrincipalId", logicapp_pipeline)
-
-    async def test_cosmos_initialization_failure_closes_client_and_allows_retry(self):
-        from azure.cosmos.exceptions import CosmosHttpResponseError
-        from utils import azure_cosmosdb
-
-        for error in (CosmosHttpResponseError(status_code=403, message="forbidden"), asyncio.CancelledError()):
-            with self.subTest(error=type(error).__name__):
-                failed_client = AsyncMock()
-                failed_client.__aenter__.side_effect = error
-                successful_client = AsyncMock()
-                with patch.object(azure_cosmosdb, "_client", None), \
-                        patch.object(azure_cosmosdb, "_get_endpoint", return_value="https://account.documents.azure.com"), \
-                        patch.object(azure_cosmosdb, "get_credential"), \
-                        patch.object(azure_cosmosdb, "cfg", side_effect=lambda key, default: default), \
-                        patch.object(azure_cosmosdb, "CosmosClient", side_effect=[failed_client, successful_client]) as factory:
-                    with self.assertRaises(type(error)) as failure:
-                        await azure_cosmosdb._get_client()
-                    self.assertIs(failure.exception, error)
-                    failed_client.close.assert_awaited_once()
-                    self.assertIsNone(azure_cosmosdb._client)
-                    self.assertIs(await azure_cosmosdb._get_client(), successful_client)
-                    self.assertIs(await azure_cosmosdb._get_client(), successful_client)
-                    self.assertEqual(factory.call_count, 2)
-                    successful_client.__aenter__.assert_awaited_once()
-                    successful_client.close.assert_not_awaited()
-                    await azure_cosmosdb.close_cosmos_client()
-                    successful_client.__aexit__.assert_awaited_once_with(None, None, None)
-                    self.assertIsNone(azure_cosmosdb._client)
+        self.assertNotIn("az webapp identity show", logicapp_pipeline)
+        self.assertNotIn("BACKFILL_PRINCIPAL_ID", logicapp_pipeline)
+        self.assertNotIn("backfillPrincipalId", logicapp_pipeline)
 
     async def test_backfill_reaches_service_and_store_through_logic_app(self):
         import httpx
         from types import SimpleNamespace
         from unittest.mock import Mock
-        from services.conversation_service import backfill_configured_channels
+        from services.conversation_service import backfill_channel
 
         store = MemoryStore()
         client = AsyncMock()
@@ -230,7 +212,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 patch("services.conversation_service.CosmosMessageStore", return_value=store), \
                 patch("services.conversation_service.get_credential", return_value=credential), \
                 patch("services.conversation_service.httpx.AsyncClient", return_value=client):
-            result = await backfill_configured_channels(config_with(), settings)
+            result = await backfill_channel(CHANNEL, settings)
         self.assertEqual(result["messagesCreated"], 2)
         self.assertEqual(result["threadsRead"], 1)
         self.assertEqual(store.validated, 1)
@@ -241,15 +223,13 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             "operation": "messages"})
         credential.get_token.assert_awaited_once_with("https://management.core.windows.net/.default")
 
-    async def test_backfill_can_target_one_channel_and_override_start_time(self):
-        from services.conversation_service import select_channels
+    async def test_backfill_request_accepts_optional_page_limit(self):
+        from models.conversation import TeamsBackfillRequest
 
-        second = {**CHANNEL, "channelId": "19:second@thread.tacv2"}
-        channels = [CHANNEL, second]
-        self.assertEqual(select_channels(channels, None), channels)
-        self.assertEqual(select_channels(channels, second["channelId"]), [second])
-        with self.assertRaisesRegex(ValueError, "allowlist"):
-            select_channels(channels, "19:unknown@thread.tacv2")
+        self.assertIsNone(TeamsBackfillRequest(**backfill_payload()).max_pages)
+        self.assertEqual(
+            TeamsBackfillRequest(**backfill_payload(max_pages=25)).max_pages, 25
+        )
 
     async def _settled_backfill(self, service, job_id):
         from models.conversation import TeamsBackfillStatus
@@ -270,22 +250,20 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         entered = asyncio.Event()
         calls = []
 
-        async def runner(config, settings, channel_id, start_time):
-            calls.append((config, settings, channel_id, start_time))
+        async def runner(channel, settings, max_pages):
+            calls.append((channel, settings, max_pages))
             entered.set()
             await release.wait()
             return {"messagesCreated": 3}
 
-        config_path = Path(__file__).resolve().parents[1] / "config/teams_collection_config.json"
-        channel = json.loads(config_path.read_text())["channels"][0]["channelId"]
-        service = TeamsBackfillService(config_path, runner)
+        service = TeamsBackfillService(runner=runner)
         with patch.object(server, "_teams_backfill_service", service), \
             patch("services.conversation_service.app_config.load", new=AsyncMock()):
             transport = httpx.ASGITransport(app=server.app)
             async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
                 accepted = await client.post(
                     "/teams/backfill",
-                    json={"channel_id": channel, "start_time": "2026-01-01T00:00:00Z"},
+                    json=backfill_payload(start_time="2026-01-01T00:00:00Z"),
                 )
                 self.assertEqual(accepted.status_code, 202, accepted.text)
                 job_id = accepted.json()["job_id"]
@@ -293,7 +271,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIsNone(accepted.json()["summary"])
                 await asyncio.wait_for(entered.wait(), 5)
 
-                busy = await client.post("/teams/backfill", json={})
+                busy = await client.post("/teams/backfill", json=backfill_payload())
                 self.assertEqual(busy.status_code, 409)
 
                 release.set()
@@ -306,32 +284,46 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIsNotNone(finished.json()["completed_at"])
 
                 self.assertEqual((await client.get("/teams/backfill/missing-job")).status_code, 404)
-                for payload in ({"channel_id": "19:unknown@thread.tacv2"},
-                                {"start_time": "2026-01-01"}):
+                custom_limit = await client.post(
+                    "/teams/backfill", json=backfill_payload(max_pages=12)
+                )
+                self.assertEqual(custom_limit.status_code, 202, custom_limit.text)
+                await self._settled_backfill(service, custom_limit.json()["job_id"])
+                for payload in (
+                    {"channel_id": CHANNEL["channelId"], "tenant_key": TENANT_KEY},
+                    backfill_payload(team_id="not-a-guid"),
+                    backfill_payload(tenant_key=""),
+                    backfill_payload(max_pages=0),
+                    backfill_payload(max_pages=1001),
+                    backfill_payload(start_time="2026-01-01"),
+                ):
                     with self.subTest(payload=payload):
                         rejected = await client.post("/teams/backfill", json=payload)
                         self.assertEqual(rejected.status_code, 422, rejected.text)
 
-        self.assertEqual(len(calls), 1)
-        self.assertEqual(calls[0][2:], (channel, "2026-01-01T00:00:00Z"))
-        self.assertEqual(calls[0][0]["channels"][0]["channelId"], channel)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0][0], {
+            "teamId": CHANNEL["teamId"], "channelId": CHANNEL["channelId"],
+            "tenantKey": TENANT_KEY, "startTime": "2026-01-01T00:00:00Z",
+        })
+        self.assertEqual(calls[0][2], 1000)
+        self.assertEqual(calls[1][2], 12)
 
     async def test_backfill_job_reports_failure_without_echoing_raw_error_content(self):
         from models.conversation import TeamsBackfillRequest
         from services.conversation_service import TeamsBackfillService
 
-        config_path = Path(__file__).resolve().parents[1] / "config/teams_collection_config.json"
         service = TeamsBackfillService(
-            config_path, AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
+            runner=AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
         )
         with patch("services.conversation_service.app_config.load", new=AsyncMock()), \
             self.assertLogs("services.conversation_service", level="ERROR"):
-            accepted = await service.start(TeamsBackfillRequest())
+            accepted = await service.start(TeamsBackfillRequest(**backfill_payload()))
             job = await self._settled_backfill(service, accepted.job_id)
             self.assertEqual(job.status.value, "failed")
             self.assertNotIn("DO_NOT_LOG", job.error)
             self.assertIsNotNone(job.completed_at)
-            retried = await service.start(TeamsBackfillRequest())
+            retried = await service.start(TeamsBackfillRequest(**backfill_payload()))
             self.assertEqual(retried.status.value, "running")
             self.assertEqual(
                 (await self._settled_backfill(service, retried.job_id)).status.value, "failed"
@@ -351,7 +343,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                      for url in urls]
         observed_urls = []
 
-        async def runner(config, settings, channel_id, start_time):
+        async def runner(channel, settings, max_pages):
             observed_urls.append(settings("TEAMS_COLLECTION_LOGIC_APP_URL", ""))
             return {"messagesCreated": 1}
 
@@ -361,7 +353,9 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 patch.object(app_config, "load", new=AsyncMock(side_effect=snapshots)) as load:
             self.assertEqual(app_config.get("TEAMS_COLLECTION_LOGIC_APP_URL", ""), "")
             for expected_url in urls:
-                accepted = await service.start(TeamsBackfillRequest())
+                accepted = await service.start(
+                    TeamsBackfillRequest(**backfill_payload())
+                )
                 job = await self._settled_backfill(service, accepted.job_id)
                 self.assertEqual(job.status.value, "succeeded")
                 self.assertEqual(observed_urls[-1], expected_url)

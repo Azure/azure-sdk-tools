@@ -350,15 +350,17 @@ async def save_conversation(req: ConversationMessage):
 
 @app.post("/teams/backfill", response_model=TeamsBackfillJob, status_code=202)
 async def start_teams_backfill(req: TeamsBackfillRequest) -> TeamsBackfillJob:
-    """Import historical posts from the configured Teams channels.
+    """Import historical posts from the requested Teams channel.
 
     A full channel takes far longer than this request may wait, so the run is
     accepted here and reported through ``/teams/backfill/{job_id}``.
     """
     logger.info(
-        "Teams backfill request: channel=%s, start_time=%s",
+        "Teams backfill request: team=%s, channel=%s, start_time=%s, max_pages=%s",
+        req.team_id,
         req.channel_id,
         req.start_time,
+        req.max_pages,
     )
     try:
         job = await _teams_backfill_service.start(req)

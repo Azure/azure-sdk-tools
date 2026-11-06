@@ -35,6 +35,7 @@ from dataset.schema import (  # noqa: E402
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
     FoundryEvalsRunner,
+    _retry_foundry_call,
     _upload_eval_items,
     output_items_to_rows,
     extract_title_and_link_from_references,
@@ -83,6 +84,47 @@ def test_upload_eval_items_uses_file_backed_data_source():
         "type": "jsonl",
         "source": {"type": "file_id", "id": "file-processed"},
     }
+
+
+def test_retry_foundry_call_retries_transient_status_errors():
+    import httpx
+    from openai import APIStatusError
+
+    calls = 0
+
+    def operation():
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            request = httpx.Request("POST", "https://example.test/evals")
+            response = httpx.Response(503, request=request)
+            raise APIStatusError("temporarily unavailable", response=response, body=None)
+        return "ok"
+
+    assert _retry_foundry_call(operation, "test operation", base_delay=0) == "ok"
+    assert calls == 3
+
+
+def test_retry_foundry_call_does_not_retry_validation_errors():
+    import httpx
+    from openai import APIStatusError
+
+    calls = 0
+
+    def operation():
+        nonlocal calls
+        calls += 1
+        request = httpx.Request("POST", "https://example.test/evals")
+        response = httpx.Response(400, request=request)
+        raise APIStatusError("invalid input", response=response, body=None)
+
+    try:
+        _retry_foundry_call(operation, "test operation", base_delay=0)
+    except APIStatusError:
+        pass
+    else:
+        raise AssertionError("Expected validation errors to remain non-retryable")
+    assert calls == 1
 
 
 def test_validate_case_missing_field():

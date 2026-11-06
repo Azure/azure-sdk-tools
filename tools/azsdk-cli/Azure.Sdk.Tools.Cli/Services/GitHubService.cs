@@ -151,6 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, CancellationToken ct);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null, CancellationToken ct = default);
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state, CancellationToken ct);
+        public Task AddPullRequestLabelAsync(string repoOwner, string repoName, int pullRequestNumber, string label, CancellationToken ct);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch, CancellationToken ct);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main", CancellationToken ct = default);
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName, CancellationToken ct);
@@ -263,6 +264,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 State = state
             };
             await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber, update);
+        }
+
+        public async Task AddPullRequestLabelAsync(string repoOwner, string repoName, int pullRequestNumber, string label, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            // AddToIssue preserves labels added by other workflows, including concurrent updates.
+            await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, pullRequestNumber, [label]);
         }
 
         public async Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body, List<string>? assignees = null, CancellationToken ct = default)

@@ -112,6 +112,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.CompletedTask;
         }
 
+        public Task AddPullRequestLabelAsync(string repoOwner, string repoName, int pullRequestNumber, string label, CancellationToken ct)
+        {
+            return Task.CompletedTask;
+        }
+
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, CancellationToken ct)
         {
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent>().AsReadOnly());

@@ -39,6 +39,33 @@ The application uses `config/knowledge-config.json` to define which repositories
 - Documentation paths within repositories  
 - Processing options and filters
 
+`path` may select a directory or an individual Markdown/MDX file.
+`relativeByRepoPath: true` keeps blob filenames relative to the repository root
+for citations; scanning is limited to the selected `path`. Without a `path`,
+processing still scans the entire available repository checkout. Ordinary sources
+without `relativeByRepoPath` retain directory-relative filenames, or the basename
+for an individual file. Existing Markdown/MDX, ignored-path, reference, dated
+release-note, and metadata filters remain unchanged. Release-note index discovery
+still checks the source root's `release-notes` directory, but skips it when outside
+the selected path; it does not discover new nested release-note directories.
+
+Previously, `relativeByRepoPath: true` used `path` only for sparse checkout and
+scanned the shared repository root for every entry. Multiple entries sharing a
+destination folder could produce duplicate blob keys and overwrite metadata.
+Each entry now ingests only its configured path while preserving repository-relative
+citations. Selected paths sharing a destination folder should not overlap,
+especially when assigning different metadata.
+
+This change applies globally to all `relativeByRepoPath` sources. Root or ancestor
+Markdown incidentally fetched by sparse checkout but outside selected paths will
+no longer be ingested. On a later authorized sync, `cleanupExpiredBlobs` can remove
+previously indexed incidental blobs absent from the new results. Review the full
+configuration and this migration impact before syncing; never run sync against a
+partial source list, because cleanup removes blobs absent from its results.
+Code/configuration changes alone do not sync, index, or deploy knowledge.
+The companion .NET knowledge-source change, [#17253](https://github.com/Azure/azure-sdk-tools/pull/17253),
+depends on this generic path-scoping change merging first.
+
 ## Building and Running
 
 ### Prerequisites

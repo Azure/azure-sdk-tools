@@ -12,7 +12,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         // When set, GetPullRequestAsync throws to simulate a GitHub lookup failure.
         public bool ThrowOnGetPullRequest { get; set; }
 
-        public string GetAuthToken() => "mock-github-token";
+        public string GetAuthToken(CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+            return "mock-github-token";
+        }
 
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main", CancellationToken ct = default)
         {

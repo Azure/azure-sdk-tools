@@ -1,13 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.IO.Compression;
+using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Octokit;
+using AuthenticationHeaderValue = System.Net.Http.Headers.AuthenticationHeaderValue;
+using MediaTypeWithQualityHeaderValue = System.Net.Http.Headers.MediaTypeWithQualityHeaderValue;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -78,61 +82,54 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        protected string GetGitHubAuthToken()
+        protected string GetGitHubAuthToken(CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
             if (!string.IsNullOrEmpty(token))
             {
                 return token;
             }
-
             token = Environment.GetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN");
             if (!string.IsNullOrEmpty(token))
             {
+                ct.ThrowIfCancellationRequested();
                 Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
                 return token;
             }
 
+            var options = new ProcessOptions("gh", ["auth", "token"],
+                timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream: false);
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
             ProcessResult result;
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs), logOutputStream:false);
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
+                timeoutCts.Token.ThrowIfCancellationRequested();
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
                 throw new InvalidOperationException(
                     $"Timed out after {GitHubCliAuthTokenTimeoutMs / 1000} seconds while running 'gh auth token'. " +
                     "Please ensure GitHub CLI is installed, not awaiting interactive prompts, and authenticated via `gh auth login`."
                 );
             }
-
-            if (result.ExitCode != 0)
+            ct.ThrowIfCancellationRequested();
+            if (result.ExitCode != 0 || string.IsNullOrWhiteSpace(result.Stdout))
             {
-                throw new InvalidOperationException(
-                    $"Failed to get GitHub auth token. Error:{Environment.NewLine}{result.Output}{Environment.NewLine}{Environment.NewLine}" +
-                    "Please make sure GitHub CLI is installed and login using `gh auth login`."
-                );
+                throw new InvalidOperationException("Failed to get GitHub auth token. Sign in with 'gh auth login' or supply GITHUB_TOKEN.");
             }
-
-            var ghToken = result.Stdout.Trim();
-            if (string.IsNullOrWhiteSpace(ghToken))
-            {
-                throw new InvalidOperationException(
-                    "GitHub CLI returned an empty authentication token. " +
-                    "Please run `gh auth status` to verify your login or re-authenticate with `gh auth login`."
-                );
-            }
-
-            Environment.SetEnvironmentVariable("GITHUB_TOKEN", ghToken, EnvironmentVariableTarget.Process);
-            return ghToken;
+            token = result.Stdout.Trim();
+            Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
+            return token;
         }
+
     }
 
     public interface IGitHubService
     {
-        public string GetAuthToken();
+        public string GetAuthToken(CancellationToken ct = default);
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -187,8 +184,54 @@ namespace Azure.Sdk.Tools.Cli.Services
             logger = _logger;
             this.httpClientFactory = httpClientFactory;
         }
-        
-        public string GetAuthToken() => GetGitHubAuthToken();
+
+        public string GetAuthToken(CancellationToken ct = default) => GetGitHubAuthToken(ct);
+
+        internal static async Task<JsonNode?> ReadJsonEvidenceAsync(HttpClient http, string path, string token, CancellationToken ct)
+        {
+            var text = await ReadGitHubEvidenceAsync(http, path, token, "application/vnd.github+json", ct);
+            return text is null ? null : JsonNode.Parse(text);
+        }
+
+        internal static async Task<string?> ReadFileEvidenceAsync(
+            HttpClient http, string repository, string commit, string path, string token, CancellationToken ct)
+        {
+            var encoded = string.Join('/', path.Split('/').Select(Uri.EscapeDataString));
+            var requestPath = $"repos/{repository}/contents/{encoded}?ref={Uri.EscapeDataString(commit)}";
+            var file = await ReadJsonEvidenceAsync(http, requestPath, token, ct);
+            if (file is null)
+            {
+                return null;
+            }
+            if (ReadString(file["type"]) != "file")
+            {
+                throw new InvalidOperationException("Expected a checked-in metadata file.");
+            }
+            if (file["size"] is JsonValue size && size.TryGetValue<long>(out var bytes) && bytes > HttpResponseHelper.MaxEvidenceBytes)
+            {
+                throw new InvalidOperationException("File exceeded the evidence size limit.");
+            }
+            // Large files lack inline content; fetch raw content from this same pinned API path.
+            return ReadString(file["encoding"]) switch
+            {
+                "base64" => Encoding.UTF8.GetString(Convert.FromBase64String(ReadString(file["content"]))),
+                "none" => await ReadGitHubEvidenceAsync(http, requestPath, token, "application/vnd.github.raw+json", ct),
+                _ => throw new InvalidOperationException("Expected checked-in file content.")
+            };
+        }
+
+        private static async Task<string?> ReadGitHubEvidenceAsync(
+            HttpClient http, string path, string token, string mediaType, CancellationToken ct)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/{path}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));
+            request.Headers.UserAgent.ParseAdd("azsdk-service-api-readiness");
+            request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+            return await HttpResponseHelper.ReadBoundedResponseAsync(http, request, ct);
+        }
+
+        private static string ReadString(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";
 
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {
@@ -207,6 +250,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<PullRequest> GetPullRequestAsync(string url, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
+            var (owner, repository, number) = ParsePullRequestUrl(url);
+            return GetPullRequestAsync(owner, repository, number, ct);
+        }
+
+        public static (string Owner, string Repository, int Number) ParsePullRequestUrl(string url)
+        {
             ArgumentNullException.ThrowIfNull(url);
             var match = Regex.Match(url,
                 @"\Ahttps://github\.com/(?<owner>(?=[A-Za-z0-9-]{1,39}/)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)/(?<repo>(?!\.{1,2}/)[A-Za-z0-9_.-]{1,100})/pull/(?<number>[0-9]+)/?\z",
@@ -216,8 +265,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new ArgumentException("Expected a GitHub pull request URL with a positive Int32 pull request number.", nameof(url));
             }
-            // Parse the web URL, but send requests only through the fixed Octokit API client.
-            return GetPullRequestAsync(match.Groups["owner"].Value, match.Groups["repo"].Value, number, ct);
+            return (match.Groups["owner"].Value, match.Groups["repo"].Value, number);
         }
 
         /// <summary>
@@ -836,7 +884,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var response = await ReadWithAnonymousFallbackAsync(client => client.Actions.Workflows.Runs.List(owner, repo, request), ct);
             return response?.WorkflowRuns ?? [];
         }
-        
+
         public async Task<IReadOnlyList<(string Name, string Content)>> GetFailedWorkflowRunLogsAsync(string owner, string repo, long runId, CancellationToken ct)
         {
             logger.LogInformation("Getting logs for workflow run {RunId} in {Owner}/{Repo}", runId, owner, repo);
@@ -1284,7 +1332,7 @@ query($owner: String!, $repo: String!, $sha: GitObjectID!, $after: String) {
         private async Task<JsonDocument> PostGraphQLAsync(string query, object variables, CancellationToken ct)
         {
             var httpClient = httpClientFactory.CreateClient();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetGitHubAuthToken());
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetGitHubAuthToken(ct));
             httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("AzureSDKDevToolsMCP", "1.0"));
 
             var requestBody = JsonSerializer.Serialize(new { query, variables });

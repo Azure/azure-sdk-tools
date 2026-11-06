@@ -32,7 +32,7 @@ The `test-proxy` optionally offers integration with other git repositories for *
 
 Colloquially, any file that is stored externally using the `asset-sync` feature of the `test-proxy` is called an `asset`.
 
-![asset sync block diagram](../_images/asset_sync_block_diagram.png)
+![asset sync block diagram](https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/documentation/_images/asset_sync_block_diagram.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature. To update recordings, the only change alongside the source code is to update the targeted tag.
 
@@ -232,7 +232,7 @@ All new packages in `azure-sdk` must externalize their recordings, so begin by c
 You could...
 
 - **Manually** generate it from the example `assets.json` [further up in this document](#the-assetsjson-and-how-it-enables-external-recordings)
-- Utilize the powershell script `eng/common/testproxy/onboarding/generate-assets-json.ps1` **without** `-InitialPush` flag. [The README is here.](/eng/common/testproxy/onboarding/README.md)
+- Utilize the powershell script `eng/common/testproxy/onboarding/generate-assets-json.ps1` **without** `-InitialPush` flag. [The README is here.](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/onboarding/README.md)
 
 Given the relative lack of complexity present in an `assets.json`, manual generation is recommended _unless recordings already exist_. In which case [this later section has you covered.](#im-a-dev-who-uses-the-test-proxy-currently-how-do-i-externalize-my-recordings)
 
@@ -260,7 +260,7 @@ Use [the transition script](https://github.com/Azure/azure-sdk-tools/blob/main/e
 
 In summary, once an assets.json is present, the shim _must_ be updated to **actually send** a reference to that assets.json inside the `record/start` or `playback/start` requests!
 
-![request with and without assets.json](../_images/before_after.png)
+![request with and without assets.json](https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/documentation/_images/before_after.png)
 
 ### What does this look like in practice?
 
@@ -270,13 +270,13 @@ Once a package or service has an assets.json and a targeted tag, each language-r
 
 In practice, this is what a code repo will look like after running `playback`-mode for a couple packages. Specifically, this is for the python repo.
 
-![assets store](../_images/assets_on_disk.png)
+![assets store](https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/documentation/_images/assets_on_disk.png)
 
 One can see the automatically restored assets repos within the `.assets` folder. Each of the top-level folders within the `.assets` folder contains a single slice of the assets repo.
 
 The below diagram illustrates how an individual assets.json, language repo, and assets repo relate to each other.
 
-![assets diagram](../_images/organization_of_assets.png)
+![assets diagram](https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/documentation/_images/organization_of_assets.png)
 
 A user can use the `config` verb to access this the location of their assets on disk! Using assets diagram directly as a reference. we can work an example:
 

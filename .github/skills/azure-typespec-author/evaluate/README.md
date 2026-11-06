@@ -398,13 +398,14 @@ The no-skill baseline runs separately through
 main benchmark pipeline.
 
 Both this pipeline and `eng/pipelines/azure-typespec-author-benchmark-no-skill.yml`
-define `EvalAzureSubscription` in their YAML `variables`. The common eval invoke
-step reads it directly, without passing a service-connection parameter through
-stage/job templates. The current deployment uses `azuresdkqabot-dev`; other deployments
-update this caller-owned variable to an authorized service connection. No Azure
-DevOps UI variable or run parameter is required. Common templates retain no
+pass the fixed value `azureSubscription: azuresdkqabot-dev` to the common stage
+template, which forwards it through the job template to the invoke step.
+Other deployments update this value in their repo-owned pipeline YAML to an
+authorized service connection. No service-connection run parameter or Azure DevOps
+UI variable is required. Common templates default to an empty connection and retain no
 deployment-specific connection fallback. An invalid connection fails Azure task
-validation for live runs. Mock runs do not use a service connection.
+validation for live runs; an empty or whitespace-only connection produces an explicit
+configuration error. Mock runs do not use a service connection.
 Authentication and Vally invocation remain in common; the KB backend configuration
 in `.vally.yaml` is unchanged.
 

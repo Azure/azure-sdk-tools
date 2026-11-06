@@ -19,8 +19,6 @@ parameters:
 
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
-  - name: EvalAzureSubscription
-    value: azuresdkqabot-dev
   - name: TypeSpecAuthorEvalMode
     value: no-skill
   - name: AZSDK_EVAL_MCP_KIND
@@ -53,6 +51,7 @@ extends:
       - --runs
       - ${{ format('{0}', parameters.Runs) }}
     UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
+    azureSubscription: azuresdkqabot-dev
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
     # Keep each shard below the installation token's one-hour lifetime.

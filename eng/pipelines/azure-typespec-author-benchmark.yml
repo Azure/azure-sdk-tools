@@ -34,8 +34,6 @@ parameters:
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
-- name: EvalAzureSubscription
-  value: azuresdkqabot-dev
 - name: SkillBranch
   value: ${{ parameters.SkillBranch }}
 - name: TypeSpecAuthorEvalMode
@@ -81,6 +79,7 @@ extends:
       - --runs
       - ${{ format('{0}', parameters.Runs) }}
     UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
+    azureSubscription: azuresdkqabot-dev
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
     createDashboardBundle: true

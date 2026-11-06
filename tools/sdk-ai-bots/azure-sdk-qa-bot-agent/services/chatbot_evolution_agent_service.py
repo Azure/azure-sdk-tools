@@ -482,10 +482,7 @@ class ChatbotEvolutionAgentService:
     async def _invoke_agent(self, payload: ChatbotEvolutionAgentInput) -> str:
         """Call the hosted Chatbot Evolution Agent and return its JSON text."""
         project_client = self._get_project_client()
-        openai_client = project_client.get_openai_client(
-            agent_name=self._agent_name(),
-            max_retries=0,
-        )
+        openai_client = project_client.get_openai_client(agent_name=self._agent_name())
         agent_ref = await self._resolve_agent_reference()
 
         # The Responses SDK accepts an untyped mapping at this boundary; the
@@ -502,8 +499,8 @@ class ChatbotEvolutionAgentService:
                 },
             )
         ]
-        # Retry only explicit session-readiness rejections, never an invocation
-        # that could already have updated KBs or issues.
+        # Keep invocation retries disabled in this wrapper; readiness rejections
+        # get additional attempts beyond the SDK's default HTTP retries.
         agent_client = HostedAgentClient(
             openai_client,
             max_retries=1,

@@ -1205,8 +1205,7 @@ async def test_evolution_consumes_shared_response_stream(
         session_ready_max_attempts=3,
     )
     project.get_openai_client.assert_called_once_with(
-        agent_name="azure-sdk-chatbot-evolution-agent",
-        max_retries=0,
+        agent_name="azure-sdk-chatbot-evolution-agent"
     )
     client.responses.create.assert_awaited_once_with(
         input=[
@@ -1233,11 +1232,11 @@ async def test_evolution_consumes_shared_response_stream(
     ("status", "code", "expected_requests"),
     [
         (424, "dependency_failed", 1),
-        (503, "session_not_ready", 1),
+        (503, "session_not_ready", 3),
         (424, "session_not_ready", 3),
     ],
 )
-async def test_evolution_retries_only_explicit_sdk_readiness_errors(
+async def test_evolution_preserves_sdk_retries_and_bounds_readiness_retries(
     status: int, code: str, expected_requests: int,
 ) -> None:
     requests: list[httpx.Request] = []

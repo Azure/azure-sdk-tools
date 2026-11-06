@@ -176,7 +176,6 @@ namespace Azure.Sdk.Tools.Cli.Services
     // down in case this changes, and also to make all async code appear consistent with conventions.
     public class GitHubService : GitConnection, IGitHubService
     {
-        private const int MaxEvidenceBytes = 4 * 1024 * 1024;
         private readonly ILogger<GitHubService> logger;
         private readonly IHttpClientFactory httpClientFactory;
 
@@ -208,7 +207,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException("Expected a checked-in metadata file.");
             }
-            if (file["size"] is JsonValue size && size.TryGetValue<long>(out var bytes) && bytes > MaxEvidenceBytes)
+            if (file["size"] is JsonValue size && size.TryGetValue<long>(out var bytes) && bytes > HttpResponseHelper.MaxEvidenceBytes)
             {
                 throw new InvalidOperationException("File exceeded the evidence size limit.");
             }
@@ -229,35 +228,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));
             request.Headers.UserAgent.ParseAdd("azsdk-service-api-readiness");
             request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
-            return await ReadBoundedResponseAsync(http, request, ct);
-        }
-
-        internal static async Task<string?> ReadBoundedResponseAsync(HttpClient http, HttpRequestMessage request, CancellationToken ct)
-        {
-            using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-            if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return null;
-            }
-            response.EnsureSuccessStatusCode();
-            if (response.Content.Headers.ContentLength > MaxEvidenceBytes)
-            {
-                throw new InvalidOperationException("Response exceeded the evidence size limit.");
-            }
-            await using var stream = await response.Content.ReadAsStreamAsync(ct);
-            using var content = new MemoryStream();
-            var buffer = new byte[16 * 1024];
-            int count;
-            // Content-Length may be absent, so enforce the cap while streaming too.
-            while ((count = await stream.ReadAsync(buffer, ct)) > 0)
-            {
-                if (content.Length + count > MaxEvidenceBytes)
-                {
-                    throw new InvalidOperationException("Response exceeded the evidence size limit.");
-                }
-                await content.WriteAsync(buffer.AsMemory(0, count), ct);
-            }
-            return Encoding.UTF8.GetString(content.ToArray());
+            return await HttpResponseHelper.ReadBoundedResponseAsync(http, request, ct);
         }
 
         private static string ReadString(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";

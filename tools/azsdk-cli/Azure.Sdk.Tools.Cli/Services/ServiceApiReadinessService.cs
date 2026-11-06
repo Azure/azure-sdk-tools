@@ -48,27 +48,30 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 return result;
             }
             var language = SdkLanguageHelpers.GetLanguageForRepo(repository);
-            var metadata = new GeneratedSdkMetadataHelper.ReadinessReader(_http, token);
-            var (sources, plane, issues) = await metadata.ReadAsync(prPath, result.HeadRepository, result.HeadSha, language, ct);
-            result.Plane = plane;
-            if (plane == GeneratedSdkMetadataHelper.DataPlane)
+            var metadata = new SdkReadinessMetadataHelper(_http, token);
+            var snapshot = new SdkReadinessMetadataHelper.SdkSnapshot(result.HeadRepository, result.HeadSha, language,
+                Text(pr["base"]?["repo"]?["full_name"]), Text(pr["base"]?["sha"]));
+            var evidence = await metadata.ReadGenerationEvidenceAsync(prPath, snapshot, ct);
+            result.Plane = evidence.Plane;
+            if (evidence.Plane == SdkReadinessMetadataHelper.DataPlane)
             {
                 result.Detail = "Data-plane SDK; ARM provider metadata is not applicable.";
                 return result;
             }
-            if (issues.Count > 0 || sources.Count == 0 || plane == GeneratedSdkMetadataHelper.UnknownPlane)
+            if (evidence.Issues.Count > 0 || evidence.Sources.Count == 0 || evidence.Plane == SdkReadinessMetadataHelper.UnknownPlane)
             {
-                result.Detail = issues.Count > 0 ? string.Join(" ", issues) : "Authoritative SDK generation metadata or API plane is unavailable.";
+                result.Detail = evidence.Issues.Count > 0 ? string.Join(" ", evidence.Issues) : "Authoritative SDK generation metadata or API plane is unavailable.";
                 return result;
             }
-            await ValidateProjectsAsync(sources, result, token, ct);
+            await ValidateProjectsAsync(evidence.Sources, result, token, ct);
             SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             result.ReadinessStatus = ServiceApiReadinessResponse.Error;
             result.Detail = exception is ArgumentException ? "Provide an SDK repository and positive PR number." : SafeError(exception);
-            result.ResponseError = result.Detail;
+            result.ResponseError = string.IsNullOrEmpty(result.HeadSha) ? result.Detail :
+                $"Checked SDK head: {result.HeadRepository}@{result.HeadSha}{Environment.NewLine}{result.Detail}";
         }
         return result;
     }
@@ -86,11 +89,11 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             result.Projects.Add(project);
             try
             {
-                var spec = await specifications.ReadAsync(source, ct);
+                var spec = await specifications.ReadPinnedSwaggerResourceTypesAsync(source, ct);
                 project.Namespace = spec.Namespace;
-                if (spec.Missing.Count > 0)
+                if (spec.MissingEvidence.Count > 0)
                 {
-                    project.Detail = $"Missing or unresolved: {string.Join(", ", spec.Missing)}.";
+                    project.Detail = $"Missing or unresolved: {string.Join(", ", spec.MissingEvidence)}.";
                     continue;
                 }
                 if (!spec.Namespace.Equals(source.ExpectedNamespace, StringComparison.OrdinalIgnoreCase))
@@ -101,7 +104,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 if (!providers.TryGetValue(spec.Namespace, out var providerTask))
                 {
                     credential ??= azure.GetCredential();
-                    providerTask = ReadProviderAsync(spec.Namespace, credential, ct);
+                    providerTask = ReadTenantProviderAsync(spec.Namespace, credential, ct);
                     providers.Add(spec.Namespace, providerTask);
                 }
                 var provider = await providerTask;
@@ -110,7 +113,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                     project.Detail = "The provider is unavailable in the validation tenant.";
                     continue;
                 }
-                CompareApiVersion(project, provider, spec.Types);
+                CompareApiVersion(project, provider, spec.ResourceTypes);
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
@@ -184,13 +187,13 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
     private Task<JsonNode?> ReadGitHubAsync(string path, string token, CancellationToken ct) =>
         GitHubService.ReadJsonEvidenceAsync(_http, path, token, ct);
 
-    private async Task<JsonNode?> ReadProviderAsync(string providerNamespace, TokenCredential credential, CancellationToken ct)
+    private async Task<JsonNode?> ReadTenantProviderAsync(string providerNamespace, TokenCredential credential, CancellationToken ct)
     {
         var accessToken = await credential.GetTokenAsync(new TokenRequestContext(["https://management.azure.com/.default"]), ct);
         using var request = new HttpRequestMessage(HttpMethod.Get,
             $"https://management.azure.com/providers/{Uri.EscapeDataString(providerNamespace)}?api-version={ArmMetadataApiVersion}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.Token);
-        var text = await GitHubService.ReadBoundedResponseAsync(_http, request, ct);
+        var text = await HttpResponseHelper.ReadBoundedResponseAsync(_http, request, ct);
         return text is null ? null : JsonNode.Parse(text);
     }
 

@@ -182,6 +182,22 @@ are allowed when their recorded project files exist inside `specification`.
 
 #### Evaluation and limits
 
+The evidence flow is:
+
+1. Capture the SDK PR head and base revisions once.
+2. `ReadGenerationEvidenceAsync` resolves their generation metadata, recorded
+  spec revision, API versions, and API plane.
+3. `ReadPinnedSwaggerResourceTypesAsync` returns the provider namespace, mapped
+  resource types, and any missing evidence from the pinned specification.
+4. `ReadTenantProviderAsync` reads ARM metadata once per provider namespace.
+5. Compare each project's exact version and aggregate the four-state result.
+
+Package roots come from the nearest pinned `tsp-location.yaml`, not a fixed
+directory depth. Discovery caches location reads and permits at most 128 candidate
+directories across the head and base revisions. The pinned base is used only to
+identify removed package paths; package existence and generation evidence are
+checked at the captured head. Missing current-head metadata remains inconclusive.
+
 The command reads explicit checked-in Swagger mappings from pinned TypeSpec
 configuration. It does not compile TypeSpec or scan the repository. Swagger
 `info.version` must equal the SDK metadata version. Resource paths identify the
@@ -189,6 +205,13 @@ provider's resource types; an unresolved child cannot pass using its parent.
 
 One ARM request per provider namespace uses
 `GET https://management.azure.com/providers/{namespace}?api-version=2021-04-01`.
+This is the documented
+[Providers - Get At Tenant Scope](https://learn.microsoft.com/rest/api/resources/providers/get-at-tenant-scope?view=rest-resources-2021-04-01)
+operation, which does not require a subscription ID. The separate
+[Providers - Get](https://learn.microsoft.com/rest/api/resources/providers/get?view=rest-resources-2021-04-01)
+operation requires `/subscriptions/{subscriptionId}` and is not used here.
+The credential's tenant supplies the metadata context; this check does not
+validate registration or deployment in a particular subscription.
 That metadata API version is not the service API version being checked. Every
 affected management project must have at least one resource type advertising its
 exact version for the overall result to be Passed. This is evidence, not release

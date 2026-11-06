@@ -15,32 +15,35 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
     private const int MaxDirectoryEntries = 1000;
     private const string ConfigurationSuffix = "/tspconfig.yaml";
 
-    internal async Task<(string Namespace, HashSet<string> Types, List<string> Missing)> ReadAsync(
+    internal sealed record SwaggerResourceEvidence(string Namespace, HashSet<string> ResourceTypes, List<string> MissingEvidence);
+    private sealed record SpecMapping(string Namespace, string? SwaggerPattern, List<string> MissingEvidence);
+
+    internal async Task<SwaggerResourceEvidence> ReadPinnedSwaggerResourceTypesAsync(
         ServiceApiReadinessSource source, CancellationToken ct)
     {
-        var (provider, pattern, missing) = await ReadMappingAsync(source, ct);
+        var mapping = await ReadPinnedSwaggerMappingAsync(source, ct);
         var types = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (pattern is null)
+        if (mapping.SwaggerPattern is null)
         {
-            return (provider, types, missing);
+            return new(mapping.Namespace, types, mapping.MissingEvidence);
         }
-        var files = await DiscoverSwaggerFilesAsync(pattern, source, ct);
+        var files = await DiscoverSwaggerFilesAsync(mapping.SwaggerPattern, source, ct);
         foreach (var file in files)
         {
             var text = await ReadFileAsync(source, file, ct);
             if (text is not null)
             {
-                AddSwaggerResourceTypes(text, file, source.ApiVersion, provider, types, missing);
+                AddSwaggerResourceTypes(text, file, source.ApiVersion, mapping.Namespace, types, mapping.MissingEvidence);
             }
         }
         if (types.Count == 0)
         {
-            missing.Add("resource-type mapping");
+            mapping.MissingEvidence.Add("resource-type mapping");
         }
-        return (provider, types, missing);
+        return new(mapping.Namespace, types, mapping.MissingEvidence);
     }
 
-    private async Task<(string Namespace, string? Pattern, List<string> Missing)> ReadMappingAsync(
+    private async Task<SpecMapping> ReadPinnedSwaggerMappingAsync(
         ServiceApiReadinessSource source, CancellationToken ct)
     {
         var project = source.Configuration[..^ConfigurationSuffix.Length];
@@ -60,14 +63,14 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
         }
         if (missing.Count > 0)
         {
-            return (provider, null, missing);
+            return new(provider, null, missing);
         }
         var pattern = SwaggerOutputPattern(configText!, project, source.ApiVersion);
         if (pattern is null)
         {
             missing.Add("checked-in Swagger output mapping");
         }
-        return (provider, pattern, missing);
+        return new(provider, pattern, missing);
     }
 
     private async Task<List<string>> DiscoverSwaggerFilesAsync(string pattern, ServiceApiReadinessSource source, CancellationToken ct)

@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services;
 public class ServiceApiReadinessServiceTests
 {
     private const string Head = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    private const string BaseCommit = "cccccccccccccccccccccccccccccccccccccccc";
     private const string SpecCommit = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     private const string Version = "2026-04-01";
     private const string Project = "specification/example/resource-manager/Example";
@@ -36,6 +37,7 @@ public class ServiceApiReadinessServiceTests
     private string _repository = "helen229/azure-sdk-for-java";
     private string[] _advertisedVersions = [Version];
     private HttpStatusCode _githubStatus;
+    private HttpStatusCode _evidenceStatus;
     private HttpStatusCode _armStatus;
     private HttpStatusCode _rawStatus;
     private int _pullRequestReads;
@@ -57,6 +59,7 @@ public class ServiceApiReadinessServiceTests
         _repository = "helen229/azure-sdk-for-java";
         _advertisedVersions = [Version];
         _githubStatus = HttpStatusCode.OK;
+        _evidenceStatus = HttpStatusCode.OK;
         _armStatus = HttpStatusCode.OK;
         _rawStatus = HttpStatusCode.OK;
         _pullRequestReads = 0;
@@ -99,6 +102,8 @@ public class ServiceApiReadinessServiceTests
     [TestCase("js", "sdk/example/arm-example", "metadata.json")]
     [TestCase("python", "sdk/example/azure-mgmt-example", "_metadata.json")]
     [TestCase("go", "sdk/resourcemanager/example/armexample", "testdata/_metadata.json")]
+    [TestCase("java", "sdk/example/generated/azure-resourcemanager-example", Metadata)]
+    [TestCase("go", "sdk/resourcemanager/example/armexample/v2", "testdata/_metadata.json")]
     public async Task ReadsExactCurrentHeadMetadataForEachSdkLayout(string language, string package, string metadata)
     {
         _files.Clear();
@@ -106,9 +111,12 @@ public class ServiceApiReadinessServiceTests
         _repository = $"helen229/azure-sdk-for-{language}";
         AddPackage(package, metadata, Version);
         var response = await CheckAsync();
+        var providerRequest = _requests.Single(request => request.Uri.Host == "management.azure.com").Uri;
         Assert.Multiple(() =>
         {
             Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+            Assert.That(providerRequest.AbsolutePath, Is.EqualTo("/providers/Microsoft.Example"));
+            Assert.That(QueryHelpers.ParseQuery(providerRequest.Query)["api-version"].ToString(), Is.EqualTo("2021-04-01"));
             Assert.That(response.HeadSha, Is.EqualTo(Head));
             Assert.That(response.Projects.Single().Source.PackagePath, Is.EqualTo(package));
             Assert.That(response.Projects.Single().Source.ApiVersion, Is.EqualTo(Version));
@@ -129,6 +137,29 @@ public class ServiceApiReadinessServiceTests
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(response.Projects.Single().Source.PackagePath, Is.EqualTo(Package));
+    }
+
+    [Test]
+    public async Task PackageDiscoveryReusesGenerationLocationReadsAcrossChangedFiles()
+    {
+        _changedFiles.Add($"{Package}/src/Generated2.cs");
+        _changedFiles.Add($"{Package}/src/Generated3.cs");
+        var response = await CheckAsync();
+        var locations = _requests.Where(request => request.Uri.AbsolutePath.EndsWith("/tsp-location.yaml", StringComparison.Ordinal));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(locations.Count(), Is.EqualTo(2));
+        Assert.That(locations.GroupBy(request => request.Uri).All(group => group.Count() == 1), Is.True);
+    }
+
+    [Test]
+    public async Task PackageDiscoveryHasABoundedDirectoryBudget()
+    {
+        _changedFiles.Clear();
+        _changedFiles.Add($"{Package}/{string.Join('/', Enumerable.Repeat("nested", 129))}/Generated.cs");
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
+        Assert.That(_requests.Count(request => request.Uri.AbsolutePath.EndsWith("/tsp-location.yaml", StringComparison.Ordinal)), Is.EqualTo(128));
+        Assert.That(ArmRequests(), Is.Empty);
     }
 
     [TestCase("CHANGELOG.md")]
@@ -444,6 +475,19 @@ public class ServiceApiReadinessServiceTests
         Assert.That(ArmRequests(), Is.Empty);
     }
 
+    [TestCase(HttpStatusCode.Forbidden)]
+    [TestCase(HttpStatusCode.TooManyRequests)]
+    public async Task GitHubFailureAfterHeadCapturePreservesCliTraceability(HttpStatusCode status)
+    {
+        _evidenceStatus = status;
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
+        Assert.That(response.ResponseError, Does.Contain(Head).And.Contain(_repository).And.Contain($"HTTP {(int)status}"));
+        Assert.That(response.ToString(), Does.Contain(Head).And.Contain(_repository).And.Contain($"HTTP {(int)status}"));
+        Assert.That(JsonSerializer.Serialize(response), Does.Not.Contain("private transport details"));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
     [Test]
     public async Task MissingHeadRepositoryDoesNotReadSdkFilesOrArm()
     {
@@ -508,6 +552,22 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.Projects.Single().Source.PackagePath, Is.EqualTo(Package));
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task DeletedFileCannotUseBaseGenerationMetadataAsCurrentEvidence(bool parentPackageExists)
+    {
+        _removedFiles.Add(_changedFiles.Single());
+        if (parentPackageExists)
+        {
+            AddPackage("sdk/example", Metadata, Version);
+        }
+        _files.Remove(Key(_repository, Head, $"{Package}/tsp-location.yaml"));
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(response.Detail, Does.Contain("missing SDK generation metadata"));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
     [Test]
     public async Task DeletedFileInSecondSurvivingPackageCannotBeHiddenByPassingFirstPackage()
     {
@@ -524,6 +584,7 @@ public class ServiceApiReadinessServiceTests
     public async Task FullyDeletedPackageIsExcludedOnlyAfterItsHeadDirectoryIsAbsent()
     {
         const string removed = "sdk/removed/azure-resourcemanager-removed";
+        SetFile(_repository, BaseCommit, $"{removed}/tsp-location.yaml", $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
         _changedFiles.Add($"{removed}/Generated.cs");
         _removedFiles.Add($"{removed}/Generated.cs");
         var response = await CheckAsync();
@@ -735,6 +796,7 @@ public class ServiceApiReadinessServiceTests
     {
         _changedFiles.Add($"{package}/Generated.cs");
         SetFile(_repository, Head, $"{package}/tsp-location.yaml", $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        SetFile(_repository, BaseCommit, $"{package}/tsp-location.yaml", $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
         SetFile(_repository, Head, $"{package}/{metadataFile}", JsonSerializer.Serialize(new { apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = version } }));
         SetFile(SpecRepository, SpecCommit, $"{Project}/main.tsp", "@armProviderNamespace\n@service\nnamespace Microsoft.Example;");
         SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", Config("{version-status}/{version}/example.json"));
@@ -777,8 +839,13 @@ public class ServiceApiReadinessServiceTests
                 state = "open",
                 body = "Configurations: human notes; API version 2026-04-01. This is not evidence.",
                 head = new { sha = _changeHead && _pullRequestReads > 1 ? new string('c', 40) : Head, repo = _missingHeadRepository ? null : new { full_name = _repository } },
+                @base = new { sha = BaseCommit, repo = new { full_name = _repository } },
                 labels = _labels.Select(label => new { name = label }).ToArray()
             });
+        }
+        if (_evidenceStatus != HttpStatusCode.OK)
+        {
+            return Json(new { error = "private transport details" }, _evidenceStatus);
         }
         if (path == $"/repos/{_repository}/pulls/1/files")
         {

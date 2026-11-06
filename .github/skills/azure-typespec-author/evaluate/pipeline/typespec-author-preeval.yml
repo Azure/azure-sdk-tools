@@ -31,15 +31,15 @@ steps:
       git fetch origin "$BRANCH_REF"
       rm -rf .github/skills/azure-typespec-author/SKILL.md \
              .github/skills/azure-typespec-author/references \
-             .github/skills/azsdk-common-typespec-naming/SKILL.md \
-             .github/skills/azsdk-common-typespec-naming/references
+             .github/skills/azure-typespec-sdk-naming/SKILL.md \
+             .github/skills/azure-typespec-sdk-naming/references
       git checkout FETCH_HEAD -- \
         .github/skills/azure-typespec-author/SKILL.md \
         .github/skills/azure-typespec-author/references
-      if git cat-file -e FETCH_HEAD:.github/skills/azsdk-common-typespec-naming/SKILL.md 2>/dev/null; then
+      if git cat-file -e FETCH_HEAD:.github/skills/azure-typespec-sdk-naming/SKILL.md 2>/dev/null; then
         git checkout FETCH_HEAD -- \
-          .github/skills/azsdk-common-typespec-naming/SKILL.md \
-          .github/skills/azsdk-common-typespec-naming/references
+          .github/skills/azure-typespec-sdk-naming/SKILL.md \
+          .github/skills/azure-typespec-sdk-naming/references
       else
         echo "Selected branch predates the naming skill; candidate naming sources remain removed."
       fi

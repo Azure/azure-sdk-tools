@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import get_args, get_type_hints
 from unittest.mock import AsyncMock
 
 from azure.search.documents.indexes.models import IndexerExecutionStatus
@@ -33,6 +34,21 @@ import utils.azure_ai_search as azure_ai_search_module
 from utils.azure_ai_search import SearchClient, _raw_chunk_filter
 from utils.azure_storage import BlobContent
 from utils.knowledge_config import KbIssueTarget, KbTarget, _build_targets
+
+
+def test_search_query_guidance_targets_current_evidence_gaps() -> None:
+    annotation = get_type_hints(
+        KnowledgeTools.search_knowledge_base, include_extras=True
+    )["queries"]
+    description = get_args(annotation)[1]
+
+    assert "current question or evidence gap" in description
+    assert "conversation and retrieved context" in description
+    assert "preserving the user's goal" in description
+    assert "Do not keep repeating the original request" in description
+    assert "Preserve relevant wording and concrete identifiers" in description
+    assert "alone as one query and search the description separately" in description
+    assert "At least 1, at most 3 queries" in description
 
 
 def test_raw_chunk_filter_excludes_wiki_pages() -> None:
@@ -440,6 +456,13 @@ async def test_dotnet_search_returns_azure_and_upstream_docs(monkeypatch, servic
         assert filters[source_name] == expected
     assert search.call_args.kwargs["extra_filter"] == (
         "(page_type eq null or page_type eq '')"
+    )
+    assert [
+        call.args[0]
+        for call in search_client.expand_by_hierarchy.call_args_list
+    ] == chunks
+    assert all(
+        not call.kwargs for call in search_client.expand_by_hierarchy.call_args_list
     )
 
 

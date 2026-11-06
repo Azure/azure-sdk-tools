@@ -29,6 +29,39 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GetProductTypeFromPreviousReleasePlansAsync_FindsUsableOlderType(bool isTestReleasePlan)
+        {
+            const string productId = "22222222-2222-2222-2222-222222222222";
+            foreach (var (id, type) in new[] { (90, "Offering"), (100, "Sku"), (110, ""), (120, "Unknown") })
+            {
+                var plan = CreateReleasePlanWorkItem(id, "Finished");
+                plan.Fields["Custom.ProductServiceTreeID"] = productId;
+                plan.Fields["Custom.ProductType"] = type;
+                _connection.AddWorkItemToQuery(plan);
+            }
+
+            var result = await _devOpsService.GetProductTypeFromPreviousReleasePlansAsync(productId, 130, isTestReleasePlan, CancellationToken.None);
+
+            Assert.That(result, Is.EqualTo("Sku"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[Custom.ProductServiceTreeID] = '{productId}'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.Id] <> 130"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.ProductType] IN ('Offering','Feature','Sku')"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain(isTestReleasePlan
+                ? "[System.Tags] CONTAINS 'Release Planner App Test'"
+                : "[System.Tags] NOT CONTAINS 'Release Planner App Test'"));
+        }
+
+        [Test]
+        public async Task GetProductTypeFromPreviousReleasePlansAsync_NoUsableTypeReturnsEmpty()
+        {
+            var result = await _devOpsService.GetProductTypeFromPreviousReleasePlansAsync(
+                "22222222-2222-2222-2222-222222222222", 42, false, CancellationToken.None);
+
+            Assert.That(result, Is.Empty);
+        }
+
         [TestCase("0123456789abcdef0123456789abcdef01234567")]
         [TestCase("")]
         public async Task GetReleasePlanForWorkItemAsync_ReadsOptionalSavedCommit(string sha)

@@ -176,6 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync(CancellationToken ct);
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label, CancellationToken ct);
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct);
+        public Task<string> GetProductTypeFromPreviousReleasePlansAsync(string productTreeId, int excludedWorkItemId, bool isTestReleasePlan, CancellationToken ct);
         public Task<ProductInfo?> GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct);
         public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetActiveReleasePlansByTypeSpecProjectPathAsync(string typeSpecProjectPath, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
@@ -2277,6 +2278,31 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogError(ex, "Failed to get active release plans for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
                 throw new Exception($"Failed to get active release plans for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
             }
+        }
+
+        public async Task<string> GetProductTypeFromPreviousReleasePlansAsync(string productTreeId, int excludedWorkItemId, bool isTestReleasePlan, CancellationToken ct)
+        {
+            if (!Guid.TryParse(productTreeId, out _))
+            {
+                throw new ArgumentException("Product tree ID must be a valid GUID.", nameof(productTreeId));
+            }
+
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan'";
+            query += $" AND [Custom.ProductServiceTreeID] = '{productTreeId}'";
+            query += $" AND [System.Id] <> {excludedWorkItemId}";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            query += " AND [System.State] IN ('New','Not Started','In Progress','Finished')";
+            query += " AND [Custom.ProductType] IN ('Offering','Feature','Sku')";
+            query += " ORDER BY [System.Id] DESC";
+
+            var workItems = await FetchWorkItemsAsync(query, ct);
+            return workItems
+                .OrderByDescending(item => item.Id)
+                .Select(item => item.Fields.TryGetValue("Custom.ProductType", out var value)
+                    ? ProductTypeExtensions.FromAdoFieldValue(value?.ToString()) : ProductType.Unknown)
+                .FirstOrDefault(type => type != ProductType.Unknown)
+                .ToAdoFieldValue();
         }
 
         public async Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct)

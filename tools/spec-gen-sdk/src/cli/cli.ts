@@ -23,6 +23,7 @@ export type SpecGenSdkCliConfig = {
   prNumber?: string;
   runMode: string;
   sdkReleaseType?: string;
+  typespecEmitter?: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   headRepoHttpsUrl?: string;
@@ -43,6 +44,7 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     prNumber: argv.prNumber,
     runMode: argv.runMode,
     sdkReleaseType: argv.sdkReleaseType,
+    typespecEmitter: argv.typespecEmitter,
     specCommitSha: argv.specCommitSha,
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
     headRepoHttpsUrl: argv.headRepoHttpsUrl,
@@ -73,6 +75,7 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       apiVersion: config.apiVersion,
       runMode: config.runMode,
       sdkReleaseType: config.sdkReleaseType,
+      typespecEmitter: config.typespecEmitter,
       workingFolder: config.workingFolder,
       headRepoHttpsUrl: config.headRepoHttpsUrl,
       headBranch: config.headBranch,
@@ -180,6 +183,10 @@ yargs(hideBin(process.argv))
           type: "string",
           description: "The release type of SDK, either 'beta' or 'stable'",
           choices: ['beta', 'stable']
+        },
+        'typespec-emitter': {
+          type: "string",
+          description: "Optional TypeSpec emitter package name to pass to language automation",
         },
         'run-mode': {
           alias: "rm",

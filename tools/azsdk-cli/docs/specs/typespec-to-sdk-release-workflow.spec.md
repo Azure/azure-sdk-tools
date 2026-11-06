@@ -56,10 +56,10 @@ flowchart TD
      - Labels applied based on results
 
 3. 🧑‍💻 **Wait for approvals** *(human gating)*
-   - **`PublishToCustomers` label** — required on all PRs targeting `main` or `RPSaaSMaster`. Author self-applies to acknowledge APIs are shipped to customers. Enforced by CI (`summarize-checks`). **Candidate for removal** -- redundant once other gates pass; causes service team confusion.
+   - **`PublishToCustomers` label**: required on all PRs targeting `main` or `RPSaaSMaster`. Author self-applies to acknowledge APIs are shipped to customers. Enforced by CI (`summarize-checks`).
    - **Package name approval** — required for first preview of new packages (`package-name-review-required` + `package-name-<lang>-pending` → `package-name-<lang>-approved`)
-   - **ARM validation** (owned by ARM, non-exhaustive) -- includes ARM review board (`ARM-Review-Required` -> `ARMSignedOff`), breaking change review, and modeling/leasing review. ARM controls what checks apply to their specs.
-   - **Breaking change review** -- Spec-level: `BreakingChangeReviewRequired` label auto-applied by CI on any spec PR with breaking changes (review team defined for ARM, undefined for data-plane -- Gap #9). SDK-level: `BreakingChange-{Language}-Sdk` label currently applies to management plane spec PRs only.
+   - **ARM validation** (owned by ARM, non-exhaustive) -- includes ARM review board (`ARMReview` → `ARMSignedOff`), breaking change review, and modeling/leasing review. ARM controls what checks apply to their specs.
+   - **Breaking change review** -- Spec-level: `BreakingChangeReviewRequired` label auto-applied by CI on any spec PR with breaking changes. Approval labels are protected to the breaking-change review team; automated data-plane routing remains Gap #9. SDK-level: `BreakingChange-{Language}-Sdk` label currently applies to management plane spec PRs only.
    - > **Note**: There is no spec-level API review. API review happens only at the SDK level (Stage 4).
 
 4. **Spec PR merges → SDK generation is automatic (management plane)**
@@ -76,9 +76,9 @@ flowchart TD
      - SDK breaking change detection
      - APIView generates SDK API surface review (current) or API Review Hub creates review PR (future)
    - **API review**: Architects review generated SDK public API surface
-     - `<lang>-api-approved` labels (current) are **informational** — source of truth is the ARH database (API hash)
-     - ARH will assign `api-approved` label on SDK PRs automatically when architect approves (replacing per-language labels)
-   - **Auto-repair**: `auto-sdk-build-fix` label triggers Copilot agent to fix custom code drift
+     - ARH uses `sdk-api-review-*` labels to reflect review state on working SDK PRs
+     - The labels are **informational**; the ARH database and exact API hash remain the source of truth
+   - **Auto-repair (.NET only today)**: `auto-sdk-build-fix` triggers the Copilot agent to fix custom code drift
    - **ARM SDK PRs**: Service team approves SDK PRs (Shanghai team may also review, to be verified)
 
 6. 🧑‍💻 **Release** *(human gating)*
@@ -92,18 +92,18 @@ flowchart TD
 ### For Reviewers
 
 1. **ARM validation** (ARM specs only) -- ARM owns their validation gates. Includes ARM review board (`ARMSignedOff`), breaking change review, and modeling/leasing review. Non-exhaustive -- ARM can add checks as needed.
-2. **SDK API review** — Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review** — API review applies only to the generated SDK. **Current**: `<lang>-api-approved` labels applied manually by architects. **Future (ARH)**: `api-approved` label applied automatically via webhooks/GH App. Labels are **informational** — source of truth is the ARH database (API hash).
+2. **SDK API review**: Review generated SDK API surface on SDK PRs via APIView (current) or API Review Hub review PRs (future). **There is no spec-level API review.** API review applies only to the generated SDK. ARH uses `sdk-api-review-*` labels on working SDK PRs. These labels are **informational**; the ARH database and exact API hash remain the source of truth.
 3. **SDK PR review** (management plane) -- Service team approves SDK PRs for ARM. Shanghai team may also review (to be verified).
-4. **Breaking change review** — Spec-level: `BreakingChangeReviewRequired` label on spec PRs (review team defined for ARM; data-plane routing is Gap #9). SDK-level: `BreakingChange-{Language}-Sdk` label on management plane spec PRs only.
+4. **Breaking change review**: Spec-level: `BreakingChangeReviewRequired` label on spec PRs. Approval labels are protected to the breaking-change review team; automated data-plane routing is Gap #9. SDK-level: `BreakingChange-{Language}-Sdk` label on management plane spec PRs only.
 5. **Package name review** — Approve new package names; apply `package-name-<lang>-approved` labels
 6. **Release approval** -- Approve release pipeline runs (service team for ARM)
 
 ### For EngSys / SDK Team
 
 1. **Monitor pipelines** — Spec PR validation, SDK generation, and SDK CI pipelines run automatically
-2. **Label routing** — Labels like `BreakingChangeReviewRequired`, `package-name-review-required`, and `auto-sdk-build-fix` trigger review routing and automation
+2. **Label routing**: Labels like `BreakingChangeReviewRequired`, `package-name-review-required`, and the .NET `auto-sdk-build-fix` trigger review routing and automation
 3. **Generation failures** — When SDK generation fails, failures are visible on [release plan dashboard](https://aka.ms/azsdk/releaseplan-dashboard). Structured error reporting for agent troubleshooting is a [known gap](#gap-tracker).
-4. **Auto-repair** — `auto-sdk-build-fix` label triggers Copilot cloud agent to fix custom code drift on SDK PRs
+4. **Auto-repair (.NET only today)**: `auto-sdk-build-fix` triggers the Copilot cloud agent to fix custom code drift on SDK PRs
 5. **Release coordination** — `azsdk_release_sdk` checks readiness; release pipelines publish to package registries (manual approval gate required)
 6. **Track progress** — [Release plan dashboard](https://aka.ms/azsdk/releaseplan-dashboard) shows where each service is in the process
 
@@ -269,7 +269,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 |------|------|-------|
 | Spec PR validation pipeline | Orchestrates full validation suite | EngSys |
 | TypeSpec compiler | CI compilation + linting (lint rules run during compile) | TypeSpec team |
-| TypeSpec Suppression Review | Reviews suppressed TypeSpec lint rules. Replacing Swagger-based Spectral LintDiff. New label TBD. Note: TypeSpec decorator suppressions and `suppressions.yaml` changes may be reviewed as separate steps. See [api-reviewer-agent.md](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/api-reviewer-agent.md). | @catalinaperalta (tool), EngSys (integration) |
+| TypeSpec Suppression Review | Reviews new or changed TypeSpec suppressions. `typespec-suppressions-review-required` blocks merge until an authorized reviewer applies `typespec-suppressions-approved`. See [api-reviewer-agent.md](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/api-reviewer-agent.md). | @catalinaperalta (tool), EngSys (integration) |
 | `@azure-tools/typespec-breaking-change` | Same-version + cross-version detection at **TypeSpec/spec level**. Auto-adds `BreakingChangeReviewRequired` / `VersioningReviewRequired` labels. Detects breaking changes in the API spec itself. | @markcowl |
 | SDK breaking change detector | Detects breaking changes in the **generated SDK API surface** (complements spec-level detection). Some changes break SDKs but not APIs (e.g., added optional params, parameter order, type renames) and vice versa. Both detectors are needed for complete coverage. | @chunyu3 / @raych1 |
 | APIView emitter (`typespec-apiview`) | Generates API surface tokens for SDK-level architect review (tokens used at Stage 4). **Will be retired with ARH.** | APIView team |
@@ -282,7 +282,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 1. Validation steps run independently — no designed chain for failure ordering or unified PR comment.
 2. No endpoint liveness verification before spec PR merge — SDK may be generated for an undeployed API. *(Aspirational)*
 3. Avocado/OAV deprecation in progress -- no timeline, issues overridden when not worth fixing. Exception list mechanism under discussion.
-4. Breaking change label routing undefined for data-plane: `BreakingChangeReviewRequired` applies but has no review team. `BreakingChange-{Language}-Sdk` currently only applies to management plane.
+4. Automated breaking-change assignment is undefined for data-plane. `BreakingChangeReviewRequired` approvals are protected to the breaking-change review team, but routing is manual. `BreakingChange-{Language}-Sdk` currently only applies to management plane.
 
 #### Open questions
 
@@ -317,7 +317,7 @@ Build author-validation loop where agent auto-applies suppression decorators bas
 | Failure | Signal | Owner | Next action | Resolution |
 |---------|--------|-------|-------------|------------|
 | Generation failure (any language) | Failed pipeline check (buried in logs) | EngSys / language owner | Investigate logs manually | Manual |
-| Customization drift | Build failure in SDK PR | azsdk-cli team | `auto-sdk-build-fix` label → auto-repair | Automatic |
+| Customization drift (.NET only today) | Build failure in SDK PR | azsdk-cli team | `auto-sdk-build-fix` label → auto-repair | Automatic |
 | Release plan creation failure | Pipeline failure | azsdk-cli team | Investigate DevOps connectivity | Manual |
 
 <details>
@@ -374,7 +374,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 
 | Failure | Signal | Owner | Next action | Resolution |
 |---------|--------|-------|-------------|------------|
-| Custom code drift | Build failure | azsdk-cli team | `auto-sdk-build-fix` label → Copilot agent auto-repairs | Automatic |
+| Custom code drift (.NET only today) | Build failure | azsdk-cli team | `auto-sdk-build-fix` label → Copilot agent auto-repairs | Automatic |
 | Other CI failure | Build/test/lint red | Language owner | Pipeline troubleshooting agent diagnoses | Manual (agent-assisted) |
 | API review feedback | Architect comments | Author | Resolve via TypeSpec changes → re-generate → new commit → CI re-runs | Manual |
 | API review not approved | Architect rejects API surface | Author | Revise TypeSpec design, update spec PR, re-generate SDK. May require follow-up architect discussion. Not all languages auto-approve — rejection path varies per language. | Manual |
@@ -393,7 +393,7 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 | **API Review Hub** (replacing APIView) | Creates synthetic review PRs with `API.md` diffs. PRs never merged — exist only for review. Architects auto-assigned. Approval recorded in ARH database (API hash). CI gates release by checking hash. | @tjprescott |
 | API review feedback resolution agent | Helps resolve API review comments via TypeSpec changes | azsdk-cli team |
 | Pipeline troubleshooting agent | Diagnoses CI failures | azsdk-cli team |
-| Auto SDK PR repair | `auto-sdk-build-fix` label → Copilot cloud agent fixes custom code drift → regenerate → rebuild. Shared orchestration in `eng/common/`, per-language opt-in. | azsdk-cli team |
+| Auto SDK PR repair | `auto-sdk-build-fix` label → Copilot cloud agent fixes custom code drift → regenerate → rebuild. Currently enabled for .NET; shared orchestration in `eng/common/` supports per-language opt-in. | azsdk-cli team |
 
 #### Gaps
 
@@ -411,11 +411,11 @@ Structured error reporting from generation pipeline + agent-assisted troubleshoo
 #### Confirmed behavior (per @tjprescott)
 
 - ARH uses its own **webhooks + GitHub App** (not GitHub Actions) to propagate approval status.
-- When an ARH review PR is **associated with a working SDK PR**, approval automatically applies `api-approved` or `api-changes-requested` labels on the working PR.
+- When an ARH review PR is **associated with a working SDK PR**, ARH propagates review state through the `sdk-api-review-*` labels on the working PR.
 - **No separate GitHub Action is needed** for label automation — ARH handles it natively.
 - Current state: label step kept manual during transition to avoid premature dependency on ARH while APIView is still active.
 
-> **Note**: **Current**: `<lang>-api-approved` labels applied manually by architects — **informational**. **Future (ARH)**: `api-approved` label assigned automatically via webhooks/GH App. Source of truth is the ARH database (API hash) in both cases.
+> **Note**: The `sdk-api-review-*` labels are informational. The ARH database and exact API hash remain the source of truth.
 
 </details>
 
@@ -513,43 +513,45 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 
 | Label | Applied by | Meaning | Blocking? | Automation |
 |-------|-----------|---------|-----------|------------|
-| `BreakingChangeReviewRequired` | CI | Breaking change detected | Yes | ⚠️ Label auto, routing manual |
-| `VersioningReviewRequired` | CI | Versioning review needed | Yes | ⚠️ Label auto, assignment manual |
-| `ARM-Review-Required` | CI | ARM spec — routes to ARM team | Yes | ✅ Fully automated |
+| `BreakingChangeReviewRequired` | CI | Cross-version breaking change review required | Yes | ⚠️ Label auto, routing manual |
+| `BreakingChange-Approved-*` | Breaking-change reviewer | Cross-version breaking change approved for a specific category | Unblocks | ⚠️ Manual protected label, gate automated |
+| `VersioningReviewRequired` | CI | Same-version change review required | Yes | ⚠️ Label auto, assignment manual |
+| `Versioning-Approved-*` | Breaking-change reviewer | Same-version change approved for a specific category | Unblocks | ⚠️ Manual protected label, gate automated |
+| `ARMReview` | CI | PR is in the ARM API review workflow | Yes | ✅ Workflow automated |
 | `ARMSignedOff` | ARM team | ARM review approved | Unblocks | ✅ Manual label, gate automated |
 | `data-plane-review-requested` | CI | New data-plane API version — routes to data-plane review board | Yes | ✅ Fully automated |
 | `data-plane-review-signoff` | Data-plane review board | Data-plane REST API spec approved | Unblocks | ✅ Manual label, gate automated |
-| `package-name-review-required` | CI | New package name detected | Yes | ✅ Fully automated |
+| `typespec-suppressions-review-required` | CI | New or changed TypeSpec suppressions require review | Yes | ✅ Fully automated |
+| `typespec-suppressions-approved` | API reviewer | TypeSpec suppression justifications approved | Unblocks | ✅ Manual protected label, gate automated |
+| `package-name-review-required` | CI | New or changed package name configuration requires review | Yes | ✅ Fully automated |
 | `package-name-<lang>-pending` | CI | Per-language package name pending review | Yes | ✅ Fully automated |
 | `package-name-<lang>-approved` | Architect | Package name approved for language | Unblocks | ✅ Manual label, gate automated |
 | `package-name-approved-all` | Architect | Approves all languages (mgmt) | Unblocks | ✅ Manual label, gate automated |
 | `package-name-approved` | CI (bot) | All required languages approved, merge unblocked | Unblocks | ✅ Fully automated |
-| `Approved-BreakingChange*` | Review team | Breaking change approved (multiple labels exist per break category) | Unblocks | ⚠️ Manual label, gate works |
-| `BreakingChange-{Language}-Sdk` | CI | Sdk breaking change detected (management plane only) | Yes | ✅ Fully automated |
-| `BreakingChange-{Language}-Sdk-Approved` | Review team | Sdk breaking change approved | Yes | ⚠️ Manual label, validation automated |
-| `BreakingChange-{Language}-Sdk-Suppression` | Authors | SDK breaking change suppression updates | Yes | ✅ Fully automated |
-| `BreakingChange-{Language}-Sdk-Suppression-Approved` | Review team | SDK breaking change suppression approved | Yes | ⚠️ Manual label, validation automated |
-| `PublishToCustomers` | Author | Acknowledges APIs are shipped to customers. Required for PRs targeting `main` or `RPSaaSMaster`. Without it, PR cannot merge. **Low-hanging fruit for removal** -- redundant once all other gates pass; causes confusion for service teams. Could be auto-applied or removed entirely. | Yes | ⚠️ Manual label, enforced by CI |
+| `BreakingChange-{Go\|Java\|JavaScript\|Python}-Sdk` | CI | Generated SDK breaking change detected (management plane only) | Yes | ✅ Fully automated |
+| `BreakingChange-{Go\|JavaScript\|Python}-Sdk-Approved` | SDK breaking-change reviewer | Generated SDK breaking change approved | Unblocks | ⚠️ Manual protected label, gate automated |
+| `BreakingChange-{Go\|JavaScript\|Python}-Sdk-Suppression` | CI | SDK breaking-change suppression updates require review | Yes | ✅ Fully automated |
+| `BreakingChange-{Go\|JavaScript\|Python}-Sdk-Suppression-Approved` | SDK breaking-change reviewer | SDK breaking-change suppression updates approved | Unblocks | ⚠️ Manual protected label, gate automated |
+| `PublishToCustomers` | Author | Acknowledges that APIs will be published to customers. Required for PRs targeting `main` or `RPSaaSMaster`. | Yes | ⚠️ Manual label, gate automated |
 
 
 #### SDK PR Labels (language repos)
 
 | Label | Applied by | Meaning | Blocking? | Automation |
 |-------|-----------|---------|-----------|------------|
-| `auto-sdk-build-fix` | CI / human | Triggers Copilot auto-repair | No | ✅ Triggers cloud agent |
+| `auto-sdk-build-fix` (.NET only) | CI / human | Marks a failed SDK build as eligible for Generator Agent repair | No | ✅ Triggers cloud agent |
 | `auto-release` | CI (ARM) / human | Triggers release pipeline on SDK PR merge. Auto-applied for ARM management plane. | No | ✅ Auto-applied (ARM) |
-| `sdk-api-review-needed` | ARH | Waiting for an authorized architect decision | No | ✅ Managed by ARH |
-| `sdk-api-review-approved` | ARH | Current exact API hash is approved for the applicable policy | Unblocks | ✅ Managed by ARH |
-| `sdk-api-review-changes-requested` | ARH | Waiting for service-team changes | No | ✅ Managed by ARH |
-| `sdk-api-review-out-of-date` | ARH | API changed and review artifacts are refreshing | No | ✅ Managed by ARH |
+| `sdk-api-review-needed` | ARH | Waiting for an authorized architect decision | Informational | ✅ Managed by ARH |
+| `sdk-api-review-approved` | ARH | Current exact API hash is approved for the applicable policy | Informational | ✅ Managed by ARH |
+| `sdk-api-review-changes-requested` | ARH | Waiting for service-team changes | Informational | ✅ Managed by ARH |
+| `sdk-api-review-out-of-date` | ARH | API changed and review artifacts are refreshing | Informational | ✅ Managed by ARH |
 | `sdk-api-review-ready` | Workflow / human | Transient working-PR trigger; ARH removes it after accepting the request | No | ✅ Consumed by ARH |
-| `release-plan-linked` | Automation | Marks PR as linked to release plan | No | ✅ Auto-applied |
-| `ready-for-review` | GitHub Form | Triggers architect review process | No | ✅ Applied via workflow |
-| `needs-info` | Reviewer | Needs more info from service team | No | ⚠️ Manual, no automation |
 
 The `sdk-api-review-*` label names and descriptions are defined in [`tools/github/data/common-labels.csv`](../../../github/data/common-labels.csv) and were added by [#17486](https://github.com/Azure/azure-sdk-tools/pull/17486).
 
-> **📋 Proposal: Label naming consistency** — Current labels use mixed conventions: `PascalCase` (`BreakingChangeReviewRequired`, `ARMSignedOff`), `kebab-case` (`auto-sdk-build-fix`, `release-plan-linked`, `package-name-<lang>-approved`, `data-plane-review-signoff`), and hybrid (`ARM-Review-Required`). Consider standardizing to `kebab-case` (e.g., `breaking-change-review-required`, `arm-signed-off`) for new labels, with backward-compatible aliasing for existing ones.
+The spec PR label contract is implemented by [`summarize-checks/labelling.ts`](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/summarize-checks/labelling.ts), with protected approvers in [`.github/protected-labels.yml`](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/protected-labels.yml) and package name details in the [package name approval process](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md).
+
+> **📋 Proposal: Label naming consistency**: Current labels use mixed conventions: `PascalCase` (`BreakingChangeReviewRequired`, `ARMSignedOff`), `kebab-case` (`auto-release`, `package-name-<lang>-approved`, `data-plane-review-signoff`), and mixed-case kebab names (`BreakingChange-Go-Sdk`). Consider standardizing new labels to `kebab-case`, with backward-compatible aliasing for existing ones.
 
 ### Approval gates (3 workstreams converging)
 
@@ -616,7 +618,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 | 4 | Release trigger automation | 5 | @raych1 | No | Done -- auto-release label + SDK PR merge triggers pipeline |
 | 5 | ARH review PR creation not automated on SDK PRs | 4 | @tjprescott | Yes | Open |
 | 6 | Breaking change resolution: agent-assisted for suppression suggestions and break categorization (API correction, intentional evolution, inadvertent). Agent can invoke authoring skill to suggest alternatives. Full automation not feasible -- versioned removals/type changes require human judgment. Source location data needed for unversioned change suggestions. | 1, 2 | @markcowl / @chunyu3 | No | Partially addressed |
-| 7 | Breaking change label routing undefined for data-plane: `BreakingChangeReviewRequired` (spec-level) applies but has no review team. `BreakingChange-{Language}-Sdk` (SDK-level) currently only applies to management plane. | 2 | @raych1 / @markcowl / @lmazuel | No | Open |
+| 7 | Automated breaking-change assignment is undefined for data-plane. `BreakingChangeReviewRequired` approval labels are protected to the breaking-change review team, but routing is manual. `BreakingChange-{Language}-Sdk` (SDK-level) currently only applies to management plane. | 2 | @raych1 / @markcowl / @lmazuel | No | Open |
 | 8 | SDK breaking change detection integration in progress | 4 | @chunyu3 / @raych1 | No | In progress |
 | 9 | Data-plane review gates: (a) spec-level breaking change review team/routing, (b) SDK-level breaking change label (`BreakingChange-{Language}-Sdk`) not applied to data-plane today, (c) data-plane spec sign-off now gated by `data-plane-review-signoff` (applied on `data-plane-review-requested`), replacing the retired `APIStewardshipBoard-SignedOff` | 2, 4 | @samvaity / @prkannap / @lmazuel | No | (c) Done; (a)(b) Open |
 | 10 | Release pipeline provisioning delay for new RPs | 5 | EngSys | No | In progress |
@@ -667,7 +669,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 
 **Description**: Breaking changes are detected at two levels. Both levels apply to ARM and data-plane specs.
 
-**Spec-level breaking changes** (`BreakingChangeReviewRequired`): Applied by CI on any spec PR with breaking changes (ARM and data-plane). For ARM, routed to ARM breaking change review team who must apply `Approved-BreakingChange` before merge. For data-plane, the label is applied but there is no defined review team or routing today (Gap #9).
+**Spec-level breaking changes** (`BreakingChangeReviewRequired`): Applied by CI on any spec PR with cross-version breaking changes (ARM and data-plane). An authorized breaking-change reviewer must apply one of the protected `BreakingChange-Approved-*` labels before merge. Automated data-plane assignment and routing remain Gap #9.
 
 **SDK-level breaking changes** (`BreakingChange-{Language}-Sdk`): Applied by CI when generated SDK has breaking changes. Currently only applies to management plane spec PRs. Data-plane specs do not have this label applied today.
 
@@ -699,7 +701,7 @@ The system uses **prompt chaining**: independent sub-skills invoked sequentially
 - **API Spec PR**: Pull request in `azure-rest-api-specs` containing TypeSpec changes.
 - **SDK PR**: Pull request in a language SDK repo with generated and customized SDK code.
 - **APIView**: Current web tool for reviewing SDK public API surface. Being replaced by API Review Hub. Operates at **SDK level only** — there is no spec-level API review.
-- **API Review Hub (ARH)**: New service replacing APIView for **SDK-level API review only** — there is no spec-level API review. Creates synthetic "review PRs" in language repos with `API.md` diffs — never merged, exist only for review. Approval recorded in ARH database (API hash). When associated with a working SDK PR, ARH auto-applies `api-approved`/`api-changes-requested` labels via webhooks + GH App (no GH Actions needed). Replaces current per-language `<lang>-api-approved` labels with single `api-approved`. ⚠️ ARH review PR creation trigger on SDK PRs is an open design gap.
+- **API Review Hub (ARH)**: New service replacing APIView for **SDK-level API review only**. There is no spec-level API review. It creates synthetic "review PRs" in language repos with `API.md` diffs. They are never merged and exist only for review. Approval is recorded in the ARH database by exact API hash. When associated with a working SDK PR, ARH uses `sdk-api-review-*` labels to reflect review state through its webhooks and GitHub App. ⚠️ ARH review PR creation trigger on SDK PRs is an open design gap.
 - **tspconfig.yaml**: Configuration specifying emitter settings per language.
 - **tsp-location.yaml**: Configuration in SDK repos pointing to source TypeSpec project.
 - **`@azure-tools/typespec-breaking-change`**: TypeSpec-native breaking change detector. Two modes: same-version regression (unversioned changes within a version) and cross-version evolution (breaking changes across API versions).
@@ -757,7 +759,7 @@ flowchart TD
     subgraph S4["STAGE 4: SDK PR Validation & API Review"]
         step5["Step 5: SDK PR CI<br/>• Build → Test → Lint → Package validation<br/>• SDK breaking change detection<br/>• API review (APIView / ARH review PR)"]
         step5 -->|FAIL| repair{"Custom code drift?"}
-        repair -->|YES| autoRepair["auto-sdk-build-fix → Copilot auto-repair"]
+        repair -->|YES (.NET)| autoRepair["auto-sdk-build-fix → Copilot auto-repair"]
         repair -->|NO| troubleshoot["Pipeline troubleshooting agent"]
         step5 -->|PASS| step6["Step 6: API Review<br/>Architects review SDK public API surface"]
         autoRepair --> step5

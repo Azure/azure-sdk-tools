@@ -1,13 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.IO.Compression;
+using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Octokit;
+using AuthenticationHeaderValue = System.Net.Http.Headers.AuthenticationHeaderValue;
+using MediaTypeWithQualityHeaderValue = System.Net.Http.Headers.MediaTypeWithQualityHeaderValue;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -172,6 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     // down in case this changes, and also to make all async code appear consistent with conventions.
     public class GitHubService : GitConnection, IGitHubService
     {
+        private const int MaxEvidenceBytes = 4 * 1024 * 1024;
         private readonly ILogger<GitHubService> logger;
         private readonly IHttpClientFactory httpClientFactory;
 
@@ -182,6 +187,78 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         public string GetAuthToken(CancellationToken ct = default) => GetGitHubAuthToken(ct);
+
+        internal static async Task<JsonNode?> ReadJsonEvidenceAsync(HttpClient http, string path, string token, CancellationToken ct)
+        {
+            var text = await ReadGitHubEvidenceAsync(http, path, token, "application/vnd.github+json", ct);
+            return text is null ? null : JsonNode.Parse(text);
+        }
+
+        internal static async Task<string?> ReadFileEvidenceAsync(
+            HttpClient http, string repository, string commit, string path, string token, CancellationToken ct)
+        {
+            var encoded = string.Join('/', path.Split('/').Select(Uri.EscapeDataString));
+            var requestPath = $"repos/{repository}/contents/{encoded}?ref={Uri.EscapeDataString(commit)}";
+            var file = await ReadJsonEvidenceAsync(http, requestPath, token, ct);
+            if (file is null)
+            {
+                return null;
+            }
+            if (ReadString(file["type"]) != "file")
+            {
+                throw new InvalidOperationException("Expected a checked-in metadata file.");
+            }
+            if (file["size"] is JsonValue size && size.TryGetValue<long>(out var bytes) && bytes > MaxEvidenceBytes)
+            {
+                throw new InvalidOperationException("File exceeded the evidence size limit.");
+            }
+            return ReadString(file["encoding"]) switch
+            {
+                "base64" => Encoding.UTF8.GetString(Convert.FromBase64String(ReadString(file["content"]))),
+                "none" => await ReadGitHubEvidenceAsync(http, requestPath, token, "application/vnd.github.raw+json", ct),
+                _ => throw new InvalidOperationException("Expected checked-in file content.")
+            };
+        }
+
+        private static async Task<string?> ReadGitHubEvidenceAsync(
+            HttpClient http, string path, string token, string mediaType, CancellationToken ct)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/{path}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));
+            request.Headers.UserAgent.ParseAdd("azsdk-service-api-readiness");
+            request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+            return await ReadBoundedResponseAsync(http, request, ct);
+        }
+
+        internal static async Task<string?> ReadBoundedResponseAsync(HttpClient http, HttpRequestMessage request, CancellationToken ct)
+        {
+            using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+            response.EnsureSuccessStatusCode();
+            if (response.Content.Headers.ContentLength > MaxEvidenceBytes)
+            {
+                throw new InvalidOperationException("Response exceeded the evidence size limit.");
+            }
+            await using var stream = await response.Content.ReadAsStreamAsync(ct);
+            using var content = new MemoryStream();
+            var buffer = new byte[16 * 1024];
+            int count;
+            while ((count = await stream.ReadAsync(buffer, ct)) > 0)
+            {
+                if (content.Length + count > MaxEvidenceBytes)
+                {
+                    throw new InvalidOperationException("Response exceeded the evidence size limit.");
+                }
+                await content.WriteAsync(buffer.AsMemory(0, count), ct);
+            }
+            return Encoding.UTF8.GetString(content.ToArray());
+        }
+
+        private static string ReadString(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";
 
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {

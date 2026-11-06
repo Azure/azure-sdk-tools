@@ -137,9 +137,93 @@ its App installation token through `GITHUB_TOKEN`; local users can use
 developer credentials locally and managed identity on the hosted worker.
 Do not pass either token on the command line.
 
-See the [versioned input/result and worker contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/specs/7-validating-service-api-readiness.spec.md).
-The command's zero exit code means an observation completed; read `status` to
-distinguish Passed from Not detected or Inconclusive. Error returns one.
+The resolver tries `GITHUB_TOKEN`, legacy `GITHUB_PERSONAL_ACCESS_TOKEN`, then
+`gh auth token`. A rejected supplied token does not switch identities. Token
+discovery does not log process output, and failures exclude stdout and stderr.
+
+The command is a draft implementation until review and a CLI release are complete.
+Consumers need a release containing it or a validated trusted artifact; merged
+source alone is not an installed CLI. Local-path validation is deferred.
+
+#### Generation evidence
+
+Every package needs `tsp-location.yaml` with an allowed spec repository, full
+commit SHA, and project directory. The command reads generation files from the
+captured SDK head and reads the specification at that recorded commit. PR
+descriptions, comments, labels, package versions, and current `main` are not
+generation evidence. There is no API-version override or arbitrary endpoint.
+
+| SDK repository | Package root | API-version metadata relative to the package root |
+| --- | --- | --- |
+| `azure-sdk-for-net` | `sdk/<service>/<package>` | `metadata.json` |
+| `azure-sdk-for-java` | `sdk/<service>/<package>` | Every top-level `src/main/resources/META-INF/*_metadata.json`, bounded to 32 files |
+| `azure-sdk-for-js` | `sdk/<service>/<package>` | `metadata.json` |
+| `azure-sdk-for-python` | `sdk/<service>/<package>` | `_metadata.json` |
+| `azure-sdk-for-go` | `sdk/resourcemanager/<service>/<module>` | `testdata/_metadata.json` |
+
+`apiVersions` maps providers to exact versions. Scalar `apiVersion` uses the
+provider in pinned `main.tsp`, not a language namespace. Identical versions are
+deduplicated. Missing or malformed files and conflicting versions or provenance
+are Inconclusive. All matching Java metadata files must be valid.
+
+Deletion-only packages and rename source packages are checked unless their
+directory is absent at the captured head. No surviving affected package is
+Inconclusive. The validated project directory determines the plane:
+`resource-manager` or `.Management` means management; `data-plane` is not
+applicable and stops before version or ARM reads. Missing, invalid, unknown, or
+mixed plane evidence is Inconclusive. Directories with filename-like suffixes
+are allowed when their recorded project files exist inside `specification`.
+
+#### Evaluation and limits
+
+The command reads explicit checked-in Swagger mappings from pinned TypeSpec
+configuration. It does not compile TypeSpec or scan the repository. Swagger
+`info.version` must equal the SDK metadata version. Resource paths identify the
+provider's resource types; an unresolved child cannot pass using its parent.
+
+One ARM request per provider namespace uses
+`GET https://management.azure.com/providers/{namespace}?api-version=2021-04-01`.
+That metadata API version is not the service API version being checked. Every
+affected management project must have at least one resource type advertising its
+exact version for the overall result to be Passed. This is evidence, not release
+approval, service health, or proof of deployment in every region.
+
+The 40-second deadline includes token discovery. Reads honor cancellation,
+reject redirects, keep GitHub and ARM tokens on their fixed hosts, and cap
+responses at 4 MiB. Large files use raw content on `api.github.com` at the same
+revision, never `download_url`. Swagger discovery is bounded to 32 files and 64
+directories per project; a truncated directory or 3,000-file PR listing cannot
+establish complete evidence. No resource operations, regional probes, samples,
+resource creation, or role assignments are performed.
+
+#### Result contract
+
+The root JSON contains `contractVersion: 1`, `status`, `headSha`, `headRepository`,
+`plane`, `checkedAt`, `detail`, and `projects`. Read `status`, not the CLI-wide
+`operation_status`; `response_error` may also appear.
+
+Each project contains `source`, `status`, `namespace`, `detail`, and `matches`.
+The source records the package, generation-file paths, pinned spec repository,
+commit, configuration, and API version. Matches contain `resourceType` and
+advertised `regions`, not regional health guarantees.
+
+| Status | Meaning |
+| --- | --- |
+| Passed | At least one applicable type advertises the exact version for every checked project. |
+| Not detected | Applicable types exist, but none advertise the version. Ask the service owner to confirm deployment. |
+| Inconclusive | Evidence or mapping is missing, conflicting, or unavailable, or ARM is not applicable. |
+| Error | Authentication, transport, cancellation, or another application failure prevented the check. |
+
+Exit zero means Passed, Not detected, or Inconclusive; exit one means Error.
+Always read `status`. Treat an unusable or unknown contract as Error. Unit tests
+cover layouts, statuses, credentials, limits, mapping, cancellation, and safe
+errors; live CLI checks separately establish installation and Azure access.
+
+`ServiceApiReadinessService` coordinates the check and ARM comparison.
+`GeneratedSdkMetadataHelper` owns package discovery and generation evidence,
+reusing `SdkLanguageHelpers` and `PackageInfoHelper`.
+`TypeSpecReadinessHelper` resolves pinned Swagger mappings.
+`GitHubService` supplies bounded JSON and file reads shared by these helpers.
 
 ### Package release approval
 

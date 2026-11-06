@@ -19,15 +19,15 @@ azure-sdk-qa-bot-agent/
 └── TROUBLESHOOTING.md
 ```
 
-The project has three independently runnable components:
+The project has the following components:
 
 | Component | Description | Entrypoint | Port |
 |-----------|-------------|------------|------|
 | **Chat Agent** | AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 |
 | **Chatbot Evolution Agent** | KB-quality analyst that diagnoses negative-feedback turns and files KB-gap GitHub issues | `agents/chatbot_evolution_agent/init.py` | 8088 |
-| **Server** | Backend API that the Teams App communicates with (FastAPI) | `server.py` | 8089 |
+| **Server** | Backend API that the Teams App communicates with, and the writer of the channel-post archive (FastAPI) | `server.py` | 8089 |
 
-> Both hosted agents bind port `8088`. Run **one at a time** locally.
+> Hosted agents bind port `8088`. Run only one chat or evolution agent at a time locally. Teams backfill runs through the backend server and the dedicated Logic App described below.
 
 ## Getting Started
 
@@ -225,7 +225,7 @@ az account get-access-token --resource api://azure-sdk-qa-bot
 
 ## Deployment
 
-The project has three independently deployable components, each with its own CD pipeline. All pipelines are manually triggered and parameterized by environment.
+Hosted agents, the server, and Logic Apps are deployed separately. All CD pipelines are manually triggered and parameterized by environment. Teams collection requires the additional provisioning and activation steps below.
 
 ### Agent Deploy
 
@@ -233,7 +233,7 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 
 - **Pipeline**: [agent-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
 - **Deploy script**: [scripts/deploy_hosted_agent.py](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/scripts/deploy_hosted_agent.py)
-- **Parameters**: `environment` (dev/prod), `agentName` (`chat_agent` or `chatbot_evolution_agent`)
+- **Parameters**: `environment` (dev/prod), `agentName` (`chat_agent`, `azure_mcp_server_agent`, or `chatbot_evolution_agent`)
 - **What it does**:
   1. Builds the Docker image from `agents/<agentName>/Dockerfile`
   2. Pushes to `azuresdkqabotcontainer.azurecr.io`
@@ -245,6 +245,64 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 python scripts/deploy_hosted_agent.py chat_agent --tag <image-tag>
 python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 ```
+
+### Teams Channel Backfill
+
+Backfill imports configured Teams channel history into the existing `conversation-messages` container. It runs on the backend server, pages the dedicated Logic App through the existing Teams connector, and writes messages in the same shape as live traffic without invoking a model.
+
+- Deploy with [pipelines/logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml), selecting `workflow: teams-collection` and the target environment. The backend server must already be deployed; the pipeline uses its App Service identity as the only caller admitted by the Logic App.
+- The pipeline writes the Logic App's SAS-free callback URL to `TEAMS_COLLECTION_LOGIC_APP_URL` in the environment's App Configuration store.
+- Each backfill job loads a fresh App Configuration snapshot before reading the callback URL. Publishing or updating the URL through the pipeline or manual deployment does not require restarting the backend.
+- The Teams API connection is an existing delegated connection and is not created or reauthorized by this pipeline. Its identity must be able to read the requested channel.
+- Backfill requests provide the team ID, channel ID, and `tenant_key`; the tenant key is written as `tenant_id` on each stored message and must match the channel's tenant in `bot-configs/channel.yaml` (mirrored at [azure-sdk-qa-bot/config/channel.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot/config/channel.yaml)).
+- The deployment service connection needs Logic App deployment permissions and App Configuration data write access. No Cosmos role assignment is needed here: the backend identity already writes live messages to `conversation-messages`.
+
+#### Backfill a Channel
+
+Backfill is a deliberate, operator-driven import with no schedule behind it. It is an endpoint on the backend server, protected by the same EasyAuth registration as every other endpoint, so calling it needs a token for that audience:
+
+```powershell
+$token = az account get-access-token --resource api://azure-sdk-qa-bot-dev --query accessToken -o tsv
+$body = @{
+   team_id = "3e17dcb0-4257-4a30-b843-77f47f1d4121"
+  channel_id = "19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype"
+   tenant_key = "typespec_channel_qa_bot"
+  start_time = "2026-01-01T00:00:00Z"
+   max_pages = 500
+} | ConvertTo-Json
+$job = Invoke-RestMethod -Method Post -Uri "https://azuresdkqabot-dev-server.azurewebsites.net/teams/backfill" `
+  -Headers @{ Authorization = "Bearer $token" } -ContentType "application/json" -Body $body
+```
+
+Each request targets one channel, and the Logic App accepts any channel the Teams connection can read. `max_pages` is optional and defaults to 1000; its accepted range is 1–1000. Omit `start_time` to include all available roots. Missing channel fields, an invalid team ID, an out-of-range page limit, or a timestamp without a timezone is rejected with `422` before any Teams page is fetched.
+
+A full channel takes far longer than an HTTP request may wait, so the server accepts the run and returns `202` with a `job_id` and `status: running` instead of the import counters. Poll it with:
+
+```powershell
+Invoke-RestMethod -Uri "https://azuresdkqabot-dev-server.azurewebsites.net/teams/backfill/$($job.job_id)" `
+  -Headers @{ Authorization = "Bearer $token" }
+```
+
+Once `status` reaches `succeeded`, the same document carries the `summary` counters; a `failed` run reports a generic `error` and the detail stays in the server logs. The server refuses a second run with `409` while one is in flight, so wait for the current import to finish. Job state is in-process: a server restart forgets it, and the run itself stops with the process.
+
+Backfill is safe to repeat. For every Teams message it either creates the document, leaves it untouched when the content already matches, or updates only `content` when the message was edited in Teams. It never deletes, never rewrites bot replies, and never clears bot-owned fields such as `should_reply`. A message changed by another writer mid-run is skipped and picked up on the next run.
+
+#### Verify Import
+
+Acceptance only means the background request was queued, so poll the backfill job until it reaches `succeeded`. Its `summary` contains the `messagesCreated`, `messagesUpdated`, `messagesUnchanged`, and `messagesSkipped` counters; `channelsCompleted` should be 1.
+
+In Cosmos Data Explorer, confirm backfilled messages landed in `azure-sdk-qa-bot/conversation-messages` alongside live traffic:
+
+```sql
+SELECT TOP 5 c.id, c.sender_role, c.created_at, c.conversation_partition
+FROM c WHERE c.conversation_type = "teams_channel"
+  AND STARTSWITH(c.conversation_partition, "teams_channel:<channelId>;")
+ORDER BY c.created_at DESC
+```
+
+A thread is one partition: `teams_channel:<channelId>;messageid=<rootId>`, holding the root post and every reply as separate documents. Forwarded attachments are expanded and the post title is prefixed as `title: ...` exactly as the real-time workflow does, so re-running backfill on unchanged content reports `messagesUnchanged` rather than rewriting documents.
+
+For a failed run, check the backend server logs and the dedicated Logic App's run history. A `403 MisMatchingOAuthClaims` means the `serverIdentityResourceId` parameter does not identify the managed identity used by the backend server. Logic App request/response content is secured.
 
 ### Server Deploy
 

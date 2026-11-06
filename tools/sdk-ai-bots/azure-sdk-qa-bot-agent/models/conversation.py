@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
+
+MAX_TEAMS_BACKFILL_PAGES = 1000
 
 
 class Role(str, Enum):
@@ -49,9 +52,38 @@ class ConversationMessage(BaseModel):
     )
 
 
+class ConversationMessageAttachment(BaseModel):
+    """A Teams message attachment, in the shape the Teams connector returns it.
+
+    Field names follow the connector (Graph ``chatMessageAttachment``) instead of
+    this module's snake_case, so a stored attachment reads like connector output.
+    """
+
+    id: str | None = None
+    contentType: str | None = None
+    contentUrl: str | None = None
+    content: Any = None
+    name: str | None = None
+    thumbnailUrl: str | None = None
+    teamsAppId: str | None = None
+
+
+class ConversationMessageImage(BaseModel):
+    """An image embedded in a Teams message body (a Graph hosted content)."""
+
+    id: str | None = None
+    contentUrl: str
+
+
 class ConversationMessageExtraInfo(BaseModel):
     channel_id: str | None = None
     message_link: str | None = None
+    attachments: list[ConversationMessageAttachment] | None = (
+        None  # Files, cards, forwarded messages, etc. as the Teams connector returns them
+    )
+    images: list[ConversationMessageImage] | None = (
+        None  # Images embedded in the message body
+    )
 
 
 class ConversationMappingItem(BaseModel):
@@ -74,6 +106,47 @@ class ConversationMessageItem(ConversationMessage):
 
 class SaveConversationMessageResponse(BaseModel):
     pass
+
+
+class TeamsBackfillRequest(BaseModel):
+    """Ask the server to import historical posts from one Teams channel.
+
+    ``tenant_key`` determines the tenant attribution in stored messages.
+    ``start_time`` drops every thread whose post is older than that instant.
+    ``max_pages`` optionally overrides the default page limit.
+    """
+
+    team_id: str = Field(min_length=1, max_length=100)
+    channel_id: str = Field(min_length=1, max_length=500)
+    tenant_key: str = Field(min_length=1, max_length=200)
+    start_time: str | None = Field(default=None, max_length=100)
+    max_pages: int | None = Field(default=None, ge=1, le=MAX_TEAMS_BACKFILL_PAGES)
+
+
+class TeamsBackfillStatus(str, Enum):
+    """Lifecycle of a single backfill run."""
+
+    running = "running"
+    succeeded = "succeeded"
+    failed = "failed"
+    cancelled = "cancelled"
+
+
+class TeamsBackfillJob(BaseModel):
+    """State of one backfill run, from acceptance to outcome.
+
+    ``summary`` carries the per-message counters the backfill reports, and is
+    present only once the run has succeeded.
+    """
+
+    job_id: str
+    status: TeamsBackfillStatus
+    channel_id: str | None = None
+    start_time: str | None = None
+    started_at: datetime
+    completed_at: datetime | None = None
+    summary: dict[str, int] | None = None
+    error: str | None = None
 
 
 class BotAnswerVerdict(str, Enum):

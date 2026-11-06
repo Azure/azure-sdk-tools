@@ -1,5 +1,8 @@
-# Deployment pipeline for the Azure SDK QA Bot Logic App.
-# Deploys the Logic App ARM template with environment-specific parameters.
+# Deployment pipeline for the Azure SDK QA Bot Logic Apps.
+# Deploys a Logic App ARM template with environment-specific parameters.
+#
+# The teams-collection template resolves the backend server identity from its
+# existing user-assigned identity resource during ARM deployment.
 # Dev/test use the shared Azure SDK listener; production uses the selected team.
 
 name: Deploy Azure SDK QA Bot Logic App
@@ -8,6 +11,13 @@ trigger: none
 pr: none
 
 parameters:
+  - name: workflow
+    displayName: 'Logic App Workflow'
+    type: string
+    default: chat
+    values:
+      - chat
+      - teams-collection
   - name: team
     displayName: 'Production Teams Team (dev/test use azure_sdk)'
     type: string
@@ -35,6 +45,8 @@ variables:
     - group: 'Azure SDK QA Bot Prod Variables'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: teamsCollectionLogicAppUrlKey
+    value: 'TEAMS_COLLECTION_LOGIC_APP_URL'
   - name: listenerTeam
     value: ${{ iif(eq(parameters.environment, 'prod'), parameters.team, 'azure_sdk') }}
 
@@ -44,7 +56,7 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: DeployLogicApp
-        displayName: 'Deploy ${{ variables.listenerTeam }} Logic App (${{ parameters.environment }})'
+        displayName: 'Deploy ${{ parameters.workflow }} Logic App (${{ parameters.environment }})'
         jobs:
           - job: Deploy
             displayName: 'ARM Template Deployment'
@@ -56,29 +68,106 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
 
-              - task: AzureCLI@2
-                displayName: 'Deploy Logic App'
-                inputs:
-                  azureSubscription: $(SERVICE_CONNECTION)
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  workingDirectory: $(workingDirectory)
-                  inlineScript: |
-                    set -euo pipefail
+              - ${{ if eq(parameters.workflow, 'chat') }}:
+                - task: AzureCLI@2
+                  displayName: 'Deploy Logic App'
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    workingDirectory: $(workingDirectory)
+                    inlineScript: |
+                      set -euo pipefail
 
-                    TEMPLATE_FILE="pipelines/logicapp/template.json"
-                    PARAMS_FILE="pipelines/logicapp/parameters.${{ variables.listenerTeam }}.${{ parameters.environment }}.json"
+                      TEMPLATE_FILE="pipelines/logicapp/template.json"
+                      PARAMS_FILE="pipelines/logicapp/parameters.${{ variables.listenerTeam }}.${{ parameters.environment }}.json"
 
-                    echo "Listener team: ${{ variables.listenerTeam }} (selected: ${{ parameters.team }})"
-                    echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"
-                    echo "Template: $TEMPLATE_FILE"
-                    echo "Parameters: $PARAMS_FILE"
+                      echo "Listener team: ${{ variables.listenerTeam }} (selected: ${{ parameters.team }})"
+                      echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"
+                      echo "Template: $TEMPLATE_FILE"
+                      echo "Parameters: $PARAMS_FILE"
 
-                    az deployment group create \
-                      --resource-group "$(RESOURCE_GROUP)" \
-                      --template-file "$TEMPLATE_FILE" \
-                      --parameters "@$PARAMS_FILE" \
-                      --name "logicapp-${{ variables.listenerTeam }}-$(Build.BuildId)" \
-                      --verbose
+                      az deployment group create \
+                        --resource-group "$(RESOURCE_GROUP)" \
+                        --template-file "$TEMPLATE_FILE" \
+                        --parameters "@$PARAMS_FILE" \
+                        --name "logicapp-${{ variables.listenerTeam }}-$(Build.BuildId)" \
+                        --verbose
 
-                    echo "Logic App deployment completed successfully."
+                      echo "Logic App deployment completed successfully."
+
+              - ${{ if eq(parameters.workflow, 'teams-collection') }}:
+                - task: AzureCLI@2
+                  displayName: 'Deploy Teams Collection Logic App'
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    workingDirectory: $(workingDirectory)
+                    inlineScript: |
+                      set -euo pipefail
+
+                      if [ "${{ parameters.team }}" != "azure_sdk" ]; then
+                        echo "The teams-collection workflow is only defined for azure_sdk."
+                        exit 1
+                      fi
+
+                      TEMPLATE_FILE="pipelines/teams-collection/template.json"
+                      PARAMS_FILE="pipelines/teams-collection/parameters.azure_sdk.${{ parameters.environment }}.json"
+                      echo "Deploying Teams backfill Logic App to $(RESOURCE_GROUP) using $PARAMS_FILE"
+                      WORKFLOW_RESOURCE_ID=$(az deployment group create \
+                        --resource-group "$(RESOURCE_GROUP)" \
+                        --name "teams-collection-${{ parameters.environment }}-$(Build.BuildId)" \
+                        --mode Incremental \
+                        --template-file "$TEMPLATE_FILE" \
+                        --parameters "@$PARAMS_FILE" \
+                        --query "properties.outputs.workflowResourceId.value" \
+                        --output tsv)
+                      if [[ ! "$WORKFLOW_RESOURCE_ID" =~ ^/subscriptions/[^/]+/resourceGroups/[^/]+/providers/Microsoft\.Logic/workflows/[^/]+$ ]]; then
+                        echo "Logic App deployment returned an invalid workflow resource ID."
+                        exit 1
+                      fi
+
+                      CALLBACK_URL=$(az rest \
+                        --method post \
+                        --url "https://management.azure.com${WORKFLOW_RESOURCE_ID}/triggers/manual/listCallbackUrl?api-version=2019-05-01" \
+                        --query value \
+                        --output tsv)
+                      if [[ ! "$CALLBACK_URL" =~ ^https://([^/?#]+)(/[^?#]*)\?([^#]+)$ ]]; then
+                        echo "Logic App returned an invalid callback URL."
+                        exit 1
+                      fi
+                      CALLBACK_HOST="${BASH_REMATCH[1]}"
+                      CALLBACK_PATH="${BASH_REMATCH[2]}"
+                      CALLBACK_QUERY="${BASH_REMATCH[3]}"
+                      if [[ "$CALLBACK_HOST" == *@* || "$CALLBACK_HOST" == *:* || \
+                            "$CALLBACK_HOST" != *.logic.azure.com || \
+                            "$CALLBACK_PATH" != */triggers/manual/paths/invoke ]]; then
+                        echo "Logic App returned an unexpected callback URL."
+                        exit 1
+                      fi
+                      IFS='&' read -r -a CALLBACK_PARAMETERS <<< "$CALLBACK_QUERY"
+                      API_VERSION=""
+                      API_VERSION_COUNT=0
+                      for CALLBACK_PARAMETER in "${CALLBACK_PARAMETERS[@]}"; do
+                        if [[ "$CALLBACK_PARAMETER" == api-version=* ]]; then
+                          API_VERSION="${CALLBACK_PARAMETER#api-version=}"
+                          ((API_VERSION_COUNT += 1))
+                        fi
+                      done
+                      if [[ "$API_VERSION_COUNT" -ne 1 || -z "$API_VERSION" ]]; then
+                        echo "Logic App callback URL must contain one api-version."
+                        exit 1
+                      fi
+                      SAS_FREE_URL="${CALLBACK_URL%%\?*}?api-version=$API_VERSION"
+                      az appconfig kv set \
+                        --endpoint "$(AZURE_APPCONFIG_ENDPOINT)" \
+                        --auth-mode login \
+                        --key "$(teamsCollectionLogicAppUrlKey)" \
+                        --value "$SAS_FREE_URL" \
+                        --yes \
+                        --output none
+                      echo "Teams backfill Logic App deployed and callback URL configured."
+                  env:
+                    AZURE_CORE_WELCOME_MESSAGE: 'false'
+                    AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

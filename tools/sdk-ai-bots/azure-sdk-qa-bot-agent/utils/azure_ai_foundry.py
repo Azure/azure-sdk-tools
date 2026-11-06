@@ -4,7 +4,6 @@ Each client is created once on first access and reused for the lifetime of
 the process.
 """
 
-import asyncio
 import logging
 import re
 from collections.abc import Callable, Mapping, Sequence
@@ -243,31 +242,8 @@ async def close_clients() -> None:
     for client in _openai_clients.values():
         await client.close()
     _openai_clients.clear()
-    _stateless_session_ids.clear()
     if _agent_client is not None:
         _agent_client = None
     if _project_client is not None:
         await _project_client.close()
         _project_client = None
-
-
-# -- Stateless warm-session cache ------------------------------------------
-# Stateless requests (no customer conversation_id) share one warm sandbox per
-# agent version via an agent_session_id captured from a stateless response.
-# No `conversation` is threaded, so history is never shared across callers.
-_stateless_session_ids: dict[tuple[str, str], str] = {}
-
-
-def get_stateless_session_id(agent_name: str, agent_version: str) -> str | None:
-    """Return the cached warm sandbox id for stateless requests, if any."""
-    return _stateless_session_ids.get((agent_name, agent_version))
-
-
-def set_stateless_session_id(
-    agent_name: str, agent_version: str, session_id: str | None
-) -> None:
-    """Cache (or clear) the warm sandbox id reused by stateless requests."""
-    if session_id is None:
-        _stateless_session_ids.pop((agent_name, agent_version), None)
-    else:
-        _stateless_session_ids[(agent_name, agent_version)] = session_id

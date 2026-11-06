@@ -554,8 +554,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 {
                     logger.LogWarning("Some customizations failed to apply: {FailureReasons}", tspCustomizationResult.FailureReason);
                     feedbackItem.AppendContext(tspCustomizationResult.FailureReason ?? "Unknown failure", "TypeSpec customization failed");
-                    tspFixFailedReasons.Append(tspCustomizationResult.FailureReason);
-                    tspFixFailedReasons.Append("; ");
+                    if (!string.IsNullOrWhiteSpace(tspCustomizationResult.FailureReason))
+                    {
+                        tspFixFailedReasons.Append(tspCustomizationResult.FailureReason);
+                        tspFixFailedReasons.Append("; ");
+                    }
                     tspFixFailed++;
                 }
 

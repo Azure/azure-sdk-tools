@@ -100,7 +100,6 @@ def _upload_eval_items(openai_client: Any, items: list[dict[str, Any]], scenario
     uploaded = openai_client.files.create(
         file=(f"{scenario}-eval-input.jsonl", content, "application/jsonl"),
         purpose="evals",
-        expires_after={"anchor": "created_at", "seconds": 259200},
     )
     processed = openai_client.files.wait_for_processing(uploaded.id)
     logger.info("Uploaded evaluation input file (id=%s, size=%d bytes)", processed.id, len(content))

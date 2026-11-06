@@ -77,7 +77,7 @@ def test_upload_eval_items_uses_file_backed_data_source():
     assert json.loads(content.decode("utf-8"))["item"]["response"] == "answer"
     assert content_type == "application/jsonl"
     assert upload["purpose"] == "evals"
-    assert upload["expires_after"] == {"anchor": "created_at", "seconds": 259200}
+    assert "expires_after" not in upload
     client.files.wait_for_processing.assert_called_once_with("file-uploaded")
     assert data_source == {
         "type": "jsonl",

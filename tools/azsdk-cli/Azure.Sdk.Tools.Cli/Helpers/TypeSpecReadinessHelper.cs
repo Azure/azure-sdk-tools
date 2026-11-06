@@ -144,7 +144,7 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
             missing.Add($"Invalid checked-in Swagger: {file}");
             return;
         }
-        if (Text(document["info"]?["version"]) != apiVersion)
+        if (document["info"] is not JsonObject info || Text(info["version"]) != apiVersion)
         {
             missing.Add($"Swagger API version does not match SDK generation metadata: {file}");
             return;

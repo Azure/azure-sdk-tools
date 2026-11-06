@@ -31,6 +31,10 @@ public class PackageInfoHelper(ILogger<PackageInfoHelper> logger, IGitHelper git
         {
             foreach (var entry in versionMap.ToArray())
             {
+                if (string.IsNullOrWhiteSpace(entry.Key))
+                {
+                    throw new JsonException("'apiVersions' keys must be non-empty provider namespaces.");
+                }
                 if (entry.Value is not JsonArray array)
                 {
                     continue;
@@ -42,7 +46,7 @@ public class PackageInfoHelper(ILogger<PackageInfoHelper> logger, IGitHelper git
                     {
                         throw new InvalidOperationException(ConflictingApiVersions);
                     }
-                    candidates.Add(text);
+                    candidates.Add(text.Trim());
                 }
                 if (candidates.Count != 1)
                 {

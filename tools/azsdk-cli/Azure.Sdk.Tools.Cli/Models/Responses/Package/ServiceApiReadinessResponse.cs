@@ -33,5 +33,18 @@ public class ServiceApiReadinessResponse : CommandResponse
     [JsonPropertyName("projects")]
     public List<ServiceApiReadinessProject> Projects { get; set; } = [];
 
-    protected override string Format() => $"Service API-version check: {ReadinessStatus}{Environment.NewLine}{Detail}";
+    protected override string Format()
+    {
+        var lines = new List<string> { $"Service API-version check: {ReadinessStatus}" };
+        if (!string.IsNullOrEmpty(HeadSha))
+        {
+            lines.Add($"Checked SDK head: {HeadRepository}@{HeadSha}");
+        }
+        lines.Add(Detail);
+        foreach (var project in Projects)
+        {
+            lines.Add($"{project.Source.PackagePath}: {project.ReadinessStatus}. {project.Detail}");
+        }
+        return string.Join(Environment.NewLine, lines);
+    }
 }

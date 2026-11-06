@@ -61,7 +61,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 result.Detail = issues.Count > 0 ? string.Join(" ", issues) : "Authoritative SDK generation metadata or API plane is unavailable.";
                 return result;
             }
-            await EvaluateProjectsAsync(sources, result, token, ct);
+            await ValidateProjectsAsync(sources, result, token, ct);
             SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -73,7 +73,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         return result;
     }
 
-    private async Task EvaluateProjectsAsync(IEnumerable<ServiceApiReadinessSource> sources, ServiceApiReadinessResponse result, string token, CancellationToken ct)
+    private async Task ValidateProjectsAsync(IEnumerable<ServiceApiReadinessSource> sources, ServiceApiReadinessResponse result, string token, CancellationToken ct)
     {
         // Cache failed lookup tasks too, so projects do not retry the same ARM failure.
         var providers = new Dictionary<string, Task<JsonNode?>>(StringComparer.OrdinalIgnoreCase);
@@ -174,7 +174,10 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         result.Detail = "API versions were read from SDK metadata files at the checked PR head. Provider metadata is evidence, not release approval or proof of regional deployment.";
         if (result.ReadinessStatus == ServiceApiReadinessResponse.Error)
         {
-            result.ResponseError = "A platform or application failure prevented the readiness check.";
+            var failures = result.Projects.Where(project => project.ReadinessStatus == ServiceApiReadinessResponse.Error)
+                .Select(project => $"{project.Source.PackagePath}: {project.Detail}");
+            result.ResponseError = $"Checked SDK head: {result.HeadRepository}@{result.HeadSha}{Environment.NewLine}" +
+                string.Join(Environment.NewLine, failures);
         }
     }
 

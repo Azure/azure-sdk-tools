@@ -28,6 +28,7 @@ public class PackageInfoHelperTests
     [TestCase("{\"apiVersion\":\" 2026-04-01 \"}", "")]
     [TestCase("{\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\"}}", "Microsoft.Example")]
     [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\"2026-04-01\"]}}", "Microsoft.Example")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\" 2026-04-01 \"]}}", "Microsoft.Example")]
     public void ReadApiVersionsByProviderReturnsUnambiguousValuesWithoutChangingMetadata(string json, string provider)
     {
         var metadata = JsonNode.Parse(json)!.AsObject();
@@ -36,6 +37,16 @@ public class PackageInfoHelperTests
         Assert.That(versions, Has.Count.EqualTo(1));
         Assert.That(versions[provider], Is.EqualTo("2026-04-01"));
         Assert.That(metadata.ToJsonString(), Is.EqualTo(before));
+    }
+
+    [TestCase("{\"apiVersions\":{\"\":\"2026-04-01\"}}")]
+    [TestCase("{\"apiVersions\":{\"   \":\"2026-04-01\"}}")]
+    [TestCase("{\"apiVersions\":{\"\":[\"2026-04-01\"]}}")]
+    [TestCase("{\"apiVersion\":\"2026-04-01\",\"apiVersions\":{\"\":\"2026-04-01\"}}")]
+    public void ReadApiVersionsByProviderRejectsBlankProviderNames(string json)
+    {
+        var metadata = JsonNode.Parse(json)!.AsObject();
+        Assert.Throws<JsonException>(() => PackageInfoHelper.ReadApiVersionsByProvider(metadata));
     }
 
     [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\"2026-03-01\"]}}")]

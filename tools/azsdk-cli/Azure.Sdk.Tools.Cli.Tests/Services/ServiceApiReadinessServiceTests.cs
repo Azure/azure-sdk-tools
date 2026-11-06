@@ -419,6 +419,7 @@ public class ServiceApiReadinessServiceTests
     [TestCase(HttpStatusCode.Forbidden)]
     [TestCase(HttpStatusCode.Unauthorized)]
     [TestCase(HttpStatusCode.Redirect)]
+    [TestCase(HttpStatusCode.TooManyRequests)]
     public async Task AzureTransportFailuresAreErrorsWithoutPrivateDetails(HttpStatusCode status)
     {
         _armStatus = status;
@@ -429,6 +430,8 @@ public class ServiceApiReadinessServiceTests
         Assert.That(json, Does.Not.Contain("private transport details"));
         Assert.That(json, Does.Not.Contain("azure-test-token"));
         Assert.That(json, Does.Not.Contain("github-test-token"));
+        Assert.That(response.ResponseError, Does.Contain(Package).And.Contain($"HTTP {(int)status}"));
+        Assert.That(response.ToString(), Does.Contain(Head).And.Contain(_repository).And.Contain(Package).And.Contain($"HTTP {(int)status}"));
     }
 
     [Test]
@@ -572,6 +575,8 @@ public class ServiceApiReadinessServiceTests
 
     [TestCase("{bad json")]
     [TestCase("{\"info\":{\"version\":\"2025-01-01\"},\"paths\":{}}")]
+    [TestCase("{\"info\":[]}")]
+    [TestCase("{\"info\":\"2026-04-01\"}")]
     public async Task InvalidOrWrongVersionSwaggerIsInconclusive(string swagger)
     {
         SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json", swagger);
@@ -587,6 +592,8 @@ public class ServiceApiReadinessServiceTests
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
         Assert.That(ArmRequests(), Is.Empty);
+        Assert.That(response.ToString(), Does.Contain(Head).And.Contain(_repository).And.Contain(Package)
+            .And.Contain(response.Projects.Single().Detail));
     }
 
     [Test]

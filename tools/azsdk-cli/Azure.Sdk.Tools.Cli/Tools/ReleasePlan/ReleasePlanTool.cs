@@ -73,6 +73,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string UpdateLanguageExclusionToolName = "azsdk_update_language_exclusion_justification";
         private const string CheckApiSpecReadyToolName = "azsdk_check_api_spec_ready_for_sdk";
         private const string LinkSdkPullRequestToolName = "azsdk_link_sdk_pull_request_to_release_plan";
+        private const string AutoReleaseLabel = "auto-release";
+        private const string LinkSdkPullRequestDescription = "Link SDK PR to a release plan. Add auto-release only for management-only, non-test, non-Private Preview, active plans when the public Azure SDK PR is open, non-draft, and targets main. Existing labels are preserved; if labeling fails after linking, retry by linking again.";
         private const string UpdateApiSpecPullRequestToolName = "azsdk_update_api_spec_pull_request_in_release_plan";
         private const string GetServiceDetailsToolName = "azsdk_get_service_details_by_typespec_path";
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
@@ -332,7 +334,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             },
             new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
-            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
+            new McpCommand(linkSdkPrCommandName, LinkSdkPullRequestDescription, LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
             new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon inactive release plans after one full overdue calendar month") { dryRunOpt },
             new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
@@ -2101,7 +2103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             };
         }
 
-        [McpServerTool(Name = LinkSdkPullRequestToolName), Description("Link SDK pull request to release plan work item")]
+        [McpServerTool(Name = LinkSdkPullRequestToolName), Description(LinkSdkPullRequestDescription)]
         public async Task<ReleaseWorkflowResponse> LinkSdkPullRequestToReleasePlan(string language, string pullRequestUrl, int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default)
         {
             try
@@ -2150,6 +2152,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan, ct);
 
                 await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
+                if (!await sdkInfoInRelease)
+                {
+                    response.ResponseError = "Failed to save the SDK pull request in the release plan. The auto-release label was not added.";
+                    response.Status = "Failed";
+                    return response;
+                }
                 if (releasePlan.IsManagementPlane)
                 {
                     response.PackageType = SdkType.Management;
@@ -2159,13 +2167,89 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.PackageType = SdkType.Dataplane;
                 }
                 response.Details.Add($"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.");
+
+                try
+                {
+                    response.Details.Add(await EnsureAutoReleaseLabelAsync(parsedLink, repoName, releasePlan, ct));
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogError(ex, "Failed to ensure {Label} on {PullRequestUrl}", AutoReleaseLabel, parsedLink.FullUrl);
+                    response.ResponseError = $"Pull request was linked to release plan, but failed to add {AutoReleaseLabel} label. Retry linking to apply the label. Error: {ex.Message}";
+                    response.Status = "Failed";
+                }
                 return response;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to link SDK pull request to release plan work item");
                 return new() { ResponseError = $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}" };
             }
+        }
+
+        private async Task<string> EnsureAutoReleaseLabelAsync(ParsedSdkPullRequest parsedUrl, string expectedRepoName, ReleasePlanWorkItem releasePlan, CancellationToken ct)
+        {
+            var skipReason = GetAutoReleasePlanSkipReason(releasePlan);
+            if (skipReason != null)
+            {
+                return $"Skipped {AutoReleaseLabel} labeling: {skipReason}";
+            }
+
+            var pr = await githubService.GetPullRequestAsync(parsedUrl.RepoOwner, parsedUrl.RepoName, parsedUrl.PrNumber, ct)
+                ?? throw new InvalidOperationException($"Failed to fetch pull request {parsedUrl.FullUrl}");
+            skipReason = GetAutoReleaseSkipReason(parsedUrl, expectedRepoName, pr);
+            if (skipReason != null)
+            {
+                return $"Skipped {AutoReleaseLabel} labeling: {skipReason}";
+            }
+            if (pr.Labels?.Any(label => string.Equals(label.Name, AutoReleaseLabel, StringComparison.OrdinalIgnoreCase)) == true)
+            {
+                return $"Pull request already has the {AutoReleaseLabel} label.";
+            }
+
+            await githubService.AddPullRequestLabelAsync(parsedUrl.RepoOwner, parsedUrl.RepoName, parsedUrl.PrNumber, AutoReleaseLabel, ct);
+            return $"Added {AutoReleaseLabel} label to pull request.";
+        }
+
+        private static string? GetAutoReleasePlanSkipReason(ReleasePlanWorkItem releasePlan)
+        {
+            if (!releasePlan.IsManagementPlane || releasePlan.IsDataPlane)
+            {
+                return "only management-only release plans are eligible.";
+            }
+            if (releasePlan.IsTestReleasePlan || releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
+            {
+                return "test and Private Preview release plans do not opt SDK PRs into release automation.";
+            }
+            if (string.Equals(releasePlan.Status, "Abandoned", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(releasePlan.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+            {
+                return "the release plan is no longer active.";
+            }
+            return null;
+        }
+
+        private static string? GetAutoReleaseSkipReason(ParsedSdkPullRequest parsedUrl, string expectedRepoName, PullRequest pr)
+        {
+            if (!string.Equals(parsedUrl.RepoOwner, REPO_OWNER, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(parsedUrl.RepoName, expectedRepoName, StringComparison.OrdinalIgnoreCase)
+                || pr.Base?.Repository == null || pr.Base.Repository.Private)
+            {
+                return "only PRs in the public Azure SDK repository are eligible.";
+            }
+            if (pr.State != ItemState.Open || pr.Merged || pr.Draft)
+            {
+                return "the SDK PR must be open, unmerged, and not a draft.";
+            }
+            if (!string.Equals(pr.Base.Ref, "main", StringComparison.Ordinal))
+            {
+                return "the SDK PR must target main.";
+            }
+            return null;
         }
 
         private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlanWorkItem releasePlan, CancellationToken ct)

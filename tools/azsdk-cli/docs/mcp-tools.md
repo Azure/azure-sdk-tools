@@ -45,7 +45,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_get_sdk_pull_request_link | `azsdk spec-workflow get-sdk-pr` | Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item. |
 | azsdk_get_service_details_by_typespec_path | `azsdk release-plan get-service-details` | Get service and service tree product details for a product using TypeSpec project path: Get service tree product details (service tree ID, service ID, package display name, product service tree link). |
 | azsdk_link_namespace_approval_issue | `azsdk release-plan link-namespace-approval` | Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id. |
-| azsdk_link_sdk_pull_request_to_release_plan | `azsdk release-plan link-sdk-pr` | Link SDK pull request to release plan work item |
+| azsdk_link_sdk_pull_request_to_release_plan | `azsdk release-plan link-sdk-pr` | Link SDK PR to a release plan and ensure `auto-release` for management-only plans with open, non-draft PRs targeting `main` in the public Azure SDK repository. Data-plane, test, Private Preview, and inactive plans are excluded. Preserves existing labels; repeated linking retries missing labels without duplicating them. Label failures return an error after linking; retry linking to apply the label. CI and review requirements still apply before merge. |
 | azsdk_onboard_product | `azsdk release-plan onboard-product` | Create or update a product onboarding work item. |
 | azsdk_package_build_code | `azsdk pkg build` | Build/compile SDK code for a specified project locally. |
 | azsdk_package_detect_breaking_change | `azsdk pkg detect-breaking-change` | Detects breaking changes in the SDK. |
@@ -105,4 +105,3 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners audit` | Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command. |
 |  | `azsdk list` |  |
-

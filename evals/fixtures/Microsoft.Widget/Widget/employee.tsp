@@ -23,9 +23,21 @@ model EmployeeProperties {
   /** City of employee */
   city?: string;
 
+  /** The absolute URL of the employee's profile page. */
+  profileUri?: string;
+
   /** The status of the last operation. */
   @visibility(Lifecycle.Read)
   provisioningState?: ProvisioningState;
+}
+
+/** Details for relocating an employee to another city. */
+model EmployeeRelocateContent {
+  /** The city to which the employee will be relocated. */
+  city: string;
+
+  /** The reason for relocating the employee. */
+  reason?: string;
 }
 
 /** The resource provisioning state. */
@@ -53,4 +65,6 @@ interface Employees {
   delete is ArmResourceDeleteWithoutOkAsync<Employee>;
   listByResourceGroup is ArmResourceListByParent<Employee>;
   listBySubscription is ArmListBySubscription<Employee>;
+
+  relocate is ArmResourceActionSync<Employee, EmployeeRelocateContent, Employee>;
 }

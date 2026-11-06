@@ -68,6 +68,9 @@ again. Existing objects are retained, and subsequent fetches use the blobless fi
 downloaded previously can still require lazy fetching. Switching to a different tag retains the existing behavior of
 discarding local changes.
 
+For linked worktrees in containers, the assets directory is registered with Git's `safe.directory` before resolving
+the worktree's Git metadata, including on cached restores. Ordinary cached clones still avoid Git commands.
+
 Breadcrumb updates still read the stored entries to detect external changes. When the requested entry's hash and tag
 already match, its file is left unchanged. Missing or changed entries are still persisted, and deleted breadcrumb files
 are recreated on the next restore.

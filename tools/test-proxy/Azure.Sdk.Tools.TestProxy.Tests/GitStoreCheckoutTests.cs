@@ -195,6 +195,87 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task ContainerRestoreRegistersWorktreeBeforeResolvingGitDirectory(bool alreadyConfigured)
+        {
+            var config = await CreateConfiguration();
+            _git.Run($"remote add origin git@github.com:{_repositoryName}.git", _remotePath);
+            _git.Run($"worktree add --detach \"{config.AssetsRepoLocation}\" recordings_v1", _remotePath);
+            await _store.BreadCrumb.Update(config);
+            if (alreadyConfigured)
+            {
+                await _store.Restore(config.AssetsJsonLocation);
+            }
+
+            string recordingPath = Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json");
+            string newRecordingPath = Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "new.json");
+            File.WriteAllText(recordingPath, "unpublished recording");
+            File.WriteAllText(newRecordingPath, "new recording");
+            _git.GlobalConfigPath = Path.Join(_testFolder, "container.gitconfig");
+            _git.AssumeDifferentOwner = true;
+            Assert.False(_git.TryRun("rev-parse --absolute-git-dir", config.AssetsRepoLocation, out var ownershipError));
+            Assert.Equal(128, ownershipError.ExitCode);
+            Assert.Contains("dubious ownership", ownershipError.StdErr);
+
+            string tracePath = Path.Join(_testFolder, "container.trace.json");
+            var startInfo = _git.CreateGitProcessInfo(_languageRepo);
+            startInfo.FileName = "dotnet";
+            foreach (string argument in new[]
+            {
+                "exec",
+                "--runtimeconfig", Path.ChangeExtension(typeof(GitStoreCheckoutTests).Assembly.Location, ".runtimeconfig.json"),
+                "--depsfile", Path.ChangeExtension(typeof(GitStoreCheckoutTests).Assembly.Location, ".deps.json"),
+                typeof(GitStore).Assembly.Location,
+                "restore",
+                "--assets-json-path", config.AssetsJsonLocation.ToString(),
+                "--storage-location", _languageRepo
+            })
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+            startInfo.Environment["TEST_PROXY_CONTAINER"] = "true";
+            startInfo.Environment["GIT_TRACE2_EVENT"] = tracePath;
+            startInfo.Environment.Remove("GIT_TOKEN");
+
+            using var process = new Process { StartInfo = startInfo };
+            process.Start();
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
+            string output = await outputTask;
+            string error = await errorTask;
+            Assert.True(process.ExitCode == 0, $"Container restore failed ({process.ExitCode}).\n{output}\n{error}");
+
+            var commands = new List<string[]>();
+            foreach (string line in File.ReadLines(tracePath))
+            {
+                using var document = JsonDocument.Parse(line);
+                var entry = document.RootElement;
+                if (entry.GetProperty("event").GetString() == "start" &&
+                    !entry.GetProperty("sid").GetString().Contains("/", StringComparison.Ordinal))
+                {
+                    commands.Add(entry.GetProperty("argv").EnumerateArray().Select(argument => argument.GetString()).ToArray());
+                }
+            }
+
+            string[] registration = Assert.Single(commands.Where(command => command.Contains("safe.directory")));
+            string[] resolution = Assert.Single(commands.Where(command => command.Contains("--absolute-git-dir")));
+            Assert.True(commands.IndexOf(registration) < commands.IndexOf(resolution));
+            Assert.Equal(config.AssetsRepoLocation.ToString(), registration.Last());
+            Assert.DoesNotContain(commands, command => command.Contains("checkout") || command.Contains("clean"));
+            string registeredPath = Assert.Single(_git.Run("config --global --get-all safe.directory", config).StdOut
+                .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
+            Assert.Equal(config.AssetsRepoLocation.ToString(), registeredPath);
+            Assert.Equal("unpublished recording", File.ReadAllText(recordingPath));
+            Assert.Equal("new recording", File.ReadAllText(newRecordingPath));
+            if (!alreadyConfigured)
+            {
+                Assert.Contains(commands, command => command.Contains("sparse-checkout"));
+            }
+        }
+
+        [Theory]
         [InlineData(null, true)]
         [InlineData("python", false)]
         public async Task RestoreSupportsRootAssetsJson(string prefix, bool includesOtherLanguages)
@@ -385,6 +466,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             public List<string> Commands { get; } = new List<string>();
             public string FailCommandOnce { get; set; }
+            public string GlobalConfigPath { get; set; }
+            public bool AssumeDifferentOwner { get; set; }
 
             public LocalGitProcessHandler(string remotePath, string repositoryName)
             {
@@ -395,9 +478,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             public override ProcessStartInfo CreateGitProcessInfo(string workingDirectory)
             {
                 var startInfo = base.CreateGitProcessInfo(workingDirectory);
-                startInfo.EnvironmentVariables["GIT_CONFIG_GLOBAL"] = OperatingSystem.IsWindows() ? "NUL" : "/dev/null";
+                startInfo.EnvironmentVariables["GIT_CONFIG_GLOBAL"] = GlobalConfigPath ?? (OperatingSystem.IsWindows() ? "NUL" : "/dev/null");
                 startInfo.EnvironmentVariables["GIT_CONFIG_NOSYSTEM"] = "1";
                 startInfo.EnvironmentVariables["GIT_TERMINAL_PROMPT"] = "0";
+                if (AssumeDifferentOwner)
+                {
+                    startInfo.EnvironmentVariables["GIT_TEST_ASSUME_DIFFERENT_OWNER"] = "1";
+                }
                 startInfo.EnvironmentVariables["GIT_CONFIG_COUNT"] = "4";
                 startInfo.EnvironmentVariables["GIT_CONFIG_KEY_0"] = $"url.{_remoteUrl}.insteadOf";
                 startInfo.EnvironmentVariables["GIT_CONFIG_VALUE_0"] = $"git@github.com:{_repositoryName}.git";

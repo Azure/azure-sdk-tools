@@ -385,7 +385,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             // Workaround for git directory ownership checks that may fail when running in a container as a different user.
             if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER"))
             {
-                GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
+                GitHandler.Run($"config --global --add safe.directory \"{config.AssetsRepoLocation}\"", config);
             }
         }
 
@@ -462,10 +462,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             string repositoryLocation = config.AssetsRepoLocation.ToString();
             bool configureRepository = !_configuredRepositories.ContainsKey(repositoryLocation);
             string configurationMarker = null;
+            bool safeDirectoryChecked = false;
 
             if (configureRepository)
             {
-                configurationMarker = GetRepositoryConfigurationMarker(config);
+                configurationMarker = GetRepositoryConfigurationMarker(config, out safeDirectoryChecked);
                 configureRepository = !Directory.Exists(configurationMarker);
                 if (!configureRepository)
                 {
@@ -482,7 +483,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
-                SetSafeDirectory(config);
+                if (!safeDirectoryChecked)
+                {
+                    SetSafeDirectory(config);
+                }
                 SetOrigin(config);
 
                 if (configureRepository && !settingsConfiguredDuringClone)
@@ -550,11 +554,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
-        private string GetRepositoryConfigurationMarker(GitAssetsConfiguration config)
+        private string GetRepositoryConfigurationMarker(GitAssetsConfiguration config, out bool safeDirectoryChecked)
         {
+            safeDirectoryChecked = false;
             string gitDirectory = Path.Join(config.AssetsRepoLocation, ".git");
             if (File.Exists(gitDirectory))
             {
+                SetSafeDirectory(config);
+                safeDirectoryChecked = true;
                 gitDirectory = GitHandler.Run("rev-parse --absolute-git-dir", config).StdOut.Trim();
             }
 

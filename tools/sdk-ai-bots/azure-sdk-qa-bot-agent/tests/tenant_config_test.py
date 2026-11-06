@@ -115,6 +115,16 @@ def test_pr_review_preserves_required_access_links() -> None:
     ) in pr_review
 
 
+def test_pr_review_checks_lifecycle_before_diagnosing_blockers() -> None:
+    pr_review = _read_pr_review_skill()
+
+    assert (
+        "Confirm whether the PR is open, closed or merged; disclose if unknown"
+    ) in pr_review
+    assert "lead with that state rather than merge blockers" in pr_review
+    assert "continue only for unresolved needs in the user's request" in pr_review
+
+
 def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
     config = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
     assert config is not None

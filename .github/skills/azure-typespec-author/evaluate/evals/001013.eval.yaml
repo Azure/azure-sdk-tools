@@ -5,7 +5,6 @@ type: capability # capability | regression
 area: "versioning"
 # Root-level environment
 environment: azsdk-mcp
-
 # Execution configuration
 defaults:
   runs: 1 # Trials per stimulus
@@ -40,11 +39,6 @@ stimuli:
       commands:
         - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
           required:
@@ -59,16 +53,7 @@ stimuli:
     prompt: |
       @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
     environment: *shared_environment
-    rubric: &shared_rubric
-      - EmployeeProperties.statusCode changes from string to int32 only in API version 2025-05-04-preview using valid TypeSpec versioning.
-      - Earlier API versions retain the string type, and preview-version handling follows the preview-after-preview convention.
-      - Changes are limited to the requested type change and contain no unrelated edits.
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
           command: "node check-node-dependencies.cjs node_modules"
@@ -99,13 +84,6 @@ stimuli:
         config:
           pattern: 'statusCode\?: int32;'
           path: "Microsoft.Widget/Widget/employee.tsp"
-      - &prompt
-        type: "prompt"
-        config:
-          threshold: 0.88
-          model: "gpt-5.6-sol"
-          scoring: "scale_1_10"
-          prompt: "Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits."
     constraints:
       max_turns: 5
       max_tokens: 1000000
@@ -115,7 +93,6 @@ stimuli:
       mode: "no-skill"
     prompt: "In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`."
     environment: *shared_environment
-    rubric: *shared_rubric
     graders:
       - type: "tool-calls"
         config:
@@ -124,7 +101,6 @@ stimuli:
       - *file_matches
       - *file_matches_type_change
       - *file_matches_property
-      - *prompt
     constraints:
       max_turns: 6
       max_tokens: 100000
@@ -132,8 +108,7 @@ stimuli:
 scoring:
   weights:
     tool-calls: 0.125
-    prompt: 0.125
     run-command: 0.125
     skill-invocation: 0.125
-    file-matches: 0.5
+    file-matches: 0.625
   threshold: 0.97

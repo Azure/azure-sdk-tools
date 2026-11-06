@@ -8,12 +8,6 @@ schedules:
       include:
         - main
     always: true
-  - cron: '5 0,4,8,12,16,20 * * *'
-    displayName: Playground
-    branches:
-      include:
-        - main
-    always: true
   - cron: '15 0,4,8,12,16,20 * * *'
     displayName: Cosmos
     branches:
@@ -53,11 +47,6 @@ parameters:
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
         # AdditionalParameters: "-DeleteNonCompliantGroups"
-      - JobName: Playground
-        ScheduleName: Playground
-        DisplayName: AzureCloud Playground - Resource Cleanup
-        ServiceConnection: azure-sdk-tests-playground
-        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments -MaxLifespanDeleteAfterHours 240"
       - JobName: Cosmos
         ScheduleName: Cosmos
         DisplayName: AzureCloud Cosmos - Resource Cleanup

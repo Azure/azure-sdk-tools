@@ -172,6 +172,7 @@ async def create_ado_issue(
         or issue_target.provider != "azure-devops"
         or not issue_target.organization
         or not issue_target.project
+        or not issue_target.area_path
     ):
         raise ValueError("knowledge source is not configured for Azure DevOps issues")
 
@@ -192,6 +193,13 @@ async def create_ado_issue(
             "op": "add",
             "path": "/fields/System.Title",
             "value": title,
+        },
+        {
+            # The agent identity may only create work items under the
+            # configured area path.
+            "op": "add",
+            "path": "/fields/System.AreaPath",
+            "value": issue_target.area_path,
         },
         {
             "op": "add",

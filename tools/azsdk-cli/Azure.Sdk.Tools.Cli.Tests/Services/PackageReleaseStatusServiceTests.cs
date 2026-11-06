@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
 using System.Net;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
@@ -29,7 +30,9 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = true,
+                IsReleaseApproved = true,
+                IsApiApproved = true,
+                IsPackageNameApproved = true,
                 Reason = "approved"
             });
 
@@ -50,7 +53,9 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = false,
+                IsReleaseApproved = false,
+                IsApiApproved = true,
+                IsPackageNameApproved = false,
                 Reason = "missingApproval"
             });
         apiViewServiceMock
@@ -109,7 +114,7 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = false,
+                IsReleaseApproved = false,
                 Reason = "repositoryNotSupported"
             });
         apiViewServiceMock
@@ -139,7 +144,7 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "java", "azure-keyvault-keys", "4.12.0b3", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = false,
+                IsReleaseApproved = false,
                 Reason = "repositoryNotSupported"
             });
         apiViewServiceMock
@@ -163,7 +168,7 @@ public class PackageReleaseStatusServiceTests
             .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "cpp", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ApiReviewHubReleaseGateResult
             {
-                IsApproved = false,
+                IsReleaseApproved = false,
                 Reason = "repositoryNotSupported"
             });
 
@@ -176,5 +181,151 @@ public class PackageReleaseStatusServiceTests
         Assert.That(result.ApiView?.Reason, Is.EqualTo("languageNotSupported"));
         Assert.That(result.ApiView?.Details, Is.EqualTo(new[] { "APIView does not support cpp for release gating." }));
         apiViewServiceMock.Verify(x => x.GetApprovalStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestCase(true, false, "packageNameNotApproved", "API approval matched the requested hash.")]
+    [TestCase(true, false, "packageNameNotApproved", "API review is not required for this package.")]
+    [TestCase(false, true, "missingApproval", "No API approval was found.")]
+    [TestCase(false, true, "rejected", "An architect requested API changes.")]
+    [TestCase(false, true, "staleArtifact", "The release artifact does not match the approved API.")]
+    [TestCase(false, false, "packageNameNotApproved", "API approval is also missing.")]
+    [TestCase(false, false, "unknownPackage", "Package is not known.")]
+    public async Task GetApprovalStatusAsync_UsesCompleteLegacyApproval_WhenReviewHubDeniesRelease(
+        bool isApiApproved, bool isPackageNameApproved, string reason, string detail)
+    {
+        var reviewHub = new ApiReviewHubReleaseGateResult
+        {
+            IsReleaseApproved = false,
+            IsApiApproved = isApiApproved,
+            IsPackageNameApproved = isPackageNameApproved,
+            Reason = reason,
+            Details = [detail],
+            AppliedInheritanceRule = "prereleaseToStable",
+            ApiApprovals = [new ApiReviewHubApiApprovalRecord { Id = "api-approval-id", Status = "approved" }]
+        };
+        reviewHubServiceMock.Setup(x => x.GetReleaseGateStatusAsync(
+                "https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(reviewHub);
+        apiViewServiceMock.Setup(x => x.GetApprovalStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiViewReleaseStatusResult
+            {
+                IsApproved = true,
+                PackageNameApproved = true,
+                StatusCode = 200,
+                Reason = "approved"
+            });
+
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsApproved, Is.True);
+            Assert.That(result.FinalSource, Is.EqualTo("APIView"));
+            Assert.That(result.Reason, Is.EqualTo("approved"));
+            Assert.That(result.ReviewHub, Is.SameAs(reviewHub));
+            Assert.That(result.ReviewHub.Reason, Is.EqualTo(reason));
+            Assert.That(result.ReviewHub.IsApiApproved, Is.EqualTo(isApiApproved));
+            Assert.That(result.ReviewHub.IsPackageNameApproved, Is.EqualTo(isPackageNameApproved));
+            Assert.That(result.ReviewHub.Details, Is.EqualTo(new[] { detail }));
+            Assert.That(result.ReviewHub.ApiApprovals![0].Id, Is.EqualTo("api-approval-id"));
+            Assert.That(result.ReviewHub.AppliedInheritanceRule, Is.EqualTo("prereleaseToStable"));
+            Assert.That(result.ApiView!.IsApproved, Is.True);
+        });
+    }
+
+    [TestCase("repositoryNotSupported")]
+    [TestCase("queryFailed")]
+    [TestCase("invalidResponse")]
+    public async Task GetApprovalStatusAsync_PreservesApprovedLegacyFallback(string reason)
+    {
+        var setup = reviewHubServiceMock.Setup(x => x.GetReleaseGateStatusAsync(
+            "https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()));
+        if (reason == "queryFailed")
+        {
+            setup.ThrowsAsync(new HttpRequestException("unavailable", null, HttpStatusCode.ServiceUnavailable));
+        }
+        else if (reason == "invalidResponse")
+        {
+            setup.ThrowsAsync(new JsonException("Required approval fields are missing."));
+        }
+        else
+        {
+            setup.ReturnsAsync(new ApiReviewHubReleaseGateResult { Reason = reason });
+        }
+        apiViewServiceMock.Setup(x => x.GetApprovalStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiViewReleaseStatusResult
+            {
+                IsApproved = true,
+                PackageNameApproved = true,
+                StatusCode = 200,
+                Reason = "approved"
+            });
+
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+
+        Assert.That(result.IsApproved, Is.True);
+        Assert.That(result.FinalSource, Is.EqualTo("APIView"));
+        Assert.That(result.Reason, Is.EqualTo("approved"));
+        Assert.That(result.ReviewHub.IsApiApproved, Is.False);
+        Assert.That(result.ReviewHub.IsPackageNameApproved, Is.False);
+        Assert.That(result.ReviewHub.Reason, Is.EqualTo(reason));
+    }
+
+    [TestCase("packageNameNotApproved")]
+    [TestCase("rejected")]
+    [TestCase("unknownPackage")]
+    public async Task GetApprovalStatusAsync_PreservesReviewHubDenial_WhenLegacyQueryFails(string reason)
+    {
+        reviewHubServiceMock.Setup(x => x.GetReleaseGateStatusAsync(
+                "https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiReviewHubReleaseGateResult
+            {
+                Reason = reason,
+                Details = ["API failure context"]
+            });
+        apiViewServiceMock.Setup(x => x.GetApprovalStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("legacy unavailable", null, HttpStatusCode.ServiceUnavailable));
+
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+
+        Assert.That(result.IsApproved, Is.False);
+        Assert.That(result.FinalSource, Is.EqualTo("ApiReviewHub"));
+        Assert.That(result.Reason, Is.EqualTo(reason));
+        Assert.That(result.ReviewHub.Details, Is.EqualTo(new[] { "API failure context" }));
+        Assert.That(result.ApiView!.Error, Does.Contain("legacy unavailable"));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task GetApprovalStatusAsync_DoesNotApprove_WhenReviewHubResponseIsInvalid_AndLegacyDoesNotApprove(bool legacyQueryFails)
+    {
+        reviewHubServiceMock.Setup(x => x.GetReleaseGateStatusAsync(
+                "https://endpoint", "python", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new JsonException("Required approval fields are missing."));
+        var setup = apiViewServiceMock.Setup(x => x.GetApprovalStatusAsync(
+            "python", "pkg", "1.0.0", It.IsAny<CancellationToken>()));
+        if (legacyQueryFails)
+        {
+            setup.ThrowsAsync(new HttpRequestException("legacy unavailable", null, HttpStatusCode.ServiceUnavailable));
+        }
+        else
+        {
+            setup.ReturnsAsync(new ApiViewReleaseStatusResult
+            {
+                IsApproved = false,
+                PackageNameApproved = true,
+                StatusCode = 201,
+                Reason = "packageNameApproved"
+            });
+        }
+
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "python", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+
+        Assert.That(result.IsApproved, Is.False);
+        Assert.That(result.FinalSource, Is.EqualTo(legacyQueryFails ? "None" : "APIView"));
+        Assert.That(result.Reason, Is.EqualTo(legacyQueryFails ? "queryFailed" : "packageNameApproved"));
+        Assert.That(result.ReviewHub.Reason, Is.EqualTo("invalidResponse"));
+        Assert.That(result.ReviewHub.Error, Does.Contain("Required approval fields are missing."));
+        apiViewServiceMock.Verify(x => x.GetApprovalStatusAsync("python", "pkg", "1.0.0", It.IsAny<CancellationToken>()), Times.Once);
     }
 }

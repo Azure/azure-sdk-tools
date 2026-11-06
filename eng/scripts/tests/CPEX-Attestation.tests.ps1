@@ -390,7 +390,14 @@ Describe 'Parse triages' {
                 id = "0"
             }; 
             expectation = @{
-                kpiIds = @()
+                kpiIds = @(
+                    "dfe9c112-416e-4e0a-8012-4a3a29807782",
+                    "e0504da9-8897-41db-a75f-5027298ba410",
+                    "ad70777b-a1f5-4d77-8926-5c466d7a214d",
+                    "84715402-4f3c-4dca-b330-f05206abaec5",
+                    "da768dff-8f90-4999-ad3a-adcd790911f3",
+                    "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+                )
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "ProductSku"
@@ -417,6 +424,10 @@ Describe 'Parse triages' {
             }; 
             expectation = @{
                 kpiIds = @(
+                    "dfe9c112-416e-4e0a-8012-4a3a29807782",
+                    "e0504da9-8897-41db-a75f-5027298ba410",
+                    "ad70777b-a1f5-4d77-8926-5c466d7a214d",
+                    "84715402-4f3c-4dca-b330-f05206abaec5",
                     "da768dff-8f90-4999-ad3a-adcd790911f3",
                     "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
                 )
@@ -509,6 +520,8 @@ Describe 'Parse triages' {
             }; 
             expectation = @{
                 kpiIds = @(
+                    "dfe9c112-416e-4e0a-8012-4a3a29807782",
+                    "ad70777b-a1f5-4d77-8926-5c466d7a214d",
                     "da768dff-8f90-4999-ad3a-adcd790911f3"
                 )
                 productID = "123456789-09876541-23124981234"
@@ -546,10 +559,10 @@ Describe 'Parse triages' {
         
         & (Join-Path $PSScriptRoot '../Invoke-CPEX-Attestation-Automation.ps1') -AzureSDKEmailUri "FAKE-URI" -TableName "FAKE-TABLE-NAME"
 
-        Should -Invoke -CommandName Get-TriagesForCPEXAttestation -Times 1
+        Should -Invoke -CommandName Get-TriagesForCPEXAttestation -Times 1 -Exactly
 
-        Should -Invoke -CommandName AddAttestationEntry -Times ($expectation.kpiIds.Count + 1)
-        Should -Invoke -CommandName AddAttestationEntry -Times 1 -ParameterFilter {
+        Should -Invoke -CommandName AddAttestationEntry -Times ($expectation.kpiIds.Count + 1) -Exactly
+        Should -Invoke -CommandName AddAttestationEntry -Times 1 -Exactly -ParameterFilter {
                 $targetId -eq $expectation.productID -and
                 $actionItemId -eq "ba2c80d5-b8be-465f-8948-283229082fd1" -and
                 $status -eq 1 -and
@@ -558,7 +571,7 @@ Describe 'Parse triages' {
                 $productName -eq $expectation.productName
             }
         foreach ($kpiId in $expectation.kpiIds) {
-            Should -Invoke -CommandName AddAttestationEntry -Times 1 -ParameterFilter {
+            Should -Invoke -CommandName AddAttestationEntry -Times 1 -Exactly -ParameterFilter {
                 $targetId -eq $expectation.productID -and
                 $actionItemId -eq $kpiId -and
                 $status -eq $expectation.status -and
@@ -568,13 +581,13 @@ Describe 'Parse triages' {
             }
         }
 
-        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 2
-        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -ParameterFilter {
+        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 2 -Exactly
+        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -Exactly -ParameterFilter {
             $workItemId -eq $triage.id -and
             $fieldName -ceq "Custom.ManagementPlaneAttestationStatus" -and
             $status -ceq $expectation.mgmtAttestationStatus
         }
-        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -ParameterFilter {
+        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -Exactly -ParameterFilter {
             $workItemId -eq $triage.id -and
             $fieldName -ceq "Custom.DataplaneAttestationStatus" -and
             $status -ceq $expectation.dataAttestationStatus

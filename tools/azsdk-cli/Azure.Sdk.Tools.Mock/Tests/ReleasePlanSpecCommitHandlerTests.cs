@@ -2,8 +2,13 @@
 // Licensed under the MIT License.
 
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
+using Azure.Sdk.Tools.Mock.Handlers;
 using Azure.Sdk.Tools.Mock.Handlers.ReleasePlan;
+using Microsoft.Extensions.DependencyInjection;
+using ModelContextProtocol.Server;
 using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.Mock.Tests;
@@ -12,6 +17,58 @@ namespace Azure.Sdk.Tools.Mock.Tests;
 public class ReleasePlanSpecCommitHandlerTests
 {
     private const string SpecCommit = "0123456789abcdef0123456789abcdef01234567";
+
+    [TestCase(0, false)]
+    [TestCase(0, true)]
+    [TestCase(-1, false)]
+    [TestCase(-1, true)]
+    [TestCase(50001, false)]
+    [TestCase(50001, true)]
+    public void Abandon_RequiresPositiveReleasePlanId(int id, bool wireArguments)
+    {
+        var response = new AbandonReleasePlanHandler().Handle(ToArguments(new() { ["releasePlanId"] = id }, wireArguments));
+        Assert.That(response.ResponseError is null, Is.EqualTo(id > 0));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Abandon_RejectsRemovedWorkItemArgumentEvenWithPlanId(bool wireArguments)
+    {
+        var response = new AbandonReleasePlanHandler().Handle(ToArguments(new() { ["releasePlanId"] = 50001, ["workItemId"] = 35000 }, wireArguments));
+        Assert.That(response.ResponseError, Does.Contain("workItemId is not supported"));
+    }
+
+    [Test]
+    public void Abandon_RejectsMissingAndNonIntegerIds()
+    {
+        var handler = new AbandonReleasePlanHandler();
+        Assert.That(handler.Handle(null).ResponseError, Is.Not.Null);
+        Assert.That(handler.Handle(new()).ResponseError, Is.Not.Null);
+        foreach (var value in new object?[] { null, "50001", true, 1.5, int.MaxValue + 1L })
+        {
+            Assert.That(handler.Handle(new() { ["releasePlanId"] = value }).ResponseError, Is.Not.Null);
+            Assert.That(handler.Handle(ToArguments(new() { ["releasePlanId"] = value }, true)).ResponseError, Is.Not.Null);
+        }
+    }
+
+    [Test]
+    public void Abandon_RegistrationMatchesProductionPlanIdOnlySchema()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<MockToolFactory>();
+        MockToolRegistrations.RegisterMockMcpTools(services);
+        using var provider = services.BuildServiceProvider();
+        var mock = provider.GetServices<McpServerTool>().Single(t => t.ProtocolTool.Name == "azsdk_abandon_release_plan");
+        var method = typeof(ReleasePlanTool).GetMethod(nameof(ReleasePlanTool.AbandonReleasePlan))!;
+        var real = McpServerTool.Create(method, _ => RuntimeHelpers.GetUninitializedObject(typeof(ReleasePlanTool)),
+            new McpServerToolCreateOptions { Services = provider });
+        Assert.That(mock.ProtocolTool.InputSchema.GetRawText(), Is.EqualTo(real.ProtocolTool.InputSchema.GetRawText()));
+        Assert.That(mock.ProtocolTool.Description, Is.EqualTo(real.ProtocolTool.Description));
+        Assert.That(mock.ProtocolTool.InputSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name),
+            Is.EqualTo(new[] { "releasePlanId" }));
+        Assert.That(provider.GetRequiredService<MockToolFactory>().GetHandler(mock.ProtocolTool.Name), Is.TypeOf<AbandonReleasePlanHandler>());
+    }
 
     [TestCase(SpecCommit, false)]
     [TestCase(SpecCommit, true)]

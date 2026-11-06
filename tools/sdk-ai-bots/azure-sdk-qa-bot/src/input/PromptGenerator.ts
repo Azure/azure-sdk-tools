@@ -56,7 +56,11 @@ export class PromptGenerator {
       timestamp: context.activity.timestamp ?? new Date(),
       conversationID: context.activity.conversation.id,
     };
-    logger.info(`Raw prompt generated: ${JSON.stringify(rawPrompt)}`, { meta });
+    logger.info('Raw prompt generated', {
+      prompt: { ...rawPrompt, images: undefined },
+      imageCount: inlineImageUrls.length,
+      meta,
+    });
     return rawPrompt;
   }
 }

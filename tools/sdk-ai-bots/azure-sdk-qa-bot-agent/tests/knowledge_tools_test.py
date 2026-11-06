@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import get_args, get_type_hints
 from unittest.mock import AsyncMock
 
 from azure.search.documents.indexes.models import IndexerExecutionStatus
@@ -13,8 +14,10 @@ import config.app_config as app_config
 from config.tenant_config import (
     SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_AZURE_REST_API_SPECS_WIKI,
+    SRC_AZURE_SDK_FOR_NET_DOCS,
     SRC_STATIC_ARM_DOCS,
     SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_CSHARP_EMITTER_DOCS,
     TenantID,
 )
 import pytest
@@ -31,6 +34,21 @@ import utils.azure_ai_search as azure_ai_search_module
 from utils.azure_ai_search import SearchClient, _raw_chunk_filter
 from utils.azure_storage import BlobContent
 from utils.knowledge_config import KbIssueTarget, KbTarget, _build_targets
+
+
+def test_search_query_guidance_targets_current_evidence_gaps() -> None:
+    annotation = get_type_hints(
+        KnowledgeTools.search_knowledge_base, include_extras=True
+    )["queries"]
+    description = get_args(annotation)[1]
+
+    assert "current question or evidence gap" in description
+    assert "conversation and retrieved context" in description
+    assert "preserving the user's goal" in description
+    assert "Do not keep repeating the original request" in description
+    assert "Preserve relevant wording and concrete identifiers" in description
+    assert "alone as one query and search the description separately" in description
+    assert "At least 1, at most 3 queries" in description
 
 
 def test_raw_chunk_filter_excludes_wiki_pages() -> None:
@@ -207,6 +225,7 @@ def test_build_targets_maps_ado_source_and_issue_project() -> None:
                             "provider": "azure-devops",
                             "organization": "azure-sdk",
                             "project": "internal",
+                            "areaPath": "internal\\qa-bot",
                         },
                     },
                     "paths": [{"folder": "internal_wiki"}],
@@ -223,7 +242,32 @@ def test_build_targets_maps_ado_source_and_issue_project() -> None:
         provider="azure-devops",
         organization="azure-sdk",
         project="internal",
+        area_path="internal\\qa-bot",
     )
+
+
+def test_build_targets_rejects_ado_issue_tracker_without_area_path() -> None:
+    with pytest.raises(ValueError, match="areaPath"):
+        _build_targets(
+            {
+                "sources": [
+                    {
+                        "repository": {
+                            "url": (
+                                "https://dev.azure.com/"
+                                "azure-sdk/internal/_git/internal.wiki"
+                            ),
+                            "issueTracker": {
+                                "provider": "azure-devops",
+                                "organization": "azure-sdk",
+                                "project": "internal",
+                            },
+                        },
+                        "paths": [{"folder": "internal_wiki"}],
+                    }
+                ]
+            }
+        )
 
 
 @pytest.mark.asyncio
@@ -368,6 +412,57 @@ async def test_resolve_kb_source_returns_ownership_and_issue_target(
     assert result.source_url == "https://github.com/Azure/typespec-azure.git"
     assert result.model_dump(mode="json")["issue_target"] == (
         vars(issue_target) if issue_target is not None else None
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("service_type", [None, "management-plane", "data-plane"])
+async def test_dotnet_search_returns_azure_and_upstream_docs(monkeypatch, service_type):
+    chunks = []
+    for source_name, title in (
+        (SRC_AZURE_SDK_FOR_NET_DOCS, "eng#packages#http-client-csharp-mgmt#docs#emitter.md"),
+        (SRC_TYPESPEC_CSHARP_EMITTER_DOCS, "customization.md"),
+    ):
+        chunks.append(KnowledgeChunk(
+            source=source_name,
+            title=title,
+            content="C# emitter guidance",
+            link=f"https://example.com/{source_name}",
+        ))
+    search = AsyncMock(return_value=chunks)
+    search_client = SimpleNamespace(
+        fused_search=search,
+        deduplicate_chunks=lambda results: results,
+        top_k=10,
+        expand_by_hierarchy=AsyncMock(side_effect=lambda chunk: chunk),
+    )
+    monkeypatch.setattr(knowledge_tools_module, "get_search_client", lambda: search_client)
+
+    result = await KnowledgeTools().search_knowledge_base(
+        queries=["How do I customize a C# client?"],
+        tenant_id=TenantID.DOTNET_CHANNEL_QA_BOT.value,
+        service_type=service_type,
+    )
+
+    assert {reference.source for reference in result.results} == {
+        SRC_AZURE_SDK_FOR_NET_DOCS, SRC_TYPESPEC_CSHARP_EMITTER_DOCS
+    }
+    search.assert_awaited_once()
+    filters = search.call_args.args[1]
+    for source_name in (SRC_AZURE_SDK_FOR_NET_DOCS, SRC_TYPESPEC_CSHARP_EMITTER_DOCS):
+        expected = f"context_id eq '{source_name}'"
+        if service_type:
+            expected += f" and (service_type eq '{service_type}' or service_type eq null)"
+        assert filters[source_name] == expected
+    assert search.call_args.kwargs["extra_filter"] == (
+        "(page_type eq null or page_type eq '')"
+    )
+    assert [
+        call.args[0]
+        for call in search_client.expand_by_hierarchy.call_args_list
+    ] == chunks
+    assert all(
+        not call.kwargs for call in search_client.expand_by_hierarchy.call_args_list
     )
 
 

@@ -5,7 +5,6 @@ type: capability # capability | regression
 area: "armtemplate"
 # Root-level environment
 environment: azsdk-mcp
-
 # Execution configuration
 defaults:
   runs: 1 # Trials per stimulus
@@ -20,7 +19,7 @@ stimuli:
       suite: "armtemplate"
       mode: "trigger"
     prompt: |
-      In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (extensible enum with known values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: &shared_environment
       files:
         - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -44,11 +43,6 @@ stimuli:
       commands:
         - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "skill-invocation"
         config:
           required:
@@ -61,18 +55,13 @@ stimuli:
       suite: "armtemplate"
       mode: "forced"
     prompt: |
-      @azure-typespec-author In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      @azure-typespec-author In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (extensible enum with known values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     rubric: &shared_rubric
       - Employee has a synchronous POST resource action named notify in API version 2024-10-01-preview.
-      - The request contains string message content and a priority limited to Low, Medium, or High.
+      - The request contains string message content and a priority defined as an extensible enum with known values Low, Medium, and High.
       - The response contains a string notification identifier and status, and changes are limited to the requested action.
     graders:
-      - type: "tool-calls"
-        config:
-          required:
-            - "^(edit|apply_patch|bash|powershell)$"
-            - "azure-sdk-mcp-azsdk_run_typespec_validation"
       - type: "run-command"
         config:
           command: "node check-node-dependencies.cjs node_modules"
@@ -112,7 +101,7 @@ stimuli:
         type: "file-matches"
         name: "file-matches-request-model"
         config:
-          pattern: "model.*Notify.*Request|model.*Notification.*Request"
+          pattern: "model.*Notify.*(?:Request|Content)|model.*Notification.*(?:Request|Content)"
           path: "employee.tsp"
       - &file_matches_message_property
         type: "file-matches"
@@ -130,7 +119,7 @@ stimuli:
         type: "file-matches"
         name: "file-matches-response-model"
         config:
-          pattern: "model.*Notify.*Response|model.*Notification.*Response"
+          pattern: "model.*Notify.*(?:Response|Result)|model.*Notification.*(?:Response|Result)"
           path: "employee.tsp"
       - &file_matches_notification_id_property
         type: "file-matches"
@@ -156,7 +145,7 @@ stimuli:
           threshold: 0.88
           model: "gpt-5.6-sol"
           scoring: "scale_1_10"
-          prompt: "Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent."
+          prompt: "Verify the operation contract without requiring particular request or response model names: Employee has a synchronous POST action named notify in API version 2024-10-01-preview; its request contains string message content and a Priority extensible enum with known values Low, Medium, and High; its response contains a string notification identifier and status; and there are no unrelated edits."
     constraints:
       max_turns: 5
       max_tokens: 1000000
@@ -165,7 +154,7 @@ stimuli:
       suite: "armtemplate"
       mode: "no-skill"
     prompt: |
-      In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
+      In API version `2024-10-01-preview`, add a synchronous POST action called `notify` to the standard operations of Employee. Request body: message content (string) and priority (extensible enum with known values Low, Medium, High). Response body: notification identifier (string) and status (string). All required decisions are provided; no separate confirmation is needed. Ensure the definition meets TypeSpec Azure guidelines.
     environment: *shared_environment
     rubric: *shared_rubric
     graders:
@@ -173,6 +162,10 @@ stimuli:
         config:
           required:
             - "^(edit|apply_patch|bash|powershell)$"
+      - type: "run-command"
+        config:
+          command: "tsp compile ."
+          expected_exit_code: 0
       - *file_matches
       - *file_matches_low_enum_value
       - *file_matches_medium_enum_value

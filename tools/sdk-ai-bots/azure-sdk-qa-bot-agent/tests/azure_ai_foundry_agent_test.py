@@ -10,7 +10,7 @@ import asyncio
 import sys
 from json import JSONDecodeError
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, call, patch
 
 import httpx
 import pytest
@@ -19,7 +19,7 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from openai import BadRequestError, NotFoundError
+from openai import APIStatusError, BadRequestError, NotFoundError
 
 from utils.azure_ai_foundry_agent import (
     CONTENT_SAFETY_MESSAGE,
@@ -285,6 +285,61 @@ def _api_error(
     return error_cls(message, response=response, body=body)
 
 
+@pytest.mark.asyncio
+async def test_readiness_retries_do_not_enable_invocation_retries() -> None:
+    error = _api_error(
+        APIStatusError, 424,
+        body={"code": "session_not_ready"},
+    )
+    good = _FakeResponse(output_text="answer")
+    client = _mock_client([error, error, _completed_stream(good)])
+
+    with patch("utils.azure_ai_foundry_agent.asyncio.sleep", new_callable=AsyncMock) as sleep:
+        _, response = await HostedAgentClient(
+            client, max_retries=1, retry_delay=10, session_ready_max_attempts=3,
+        ).invoke(conversation_items=[], agent_ref={})
+
+    assert response is good
+    assert client.responses.create.await_count == 3
+    assert sleep.await_args_list == [call(10), call(20)]
+
+
+@pytest.mark.asyncio
+async def test_readiness_retries_are_bounded_and_preserve_the_failure() -> None:
+    error = _api_error(
+        APIStatusError, 424, message="session_not_ready: request-id-123",
+        body={"code": "session_not_ready"},
+    )
+    client = _mock_client([error, error, error])
+
+    with pytest.raises(RuntimeError, match="session_not_ready: request-id-123"):
+        await HostedAgentClient(
+            client, max_retries=1, retry_delay=0, session_ready_max_attempts=3,
+        ).invoke(conversation_items=[], agent_ref={})
+
+    assert client.responses.create.await_count == 3
+
+
+@pytest.mark.asyncio
+async def test_readiness_retry_never_replays_an_accepted_stream() -> None:
+    error = _api_error(
+        APIStatusError, 424, message="failure after acceptance",
+        body={"code": "session_not_ready"},
+    )
+
+    async def accepted_stream():
+        yield _FakeEvent("response.created")
+        raise error
+
+    client = _mock_client([accepted_stream()])
+    with pytest.raises(RuntimeError, match="failure after acceptance"):
+        await HostedAgentClient(
+            client, max_retries=1, retry_delay=0, session_ready_max_attempts=3,
+        ).invoke(conversation_items=[], agent_ref={})
+
+    assert client.responses.create.await_count == 1
+
+
 @pytest.mark.parametrize(
     "error_cls, status_code",
     [(NotFoundError, 404), (BadRequestError, 400)],
@@ -310,14 +365,14 @@ async def test_invoke_drops_rejected_session_and_retries_without_it(
     ) as mock_set:
         _, out = await HostedAgentClient(client, retry_delay=0).invoke(
             conversation_items=[],
-            agent_ref={"name": "azure-mcp-agent"},
+            agent_ref={"name": "azure-mcp-agent", "version": "42"},
             agent_session_id="stale-session",
         )
 
     assert out is good
     assert client.responses.create.await_count == 2
     # The rejected session is cleared so a fresh one is created next time.
-    mock_set.assert_called_once_with("azure-mcp-agent", None)
+    mock_set.assert_called_once_with("azure-mcp-agent", "42", None)
     # First attempt carried the stale session; the retry dropped it.
     assert captured_extra_bodies[0].get("agent_session_id") == "stale-session"
     assert "agent_session_id" not in captured_extra_bodies[1]

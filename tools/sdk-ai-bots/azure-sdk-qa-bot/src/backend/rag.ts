@@ -2,6 +2,7 @@ import axios from 'axios';
 import { logger } from '../logging/logger.js';
 import { ragApiPaths } from '../config/config.js';
 import { TokenCredential } from '@azure/identity';
+import type { TeamsMention } from '../common/mentions.js';
 
 export interface RAGOptions {
   endpoint: string;
@@ -79,6 +80,7 @@ export interface CompletionResponsePayload {
   ReasoningProgress?: string;
   route_tenant?: string;
   trace_id?: string;
+  mentions?: TeamsMention[] | null;
 }
 
 export function isCompletionResponsePayload(
@@ -150,7 +152,15 @@ export async function getRAGReply(
     meta
   );
   try {
-    logger.info('Completion payload:', { payload });
+    logger.info('Completion payload:', {
+      payload: {
+        ...payload,
+        additional_infos: payload.additional_infos?.map((info) => ({
+          ...info,
+          link: info.link.startsWith('data:') ? '[inline image omitted]' : info.link,
+        })),
+      },
+    });
     let headers = {
         'Content-Type': 'application/json; charset=utf-8',
     };
@@ -167,7 +177,12 @@ export async function getRAGReply(
     logger.info('Get response from RAG', { responseBody: response.data, meta });
     return response.data;
   } catch (error) {
-    logger.warn('Failed to get reply from RAG:', { error, meta });
+    logger.warn('Failed to get reply from RAG:', {
+      error: axios.isAxiosError(error)
+        ? { name: error.name, message: error.message, status: error.response?.status }
+        : error,
+      meta,
+    });
     return undefined;
   }
 }

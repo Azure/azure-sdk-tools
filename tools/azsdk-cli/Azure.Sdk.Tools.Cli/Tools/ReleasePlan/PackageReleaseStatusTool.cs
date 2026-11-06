@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string?> sdkReleaseTypeOpt = new("--sdk-release-type")
         {
-            Description = "SDK release type (e.g., beta, stable). Used only by the transitional package-name lookup when neither a plan ID nor an SDK PR is supplied.",
+            Description = "SDK release type (e.g., beta, stable). Reported as release metadata; not used to select a release plan.",
             Required = false,
         };
 
@@ -173,7 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Only callers that supply neither correlation input use the transitional lookup.
                 if (releasePlanId == 0 && string.IsNullOrWhiteSpace(sdkPullRequest))
                 {
-                    return await UpdateByLegacyPackageLookupAsync(response, packageName, language, releaseStatus, packageVersion, sdkReleaseType, releasePipelineUrl, sdkPullRequest, "No release-plan ID or SDK PR was supplied.", ct);
+                    return await UpdateByLegacyPackageLookupAsync(response, packageName, language, releaseStatus, packageVersion, releasePipelineUrl, ct);
                 }
                 if (!string.IsNullOrWhiteSpace(sdkPullRequest))
                 {
@@ -285,21 +285,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         // Transitional: keeps the original package-name lookup until every release pipeline forwards a plan ID or SDK PR.
-        private async Task<ReleaseStatusUpdateResponse> UpdateByLegacyPackageLookupAsync(ReleaseStatusUpdateResponse response, string packageName, string language, string releaseStatus, string? packageVersion, string? sdkReleaseType, string? releasePipelineUrl, string? sdkPullRequest, string reason, CancellationToken ct)
+        private async Task<ReleaseStatusUpdateResponse> UpdateByLegacyPackageLookupAsync(ReleaseStatusUpdateResponse response, string packageName, string language, string releaseStatus, string? packageVersion, string? releasePipelineUrl, CancellationToken ct)
         {
-            logger.LogWarning("LEGACY_RELEASE_PLAN_LOOKUP: {reason} Using the transitional package-name lookup for package {packageName} in {language}.", reason, packageName, language);
-            response.ReleaseStatus = releaseStatus;
+            logger.LogWarning("LEGACY_RELEASE_PLAN_LOOKUP: No release-plan ID or SDK PR was supplied. Using the transitional package-name lookup for package {packageName} in {language}.", packageName, language);
 
             logger.LogInformation("Searching for in-progress release plans with package {packageName} for {language}", packageName, language);
             bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
             var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting, ct);
             if (releasePlans.Count == 0)
             {
+                response.ReleaseStatus = releaseStatus;
                 response.Message = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
                 return response;
             }
+            if (releasePlans.Count > 1)
+            {
+                response.ResponseError = $"Multiple in-progress release plans found for package '{packageName}' in language '{language}'. Supply --release-plan-id or --sdk-pull-request to select exactly one plan. Candidate release plan IDs: {string.Join(", ", releasePlans.Select(p => p.ReleasePlanId))}. No release plan was updated.";
+                return response;
+            }
 
-            var releasePlan = SelectReleasePlan(releasePlans, packageName, sdkReleaseType, sdkPullRequest);
+            var releasePlan = releasePlans[0];
             response.ReleasePlanId = releasePlan.ReleasePlanId;
             response.TypeSpecProject = releasePlan.APISpecProjectPath;
             logger.LogInformation("Updating release status to {releaseStatus} for package {packageName} in release plan work item {workItemId}", releaseStatus, packageName, releasePlan.WorkItemId);
@@ -322,6 +327,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
             logger.LogInformation("Successfully updated release status to {releaseStatus} for package {packageName} in release plan {workItemId}", releaseStatus, packageName, releasePlan.WorkItemId);
+            response.ReleaseStatus = releaseStatus;
 
             if (string.Equals(releaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
             {
@@ -361,59 +367,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
 
             return response;
-        }
-
-        private ReleasePlanWorkItem SelectReleasePlan(List<ReleasePlanWorkItem> releasePlans, string packageName, string? sdkReleaseType, string? sdkPullRequest)
-        {
-            var releasePlan = releasePlans[0];
-            if (releasePlans.Count > 1)
-            {
-                logger.LogInformation("Multiple active release plans are found for '{packageName}'", packageName);
-                // If an SDK pull request URL is provided, try to select the release plan that matches it.
-                if (!string.IsNullOrWhiteSpace(sdkPullRequest))
-                {
-                    var releasePlanWithSdkPullRequest = releasePlans.FirstOrDefault(rp =>
-                        rp.SDKInfo.Any(s =>
-                            string.Equals(s.PackageName, packageName, StringComparison.OrdinalIgnoreCase)
-                            && !string.IsNullOrWhiteSpace(s.SdkPullRequestUrl)
-                            && string.Equals(s.SdkPullRequestUrl, sdkPullRequest, StringComparison.OrdinalIgnoreCase)));
-                    if (releasePlanWithSdkPullRequest != null)
-                    {
-                        logger.LogInformation("Selected release plan {releasePlanId} with SDK pull request {sdkPullRequest}.", releasePlanWithSdkPullRequest.ReleasePlanId, sdkPullRequest);
-                        releasePlan = releasePlanWithSdkPullRequest;
-                        return releasePlan;
-                    }
-                    logger.LogInformation("No release plan matched the SDK pull request {sdkPullRequest}.", sdkPullRequest);
-                }
-                // If an SDK release type is provided, try to select the release plan that matches it.
-                if (!string.IsNullOrWhiteSpace(sdkReleaseType))
-                {
-                    var releasePlanWithSdkReleaseType = releasePlans.FirstOrDefault(rp => string.Equals(rp.SDKReleaseType, sdkReleaseType, StringComparison.OrdinalIgnoreCase));
-                    if (releasePlanWithSdkReleaseType != null)
-                    {
-                        logger.LogInformation("Selected release plan {releasePlanId} with SDK release type {sdkReleaseType}.", releasePlanWithSdkReleaseType.ReleasePlanId, sdkReleaseType);
-                        releasePlan = releasePlanWithSdkReleaseType;
-                        return releasePlan;
-                    }
-                    logger.LogInformation("No release plan matched the SDK release type {sdkReleaseType}.", sdkReleaseType);
-                }
-                // If no release plan was selected by SDK pull request or SDK release type, try to select the release plan with a merged pull request.
-                var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => string.Equals(s.PackageName, packageName, StringComparison.OrdinalIgnoreCase) && s.PullRequestStatus.Equals("Merged")));
-                if (releasePlanWithPrMerged != null)
-                {
-                    logger.LogInformation("Selected first release plan {releasePlanId} with pull request as merged.", releasePlanWithPrMerged.ReleasePlanId);
-                    releasePlan = releasePlanWithPrMerged;
-                }
-                else
-                {
-                    logger.LogInformation("No release plan with merged pull request status found. Defaulting to first release plan {releasePlanId}.", releasePlan.ReleasePlanId);
-                }
-            }
-            else
-            {
-                logger.LogInformation("Found release plan work item {workItemId} for package {packageName}", releasePlan.WorkItemId, packageName);
-            }
-            return releasePlan;
         }
 
         private async Task QueueNextReleasePlanAsync(ReleasePlanWorkItem finishedReleasePlan, ReleaseStatusUpdateResponse response, CancellationToken ct)

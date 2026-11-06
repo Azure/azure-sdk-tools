@@ -499,11 +499,14 @@ class ChatbotEvolutionAgentService:
                 },
             )
         ]
-        # Do not add invocation retries to a job that can update KBs and issues.
+        # Keep invocation retries disabled in this wrapper; readiness rejections
+        # get additional attempts beyond the SDK's default HTTP retries.
         agent_client = HostedAgentClient(
             openai_client,
             max_retries=1,
+            retry_delay=10.0,
             stream_timeout=_JOB_TIMEOUT_SECS,
+            session_ready_max_attempts=3,
         )
         trace_id, response = await agent_client.invoke(
             conversation_items=input_items,

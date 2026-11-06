@@ -129,8 +129,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(ConfiguredPipelineRun);
         }
 
-        Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanAsync(int releasePlanId, CancellationToken ct)
+        Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanAsync(int releasePlanId, CancellationToken ct, bool includeAbandoned)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
+            ct.ThrowIfCancellationRequested();
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 1,
@@ -192,6 +194,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = workItemId,
+                Revision = 1,
                 ReleasePlanId = 1,
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
@@ -360,6 +363,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         }
 
         public ProductInfo? ConfiguredTriageProductInfo { get; set; }
+
+        Task<string> IDevOpsService.GetProductTypeFromPreviousReleasePlansAsync(string productTreeId, int excludedWorkItemId, bool isTestReleasePlan, CancellationToken ct)
+        {
+            return Task.FromResult(productTreeId == "12345678-1234-5678-9012-123456789012" ? "Offering" : string.Empty);
+        }
 
         Task<ProductInfo?> IDevOpsService.GetProductInfoFromTriageWorkItemAsync(string productServiceTreeId, CancellationToken ct)
         {

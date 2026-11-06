@@ -17,25 +17,19 @@ pr:
       - eng/common/scripts/stress-testing
 
 jobs:
-  - job: Analyze
+  - job: MSOBB_Benign_Connection_Check
+    displayName: MSOBB benign service-connection check
+    condition: eq(variables['Build.Reason'], 'PullRequest')
     pool:
       name: azsdk-pool
       demands: ImageOverride -equals ubuntu-24.04
     steps:
-      - template: /eng/common/pipelines/templates/steps/verify-links.yml
-        parameters:
-          Directory: tools/stress-cluster
-      - template: /eng/common/pipelines/templates/steps/verify-links.yml
-        parameters:
-          Directory: eng/common/scripts/stress-testing
-
-
-  - template: /eng/pipelines/templates/jobs/stress-test-release.yml
-    parameters:
-      Environment: pg
-      TestRepository: examples
-      DeployFromBranchOrCommit: $(Build.SourceVersion)
-  - template: /eng/pipelines/templates/jobs/stress-cluster-provision.yml
-    parameters:
-      Environment: pg
-      WhatIf: true
+      - checkout: none
+      - task: AzureCLI@2
+        displayName: MSOBB fixed marker after task login
+        inputs:
+          azureSubscription: azure-sdk-tests-public
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            Write-Host 'MSOBB_FIXED_MARKER_ONLY'

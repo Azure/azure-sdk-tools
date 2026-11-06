@@ -4,8 +4,8 @@
 
 ### Features Added
 
-- Added CLI-only `pkg check-api-version --pull-request-url <url>` to check an SDK PR's exact API version against ARM metadata and return Passed, Not detected, Inconclusive, or Error with evidence.
-	The service coordinates existing GitHub, language, and generation metadata helpers plus a focused pinned-spec reader. Supports five SDK layouts and classifies validated project metadata without PR labels; confirmed data-plane projects skip version and ARM reads.
+- Added CLI `pkg check-api-version --pull-request-url <url>` and read-only MCP tool `azsdk_check_service_api_version` to check an SDK PR's exact API version against ARM metadata and return Passed, Not detected, Inconclusive, or Error with evidence.
+	The service coordinates existing GitHub, language, and generation metadata helpers plus a focused pinned-spec reader. Intent comments explain provenance, lookup reuse, and evidence limits. Supports five SDK layouts and classifies validated project metadata without PR labels; confirmed data-plane projects skip version and ARM reads.
 	Uses the existing token helper with optional cancellation, captures the PR head once without a SHA input, and keeps evidence reads bounded. Callers check that returned head against the current PR before publishing results. The command and result contract are documented in the CLI README.
 - `eng package-info` supports `--package-path` to inspect one local SDK package and return its information directly, or export it with `--out-dir`. Existing bulk export remains supported.
 - Package discovery now populates `PackageInfo.ApiVersions` from generated metadata for Java, JavaScript, Python, Go, and .NET. Output entries preserve `Namespace` and `Version` from the `apiVersions` map, falling back to an unnamed `apiVersion` when the map is absent or empty. Namespace/version pairs are deduplicated and sorted, with version strings trimmed. Missing metadata leaves the array empty; malformed or unreadable metadata logs a warning without failing package discovery.

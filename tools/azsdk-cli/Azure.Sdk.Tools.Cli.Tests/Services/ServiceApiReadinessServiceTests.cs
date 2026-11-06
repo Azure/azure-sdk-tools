@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Azure.Core;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.AspNetCore.WebUtilities;
@@ -80,6 +81,17 @@ public class ServiceApiReadinessServiceTests
         factory.Setup(value => value.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(new HttpClient(handler.Object));
         _service = new ServiceApiReadinessService(_github.Object, azure.Object, factory.Object);
         AddPackage(Package, Metadata, Version);
+    }
+
+    [TestCase(SdkLanguage.Java, "src/main/resources/META-INF", "*_metadata.json")]
+    [TestCase(SdkLanguage.JavaScript, "", "metadata.json")]
+    [TestCase(SdkLanguage.DotNet, "", "metadata.json")]
+    [TestCase(SdkLanguage.Python, "", "_metadata.json")]
+    [TestCase(SdkLanguage.Go, "testdata", "_metadata.json")]
+    [TestCase(SdkLanguage.Unknown, "", "")]
+    public void MetadataLocationsAreSharedByLocalAndRemoteReaders(SdkLanguage language, string directory, string pattern)
+    {
+        Assert.That(GeneratedSdkMetadataHelper.GetMetadataFileLocation(language), Is.EqualTo((directory, pattern)));
     }
 
     [TestCase("java", Package, Metadata)]

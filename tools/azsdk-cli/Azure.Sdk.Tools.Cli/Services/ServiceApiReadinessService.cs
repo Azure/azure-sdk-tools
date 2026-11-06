@@ -15,12 +15,14 @@ public interface IServiceApiReadinessService
 public class ServiceApiReadinessService(IGitHubService github, IAzureService azure, IHttpClientFactory clients) : IServiceApiReadinessService
 {
     public const string HttpClientName = "ServiceApiReadiness";
+    // This selects the ARM metadata endpoint, not the SDK's service API version.
     public const string ArmMetadataApiVersion = "2021-04-01";
     private readonly HttpClient _http = clients.CreateClient(HttpClientName);
 
     public async Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct)
     {
         var result = new ServiceApiReadinessResponse();
+        // Authentication and all evidence reads share one deadline.
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(ct);
         budget.CancelAfter(TimeSpan.FromSeconds(40));
         ct = budget.Token;
@@ -36,6 +38,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             var token = github.GetAuthToken(ct);
             var prPath = $"repos/{owner}/{repository}/pulls/{pullRequest}";
             var pr = await ReadGitHubAsync(prPath, token, ct) ?? throw new InvalidOperationException("SDK PR is unavailable.");
+            // Capture one revision; publishing callers must check that it is still current.
             result.HeadSha = Text(pr["head"]?["sha"]);
             result.HeadRepository = Text(pr["head"]?["repo"]?["full_name"]);
             if (Text(pr["state"]) != "open" || !GeneratedSdkMetadataHelper.IsCommitSha(result.HeadSha) ||
@@ -72,6 +75,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
 
     private async Task EvaluateProjectsAsync(IEnumerable<ServiceApiReadinessSource> sources, ServiceApiReadinessResponse result, string token, CancellationToken ct)
     {
+        // Cache failed lookup tasks too, so projects do not retry the same ARM failure.
         var providers = new Dictionary<string, Task<JsonNode?>>(StringComparer.OrdinalIgnoreCase);
         var specifications = new TypeSpecReadinessHelper(_http, token);
         TokenCredential? credential = null;
@@ -140,6 +144,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 .Where(region => !string.IsNullOrEmpty(region)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
             project.Matches.Add(new ServiceApiReadinessMatch { ResourceType = Text(resource["resourceType"]), Regions = regions });
         }
+        // One exact match passes this project, but does not prove every operation or region.
         project.ReadinessStatus = project.Matches.Count > 0 ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected;
         project.Detail = $"{project.Matches.Count} of {applicable.Length} mapped resource types advertise the exact version ({resourceTypes.Count} project resource types identified).";
         if (project.ReadinessStatus == ServiceApiReadinessResponse.NotDetected)

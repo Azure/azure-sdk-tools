@@ -7,6 +7,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
+// Map checked-in spec files at the recorded commit without compiling TypeSpec.
 internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
 {
     private const int MaxSwaggerFiles = 32;
@@ -163,6 +164,7 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
         try
         {
             var config = GeneratedSdkMetadataHelper.ParseYaml(text);
+            // Inherited emitter options are unresolved here; do not guess their output mapping.
             if (config.Children.ContainsKey(new YamlScalarNode("extends")) ||
                 !config.Children.TryGetValue(new YamlScalarNode("options"), out var optionsNode) || optionsNode is not YamlMappingNode options ||
                 !options.Children.TryGetValue(new YamlScalarNode("@azure-tools/typespec-autorest"), out var emitterNode) || emitterNode is not YamlMappingNode emitter)
@@ -271,6 +273,7 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
             {
                 break;
             }
+            // Named resources use placeholders; "default" also supports singleton resources.
             if (name is not null && !Regex.IsMatch(name, @"\A\{[^}]+\}\z") && name != "default")
             {
                 types.Clear();

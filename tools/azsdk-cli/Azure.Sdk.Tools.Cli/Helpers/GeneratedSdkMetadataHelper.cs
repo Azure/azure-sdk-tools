@@ -95,6 +95,7 @@ public static class GeneratedSdkMetadataHelper
         {
             return "";
         }
+        // Preserve YAML types: an implicit boolean or number is not metadata text.
         if (scalar.Style is YamlDotNet.Core.ScalarStyle.Plain or YamlDotNet.Core.ScalarStyle.Any &&
             Regex.IsMatch(scalar.Value, @"\A(?:null|true|false|~|[-+]?\d+(?:\.\d+)?)\z", RegexOptions.IgnoreCase))
         {
@@ -103,6 +104,7 @@ public static class GeneratedSdkMetadataHelper
         return scalar.Value;
     }
 
+    // Unlike local package discovery, readiness cannot continue with missing generation evidence.
     internal sealed class ReadinessReader(HttpClient http, string token)
     {
         private const int MaxMetadataFiles = 32;
@@ -132,6 +134,7 @@ public static class GeneratedSdkMetadataHelper
             var survivingPackages = 0;
             foreach (var package in packages.Order(StringComparer.Ordinal))
             {
+                // Deleted and renamed source packages still count if their directory survives at this head.
                 bool? exists = knownAtHead.Contains(package) ? true : await PackageExistsAtHeadAsync(package, sdk, ct);
                 if (exists == false)
                 {
@@ -186,6 +189,7 @@ public static class GeneratedSdkMetadataHelper
                 var directory = Scalar(metadata, "directory");
                 var commit = Scalar(metadata, "commit");
                 var repository = NormalizeSpecRepository(Scalar(metadata, "repo"));
+                // Validate provenance before a data-plane hint can make the check not applicable.
                 if (!IsSpecificationProjectDirectory(directory) || !IsCommitSha(commit) || repository is null)
                 {
                     issues.Add($"{package}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository.");
@@ -272,6 +276,7 @@ public static class GeneratedSdkMetadataHelper
                     var provider = entry.Key;
                     if (provider.Length == 0)
                     {
+                        // Scalar apiVersion has no provider key; use the pinned TypeSpec namespace.
                         inferredProvider ??= ProviderNamespace(await ReadFileAsync(location.Repository, location.CommitSha, $"{location.Directory}/main.tsp", ct) ?? "");
                         provider = inferredProvider;
                     }

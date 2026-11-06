@@ -212,6 +212,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException("File exceeded the evidence size limit.");
             }
+            // Large files lack inline content; fetch raw content from this same pinned API path.
             return ReadString(file["encoding"]) switch
             {
                 "base64" => Encoding.UTF8.GetString(Convert.FromBase64String(ReadString(file["content"]))),
@@ -247,6 +248,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             using var content = new MemoryStream();
             var buffer = new byte[16 * 1024];
             int count;
+            // Content-Length may be absent, so enforce the cap while streaming too.
             while ((count = await stream.ReadAsync(buffer, ct)) > 0)
             {
                 if (content.Length + count > MaxEvidenceBytes)

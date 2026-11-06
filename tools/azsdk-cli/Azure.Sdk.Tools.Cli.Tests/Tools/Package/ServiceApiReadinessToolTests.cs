@@ -3,7 +3,9 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Package;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using Moq;
 
@@ -13,10 +15,58 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package;
 public class ServiceApiReadinessToolTests
 {
     [Test]
-    public void ReadinessIsCliOnly()
+    public void ReadinessHasOneReadOnlyMcpToolWithOnlyThePullRequestUrl()
     {
-        Assert.That(typeof(ServiceApiReadinessTool).IsDefined(typeof(McpServerToolTypeAttribute), false), Is.False);
-        Assert.That(typeof(ServiceApiReadinessTool).GetMethods().Any(method => method.IsDefined(typeof(McpServerToolAttribute), false)), Is.False);
+        var tool = new ServiceApiReadinessTool(Mock.Of<IServiceApiReadinessService>(), NullLogger<ServiceApiReadinessTool>.Instance);
+        var methods = typeof(ServiceApiReadinessTool).GetMethods()
+            .Where(method => method.IsDefined(typeof(McpServerToolAttribute), false)).ToArray();
+        Assert.That(typeof(ServiceApiReadinessTool).IsDefined(typeof(McpServerToolTypeAttribute), false), Is.True);
+        Assert.That(methods, Has.Length.EqualTo(1));
+        Assert.That(methods.Single().Name, Is.EqualTo(nameof(ServiceApiReadinessTool.CheckServiceApiVersion)));
+
+        var descriptor = McpServerTool.Create(methods.Single(), _ => tool).ProtocolTool;
+        Assert.That(descriptor.Name, Is.EqualTo("azsdk_check_service_api_version"));
+        Assert.That(descriptor.Annotations?.ReadOnlyHint, Is.True);
+        Assert.That(descriptor.InputSchema.GetProperty("properties").EnumerateObject().Select(property => property.Name),
+            Is.EqualTo(new[] { "pullRequestUrl" }));
+        Assert.That(descriptor.InputSchema.GetProperty("required").EnumerateArray().Select(value => value.GetString()),
+            Is.EqualTo(new[] { "pullRequestUrl" }));
+    }
+
+    [TestCase(ServiceApiReadinessResponse.Passed)]
+    [TestCase(ServiceApiReadinessResponse.NotDetected)]
+    [TestCase(ServiceApiReadinessResponse.Inconclusive)]
+    [TestCase(ServiceApiReadinessResponse.Error)]
+    public async Task McpDispatchReturnsTheSameCapturedHeadAndReadinessContract(string state)
+    {
+        var head = new string('a', 40);
+        var service = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
+        service.Setup(value => value.CheckAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceApiReadinessResponse { ReadinessStatus = state, HeadSha = head });
+        var tool = new ServiceApiReadinessTool(service.Object, NullLogger<ServiceApiReadinessTool>.Instance);
+        var method = typeof(ServiceApiReadinessTool).GetMethod(nameof(ServiceApiReadinessTool.CheckServiceApiVersion))!;
+        var server = new Mock<McpServer>();
+        using var services = new ServiceCollection().BuildServiceProvider();
+        server.SetupGet(value => value.Services).Returns(services);
+        var context = new RequestContext<CallToolRequestParams>(server.Object, new JsonRpcRequest { Method = "tools/call" })
+        {
+            Params = new()
+            {
+                Name = "azsdk_check_service_api_version",
+                Arguments = new Dictionary<string, JsonElement>
+                {
+                    ["pullRequestUrl"] = JsonSerializer.SerializeToElement("https://github.com/Azure/azure-sdk-for-java/pull/12")
+                }
+            }
+        };
+
+        var call = await McpServerTool.Create(method, _ => tool).InvokeAsync(context);
+        Assert.That(call.IsError, Is.Not.True);
+        using var json = JsonDocument.Parse(call.Content.OfType<TextContentBlock>().Single().Text);
+        Assert.That(json.RootElement.GetProperty("contractVersion").GetInt32(), Is.EqualTo(1));
+        Assert.That(json.RootElement.GetProperty("status").GetString(), Is.EqualTo(state));
+        Assert.That(json.RootElement.GetProperty("headSha").GetString(), Is.EqualTo(head));
+        service.Verify(value => value.CheckAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [TestCase("https://github.com/Azure/azure-sdk-for-java/pull/12", "Azure", "azure-sdk-for-java")]

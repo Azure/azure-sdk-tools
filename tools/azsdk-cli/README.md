@@ -121,7 +121,13 @@ Missing metadata or metadata without API versions leaves `ApiVersions` empty. Ma
 azsdk pkg check-api-version --pull-request-url https://github.com/Azure/azure-sdk-for-java/pull/123 --output json
 ```
 
-This read-only CLI command resolves exact generation metadata from the SDK
+The MCP tool `azsdk_check_service_api_version` accepts the same PR URL:
+
+```json
+{"pullRequestUrl": "https://github.com/Azure/azure-sdk-for-java/pull/123"}
+```
+
+The CLI and MCP entry points share one read-only check. It resolves exact generation metadata from the SDK
 files at the current PR head, reads the pinned specification, and compares the
 version with ARM provider metadata. It returns Passed, Not detected,
 Inconclusive, or Error with source and resource-type evidence. It does not edit
@@ -129,7 +135,7 @@ GitHub, grant permissions, merge a PR, or release a package.
 
 The command takes one GitHub SDK PR URL and captures its head SHA. Callers must
 compare that SHA with the current head before publishing a result. It does not
-accept a caller-supplied SHA and is not exposed as an MCP tool.
+accept a caller-supplied SHA. The same captured-head rule applies to MCP results.
 
 GitHub authentication uses the existing token resolver: automation can supply
 its App installation token through `GITHUB_TOKEN`; local users can use

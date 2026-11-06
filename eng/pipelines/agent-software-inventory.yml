@@ -1,3 +1,6 @@
+
+# MSOBB owned provider-registration probe
+MSOBB_INVALID_YAML: [
 # Inventory the agent software installed.
 
 trigger: none

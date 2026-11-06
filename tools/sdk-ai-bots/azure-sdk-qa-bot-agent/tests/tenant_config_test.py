@@ -150,6 +150,7 @@ def test_stewardship_tenant_uses_shared_agent_and_maintained_sources() -> None:
         SRC_AZURE_REST_API_SPECS_DOCS,
         SRC_AZURE_OPENAPI_DIFF_DOCS,
         SRC_AZURE_AVOCADO_DOCS,
+        SRC_STATIC_CPEX_DOCS,
     ]
     assert SRC_AZURE_SDK_DOCS_ENG not in config.source_filter
 
@@ -198,13 +199,54 @@ def test_stewardship_specialist_routes_are_injected_from_tenant_config() -> None
     assert "[tenant_scope]" in scope
     for exclusion in (
         "Detailed TypeSpec authoring or emitter failures — use the TypeSpec skill",
-        "Detailed spec PR check investigation — use the API Spec Review skill",
-        "Breaking-change exception requests — use the API Spec Review skill for the applicable authorized-reviewer process",
         "Release-plan lifecycle — use the SDK Onboarding skill",
     ):
         assert exclusion in config.exclusions
         assert f"- {exclusion}" in scope
         assert exclusion not in skill_content
+
+
+def test_stewardship_does_not_direct_pr_questions_to_api_spec_review() -> None:
+    from services.chat_service import ChatService
+
+    message = ChatService()._build_tenant_system_message(
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT
+    )
+
+    assert "API Spec Review skill" not in message
+    assert "`api-spec-review`" not in message
+
+
+def test_stewardship_action_limits_are_not_routing_exclusions() -> None:
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    instruction = (
+        _AGENT_ROOT / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert not any(
+        "Performing approvals" in exclusion for exclusion in config.exclusions
+    )
+    assert "All your tools are read-only" in instruction
+    assert "merge, approve, or modify action" in instruction
+
+
+def test_stewardship_cpex_policy_is_available_without_routing() -> None:
+    from tools.knowledge_tools import _resolve_source_filters
+
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    filters = _resolve_source_filters(
+        [source.name for source in config.sources],
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT.value,
+        "data-plane",
+    )
+
+    assert filters[SRC_STATIC_CPEX_DOCS] == (
+        f"context_id eq '{SRC_STATIC_CPEX_DOCS}'"
+        " and (service_type eq 'data-plane' or service_type eq null)"
+    )
+    assert f"- {SRC_STATIC_CPEX_DOCS}:" in build_skill_content(
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT
+    )
 
 
 def test_stewardship_guideline_follows_a_request_to_answer_workflow() -> None:

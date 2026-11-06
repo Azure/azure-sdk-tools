@@ -538,12 +538,16 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 |-------|-----------|---------|-----------|------------|
 | `auto-sdk-build-fix` | CI / human | Triggers Copilot auto-repair | No | ✅ Triggers cloud agent |
 | `auto-release` | CI (ARM) / human | Triggers release pipeline on SDK PR merge. Auto-applied for ARM management plane. | No | ✅ Auto-applied (ARM) |
-| `<lang>-api-approved` (current) / `api-approved` (ARH future) | ARH (future) / Architect (current) | SDK API approved -- **informational only**. Source of truth is ARH database (API hash). Current: architects apply `<lang>-api-approved` manually. Future: ARH assigns `api-approved` automatically. | Informational | ⚠️ Transitioning to ARH |
+| `sdk-api-review-needed` | ARH | Waiting for an authorized architect decision | No | ✅ Managed by ARH |
+| `sdk-api-review-approved` | ARH | Current exact API hash is approved for the applicable policy | Unblocks | ✅ Managed by ARH |
+| `sdk-api-review-changes-requested` | ARH | Waiting for service-team changes | No | ✅ Managed by ARH |
+| `sdk-api-review-out-of-date` | ARH | API changed and review artifacts are refreshing | No | ✅ Managed by ARH |
+| `sdk-api-review-ready` | Workflow / human | Transient working-PR trigger; ARH removes it after accepting the request | No | ✅ Consumed by ARH |
 | `release-plan-linked` | Automation | Marks PR as linked to release plan | No | ✅ Auto-applied |
 | `ready-for-review` | GitHub Form | Triggers architect review process | No | ✅ Applied via workflow |
 | `needs-info` | Reviewer | Needs more info from service team | No | ⚠️ Manual, no automation |
-| `review-out-of-date` | ARH | Review PR stale | No | 🔜 Part of ARH |
-| `architecture-review-needed` | ARH | Flags for architect review | No | 🔜 Part of ARH |
+
+The `sdk-api-review-*` label names and descriptions are defined in [`tools/github/data/common-labels.csv`](../../../github/data/common-labels.csv) and were added by [#17486](https://github.com/Azure/azure-sdk-tools/pull/17486).
 
 > **📋 Proposal: Label naming consistency** — Current labels use mixed conventions: `PascalCase` (`BreakingChangeReviewRequired`, `ARMSignedOff`), `kebab-case` (`auto-sdk-build-fix`, `release-plan-linked`, `package-name-<lang>-approved`, `data-plane-review-signoff`), and hybrid (`ARM-Review-Required`). Consider standardizing to `kebab-case` (e.g., `breaking-change-review-required`, `arm-signed-off`) for new labels, with backward-compatible aliasing for existing ones.
 

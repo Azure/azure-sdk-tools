@@ -114,10 +114,21 @@ public class ReleasePlanLinkSdkPullRequestTests
             case "unspecified-plane": _plan.IsManagementPlane = false; break;
         }
         var state = reason is "closed" or "merged" ? "closed" : "open";
-        _github.Setup(s => s.GetPullRequestAsync("Azure", Repo, 42, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Pr(state: state, draft: reason == "draft", merged: reason == "merged",
+        var excludedPlan = reason is "test-plan" or "private-preview" or "abandoned" or "finished"
+            or "data-plane" or "mixed-plane" or "unspecified-plane";
+        var pr = Pr(state: state, draft: reason == "draft", merged: reason == "merged",
                 target: reason == "other-target" ? "release/1.0" : "main",
-                isPrivate: reason == "private-repo", missingRepo: reason == "missing-repo"));
+                isPrivate: reason == "private-repo", missingRepo: reason == "missing-repo");
+        var prLookup = _github.SetupSequence(s => s.GetPullRequestAsync("Azure", Repo, 42, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pr);
+        if (excludedPlan)
+        {
+            prLookup.ThrowsAsync(new InvalidOperationException("The excluded plan must not trigger a labeling lookup."));
+        }
+        else
+        {
+            prLookup.ReturnsAsync(pr);
+        }
         _github.Setup(s => s.UpdatePullRequestAsync("Azure", Repo, 42, "SDK changes", It.IsAny<string>(),
             state == "closed" ? ItemState.Closed : ItemState.Open, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
@@ -126,6 +137,8 @@ public class ReleasePlanLinkSdkPullRequestTests
         Assert.That(response.ResponseError, Is.Null);
         Assert.That(response.Details, Has.Some.Contains("Skipped auto-release"));
         VerifyLabel(Times.Never());
+        _github.Verify(s => s.GetPullRequestAsync("Azure", Repo, 42, It.IsAny<CancellationToken>()),
+            Times.Exactly(excludedPlan ? 1 : 2));
         _devOps.Verify(s => s.AddSdkInfoInReleasePlanAsync(100, "Python", "", PrUrl, "Completed", It.IsAny<CancellationToken>()), Times.Once);
     }
 

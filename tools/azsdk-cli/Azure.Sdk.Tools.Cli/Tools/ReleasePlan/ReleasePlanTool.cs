@@ -2193,9 +2193,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private async Task<string> EnsureAutoReleaseLabelAsync(ParsedSdkPullRequest parsedUrl, string expectedRepoName, ReleasePlanWorkItem releasePlan, CancellationToken ct)
         {
+            var skipReason = GetAutoReleasePlanSkipReason(releasePlan);
+            if (skipReason != null)
+            {
+                return $"Skipped {AutoReleaseLabel} labeling: {skipReason}";
+            }
+
             var pr = await githubService.GetPullRequestAsync(parsedUrl.RepoOwner, parsedUrl.RepoName, parsedUrl.PrNumber, ct)
                 ?? throw new InvalidOperationException($"Failed to fetch pull request {parsedUrl.FullUrl}");
-            var skipReason = GetAutoReleaseSkipReason(parsedUrl, expectedRepoName, pr, releasePlan);
+            skipReason = GetAutoReleaseSkipReason(parsedUrl, expectedRepoName, pr);
             if (skipReason != null)
             {
                 return $"Skipped {AutoReleaseLabel} labeling: {skipReason}";
@@ -2209,7 +2215,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return $"Added {AutoReleaseLabel} label to pull request.";
         }
 
-        private static string? GetAutoReleaseSkipReason(ParsedSdkPullRequest parsedUrl, string expectedRepoName, PullRequest pr, ReleasePlanWorkItem releasePlan)
+        private static string? GetAutoReleasePlanSkipReason(ReleasePlanWorkItem releasePlan)
         {
             if (!releasePlan.IsManagementPlane || releasePlan.IsDataPlane)
             {
@@ -2224,6 +2230,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 return "the release plan is no longer active.";
             }
+            return null;
+        }
+
+        private static string? GetAutoReleaseSkipReason(ParsedSdkPullRequest parsedUrl, string expectedRepoName, PullRequest pr)
+        {
             if (!string.Equals(parsedUrl.RepoOwner, REPO_OWNER, StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(parsedUrl.RepoName, expectedRepoName, StringComparison.OrdinalIgnoreCase)
                 || pr.Base?.Repository == null || pr.Base.Repository.Private)

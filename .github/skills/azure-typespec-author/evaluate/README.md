@@ -375,7 +375,7 @@ Local setup rewrites only the root `agent_environment:` entry in each eval file.
 The manual benchmark pipeline is `eng/pipelines/azure-typespec-author-benchmark.yml`.
 Each build selects forced or trigger mode and uses the common Prepare/Eval/Summary stage template.
 It builds the selected MCP, prepares skills and fixtures for that mode, generates an
-area-based matrix, and produces one summary and dashboard bundle. Run separate builds
+area-based matrix, and produces one summary and JUnit results. Run separate builds
 to compare modes; this pipeline no longer runs forced and trigger tracks together.
 
 | Parameter                 | Purpose                                                                                    |
@@ -384,14 +384,8 @@ to compare modes; this pipeline no longer runs forced and trigger tracks togethe
 | `SkillBranch`             | Skill source branch to overlay                                                             |
 | `McpKind`                 | `live` or `mock`                                                                           |
 | `Runs`                    | Trials per stimulus                                                                        |
-| `publishDashboardResults` | Publish trusted main results; disabling it retains the bundle without added storage egress |
 
-Publication uses the existing common trust policy: only approved main-branch runs
-can upload, and the pipeline owner must configure `EvalStorageAccountName`,
-`EvalDashboardRefreshUrl` and `EvalDashboardResource`. Eval authentication and dashboard
-publication use separate service connections. Feature-branch runs retain the bundle
-as a pipeline artifact but do not upload. Dashboard grouping/comparison by mode still
-requires verification in the reader.
+Dashboard bundling and publication are not enabled for this benchmark.
 
 The no-skill baseline runs separately through
 `eng/pipelines/azure-typespec-author-benchmark-no-skill.yml`; it is not a mode of the
@@ -402,10 +396,9 @@ pass the fixed value `azureSubscription: azuresdkqabot-dev` to the common stage
 template, which forwards it through the job template to the invoke step.
 Other deployments update this value in their repo-owned pipeline YAML to an
 authorized service connection. No service-connection run parameter or Azure DevOps
-UI variable is required. Common templates default to an empty connection and retain no
-deployment-specific connection fallback. An invalid connection fails Azure task
-validation for live runs; an empty or whitespace-only connection produces an explicit
-configuration error. Mock runs do not use a service connection.
+UI variable is required. This explicit value overrides the common invoke template's
+existing `opensource-api-connection` default. An invalid connection fails Azure task
+validation for live runs. Mock runs do not use a service connection.
 Authentication and Vally invocation remain in common; the KB backend configuration
 in `.vally.yaml` is unchanged.
 

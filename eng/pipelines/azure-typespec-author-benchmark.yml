@@ -27,10 +27,6 @@ parameters:
   displayName: Vally trials per stimulus
   type: number
   default: 1
-- name: publishDashboardResults
-  displayName: 'Publish trusted main results to Blob (includes pipeline-wide Azure Storage egress)'
-  type: boolean
-  default: true
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
@@ -82,8 +78,6 @@ extends:
     azureSubscription: azuresdkqabot-dev
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
-    createDashboardBundle: true
-    publishDashboardResults: ${{ parameters.publishDashboardResults }}
     # Keep each shard below the installation token's one-hour lifetime.
     ${{ if eq(parameters.Runs, 1) }}:
       shardTimeoutInMinutes: 50

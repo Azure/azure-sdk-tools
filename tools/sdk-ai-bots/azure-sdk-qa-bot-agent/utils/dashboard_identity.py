@@ -3,10 +3,7 @@
 import base64
 import binascii
 import json
-
-# Pydantic builds a response schema from this, and it rejects typing.TypedDict
-# on interpreters older than the 3.12 the containers run.
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 
 _DISPLAY_NAME_CLAIMS = (

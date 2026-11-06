@@ -8,7 +8,7 @@ Driving the slow answer-generation step ourselves is the main lever for evaluati
 speed.
 
 Flow: concurrent ``/completion`` collection -> ``responses.retrieve`` -> ``evals.create``
-(inline item source) -> ``evals.runs.create`` -> poll -> ``output_items.list`` ->
+-> upload JSONL input -> ``evals.runs.create`` -> poll -> ``output_items.list`` ->
 ``output_items_to_rows`` -> the existing ``EvalsResult`` gate/baseline logic.
 
 """
@@ -89,6 +89,22 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "references": it.get("references", []),
         "knowledges": it.get("knowledges", []),
     }
+
+
+def _upload_eval_items(openai_client: Any, items: list[dict[str, Any]], scenario: str) -> dict[str, Any]:
+    """Upload eval inputs as JSONL and return a file-backed run data source."""
+    content = "".join(
+        json.dumps({"item": _completion_item(item)}, ensure_ascii=False) + "\n"
+        for item in items
+    ).encode("utf-8")
+    uploaded = openai_client.files.create(
+        file=(f"{scenario}-eval-input.jsonl", content, "application/jsonl"),
+        purpose="evals",
+        expires_after={"anchor": "created_at", "seconds": 86400},
+    )
+    processed = openai_client.files.wait_for_processing(uploaded.id)
+    logger.info("Uploaded evaluation input file (id=%s, size=%d bytes)", processed.id, len(content))
+    return {"type": "jsonl", "source": {"type": "file_id", "id": processed.id}}
 
 
 def extract_title_and_link_from_references(references: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -567,12 +583,6 @@ class FoundryEvalsRunner:
     ) -> dict[str, Any]:
         """Completion mode: concurrently collect bot answers, then grade them inline."""
         from openai.types.eval_create_params import DataSourceConfigCustom
-        from openai.types.evals.create_eval_jsonl_run_data_source_param import (
-            CreateEvalJSONLRunDataSourceParam,
-            SourceFileContent,
-            SourceFileContentContent,
-        )
-
         # 1) Collect bot answers concurrently (the slow, now-parallelized step).
         collector = CompletionCollector(
             api_url=self._completion_url or resolve_completion_url(),
@@ -634,12 +644,9 @@ class FoundryEvalsRunner:
         )
         logger.info("Evaluation created (id=%s, name=%s)", eval_object.id, name)
 
-        # 4) Grade the pre-collected answers as inline data (no agent target).
+        # 4) Upload and grade the pre-collected answers (no agent target).
         run_name = f"{name}-run"
-        content = [SourceFileContentContent(item=_completion_item(it)) for it in items]
-        data_source = CreateEvalJSONLRunDataSourceParam(
-            type="jsonl", source=SourceFileContent(type="file_content", content=content)
-        )
+        data_source = _upload_eval_items(openai_client, items, scenario)
         run = openai_client.evals.runs.create(
             eval_id=eval_object.id, name=run_name, data_source=data_source  # type: ignore[arg-type]
         )

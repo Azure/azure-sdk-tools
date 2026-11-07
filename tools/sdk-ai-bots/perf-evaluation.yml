@@ -29,6 +29,7 @@ parameters:
       - releasesupport
       - authoring
       - mcpserver
+      - apistewardshipboard
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml

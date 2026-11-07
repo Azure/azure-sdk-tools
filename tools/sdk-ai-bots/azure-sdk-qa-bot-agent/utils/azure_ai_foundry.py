@@ -4,17 +4,32 @@ Each client is created once on first access and reused for the lifetime of
 the process.
 """
 
-import asyncio
 import logging
 import re
+from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
+from typing import Any, cast
 
-from agent_framework import TruncationStrategy
+from agent_framework import (
+    Agent,
+    AgentModeProvider,
+    ContextProvider,
+    FileSystemAgentFileStore,  # pyright: ignore[reportAttributeAccessIssue]
+    MiddlewareTypes,
+    SkillsProvider,
+    ToolResultCompactionStrategy,
+    ToolTypes,
+    TruncationStrategy,
+    create_harness_agent,
+)
 from agent_framework.foundry import FoundryChatClient
+from agent_framework.openai import OpenAIChatOptions
 from azure.ai.projects.aio import AIProjectClient
 from azure.core.exceptions import ResourceNotFoundError
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
 from config.app_config import Settings, get as cfg
+from middleware.tool_output_storage import ToolOutputStorageMiddleware
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
@@ -68,6 +83,45 @@ def get_agent_client() -> FoundryChatClient:
             ),
         )
     return _agent_client
+
+
+def create_hosted_chat_agent(
+    client: FoundryChatClient,
+    *,
+    name: str,
+    agent_id: str,
+    harness_instructions: str,
+    instructions: str,
+    tools: ToolTypes
+    | Callable[..., Any]
+    | Sequence[ToolTypes | Callable[..., Any]],
+    skills_provider: SkillsProvider,
+    memory_provider: ContextProvider,
+    middleware: Sequence[MiddlewareTypes],
+    default_options: Mapping[str, Any],
+) -> Agent[OpenAIChatOptions]:
+    """Create the hosted chat agent with the Agent Framework harness."""
+    before_compaction = ToolResultCompactionStrategy(keep_last_tool_call_groups=2)
+    after_compaction = ToolResultCompactionStrategy(keep_last_tool_call_groups=1)
+    resolved_options = cast(OpenAIChatOptions, dict(default_options))
+    memory_store = FileSystemAgentFileStore(Path.cwd() / "agent-file-memory")
+
+    return create_harness_agent(  # pyright: ignore[reportCallIssue]
+        client,
+        name=name,
+        id=agent_id,
+        harness_instructions=harness_instructions,
+        agent_instructions=instructions,
+        tools=tools,
+        before_compaction_strategy=before_compaction,
+        after_compaction_strategy=after_compaction,
+        mode_provider=AgentModeProvider(default_mode="execute"),
+        file_memory_store=memory_store,
+        skills_provider=skills_provider,
+        context_providers=[memory_provider],
+        middleware=[*middleware, ToolOutputStorageMiddleware(memory_store)],
+        default_options=resolved_options,
+    )
 
 
 def get_project_client() -> AIProjectClient:
@@ -188,31 +242,8 @@ async def close_clients() -> None:
     for client in _openai_clients.values():
         await client.close()
     _openai_clients.clear()
-    _stateless_session_ids.clear()
     if _agent_client is not None:
         _agent_client = None
     if _project_client is not None:
         await _project_client.close()
         _project_client = None
-
-
-# -- Stateless warm-session cache ------------------------------------------
-# Stateless requests (no customer conversation_id) share one warm sandbox per
-# agent version via an agent_session_id captured from a stateless response.
-# No `conversation` is threaded, so history is never shared across callers.
-_stateless_session_ids: dict[tuple[str, str], str] = {}
-
-
-def get_stateless_session_id(agent_name: str, agent_version: str) -> str | None:
-    """Return the cached warm sandbox id for stateless requests, if any."""
-    return _stateless_session_ids.get((agent_name, agent_version))
-
-
-def set_stateless_session_id(
-    agent_name: str, agent_version: str, session_id: str | None
-) -> None:
-    """Cache (or clear) the warm sandbox id reused by stateless requests."""
-    if session_id is None:
-        _stateless_session_ids.pop((agent_name, agent_version), None)
-    else:
-        _stateless_session_ids[(agent_name, agent_version)] = session_id

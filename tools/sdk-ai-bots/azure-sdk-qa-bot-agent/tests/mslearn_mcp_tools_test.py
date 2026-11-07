@@ -27,5 +27,4 @@ async def test_create_mslearn_mcp_tool() -> None:
         approval_mode="never_require",
         load_prompts=False,
         request_timeout=30,
-        parse_tool_results=tool_type.call_args.kwargs["parse_tool_results"],
     )

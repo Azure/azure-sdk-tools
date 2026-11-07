@@ -42,8 +42,6 @@ from utils.azure_ai_foundry import (
     get_branch_agent_version,
     get_openai_client,
     get_project_client,
-    get_stateless_session_id,
-    set_stateless_session_id,
 )
 from utils.teams_image import get_image_data_uri
 from utils.text_util import BRANCH_PREFIX_RE, preprocess_message, preprocess_html_content
@@ -106,7 +104,6 @@ class ChatService:
         self._settings = settings or cfg
         self._project_client = project_client
         self._openai_client = openai_client
-        self._stateless_session_ids: dict[tuple[str, str], str] = {}
 
     def _get_project_client(self) -> AIProjectClient:
         return self._project_client or get_project_client()
@@ -120,23 +117,6 @@ class ChatService:
             )
             return self._project_client.get_openai_client(agent_name=resolved)
         return get_openai_client(agent_name)
-
-    def _get_stateless_session_id(
-        self, agent_name: str, agent_version: str
-    ) -> str | None:
-        if self._project_client is None and self._openai_client is None:
-            return get_stateless_session_id(agent_name, agent_version)
-        return self._stateless_session_ids.get((agent_name, agent_version))
-
-    def _set_stateless_session_id(
-        self, agent_name: str, agent_version: str, session_id: str | None
-    ) -> None:
-        if self._project_client is None and self._openai_client is None:
-            set_stateless_session_id(agent_name, agent_version, session_id)
-        elif session_id is None:
-            self._stateless_session_ids.pop((agent_name, agent_version), None)
-        else:
-            self._stateless_session_ids[(agent_name, agent_version)] = session_id
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
@@ -160,13 +140,12 @@ class ChatService:
         )
         openai_client = self._get_openai_client(agent_name)
 
-        # Stateless calls (no customer conversation_id) skip conversation
-        # threading and reuse a warm sandbox; threaded calls resolve history.
+        # Stateless calls must use fresh logical sessions so harness state cannot
+        # leak between independent requests. The hosted container remains warm.
         stateless = not req.conversation_id
         if stateless:
             agent_conversation_id, is_new = None, True
-            agent_session_id = self._get_stateless_session_id(agent.name, agent.version)
-            logger.info("Stateless request: reusing warm session=%s", agent_session_id)
+            agent_session_id = None
         else:
             agent_conversation_id, is_new = await self._resolve_conversation(
                 openai_client, req
@@ -264,14 +243,6 @@ class ChatService:
                 agent_conversation_id=agent_conversation_id,
                 agent_ref=agent_ref,
             )
-        # Cache the warm sandbox id so later stateless calls reuse it.
-        if stateless:
-            extra = getattr(response, "model_extra", None) or {}
-            captured = extra.get("agent_session_id")
-            if isinstance(captured, str) and captured:
-                self._set_stateless_session_id(agent.name, agent.version, captured)
-                logger.info("Stateless request: captured warm session=%s", captured)
-
         logger.info(
             "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
             trace_id,

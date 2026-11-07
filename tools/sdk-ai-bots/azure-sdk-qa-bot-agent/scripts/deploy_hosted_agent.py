@@ -283,7 +283,7 @@ def main() -> None:
                 container_configuration=ContainerConfiguration(image=image),
                 protocol_versions=[
                     ProtocolVersionRecord(
-                        protocol=AgentProtocol.RESPONSES, version="1.0.0"
+                        protocol=AgentProtocol.RESPONSES, version="2.0.0"
                     )
                 ],
                 environment_variables=env_vars,

@@ -25,7 +25,7 @@ from pydantic import BaseModel
 
 from config.app_config import get as cfg
 from models.feedback import AzureDevOpsIssueReference, parse_issue_reference
-from tools import tool, truncating_mcp_parser
+from tools import tool
 from utils.azure_credential import get_credential
 from utils.knowledge_config import get_kb_targets
 
@@ -124,7 +124,6 @@ async def _create_ado_mcp_tool(
         load_prompts=False,
         allowed_tools=list(allowed_tools),
         approval_mode="never_require",
-        parse_tool_results=truncating_mcp_parser,
         description=description,
     )
 

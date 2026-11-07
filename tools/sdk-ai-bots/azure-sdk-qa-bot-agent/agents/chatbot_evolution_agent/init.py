@@ -50,7 +50,7 @@ from utils.azure_ai_foundry import (
     get_project_client,
 )
 from utils.azure_storage import create_blob_service_client
-from utils.tool_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_security import ToolOutputSecurityMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,9 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         context_providers=[compaction_provider],
-        middleware=[ToolOutputSecurityMiddleware()],
+        middleware=[
+            ToolOutputSecurityMiddleware(),
+        ],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,

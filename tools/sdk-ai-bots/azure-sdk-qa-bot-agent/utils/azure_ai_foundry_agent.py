@@ -26,8 +26,6 @@ from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import ResponseOutputMessage, ResponseOutputText
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 
-from utils.azure_ai_foundry import set_stateless_session_id
-
 logger = logging.getLogger(__name__)
 
 # -- Retry / timeout tuning ------------------------------------------------
@@ -136,10 +134,10 @@ class HostedAgentClient:
     ) -> tuple[str | None, OpenAIResponse]:
         """Invoke the agent with bounded retries and return ``(trace_id, response)``.
 
-        Threaded calls pass ``agent_conversation_id``; stateless calls pass a
-        reused ``agent_session_id``. A cached session rejected by the platform
-        (404/400) is dropped so the next attempt creates a fresh one. Empty
-        responses and transient errors are retried.
+        Threaded calls pass ``agent_conversation_id``. Callers may pass an
+        ``agent_session_id`` for an explicitly stateful session; a rejected
+        session is dropped before retrying. Empty responses and transient
+        errors are retried.
         """
         last_error: Exception | None = None
 
@@ -210,11 +208,8 @@ class HostedAgentClient:
                         exc_info=True,
                     )
                     return None, _build_content_safety_response()
-                # Rejected cached session: drop it and retry without one.
+                # Rejected session: drop it and retry without one.
                 if agent_session_id:
-                    set_stateless_session_id(
-                        agent_ref["name"], agent_ref["version"], None
-                    )
                     agent_session_id = None
                     continue
                 logger.warning(

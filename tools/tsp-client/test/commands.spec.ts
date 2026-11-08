@@ -1,4 +1,4 @@
-import { cp, stat, rm, readFile, mkdir } from "node:fs/promises";
+import { cp, stat, rm, readFile, mkdir, writeFile, mkdtemp } from "node:fs/promises";
 import {
   initCommand,
   generateCommand,
@@ -9,7 +9,7 @@ import {
   generateConfigFilesCommand,
   parseNpmArgs,
 } from "../src/commands.js";
-import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, it, expect, vi } from "vitest";
 import { assert } from "chai";
 import { getRepoRoot } from "../src/git.js";
 import { cwd } from "node:process";
@@ -19,6 +19,13 @@ import { doesFileExist } from "../src/network.js";
 import { TspLocation } from "../src/typespec.js";
 import { writeTspLocationYaml } from "../src/utils.js";
 import { dirname, resolve } from "node:path";
+import { tmpdir } from "node:os";
+import * as git from "../src/git.js";
+import * as fsUtils from "../src/fs.js";
+import * as tspUtils from "../src/typespec.js";
+import * as npmUtils from "../src/npm.js";
+import * as metadataUtils from "../src/metadata.js";
+import { Logger } from "../src/log.js";
 
 describe.sequential("Verify commands", () => {
   let repoRoot: string;
@@ -921,6 +928,67 @@ describe.sequential("Verify commands", () => {
     } finally {
       await rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
       await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+    }
+  });
+
+  it("Generate logs clear warning when diagnostic package version listing fails", async () => {
+    const tempOutputDir = await mkdtemp(joinPaths(tmpdir(), "tsp-client-generate-log-"));
+    const tempRoot = joinPaths(tempOutputDir, "TempTypeSpecFiles");
+    const srcDir = joinPaths(tempRoot, "WidgetManager");
+    await mkdir(srcDir, { recursive: true });
+    await writeFile(joinPaths(srcDir, "tspconfig.yaml"), "options: {}", "utf8");
+
+    const warnSpy = vi.spyOn(Logger, "warn").mockImplementation(() => {});
+    const npmSpy = vi.spyOn(npmUtils, "npmCommand").mockResolvedValueOnce().mockRejectedValueOnce(
+      new Error("'grep' is not recognized as an internal or external command, operable program or batch file."),
+    );
+    const getRepoRootSpy = vi.spyOn(git, "getRepoRoot").mockResolvedValue(tempOutputDir);
+    const readTspLocationSpy = vi.spyOn(fsUtils, "readTspLocation").mockResolvedValue({
+      directory: "specification/widget/WidgetManager",
+      commit: "abc",
+      repo: "Azure/azure-rest-api-specs",
+      additionalDirectories: [],
+    });
+    const getEmitterSpy = vi
+      .spyOn(fsUtils, "getEmitterFromRepoConfig")
+      .mockResolvedValue("@azure-tools/typespec-ts");
+    const discoverEntrypointSpy = vi
+      .spyOn(tspUtils, "discoverEntrypointFile")
+      .mockResolvedValue("main.tsp");
+    const compileTspSpy = vi.spyOn(tspUtils, "compileTsp").mockResolvedValue({
+      success: true,
+      exampleCmd: "tsp compile main.tsp",
+    });
+    const metadataSpy = vi.spyOn(metadataUtils, "createTspClientMetadata").mockResolvedValue();
+    const removeDirectorySpy = vi.spyOn(fsUtils, "removeDirectory").mockResolvedValue();
+
+    try {
+      await generateCommand({
+        "output-dir": tempOutputDir,
+        "skip-install": false,
+        "save-inputs": true,
+      });
+
+      expect(npmSpy).toHaveBeenCalledTimes(2);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "Unable to log diagnostic package versions for dependencies matching 'typespec|azure-tools'",
+        ),
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("This step is optional and generation will continue."),
+      );
+    } finally {
+      getRepoRootSpy.mockRestore();
+      readTspLocationSpy.mockRestore();
+      getEmitterSpy.mockRestore();
+      discoverEntrypointSpy.mockRestore();
+      compileTspSpy.mockRestore();
+      metadataSpy.mockRestore();
+      removeDirectorySpy.mockRestore();
+      npmSpy.mockRestore();
+      warnSpy.mockRestore();
+      await rm(tempOutputDir, { recursive: true, force: true });
     }
   });
 

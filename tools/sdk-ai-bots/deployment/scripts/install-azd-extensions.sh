@@ -3,28 +3,34 @@
 set -euo pipefail
 
 manifest_path="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/azure.yaml}"
-extension_constraint=$(yq -r '.requiredVersions.extensions."azure.ai.agents"' "$manifest_path")
-if [[ "$extension_constraint" != =* ]]; then
-    echo "Expected an exact azure.ai.agents version in $manifest_path, got '$extension_constraint'." >&2
-    exit 1
-fi
-
-azd extension install azure.ai.agents \
-    --source azd \
-    --version "${extension_constraint#=}" \
-    --no-prompt
-
+extension_versions=$(yq -o=json '.requiredVersions.extensions' "$manifest_path")
 required_extensions=(
-    azure.ai.agents
     azure.ai.inspector
     azure.ai.projects
     azure.ai.connections
     azure.ai.toolboxes
+    azure.ai.agents
 )
+for extension_id in "${required_extensions[@]}"; do
+    constraint=$(jq -r --arg id "$extension_id" '.[$id] // ""' <<< "$extension_versions")
+    if [[ "$constraint" != =* || "$constraint" == "=" ]]; then
+        echo "Expected an exact $extension_id version in $manifest_path, got '$constraint'." >&2
+        exit 1
+    fi
+done
+for extension_id in "${required_extensions[@]}"; do
+    constraint=$(jq -r --arg id "$extension_id" '.[$id]' <<< "$extension_versions")
+    azd extension install "$extension_id" \
+        --source azd \
+        --version "${constraint#=}" \
+        --no-prompt
+done
+
 installed_extensions=$(azd extension list --installed --output json)
 for extension_id in "${required_extensions[@]}"; do
-    jq -e --arg id "$extension_id" --arg version "${extension_constraint#=}" \
-        'any(.[]; .id == $id and (.installedVersion // "") != "" and ($id != "azure.ai.agents" or .installedVersion == $version))' \
+    constraint=$(jq -r --arg id "$extension_id" '.[$id]' <<< "$extension_versions")
+    jq -e --arg id "$extension_id" --arg version "${constraint#=}" \
+        'any(.[]; .id == $id and .installedVersion == $version)' \
         <<< "$installed_extensions" >/dev/null || {
         echo "Required azd extension '$extension_id' is missing or has an unexpected installed version." >&2
         exit 1

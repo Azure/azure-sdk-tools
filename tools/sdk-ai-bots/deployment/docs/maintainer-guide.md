@@ -12,9 +12,12 @@ For the deployed topology, start with the
 For principal ownership and role scopes, use the
 [identity and access reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/identity-and-access.md).
 
-The project currently requires azd `>=1.37.0` and pins the stable
-`azure.ai.agents` extension to `1.0.0` in `azure.yaml`. Install the required extension
-before provisioning or deploying hosted agents.
+The project pins azd `1.37.3` and agents, inspector, projects, connections, and
+toolboxes extensions to `1.0.0` in `azure.yaml`. Each pipeline job installs the
+selected CLI into its temporary tooling directory and uses a job-local azd
+profile for installation and federated authentication. The CLI path and profile
+are propagated to later tasks, so older preinstalled binaries or extensions
+cannot override the pins. Dependencies are installed before the agents extension.
 
 ## Sources of Truth
 

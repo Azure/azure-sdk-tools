@@ -356,17 +356,28 @@ test("deploys the image tag selected by the pipeline", () => {
   assert.match(localSync, /buildAzdEnvironmentValues/);
 });
 
-test("pins the stable agents extension with a compatible azd minimum", () => {
+test("pins the CLI and every required stable extension", () => {
   const project = parse(read("../azure.yaml"));
 
-  assert.equal(project.requiredVersions.azd, ">= 1.37.0");
-  assert.equal(project.requiredVersions.extensions["azure.ai.agents"], "=1.0.0");
+  assert.equal(project.requiredVersions.azd, "=1.37.3");
   const installer = read("scripts/install-azd-extensions.sh");
-  for (const dependency of ["azure.ai.inspector", "azure.ai.projects", "azure.ai.connections", "azure.ai.toolboxes"]) {
+  for (const dependency of ["azure.ai.agents", "azure.ai.inspector", "azure.ai.projects", "azure.ai.connections", "azure.ai.toolboxes"]) {
+    assert.equal(project.requiredVersions.extensions[dependency], "=1.0.0");
     assert.match(installer, new RegExp(dependency.replaceAll(".", "\\.")));
   }
 });
 
+test("pipeline tooling uses a job-local pinned CLI and shares its extension profile", () => {
+  const template = parse(read("pipelines/templates/azd-auth.yml"));
+  const install = template.steps[0];
+  assert.equal(install.env.AZD_INSTALL_DIRECTORY, "$(Agent.TempDirectory)/sdk-ai-bots-azd-bin");
+  assert.equal(install.env.AZD_CONFIG_DIR, "$(Agent.TempDirectory)/sdk-ai-bots-azd-profile");
+  assert.match(install.bash, /install-pipeline-azd\.sh/);
+  assert.match(install.bash, /export PATH="\$AZD_INSTALL_DIRECTORY:\$PATH"/);
+  assert.match(install.bash, /task\.setvariable variable=AZD_CONFIG_DIR/);
+  assert.match(install.bash, /install-azd-extensions\.sh" "\$PROJECT"/);
+  assert.doesNotMatch(install.bash, /command -v azd|install-azd\.sh \| bash/);
+});
 test("exports the Foundry project ID required by the agent extension", () => {
   const agent = read("infra/layers/agent/main.bicep");
 

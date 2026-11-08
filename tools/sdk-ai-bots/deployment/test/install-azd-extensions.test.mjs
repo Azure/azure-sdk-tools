@@ -8,13 +8,14 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const requiredExtensions = [
-  "azure.ai.agents",
   "azure.ai.inspector",
   "azure.ai.projects",
   "azure.ai.connections",
   "azure.ai.toolboxes",
+  "azure.ai.agents",
 ];
 const installed = requiredExtensions.map(id => ({ id, installedVersion: "1.0.0" }));
+const constraints = Object.fromEntries(requiredExtensions.map(id => [id, "=1.0.0"]));
 const fakeAzd = String.raw`#!/usr/bin/env node
 const fs = require("node:fs");
 const args = process.argv.slice(2);
@@ -32,9 +33,9 @@ if (args[0] === "extension" && args[1] === "install") {
 `;
 const fakeYq = String.raw`#!/usr/bin/env node
 const args = process.argv.slice(2);
-if (args[0] !== "-r" || args[1] !== '.requiredVersions.extensions."azure.ai.agents"' ||
+if (args[0] !== "-o=json" || args[1] !== '.requiredVersions.extensions' ||
     args[2] !== process.env.MANIFEST_PATH) throw new Error("Unexpected yq arguments");
-console.log(process.env.EXTENSION_CONSTRAINT);
+console.log(process.env.EXTENSION_CONSTRAINTS);
 `;
 
 function runInstaller(extraEnv = {}) {
@@ -51,7 +52,7 @@ function runInstaller(extraEnv = {}) {
         PATH: `${temporary}:${process.env.PATH}`,
         CALL_LOG: log,
         MANIFEST_PATH: manifest,
-        EXTENSION_CONSTRAINT: "=1.0.0",
+        EXTENSION_CONSTRAINTS: JSON.stringify(constraints),
         INSTALLED_EXTENSIONS: JSON.stringify(installed),
         ...extraEnv,
       },
@@ -68,13 +69,16 @@ test("installs the exact GA pin and verifies all direct dependencies", () => {
   const result = runInstaller();
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(result.calls, [
-    ["extension", "install", "azure.ai.agents", "--source", "azd", "--version", "1.0.0", "--no-prompt"],
+    ...requiredExtensions.map(id =>
+      ["extension", "install", id, "--source", "azd", "--version", "1.0.0", "--no-prompt"]),
     ["extension", "list", "--installed", "--output", "json"],
   ]);
 });
 
 test("rejects non-exact extension constraints before installation", () => {
-  const result = runInstaller({ EXTENSION_CONSTRAINT: ">=1.0.0" });
+  const result = runInstaller({
+    EXTENSION_CONSTRAINTS: JSON.stringify({ ...constraints, "azure.ai.agents": ">=1.0.0" }),
+  });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Expected an exact/);
   assert.deepEqual(result.calls, []);
@@ -111,6 +115,24 @@ test("does not treat a missing installedVersion as an installed dependency", () 
     INSTALLED_EXTENSIONS: JSON.stringify(installed.map(extension =>
       extension.id === "azure.ai.connections" ? { id: extension.id } : extension)),
   });
+
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /azure\.ai\.connections.*missing/);
+});
+
+test("does not accept a newer dependency that differs from the project pin", () => {
+  const result = runInstaller({
+    INSTALLED_EXTENSIONS: JSON.stringify(installed.map(extension =>
+      extension.id === "azure.ai.projects" ? { ...extension, installedVersion: "1.0.1" } : extension)),
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /azure\.ai\.projects.*unexpected installed version/);
+});
+
+test("rejects missing dependency pins before any installation", () => {
+  const { "azure.ai.toolboxes": _omitted, ...missing } = constraints;
+  const result = runInstaller({ EXTENSION_CONSTRAINTS: JSON.stringify(missing) });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Expected an exact azure\.ai\.toolboxes version/);
+  assert.deepEqual(result.calls, []);
 });

@@ -9,9 +9,16 @@
 steps:
     - bash: |
           set -euo pipefail
-          command -v azd >/dev/null || curl -fsSL https://aka.ms/install-azd.sh | bash
-          azd version && bash "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/install-azd-extensions.sh"
-      displayName: 'Ensure azd and required extensions are installed'
+          PROJECT="$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure.yaml"
+          TOOLING="$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts"
+          bash "$TOOLING/install-pipeline-azd.sh" "$PROJECT" "$AZD_INSTALL_DIRECTORY"
+          export PATH="$AZD_INSTALL_DIRECTORY:$PATH"
+          echo "##vso[task.setvariable variable=AZD_CONFIG_DIR]$AZD_CONFIG_DIR"
+          bash "$TOOLING/install-azd-extensions.sh" "$PROJECT"
+      displayName: 'Install pinned azd and extensions'
+      env:
+          AZD_INSTALL_DIRECTORY: $(Agent.TempDirectory)/sdk-ai-bots-azd-bin
+          AZD_CONFIG_DIR: $(Agent.TempDirectory)/sdk-ai-bots-azd-profile
 
     - task: AzureCLI@2
       displayName: 'azd / az auth (federated)'

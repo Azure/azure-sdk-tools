@@ -26,8 +26,7 @@ or infrastructure contracts.
 | Failure area | Recovery path |
 | --- | --- |
 | Frontend | Run with `component=frontend`. Reapply the prior Teams package if its manifest changed. |
-| Agent-server | Run with `component=agent-server`. It deploys directly to the production site and redeploys the knowledge-sync WebJob in dev/prod. |
-| Knowledge-sync WebJob | Run with `component=agent-server` from the known-good revision, then verify the WebJob schedule and latest run. |
+| Agent-server | Run with `component=agent-server`. It deploys only the server directly to the production site. |
 | Chat agent | Run with `component=agent` or use the hosted-agent pipeline, then verify the new active Foundry version. |
 | Evolution agent | Run the production hosted-agent deployment from the known-good revision and verify primary/candidate RBAC. |
 | Logic App | Run with `component=logic-app` to reapply its workflow, or keep the workflow disabled during investigation. |
@@ -35,6 +34,9 @@ or infrastructure contracts.
 Review and approve the infrastructure preview even during rollback. A prior
 source revision may also contain older Bicep; do not approve unintended
 infrastructure reversions merely to restore application code.
+
+Knowledge-sync recovery belongs to its package-owned backend CD workflow, not
+`qa-bot-deploy.yml`; restoring chatbot code does not deploy or roll back that job.
 
 For dev-only emergency testing, check out the known-good revision and run
 `azd deploy <service> --environment dev`. Production recovery remains

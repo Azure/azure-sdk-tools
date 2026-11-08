@@ -98,8 +98,7 @@ test("shared layer grants caller configuration access and all runtime data roles
     grant.roleDefinitionId === ROLE_IDS.configOwner));
   for (const role of [
     ROLE_IDS.blobOwner, ROLE_IDS.tableContributor, ROLE_IDS.queueContributor,
-    ROLE_IDS.configReader, ROLE_IDS.searchIndexContributor,
-    ROLE_IDS.searchServiceContributor, ROLE_IDS.acrPull,
+    ROLE_IDS.configReader, ROLE_IDS.searchIndexReader, ROLE_IDS.acrPull,
   ]) {
     assert.ok(plan.some(grant =>
       grant.principalId === env.MANAGED_IDENTITY_PRINCIPAL_ID && grant.roleDefinitionId === role), role);
@@ -160,6 +159,26 @@ test("a management Contributor grant does not substitute for data-plane access",
     principalId: env.DEPLOYMENT_PRINCIPAL_ID, scope, roleDefinitionId: ROLE_IDS.configOwner,
   }, azure.run), true);
   assert.equal(azure.azureCreates().length, 1);
+});
+
+test("shared runtime Search grants are query-only and preserve existing document access", () => {
+  const azure = fixture();
+  const scope = `${prefix}Microsoft.Search/searchServices/test-search`;
+  const plan = buildResourceRolePlan("shared-resources", env);
+  const runtimeGrants = plan.filter(grant =>
+    grant.principalId === env.MANAGED_IDENTITY_PRINCIPAL_ID && grant.scope === scope);
+
+  assert.deepEqual(runtimeGrants.map(grant => grant.roleDefinitionId), [ROLE_IDS.searchIndexReader]);
+  azure.grants.set(`${env.MANAGED_IDENTITY_PRINCIPAL_ID}::${scope}`, [{
+    roleDefinitionId: ROLE_IDS.searchIndexContributor,
+    scope: "/subscriptions/test-sub/resourceGroups/test-rg",
+  }]);
+  assert.equal(ensureRoleAssignment(runtimeGrants[0], azure.run), true);
+  assert.deepEqual(azure.azureCreates(), []);
+  assert.ok(plan.some(grant =>
+    grant.principalId === env.DEPLOYMENT_PRINCIPAL_ID &&
+    grant.roleDefinitionId === ROLE_IDS.searchServiceContributor &&
+    grant.scope === scope));
 });
 
 test("missing privilege and unreadable assignment lists fail explicitly", () => {

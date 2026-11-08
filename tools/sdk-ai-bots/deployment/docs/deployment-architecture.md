@@ -12,8 +12,7 @@ is `tools/sdk-ai-bots/azure.yaml`, the Bicep entry points under
 - **`frontend`:** Teams bot on App Service. A user-assigned managed identity
   provides Azure Bot authentication.
 - **`agent-server`:** Python API on App Service protected by Easy Auth. It
-  resolves channel configuration, converts Teams activities, and hosts the
-  scheduled knowledge-sync WebJob.
+  resolves channel configuration and converts Teams activities.
 - **`agent`:** Microsoft Foundry hosted chat agent built remotely in ACR.
 - **Azure MCP Server agent:** Separate Foundry hosted agent for the Azure MCP
   Server tenant.
@@ -22,8 +21,8 @@ is `tools/sdk-ai-bots/azure.yaml`, the Bicep entry points under
   definitions.
 - **Evolution agent:** Production-only Foundry hosted agent with scoped access
   to production and candidate-dev resources.
-- **Data jobs:** Knowledge sync runs as a scheduled WebJob on `agent-server`.
-  Generated-wiki and feedback/evolution pipelines remain independent jobs.
+- **External data jobs:** Package-owned workflows manage knowledge sync,
+  generated wiki, and feedback/evolution independently of this deployment.
 
 Shared infrastructure includes ACR, Storage, Cosmos DB, App
 Configuration, Azure AI Search, AI Services, Log Analytics, Application
@@ -90,20 +89,18 @@ flowchart LR
   AGENT --> EVOLUTION[Evolution agent, prod only]
   SERVER --> READY[Authenticated /ping readiness]
   READY --> FRONTEND[Frontend]
-  READY --> SYNC[Knowledge-sync WebJob, dev/prod]
 ```
 
 The Azure MCP Server agent follows the chat agent, and agent-server waits for
 both hosted agents before frontend readiness. The readiness gate retries the
-Easy Auth-protected `/ping` endpoint before the frontend and dev/prod WebJob
-stages proceed. The production-only evolution branch does not gate frontend
+Easy Auth-protected `/ping` endpoint before the frontend stage proceeds.
+The production-only evolution branch does not gate frontend
 deployment.
 
 `qa-bot-deploy.yml` defaults to `component=all`. A component-scoped run
 provisions the selected layer and its dependencies. Selecting `agent` deploys
 both the chat agent and Azure MCP Server agent; selecting `frontend` deploys
-only the frontend. Dev/prod `agent-server` deployments also update the
-knowledge-sync WebJob, while preview deploys only the server. Selecting
+only the frontend. `agent-server` deploys only the server in every environment. Selecting
 `shared-resources` or `logic-app` provisions that infrastructure scope without
 an application deploy. Component CI remains separate from provisioning and
 deployment.
@@ -131,9 +128,7 @@ lifecycle hooks:
   authorization, and tag dev hosted-agent versions with their source branch;
 - frontend postdeploy probes `/health` and, when interactive Teams provisioning
   is enabled, installs or updates the approved Teams app in each configured
-  group;
-- the knowledge-sync deployment stage packages and deploys the scheduled
-  WebJob after agent-server readiness.
+  group.
 
 Application images use azd native remote Docker builds. After infrastructure
 apply, the selected application deployment stage establishes runtime state and
@@ -155,10 +150,13 @@ flowchart LR
     EVOLVE --> VALIDATE[Validate closed issues]
 ```
 
-Knowledge sync runs as the `knowledge-sync` scheduled WebJob on the
-agent-server App Service and starts the primary Search indexer after writing
-blobs. Wiki generation remains a scheduled pipeline and starts its own indexer.
-The feedback pipeline operates independently of knowledge sync.
+The knowledge-sync package writes source blobs and starts the primary Search
+indexer. Its WebJob deployment and SSH setting are owned by the existing backend
+CD pipeline, not `qa-bot-deploy.yml`. Wiki generation starts its own indexer.
+The package CI builds and tests; it does not provision Search schema, datasources,
+indexers, or Azure RBAC. This deployment retains those infrastructure prerequisites
+and chatbot query access, but does not provision the external writer's Search
+write/indexer grants. Existing grants are not deleted.
 
 ## Security Boundaries
 

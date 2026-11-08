@@ -35,7 +35,7 @@ flowchart LR
     PIPELINE[Deployment service principal] -->|deploy| AZURE[Azure resources]
     DEVELOPERS[Developer group] -->|interactive development| AZURE
     FRONTEND[Frontend identity] -->|bot and storage| CHATBOT[Chatbot system]
-    SHARED[Shared runtime identity] -->|backend and knowledge sync| CHATBOT
+    SHARED[Shared runtime identity] -->|backend| CHATBOT
     SEARCH[Search identity] -->|source blobs and models| CHATBOT
     PROJECT[Foundry project identity] -->|pull agent image| ACR[Container registry]
     AGENT[Hosted-agent identity] -->|runtime data| CHATBOT
@@ -101,10 +101,9 @@ identity and exports its client, object, and resource IDs. It is used by:
   connection.
 
 It is attached to the agent-server together with the frontend identity, but the
-agent-server and its knowledge-sync WebJob explicitly select the shared
-identity for Azure SDK credentials. The App Service exposes the frontend
-identity's client ID as `BOT_CLIENT_ID` so the WebJob can sign GitHub App tokens
-with the externally managed Key Vault key.
+agent-server explicitly selects the shared identity for Azure SDK credentials.
+The App Service exposes the frontend identity's client ID as `BOT_CLIENT_ID`
+for backend Teams image authentication.
 
 ### Frontend and bot identity
 
@@ -128,7 +127,7 @@ AI Services for integrated vectorization and knowledge-base model operations.
 ### External GitHub signing vault
 
 GitHub App authentication uses a non-exportable key in an externally managed
-vault. Agents and knowledge sync select it through `GITHUB_APP_KEYVAULT_URL`;
+vault. Agents select it through `GITHUB_APP_KEYVAULT_URL`;
 the frontend uses `GITHUB_APP_KEY_VAULT_NAME`. Runtime identities use the key's
 remote signing API to obtain GitHub App installation tokens.
 
@@ -183,10 +182,12 @@ Reconciled after the shared-resources layer by
   state operations.
 - **App Configuration Data Reader**
   (`516239f1-63e1-4d78-a4de-a74fb236a071`) on App Configuration.
-- **Search Index Data Contributor**
-  (`8ebe5a00-799e-43f5-93ac-243d3dce84a7`) on Search.
-- **Search Service Contributor** on Search so the knowledge-sync WebJob can
-  manage indexer operations.
+- **Search Index Data Reader**
+  (`1407120a-92aa-4202-b7e9-c0e197c71c8f`) on Search for chatbot queries.
+  An existing Search Index Data Contributor grant satisfies this requirement
+  without a redundant assignment. The deployment does not revoke existing
+  grants or provision shared-runtime Search write/indexer access for an external
+  ingestion job.
 - **Contributor** (`b24988ac-6180-42a0-ab88-20f7382dd24c`) and **AcrPull**
   (`7f951dda-4ed3-4680-a7ca-43fe172d538d`) on ACR.
 - **Cosmos DB Built-in Data Contributor**
@@ -359,8 +360,8 @@ scope and calls the server with that token.
 
 ### Runtime access
 
-The agent-server and its knowledge-sync WebJob explicitly select the shared
-runtime identity through `AZURE_CLIENT_ID`. The agent-server uses it to read
+The agent-server explicitly selects the shared runtime identity through
+`AZURE_CLIENT_ID`. The agent-server uses it to read
 channel configuration from Blob Storage. The Logic App uses it for
 authenticated agent-server calls and the Cosmos managed API connection, and
 attaches the frontend identity for bot calls.

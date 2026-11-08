@@ -7,6 +7,16 @@ and lifecycle hooks for state that cannot be expressed safely in Bicep.
 The selected resource group must already exist; this deployment does not create
 or manage the resource group itself.
 
+Knowledge-sync deployment is outside this directory. Its package owns
+[builds, tests, and runtime behavior](../azure-sdk-qa-bot-knowledge-sync/README.md),
+and the existing [backend CD pipeline](../azure-sdk-qa-bot-agent/pipelines/server-cd.yml)
+owns WebJob packaging, SSH configuration, and deployment. The chatbot deployment
+does not duplicate those steps or grant shared-runtime Search write access for
+that job. Existing external jobs and grants are not revoked by this change.
+
+Search schema, datasource, indexer, and knowledge-base provisioning remain here:
+the knowledge-sync package consumes those resources but does not create them.
+
 ## Layout
 
 ```text

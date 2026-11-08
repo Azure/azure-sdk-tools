@@ -17,6 +17,7 @@ export const ROLE_IDS = {
   configReader: "516239f1-63e1-4d78-a4de-a74fb236a071",
   configOwner: "5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b",
   searchIndexContributor: "8ebe5a00-799e-43f5-93ac-243d3dce84a7",
+  searchIndexReader: "1407120a-92aa-4202-b7e9-c0e197c71c8f",
   searchServiceContributor: "7ca78c08-252a-4471-8644-bb5ff32d4ba0",
   acrPull: "7f951dda-4ed3-4680-a7ca-43fe172d538d",
   acrPush: "8311e382-0749-4cb8-b61a-304f252e45ec",
@@ -51,6 +52,7 @@ const EQUIVALENT_ROLES: Record<string, readonly string[]> = {
   [ROLE_IDS.blobReader]: [ROLE_IDS.blobContributor, ROLE_IDS.blobOwner],
   [ROLE_IDS.configReader]: [ROLE_IDS.configOwner],
   [ROLE_IDS.searchServiceContributor]: [ROLE_IDS.contributor, ROLE_IDS.owner],
+  [ROLE_IDS.searchIndexReader]: [ROLE_IDS.searchIndexContributor],
   [ROLE_IDS.acrPull]: [ROLE_IDS.acrPush],
   [ROLE_IDS.openAiUser]: [ROLE_IDS.foundryUser, ROLE_IDS.foundryManager],
   [ROLE_IDS.foundryUser]: [ROLE_IDS.foundryManager],
@@ -92,8 +94,7 @@ export function buildResourceRolePlan(
     add(identity, ROLE_IDS.queueContributor, storage);
     add(identity, ROLE_IDS.tableContributor, storage);
     add(identity, ROLE_IDS.configReader, configuration);
-    add(identity, ROLE_IDS.searchIndexContributor, search);
-    add(identity, ROLE_IDS.searchServiceContributor, search);
+    add(identity, ROLE_IDS.searchIndexReader, search);
     add(identity, ROLE_IDS.acrPull, registry);
     add(required(env, "SEARCH_SERVICE_PRINCIPAL_ID"), ROLE_IDS.blobReader, storage);
     add(deployment, ROLE_IDS.blobContributor, storage, deploymentType);

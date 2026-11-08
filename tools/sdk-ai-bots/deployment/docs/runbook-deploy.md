@@ -7,8 +7,7 @@ Use this runbook for routine deployments after the one-time
 
 Use the deployment pipeline with `component=all` when infrastructure contracts
 or multiple services change. Select one component for an isolated application
-or infrastructure change. Dev/prod agent-server deployments include the
-scheduled knowledge-sync WebJob.
+or infrastructure change. Agent-server deployments update only the server.
 
 | Scope | Pipeline | `component` |
 | --- | --- | --- |
@@ -24,15 +23,17 @@ generation and feedback processing use their specialized scheduled pipelines.
 
 | Related job | YAML definition |
 | --- | --- |
-| Knowledge-sync-only fallback (dev/prod) | `azure-sdk-qa-bot-agent/pipelines/server-cd.yml`, `deploymentTarget=knowledge-sync` |
+| External knowledge-sync WebJob (dev/prod) | `azure-sdk-qa-bot-agent/pipelines/server-cd.yml`, `deploymentTarget=knowledge-sync` |
 | Generated wiki | `azure-sdk-qa-bot-wiki-index/build_wiki.yml` |
 | Hosted-agent deployment | `azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` |
 | Feedback/evolution jobs | `azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` |
 
-The knowledge-sync-only fallback requires the backend CD definition's existing
-variable groups and service connection, plus previously configured App Service
-settings and SSH key. It does not provision those prerequisites. Ensure no
-other knowledge-sync schedule writes to the same environment concurrently.
+Knowledge-sync deployment is owned by that external backend CD definition, not
+`qa-bot-deploy.yml`. Its variable groups, service connection, App Service
+settings, SSH credential, schedule, and writer permissions must be configured
+through the package-owned workflow. Package CI builds and tests only; Search
+schema and indexer provisioning remain in this deployment. Existing external
+jobs and Azure role assignments are not removed.
 
 ## 2. Pre-deployment Checks
 
@@ -44,12 +45,9 @@ other knowledge-sync schedule writes to the same environment concurrently.
    [operational readiness checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md).
 6. Confirm the source revision is permitted by the target service connection's
    branch-control policy.
-7. Before the first dev/prod WebJob deployment, disable and drain the prior
-   Azure DevOps knowledge-sync schedule and confirm the deployment pipeline can
-   use the `EMU-SSH-PRIVATE-KEY` secure file.
-8. Verify that the selected resource group already exists and is readable by
+7. Verify that the selected resource group already exists and is readable by
    the deployment identity. The pipeline will not create it.
-9. When migrating dev to the shared SDK/MCP listener, disable any
+8. When migrating dev to the shared SDK/MCP listener, disable any
    retired standalone MCP workflow through an approved operator action.
    Incremental provisioning omits that workflow but does not delete or disable
    an already deployed resource.
@@ -90,13 +88,12 @@ After apply, `qa-bot-deploy.yml` deploys the selected application service.
 chat-agent deployment starts first. The Azure MCP Server agent follows the chat
 agent, and agent-server waits for both hosted agents. The production-only
 evolution agent follows the chat agent on an independent branch. Before
-frontend or knowledge-sync WebJob deployment, the pipeline acquires an Easy
+frontend deployment, the pipeline acquires an Easy
 Auth token and retries agent-server `/ping`; a failed readiness probe stops the
 rollout.
 
 Each service uses an `azd` native remote build or the shared hosted-agent
-deployment helper. Bicep owns both complete Logic App workflows. The dev/prod
-agent-server path tests, packages, and deploys the `knowledge-sync` WebJob.
+deployment helper. Bicep owns both complete Logic App workflows.
 Pipeline deployments normally set `AZD_SKIP_TEAMS_PROVISION=1`; complete Teams
 catalog publication and group installation separately using the manual setup
 procedure. The frontend postdeploy hook performs that work only when enabled
@@ -125,8 +122,7 @@ PR-review skills are included in the hosted-agent image, while result decoding
 and retrieval changes also require the matching backend image. Evolution
 readiness retries and retained-history trace lookup require the backend and
 production evolution-agent images; partial feedback-job failures are reported
-as `SucceededWithIssues`, not a fully successful scan. Deploy the refreshed
-knowledge-sync package and confirm the upstream knowledge configuration includes
+as `SucceededWithIssues`, not a fully successful scan. Confirm the upstream knowledge configuration includes
 Azure DevOps `areaPath`; the backend reads that configuration from GitHub with a
 one-hour cache. Retain work-item permissions under the configured area.
 
@@ -136,8 +132,8 @@ one-hour cache. Retain work-item permissions under the configured area.
 2. Confirm frontend `/health` is healthy.
 3. Call agent-server `/ping` with an Easy Auth token for the backend
    Application ID URI.
-4. In dev/prod, confirm the `knowledge-sync` WebJob has the expected schedule
-   and its latest run completed successfully.
+4. Confirm the Search index contains the expected externally ingested knowledge
+   and wiki data.
 5. Confirm the primary Logic App is enabled and its Teams connection is
    `Connected`. Dev uses one listener including MCP; preview and production
    each use a separate MCP listener. Preview observes the production channels
@@ -183,9 +179,8 @@ azd deploy agent-server --environment dev --no-prompt
 azd deploy frontend --environment dev --no-prompt
 ```
 
-These commands do not deploy the separate Azure MCP Server agent or the
-knowledge-sync WebJob. The unified pipeline owns those steps, including SSH-key
-injection. Use it for a complete deployment or follow the hosted-agent path
+These commands do not deploy the separate Azure MCP Server agent. The unified
+pipeline owns that step. Use it for a complete chatbot deployment or follow the hosted-agent path
 above for an isolated hosted-agent update. Preview and production use their
 mapped pipelines and service connections.
 
@@ -193,7 +188,9 @@ mapped pipelines and service connections.
 
 After infrastructure apply, run the corresponding application deployment
 stages and repeat post-deployment verification. This establishes the selected
-images and the scheduled WebJob.
+application images. External data jobs are operated through their package-owned
+workflows. If backend reprovisioning changes App Service settings used by an
+external WebJob, restore those prerequisites through its owner workflow.
 
 If verification fails, stop promotion and follow the
 [rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md).

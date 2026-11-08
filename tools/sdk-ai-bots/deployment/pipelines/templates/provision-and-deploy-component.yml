@@ -37,9 +37,3 @@ stages:
           environment: ${{ parameters.environment }}
           imageTag: ${{ parameters.imageTag }}
           dependsOn: DeployComponent
-
-    - ${{ if and(eq(parameters.component, 'agent-server'), ne(parameters.environment, 'preview')) }}:
-      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/knowledge-sync-deploy-stage.yml
-        parameters:
-          environment: ${{ parameters.environment }}
-          dependsOn: DeployComponent

@@ -149,8 +149,7 @@ from `deployment/pipelines/orchestrators`.
 The application deployment definition accepts `component=all` (the default),
 `shared-resources`, `agent`, `frontend`, `agent-server`, or `logic-app`. Use
 `all` for the full environment. Selecting `agent` deploys the chat and Azure MCP
-Server agents. Dev/prod `agent-server` deployments also update the scheduled
-knowledge-sync WebJob; preview deploys only the server. `frontend` deploys the
+Server agents. `agent-server` deploys only the server in every environment. `frontend` deploys the
 frontend, while `shared-resources` and `logic-app` are provision-only selections.
 
 Wiki generation, hosted-agent deployment, and feedback jobs use the
@@ -221,17 +220,18 @@ or upgrade an approved package.
 
 - The GitHub App signing key is expected in the vault configured by
   `GITHUB_APP_KEYVAULT_URL` and `GITHUB_APP_KEY_NAME`; this deployment does not
-  create it. The frontend identity selected by the WebJob's `BOT_CLIENT_ID`
+  create it. The frontend identity
   needs key `Sign` permission through a legacy access policy, or Key Vault
   Crypto User on an RBAC-enabled vault, for the remote signing API used by the
-  frontend and WebJob.
-- Authorize `tools - sdk-ai-bots - deploy` to use the
-  `EMU-SSH-PRIVATE-KEY` secure file. The dev/prod agent-server path injects it
-  into the App Service without placing the key in pipeline arguments or logs.
-- Before the first WebJob deployment, disable and drain the previous dev/prod
-  Azure DevOps knowledge-sync schedules to prevent concurrent writers.
+  frontend.
 - Do not create a Cosmos DB connection-string secret for the Logic App; its
   connection uses managed identity.
+
+Knowledge-sync credentials, schedule, deployment, and writer permissions are
+external prerequisites managed through the
+[package-owned workflow](../../azure-sdk-qa-bot-knowledge-sync/README.md).
+The chatbot deployment does not require its SSH secure file. Search schema and
+indexer setup remain deployment-owned because package CI only builds and tests.
 
 Storage soft delete and seven-day continuous Cosmos backup are provisioned. If
 the recovery plan requires blob-version restoration, enable and test blob

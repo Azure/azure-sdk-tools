@@ -80,8 +80,8 @@ target resource state before approving a preview.
 
 Full-stack application deployment is a graph, not a serial list. `agent` starts
 after provisioning. The Azure MCP Server agent follows `agent`; `agent-server`
-waits for both hosted agents; and `frontend` plus the dev/prod knowledge-sync
-WebJob wait for an authenticated agent-server `/ping` readiness probe. The
+waits for both hosted agents; and `frontend` waits for an authenticated
+agent-server `/ping` readiness probe. The
 production-only evolution agent also waits for `agent`, but runs independently
 of the agent-server/frontend branch. Preserve these runtime dependencies unless
 the producer-consumer contract changes.
@@ -91,9 +91,9 @@ uses a manual approval stage. The approval task expires after 24 hours and the
 stage after three days. Logic App provisioning verifies the Teams managed
 connection and requests delegated consent before the deployment can complete.
 
-Knowledge sync is deployed as a scheduled WebJob with the dev/prod
-agent-server path. Wiki generation and feedback/evolution remain data jobs
-outside the azd service graph.
+Knowledge sync, wiki generation, and feedback/evolution are package-owned data
+jobs outside the azd deployment graph. WebJob packaging, SSH configuration, and
+knowledge-sync deployment remain in the existing backend CD pipeline.
 
 ## azd Hook Workflow
 
@@ -229,8 +229,7 @@ package, remote publish, and container deployment lifecycle; the frontend
 Dockerfile compiles TypeScript inside the remote build. `agent` also has no
 predeploy hook; azd and the `azure.ai.agents` extension own its image build and
 initial Foundry deployment before `agent-postdeploy.ts` reconciles runtime
-state. The deployment pipeline separately packages and deploys the
-knowledge-sync WebJob after agent-server readiness.
+state. The deployment pipeline does not package or deploy knowledge sync.
 
 ### Rerunning a Hook
 
@@ -274,8 +273,9 @@ use a build-based tag when no override is supplied.
   production issue locally.
 - `.azure/` contains machine-local state. Never use it as review evidence or
   commit it.
-- Keep wiki generation and feedback processing outside the azd service graph.
-  Knowledge sync is a WebJob coupled to the agent-server deployment path.
+- Keep knowledge-sync deployment, wiki generation, and feedback processing
+  outside the azd service graph. Their external workflows consume the Search
+  infrastructure provisioned here.
 
 ## azd References
 

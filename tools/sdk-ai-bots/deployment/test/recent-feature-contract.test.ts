@@ -196,7 +196,7 @@ test("deploys application services according to runtime dependencies", () => {
   assert.match(stages, /healthPath: '\$\(AGENT_SERVER_HEALTH_PATH\)'/);
   assert.match(stages, /easyAuthAudience: '\$\(SERVER_APPLICATION_ID_URI\)'/);
   assert.match(stages, /evolution-agent-deploy-stage\.yml[\s\S]*?dependsOn: DeployAgent/);
-  assert.match(stages, /knowledge-sync-deploy-stage\.yml[\s\S]*?dependsOn: VerifyAgentServer/);
+  assert.doesNotMatch(stages, /DeployKnowledgeSync|knowledge-sync-deploy-stage/);
   assert.match(frontend, /dependsOn: VerifyAgentServer/);
   assert.doesNotMatch(frontend, /dependsOn: DeployEvolutionAgent/);
   assert.doesNotMatch(`${orchestrator}\n${stages}`, /function-app|DeployFunctionApp/);
@@ -535,11 +535,9 @@ test("aligns runtime app settings with application consumers", () => {
   assert.doesNotMatch(agentServer, /KEY_VAULT_URL|ADO_RESOURCE_SCOPE/);
 });
 
-test("runs Search indexers after both data producers", () => {
-  const knowledge = read("../azure-sdk-qa-bot-knowledge-sync/src/DailySyncKnowledge.ts");
+test("runs the Search indexer after the independent wiki producer", () => {
   const wiki = read("../azure-sdk-qa-bot-wiki-index/build_wiki.yml");
 
-  assert.match(knowledge, /searchService\.runIndexer\(\)/);
   assert.match(wiki, /run-search-indexer\.sh" AI_SEARCH_WIKI_INDEXER/);
 });
 
@@ -590,35 +588,22 @@ test("loads Logic App channel configuration through the authenticated backend", 
   );
 });
 
-test("deploys scheduled knowledge sync with the agent server", () => {
-  const agentServer = read("infra/layers/agent-server/main.bicep");
+test("leaves package-owned knowledge sync deployment outside the chatbot deployment graph", () => {
   const fullStack = read("pipelines/templates/deploy-stage.yml");
   const targeted = read("pipelines/templates/provision-and-deploy-component.yml");
-  const stage = read("pipelines/templates/knowledge-sync-deploy-stage.yml");
 
-  assert.doesNotThrow(() => parse(stage));
-  assert.match(agentServer, /name: 'BOT_CLIENT_ID'\s+value: frontendIdentityClientId/);
-  assert.match(fullStack, /knowledge-sync-deploy-stage\.yml/);
-  assert.match(
-    targeted,
-    /eq\(parameters\.component, 'agent-server'\)[\s\S]*?knowledge-sync-deploy-stage\.yml/,
+  assert.doesNotThrow(() => parse(fullStack));
+  assert.doesNotThrow(() => parse(targeted));
+  assert.doesNotMatch(
+    `${fullStack}\n${targeted}`,
+    /knowledge-sync|DeployKnowledgeSync|build:webjob|SSH_KEY_FILE|WEBJOB_NAME/,
   );
-  assert.match(stage, /values: \[dev, prod\]/);
-  assert.match(stage, /npm test -- --no-file-parallelism/);
-  assert.match(stage, /npm run build:webjob/);
-  assert.match(stage, /configure-knowledge-sync-ssh\.mjs/);
-  assert.match(stage, /deploy-webjob\.mjs/);
-  assert.match(stage, /WEBJOB_NAME: knowledge-sync/);
-});
-
-test("keeps WebJob tools without reinstalling Node in the backend image", () => {
-  const dockerfile = read("../azure-sdk-qa-bot-agent/Dockerfile");
-  const launcher = read("../azure-sdk-qa-bot-knowledge-sync/webjob/run.sh");
-
-  assert.match(dockerfile, /tdnf install -y .*git openssh-clients/);
-  assert.doesNotMatch(dockerfile, /nodejs\.org|npm install|tdnf install[^\n]*nodejs/);
-  assert.match(launcher, /NODE="\$JOB_ROOT\/runtime\/bin\/node"/);
-  assert.match(launcher, /exec "\$NODE"/);
+  for (const removed of [
+    "pipelines/templates/knowledge-sync-deploy-stage.yml",
+    "scripts/configure-knowledge-sync-ssh.mjs",
+  ]) {
+    assert.equal(existsSync(resolve(deploymentRoot, removed)), false);
+  }
 });
 
 test("subscribes the additional dev .NET channel", () => {

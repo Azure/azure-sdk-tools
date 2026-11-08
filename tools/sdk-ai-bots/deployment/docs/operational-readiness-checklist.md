@@ -44,15 +44,15 @@ exception with an owner and due date.
       and bot-config upload without skipped required values.
 - [ ] `WEB_FETCH_ALLOWED_DOMAINS` contains the approved production domains.
 - [ ] The configured GitHub App signing key exists and the frontend identity
-      selected by the WebJob's `BOT_CLIENT_ID` can sign with it.
+      can sign with it.
 - [ ] The Teams managed-API connection reports `Connected`.
 - [ ] The Azure Bot `MsTeamsChannel` exists.
 - [ ] The approved Teams app version is published in the tenant catalog.
 
 ## Data and Recovery
 
-- [ ] The knowledge-sync WebJob and wiki build have completed successfully and
-      both Search indexer triggers were accepted.
+- [ ] External knowledge and wiki ingestion are healthy and the Search index
+      contains the expected source data.
 - [ ] The production daily feedback pipeline has completed with the evolution
       gate enabled and the required primary/candidate access.
 - [ ] Cosmos DB continuous backup is enabled and its restore procedure is known.
@@ -68,8 +68,7 @@ exception with an owner and due date.
       service.
 - [ ] Frontend availability test and deployment alerts report healthy.
 - [ ] Alert destinations and on-call ownership have been exercised.
-- [ ] Operators can verify frontend `/health`, agent-server `/ping`, and the
-      `knowledge-sync` WebJob schedule and latest run after deployment.
+- [ ] Operators can verify frontend `/health` and agent-server `/ping`.
 - [ ] The Teams message path and Logic App trigger have been tested in the
       target tenant.
 - [ ] Dashboard or saved-query links are recorded in the team's operational

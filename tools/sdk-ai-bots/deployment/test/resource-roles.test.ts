@@ -108,6 +108,22 @@ test("shared layer grants caller configuration access and all runtime data roles
     grant.roleDefinitionId === ROLE_IDS.blobReader));
 });
 
+test("adopted Search reuses the shared identity's existing Blob access", () => {
+  const identityId = `${prefix}Microsoft.ManagedIdentity/userAssignedIdentities/runtime`;
+  const plan = buildResourceRolePlan("shared-resources", {
+    ...env,
+    MANAGED_IDENTITY_RESOURCE_ID: identityId,
+    SEARCH_USER_ASSIGNED_IDENTITIES: JSON.stringify({ [identityId.toUpperCase()]: {} }),
+  });
+
+  assert.ok(plan.some(grant =>
+    grant.principalId === env.MANAGED_IDENTITY_PRINCIPAL_ID &&
+    grant.roleDefinitionId === ROLE_IDS.blobOwner));
+  assert.ok(plan.every(grant =>
+    grant.principalId !== env.SEARCH_SERVICE_PRINCIPAL_ID ||
+    grant.roleDefinitionId !== ROLE_IDS.blobReader));
+});
+
 test("fresh provisioning creates missing roles; repeating it skips every assignment", () => {
   const azure = fixture();
   for (const layer of ["shared-resources", "agent", "frontend"] as const) {
@@ -216,9 +232,11 @@ test("agent layer grants Foundry access to the caller and runtime and image pull
   assert.ok(plan.some(grant =>
     grant.principalId === env.FOUNDRY_PROJECT_PRINCIPAL_ID &&
     grant.roleDefinitionId === ROLE_IDS.acrPull));
-  assert.ok(plan.some(grant =>
-    grant.principalId === env.SEARCH_SERVICE_PRINCIPAL_ID &&
-    grant.roleDefinitionId === ROLE_IDS.openAiUser));
+  assert.deepEqual(
+    plan.filter(grant => grant.principalId === env.SEARCH_SERVICE_PRINCIPAL_ID)
+      .map(grant => grant.roleDefinitionId),
+    [ROLE_IDS.openAiUser],
+  );
 });
 
 test("frontend grants use the provisioned principal, not the client ID", () => {

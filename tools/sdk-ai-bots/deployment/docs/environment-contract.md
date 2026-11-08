@@ -135,6 +135,14 @@ layer's `main.bicepparam`. Do not copy these values to a fresh environment:
 first read the target resource state and use preview to prove that no identity,
 policy, immutable partition key, or model capacity will be removed.
 
+`SEARCH_USER_ASSIGNED_IDENTITIES` and `MANAGED_IDENTITY_RESOURCE_ID` select the
+existing shared identity for new Search datasources when it is attached to the
+service. Identity matching is case-insensitive for ARM resource IDs. Existing
+datasources retain their explicit identity on reconciliation, and the shared
+identity's Blob access is reused rather than adding an unused system-identity
+Blob Reader grant. Fresh services without an attached shared identity retain the
+system-assigned default.
+
 The dev registry sets `CONTAINER_REGISTRY_IS_EXISTING=true` because it retains
 identities from both dev and production. A resource-group-scoped developer
 cannot reassign the production identity, so shared-resource provisioning reads

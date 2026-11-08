@@ -121,8 +121,12 @@ backend workload authorization from being conflated.
 
 ### Search service identity
 
-Azure AI Search has a system-assigned identity. It reads source blobs and calls
-AI Services for integrated vectorization and knowledge-base model operations.
+Azure AI Search has a system-assigned identity for model operations. Adopted
+datasources can select an attached user-assigned identity for source Blob reads.
+Dev uses the shared runtime identity, which already has Blob access. Datasource
+updates preserve explicit identity selection; new datasources use that shared
+identity when configured in `SEARCH_USER_ASSIGNED_IDENTITIES`, otherwise they
+use the Search system-assigned identity.
 
 ### External GitHub signing vault
 
@@ -215,12 +219,15 @@ Storage role.
 ### Search identity roles
 
 - **Storage Blob Data Reader**
-  (`2a2b9908-6ea1-4ae2-8e65-a410df84e7d1`) on the shared storage account;
-- **Cognitive Services User**
-  (`a97b65f3-24c7-4388-baec-2e87135dc908`) on the AI Services account;
+  (`2a2b9908-6ea1-4ae2-8e65-a410df84e7d1`) on the shared storage account only
+  when default datasources use the Search system-assigned identity. When Search
+  uses the attached shared user-assigned identity, its existing Blob Data Owner
+  grant supplies access and no unused system-identity Blob grant is created;
 - **Cognitive Services OpenAI User**
   (`5e0bd9bd-7b93-4f28-af87-19fc36ad61bd`) on the AI Services account so Search
-  can call embedding deployments when local authentication is disabled.
+  can call embedding deployments when local authentication is disabled. This is
+  sufficient for the configured Azure OpenAI model calls; the broader Cognitive
+  Services User role is not required.
 
 ### Foundry project identity role
 

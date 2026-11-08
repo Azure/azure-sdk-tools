@@ -16,6 +16,9 @@ that job. Existing external jobs and grants are not revoked by this change.
 
 Search schema, datasource, indexer, and knowledge-base provisioning remain here:
 the knowledge-sync package consumes those resources but does not create them.
+Adopted Search datasources retain their explicit identity on updates. When the
+shared user-assigned identity is attached to Search, new datasources use it and
+reuse its Blob access instead of requiring an unused system-identity grant.
 
 ## Layout
 

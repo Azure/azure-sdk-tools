@@ -1,4 +1,5 @@
 import { type CommandRunner, runCommand } from "../../scripts/lib/cli.js";
+import { getSearchIndexerIdentityResourceId } from "./search-identity.js";
 import {
   ensureCosmosRoleAssignment,
   ensureRoleAssignment,
@@ -22,7 +23,6 @@ export const ROLE_IDS = {
   acrPull: "7f951dda-4ed3-4680-a7ca-43fe172d538d",
   acrPush: "8311e382-0749-4cb8-b61a-304f252e45ec",
   openAiUser: "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
-  cognitiveUser: "a97b65f3-24c7-4388-baec-2e87135dc908",
   foundryUser: "53ca6127-db72-4b80-b1b0-d745d6d5456d",
   foundryManager: "eadc314b-1a2d-4efa-be10-5d325db5065e",
   metricsPublisher: "3913510d-42f4-4e42-8a64-420c390055eb",
@@ -96,7 +96,9 @@ export function buildResourceRolePlan(
     add(identity, ROLE_IDS.configReader, configuration);
     add(identity, ROLE_IDS.searchIndexReader, search);
     add(identity, ROLE_IDS.acrPull, registry);
-    add(required(env, "SEARCH_SERVICE_PRINCIPAL_ID"), ROLE_IDS.blobReader, storage);
+    if (!getSearchIndexerIdentityResourceId(env)) {
+      add(required(env, "SEARCH_SERVICE_PRINCIPAL_ID"), ROLE_IDS.blobReader, storage);
+    }
     add(deployment, ROLE_IDS.blobContributor, storage, deploymentType);
     add(deployment, ROLE_IDS.searchServiceContributor, search, deploymentType);
     if (!externallyManagedRegistry) {
@@ -119,7 +121,6 @@ export function buildResourceRolePlan(
       add(identity, ROLE_IDS.openAiUser, account);
       add(deployment, ROLE_IDS.openAiUser, account, deploymentType);
       const searchIdentity = required(env, "SEARCH_SERVICE_PRINCIPAL_ID");
-      add(searchIdentity, ROLE_IDS.cognitiveUser, account);
       add(searchIdentity, ROLE_IDS.openAiUser, account);
       add(required(env, "FOUNDRY_PROJECT_PRINCIPAL_ID"), ROLE_IDS.acrPull, registry);
       if (developer && developerType) {

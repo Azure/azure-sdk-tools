@@ -1,5 +1,7 @@
 import { execFileSync } from "node:child_process";
 
+import { getSearchIndexerIdentityResourceId } from "./search-identity.js";
+
 const STABLE_API_VERSION = "2026-04-01";
 const AGENTIC_API_VERSION = "2026-08-01-preview";
 
@@ -255,6 +257,7 @@ function dataSourceDefinition(
   description: string,
   storageResourceId: string,
   containerName: string,
+  identityResourceId: string | undefined,
 ): JsonObject {
   return {
     name,
@@ -264,6 +267,12 @@ function dataSourceDefinition(
       connectionString: `ResourceId=${storageResourceId};`,
     },
     container: { name: containerName },
+    ...(identityResourceId ? {
+      identity: {
+        "@odata.type": "#Microsoft.Azure.Search.DataUserAssignedIdentity",
+        userAssignedIdentity: identityResourceId,
+      },
+    } : {}),
     dataDeletionDetectionPolicy: {
       "@odata.type": "#Microsoft.Azure.Search.SoftDeleteColumnDeletionDetectionPolicy",
       softDeleteColumnName: "IsDeleted",
@@ -354,6 +363,7 @@ function indexerDefinition(
 
 export function buildSearchResourcePlan(options: SearchResourcePlanOptions): SearchResourceDefinition[] {
   const env = options.env ?? process.env;
+  const indexerIdentityResourceId = getSearchIndexerIdentityResourceId(env);
   const indexName = configured(env, "AI_SEARCH_INDEX", "azure-sdk-knowledge");
   const indexerName = configured(env, "AI_SEARCH_INDEXER", "azure-sdk-knowledge-indexer");
   const knowledgeSourceName = configured(
@@ -455,6 +465,7 @@ export function buildSearchResourcePlan(options: SearchResourcePlanOptions): Sea
         `Managed by sdk-ai-bots deployment; storage=${storageResourceId}; container=knowledge`,
         storageResourceId,
         "knowledge",
+        indexerIdentityResourceId,
       ),
     },
     {
@@ -466,6 +477,7 @@ export function buildSearchResourcePlan(options: SearchResourcePlanOptions): Sea
         `Managed by sdk-ai-bots deployment; storage=${storageResourceId}; container=wiki`,
         storageResourceId,
         "wiki",
+        indexerIdentityResourceId,
       ),
     },
     {
@@ -614,6 +626,17 @@ function comparableBody(resource: SearchResourceDefinition): JsonObject {
   return withoutCredentials;
 }
 
+function preserveDataSourceIdentity(
+  resource: SearchResourceDefinition,
+  current: JsonObject | null,
+): SearchResourceDefinition {
+  if (resource.collection !== "datasources" || current?.identity == null) return resource;
+  if (typeof current.identity !== "object" || Array.isArray(current.identity)) {
+    throw new Error(`Azure AI Search datasource '${resource.name}' returned an invalid identity.`);
+  }
+  return { ...resource, body: { ...resource.body, identity: current.identity } };
+}
+
 function isDesiredSubset(desired: unknown, current: unknown): boolean {
   if (Array.isArray(desired)) {
     return (
@@ -695,10 +718,11 @@ export async function reconcileSearchResources(
   for (const resource of resources) {
     const url = resourceUrl(endpoint, resource);
     const current = await readCurrent(fetchImpl, url, headers);
+    const desired = preserveDataSourceIdentity(resource, current);
     const action: SearchResourceAction =
       current === null
         ? "create"
-        : isDesiredSubset(comparableBody(resource), current)
+        : isDesiredSubset(comparableBody(desired), current)
           ? "unchanged"
           : "update";
 
@@ -706,8 +730,8 @@ export async function reconcileSearchResources(
     log(`  ${action.padEnd(9)} ${resource.collection}/${resource.name}`);
     if (dryRun || action === "unchanged") continue;
 
-    const updated = await putResource(fetchImpl, url, headers, resource.body);
-    if (!isDesiredSubset(comparableBody(resource), updated)) {
+    const updated = await putResource(fetchImpl, url, headers, desired.body);
+    if (!isDesiredSubset(comparableBody(desired), updated)) {
       throw new Error(`Azure AI Search did not return the desired definition for ${resource.collection}/${resource.name}.`);
     }
   }

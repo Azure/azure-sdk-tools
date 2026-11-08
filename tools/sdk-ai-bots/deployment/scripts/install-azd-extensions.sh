@@ -18,13 +18,15 @@ required_extensions=(
     azure.ai.agents
     azure.ai.inspector
     azure.ai.projects
+    azure.ai.connections
+    azure.ai.toolboxes
 )
 installed_extensions=$(azd extension list --installed --output json)
 for extension_id in "${required_extensions[@]}"; do
-    jq -e --arg id "$extension_id" \
-        'any(.[]; .id == $id and .installedVersion != "")' \
+    jq -e --arg id "$extension_id" --arg version "${extension_constraint#=}" \
+        'any(.[]; .id == $id and (.installedVersion // "") != "" and ($id != "azure.ai.agents" or .installedVersion == $version))' \
         <<< "$installed_extensions" >/dev/null || {
-        echo "Required azd extension '$extension_id' is not installed." >&2
+        echo "Required azd extension '$extension_id' is missing or has an unexpected installed version." >&2
         exit 1
     }
 done

@@ -356,6 +356,17 @@ test("deploys the image tag selected by the pipeline", () => {
   assert.match(localSync, /buildAzdEnvironmentValues/);
 });
 
+test("pins the stable agents extension with a compatible azd minimum", () => {
+  const project = parse(read("../azure.yaml"));
+
+  assert.equal(project.requiredVersions.azd, ">= 1.37.0");
+  assert.equal(project.requiredVersions.extensions["azure.ai.agents"], "=1.0.0");
+  const installer = read("scripts/install-azd-extensions.sh");
+  for (const dependency of ["azure.ai.inspector", "azure.ai.projects", "azure.ai.connections", "azure.ai.toolboxes"]) {
+    assert.match(installer, new RegExp(dependency.replaceAll(".", "\\.")));
+  }
+});
+
 test("exports the Foundry project ID required by the agent extension", () => {
   const agent = read("infra/layers/agent/main.bicep");
 

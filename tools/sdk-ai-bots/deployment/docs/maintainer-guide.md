@@ -12,8 +12,8 @@ For the deployed topology, start with the
 For principal ownership and role scopes, use the
 [identity and access reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/identity-and-access.md).
 
-The project currently requires azd `>=1.32.0` and pins the
-`azure.ai.agents` extension in `azure.yaml`. Install the required extension
+The project currently requires azd `>=1.37.0` and pins the stable
+`azure.ai.agents` extension to `1.0.0` in `azure.yaml`. Install the required extension
 before provisioning or deploying hosted agents.
 
 ## Sources of Truth

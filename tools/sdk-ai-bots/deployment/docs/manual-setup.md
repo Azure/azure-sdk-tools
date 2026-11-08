@@ -9,13 +9,16 @@ Local tooling is needed only for dev bootstrap or maintenance from a
 workstation. Azure DevOps agents install their own dependencies.
 
 - Azure CLI 2.60 or later
-- Azure Developer CLI (`azd`) 1.32.0 or later
+- Azure Developer CLI (`azd`) 1.37.0 or later
 - Bicep CLI 0.30 or later (`az bicep install`)
 - Node.js 20 or later and npm
 - Bash and `yq` v4 for environment loading, extension setup, and deployment checks
 - Docker only for optional local image builds; pipelines build remotely in ACR
 
 Install and validate the deployment tooling:
+
+Update an older azd installation before installing the pinned
+`azure.ai.agents` 1.0.0 extension, which requires azd 1.37.0 or later.
 
 ```bash
 cd tools/sdk-ai-bots/deployment

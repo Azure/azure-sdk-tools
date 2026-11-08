@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
@@ -105,6 +106,68 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return File.Exists(Path.Combine(repoRoot, "node_modules", ".bin", tspExecutable));
         }
 
+        private async Task InstallTypeSpecDependenciesAsync(string repoRoot, ILogger logger, CancellationToken ct)
+        {
+            var pnpmLockPath = Path.Combine(repoRoot, "pnpm-lock.yaml");
+            var packageLockPath = Path.Combine(repoRoot, "package-lock.json");
+
+            ProcessOptions? processOptions = null;
+            string installCommand = string.Empty;
+
+            if (File.Exists(pnpmLockPath))
+            {
+                var packageJsonPath = Path.Combine(repoRoot, "package.json");
+                if (!File.Exists(packageJsonPath))
+                {
+                    throw new InvalidOperationException($"pnpm lockfile found at {pnpmLockPath}, but package.json was not found.");
+                }
+
+                using var packageJson = JsonDocument.Parse(await File.ReadAllTextAsync(packageJsonPath, ct));
+                if (!packageJson.RootElement.TryGetProperty("packageManager", out var packageManagerElement)
+                    || packageManagerElement.ValueKind != JsonValueKind.String
+                    || packageManagerElement.GetString() is not string packageManager
+                    || !packageManager.StartsWith("pnpm@", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException($"pnpm lockfile found at {pnpmLockPath}, but package.json does not declare a pnpm packageManager.");
+                }
+
+                installCommand = "corepack pnpm install --frozen-lockfile";
+                logger.LogInformation("TypeSpec compiler not found in {repoRoot}. Installing dependencies with {PackageManager} through Corepack...", repoRoot, packageManager);
+                processOptions = new ProcessOptions(
+                    "corepack",
+                    ["pnpm", "install", "--frozen-lockfile"],
+                    workingDirectory: repoRoot,
+                    timeout: TimeSpan.FromMinutes(15));
+            }
+            else if (File.Exists(packageLockPath))
+            {
+                installCommand = "npm ci";
+                logger.LogInformation("TypeSpec compiler not found in {repoRoot}. Installing dependencies with npm...", repoRoot);
+                processOptions = new ProcessOptions(
+                    "npm",
+                    ["ci"],
+                    workingDirectory: repoRoot,
+                    timeout: TimeSpan.FromMinutes(15));
+            }
+            else
+            {
+                logger.LogWarning(
+                    "TypeSpec compiler not found in node_modules and neither {PnpmLockPath} nor {PackageLockPath} exists. Skipping dependency install.",
+                    pnpmLockPath,
+                    packageLockPath);
+                return;
+            }
+
+            var installResult = await _processHelper.Run(processOptions, ct);
+            if (installResult.ExitCode != 0)
+            {
+                var output = string.IsNullOrWhiteSpace(installResult.Output) ? string.Empty : $" Output: {installResult.Output}";
+                throw new InvalidOperationException($"{installCommand} failed with exit code {installResult.ExitCode}.{output}");
+            }
+
+            logger.LogInformation("{InstallCommand} completed.", installCommand);
+        }
+
         /// <inheritdoc/>
         public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
         {
@@ -129,23 +192,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 }
                 else if (!IsTypeParserExecutablePresent(repoRoot))
                 {
-                    var packageLockPath = Path.Combine(repoRoot, "package-lock.json");
-                    if (!File.Exists(packageLockPath))
-                    {
-                        logger.LogWarning("TypeSpec compiler not found in node-modules and {packageLockPath} does not exist. Skipping npm ci.", packageLockPath);
-                    }
-                    else
-                    {
-                        logger.LogInformation("TypeSpec compiler not found in {repoRoot}. Installing dependencies...", repoRoot);
-                        var processOptions = new ProcessOptions("npm", ["ci"], workingDirectory: repoRoot, timeout: TimeSpan.FromMinutes(15));
-                        var npmResult = await _processHelper.Run(processOptions, ct);
-                        if (npmResult.ExitCode != 0)
-                        {
-                            logger.LogWarning("npm ci failed with exit code {ExitCode}. Output: {Output}", npmResult.ExitCode, npmResult.Output);
-                            return null;
-                        }
-                        logger.LogInformation("npm ci completed.");
-                    }
+                    await InstallTypeSpecDependenciesAsync(repoRoot, logger, ct);
                 }
 
                 var project = TypeSpecProject.ParseTypeSpecConfig(typeSpecProjectPath);
@@ -180,15 +227,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var result = await npxHelper.Run(npxOptions, ct);
                 if (result.ExitCode != 0)
                 {
-                    logger.LogWarning("TypeSpec metadata emitter failed with exit code {ExitCode}. Output: {Output}", result.ExitCode, result.Output);
-                    return project;
+                    throw new InvalidOperationException($"TypeSpec metadata emitter failed with exit code {result.ExitCode}. Output: {result.Output}");
                 }
 
                 var metadataFilePath = Path.Combine(project.ProjectRootPath, "tsp-output", "@azure-tools", "typespec-metadata", "typespec-metadata.yaml");
                 if (!File.Exists(metadataFilePath))
                 {
-                    logger.LogWarning("typespec-metadata.yaml not found at expected path: {metadataFilePath}", metadataFilePath);
-                    return project;
+                    throw new InvalidOperationException($"TypeSpec metadata emitter completed without producing {metadataFilePath}.");
                 }
 
                 var metadataYaml = await File.ReadAllTextAsync(metadataFilePath, ct);
@@ -200,6 +245,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     project.Packages = packages;
                 }
                 return project;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (InvalidOperationException ex)
+            {
+                logger.LogError(ex, "Failed to run TypeSpec metadata emitter");
+                throw;
             }
             catch (Exception ex)
             {

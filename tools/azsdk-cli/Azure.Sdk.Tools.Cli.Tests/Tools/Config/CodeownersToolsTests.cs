@@ -42,12 +42,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 new TestLogger<CodeownersTool>(),
                 null,
                 _mockCodeownersValidator.Object,
-                _mockcodeownersGenerateHelper.Object,
+                new Lazy<ICodeownersGenerateHelper>(() => _mockcodeownersGenerateHelper.Object),
                 _mockGitHelper.Object,
-                _mockCodeownersManagement.Object,
-                _mockCheckPackageHelper.Object,
+                new Lazy<ICodeownersManagementHelper>(() => _mockCodeownersManagement.Object),
+                new Lazy<ICheckPackageHelper>(() => _mockCheckPackageHelper.Object),
                 _mockDevOps.Object,
-                _mockAuditHelper.Object
+                new Lazy<ICodeownersAuditHelper>(() => _mockAuditHelper.Object)
             );
         }
 

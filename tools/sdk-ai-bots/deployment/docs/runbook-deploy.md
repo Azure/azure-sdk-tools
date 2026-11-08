@@ -109,6 +109,27 @@ verification sequence below.
 The pipeline does not perform a slot swap or automatic rollback. Stop promotion
 and use the rollback runbook if verification fails.
 
+### Coordinated Feature Rollouts
+
+Teams image input requires updated agent-server and frontend images, the
+deployment-owned Logic App workflows, and Teams catalog publication and
+installation of manifest version `1.0.5` (schema `1.25`, channel features
+`tier1`). Use `component=all` for this rollout; a frontend-only deployment does
+not update the workflows or backend. The Teams connector downloads up to four
+Graph-hosted images, with a 5 MiB per-image limit. Download outputs and bot
+request inputs are secured; bot requests do not use chunked transfer.
+Non-image messages bypass downloads, and failed downloads retain the original
+activity or successfully downloaded images.
+
+PR-review skills are included in the hosted-agent image, while result decoding
+and retrieval changes also require the matching backend image. Evolution
+readiness retries and retained-history trace lookup require the backend and
+production evolution-agent images; partial feedback-job failures are reported
+as `SucceededWithIssues`, not a fully successful scan. Deploy the refreshed
+knowledge-sync package and confirm the upstream knowledge configuration includes
+Azure DevOps `areaPath`; the backend reads that configuration from GitHub with a
+one-hour cache. Retain work-item permissions under the configured area.
+
 ## 5. Verify the Deployment
 
 1. Confirm the pipeline used the expected source revision and environment.
@@ -138,6 +159,11 @@ Preview and production must keep `ENABLE_AI_FOUNDRY_AGENT_ROUTING=false`.
 
 For a knowledge or wiki run, also confirm the expected blobs were written and
 the corresponding Search indexer start request was accepted.
+
+For image-input rollout, send both a text-only message and a message with an
+inline Teams image through each listener. Confirm the image reaches the bot
+as a data URL without appearing in workflow history, and verify that a failed
+image download does not prevent the message from reaching the bot.
 
 ## 6. Local Dev Deployment
 

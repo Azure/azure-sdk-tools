@@ -410,3 +410,40 @@ async def test_run_validates_before_analysis() -> None:
         tenant_id=None, excluded_channels=set()
     )
     assert events == ["validation", "analysis"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", [None, RuntimeError("persistence failed")])
+async def test_analysis_failures_warn_without_skipping_remaining_jobs(
+    failure, caplog, capsys, monkeypatch,
+) -> None:
+    monkeypatch.setenv("TF_BUILD", "True")
+    caplog.set_level("INFO", logger="run_feedback_jobs")
+    qa_service = MagicMock()
+    qa_service.get_messages_in_period = AsyncMock(return_value=[])
+    qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
+    qa_service.close_inactive_threads = AsyncMock(return_value=0)
+    qa_service.list_pending_validation = AsyncMock(return_value=[])
+    qa_service.list_analyzable = AsyncMock(return_value=[
+        _record(qa_status=QAStatus.ongoing),
+        _record(qa_status=QAStatus.ongoing),
+    ])
+    evolution = MagicMock()
+    evolution.recover_stale_jobs = AsyncMock(return_value=0)
+    evolution.run_job = AsyncMock(side_effect=[
+        failure, _result(ChatbotEvolutionAgentOutcome.no_issue),
+    ])
+    with (
+        patch.object(run_feedback_jobs, "QARecordService", return_value=qa_service),
+        patch.object(run_feedback_jobs, "ChatbotEvolutionAgentService", return_value=evolution),
+        patch.object(run_feedback_jobs, "_load_excluded_channels", new=AsyncMock(return_value=set())),
+        patch.object(run_feedback_jobs.app_config, "get", return_value="true"),
+    ):
+        await run_feedback_jobs._run(_args())
+
+    assert evolution.run_job.await_count == 2
+    assert "ongoing=0 finished=1" in caplog.text
+    assert "evolution-failed=1 skipped=0" in caplog.text
+    output = capsys.readouterr().out
+    assert "##vso[task.logissue type=warning]" in output
+    assert "##vso[task.complete result=SucceededWithIssues;]" in output

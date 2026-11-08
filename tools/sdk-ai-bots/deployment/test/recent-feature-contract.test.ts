@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runInNewContext } from "node:vm";
 import { parse } from "yaml";
 
 const deploymentRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -684,4 +685,77 @@ test("resolves forwarded Teams messages before processing them", () => {
     threadActions.Need_Reply.actions.Should_Reply.actions.convertActivity.inputs.body,
     "@outputs('Resolved_message_details')",
   );
+});
+
+test("keeps Teams image downloads aligned with the upstream workflow", () => {
+  const workflow = JSON.parse(read("infra/layers/logic-app/workflowDefinition.json"));
+  const upstream = JSON.parse(read(
+    "../azure-sdk-qa-bot-agent/pipelines/logicapp/template.json",
+  )).resources.find((resource: { type: string }) =>
+    resource.type === "Microsoft.Logic/workflows",
+  ).properties.definition;
+  const actions = workflow.actions.For_each.actions
+    .Thread_Message_From_User.actions.Need_Reply.actions.Should_Reply.actions;
+  const upstreamActions = upstream.actions.For_each.actions
+    .Thread_Message_From_User.actions.Need_Reply.actions.Should_Reply.actions;
+  const parameterizedImages = JSON.parse(JSON.stringify(upstreamActions.Has_image_attachments)
+    .replaceAll("[parameters('botAudience')]", "@parameters('botAudience')")
+    .replaceAll("[parameters('botIdentityResourceId')]", "@parameters('botIdentityResourceId')")
+    .replaceAll(
+      "[concat(parameters('botBaseUrl'), '/api/messages')]",
+      "@{parameters('botBaseUrl')}/api/messages",
+    ));
+
+  assert.deepEqual(workflow.parameters.maxImageBytes, upstream.parameters.maxImageBytes);
+  assert.equal(workflow.parameters.maxImageBytes.defaultValue, 5 * 1024 * 1024);
+  assert.deepEqual(workflow.actions.Initialize_downloaded_images, upstream.actions.Initialize_downloaded_images);
+  assert.equal(workflow.actions.For_each.operationOptions, "Sequential");
+  assert.deepEqual(workflow.actions.For_each.runAfter, upstream.actions.For_each.runAfter);
+  assert.deepEqual(actions.Filter_image_attachments, upstreamActions.Filter_image_attachments);
+  assert.deepEqual(actions.Has_image_attachments, parameterizedImages);
+  assert.equal(actions.Scope, undefined);
+
+  const bicep = read("infra/layers/logic-app/main.bicep");
+  assert.equal((bicep.match(/definition: workflowDefinition/g) ?? []).length, 2);
+  const manifest = JSON.parse(read("../azure-sdk-qa-bot/appPackage/manifest.json"));
+  assert.equal(manifest.manifestVersion, "1.25");
+  assert.equal(manifest.supportsChannelFeatures, "tier1");
+  assert.equal(manifest.version, "1.0.5");
+  assert.match(read("../azure-sdk-qa-bot/src/index.ts"), /express\.json\(\{ limit: '30mb' \}\)/);
+});
+
+test("prepares downloaded images without losing attachments when one download is rejected", () => {
+  const workflow = JSON.parse(read("infra/layers/logic-app/workflowDefinition.json"));
+  const prepare = workflow.actions.For_each.actions.Thread_Message_From_User
+    .actions.Need_Reply.actions.Should_Reply.actions.Has_image_attachments
+    .actions.Resolve_image_bytes.actions.Prepare_activity_images;
+  const activity = {
+    type: "message",
+    attachments: [
+      { contentType: "image/png", contentUrl: "https://graph.microsoft.com/image-1" },
+      { contentType: "image/png", contentUrl: "https://graph.microsoft.com/image-2" },
+      { contentType: "text/plain", contentUrl: "https://example.com/document" },
+    ],
+  };
+  const downloaded = [
+    {
+      url: activity.attachments[0].contentUrl,
+      body: { "$content-type": "IMAGE/PNG; charset=binary", "$content": "aW1hZ2U=" },
+    },
+    { url: activity.attachments[1].contentUrl, body: null },
+  ];
+  const context = {
+    workflowContext: {
+      actions: {
+        convertActivity: { outputs: { body: activity } },
+        Image_download_results: { outputs: downloaded },
+      },
+    },
+  };
+  const prepared = runInNewContext(`(function () { ${prepare.inputs.code} })()`, context);
+
+  assert.equal(prepared.attachments[0].contentUrl, "data:image/png;base64,aW1hZ2U=");
+  assert.equal(prepared.attachments[1].contentUrl, "https://graph.microsoft.com/image-2");
+  assert.equal(prepared.attachments[2].contentUrl, "https://example.com/document");
+  assert.equal(prepared.type, "message");
 });

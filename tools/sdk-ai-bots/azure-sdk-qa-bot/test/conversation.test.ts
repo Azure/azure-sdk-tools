@@ -180,6 +180,20 @@ describe('ConversationHandler', () => {
     expect(result.contactCard).toBeUndefined();
   });
 
+  it('should not persist inline image bytes in the Azure Table prompt property', async () => {
+    await handler.initialize();
+    const dataUri = `data:image/png;base64,${'A'.repeat(100000)}`;
+    const message = {
+      ...testMessage,
+      prompt: { ...testPrompt, images: [dataUri, ...testPrompt.images] },
+    };
+    const result = await handler.saveMessage(message, {});
+
+    expect(JSON.parse(result.prompt).images).toEqual(testPrompt.images);
+    expect(result.prompt).not.toContain(dataUri);
+    expect(message.prompt.images[0]).toBe(dataUri);
+  });
+
   it('should save a message with contact card', async () => {
     await handler.initialize();
     const result = await handler.saveMessage(testMessageWithContactCard, {});

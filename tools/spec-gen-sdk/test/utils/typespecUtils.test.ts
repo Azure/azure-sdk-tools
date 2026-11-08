@@ -68,4 +68,52 @@ describe('findSDKToGenerateFromTypeSpecProject', () => {
     expect(result).toEqual([]);
   });
 
+  describe.each([
+    ['@azure-tools/typespec-ts', '@azure-tools/typespec-ts-provisioning', 'azure-sdk-for-js'],
+    ['@azure-tools/typespec-csharp', '@azure-tools/typespec-csharp-provisioning', 'azure-sdk-for-net'],
+  ])('selected emitter %s', (regularEmitter, selectedEmitter, repository) => {
+    const specConfig: SpecConfig = {
+      ...specificationRepositoryConfigurationContent,
+      typespecEmitterToSdkRepositoryMapping: {
+        ...specificationRepositoryConfigurationContent.typespecEmitterToSdkRepositoryMapping,
+        [selectedEmitter]: repository,
+      },
+    };
+
+    it.each(['options', 'emitters'])('requires the selected emitter under %s even if the repository is enabled', (field) => {
+      const yaml = `${field}:\n  "${regularEmitter}": {}`;
+      expect(findSDKToGenerateFromTypeSpecProject(yaml, specConfig, selectedEmitter)).toEqual([]);
+    });
+
+    it.each(['options', 'emitters'])('accepts a configured selected emitter under %s', (field) => {
+      const yaml = `${field}:\n  "${regularEmitter}": {}\n  "${selectedEmitter}": {}`;
+      expect(findSDKToGenerateFromTypeSpecProject(yaml, specConfig, selectedEmitter)).toEqual([repository]);
+    });
+
+    it.each(['false', 'null'])('rejects a disabled selected emitter (%s)', (value) => {
+      const yaml = `options:\n  "${regularEmitter}": {}\n  "${selectedEmitter}": ${value}`;
+      expect(findSDKToGenerateFromTypeSpecProject(yaml, specConfig, selectedEmitter)).toEqual([]);
+    });
+
+    it.each([undefined, ''])('preserves repository-level detection for selection %s', (selection) => {
+      const yaml = `options:\n  "${regularEmitter}": {}`;
+      expect(findSDKToGenerateFromTypeSpecProject(yaml, specConfig, selection)).toEqual([repository]);
+    });
+
+    it('does not fall back to legacy emitters when options is present', () => {
+      const yaml = `options: {}\nemitters:\n  "${selectedEmitter}": {}`;
+      expect(findSDKToGenerateFromTypeSpecProject(yaml, specConfig, selectedEmitter)).toEqual([]);
+    });
+  });
+
+  it('rejects a configured selected emitter without a repository mapping', () => {
+    const emitter = '@azure-tools/unmapped-emitter';
+    expect(findSDKToGenerateFromTypeSpecProject(`options:\n  "${emitter}": {}`, specificationRepositoryConfigurationContent, emitter)).toEqual([]);
+  });
+
+  it('preserves YAML parsing errors with an explicit emitter', () => {
+    expect(() => findSDKToGenerateFromTypeSpecProject('options: [', specificationRepositoryConfigurationContent, '@azure-tools/typespec-ts'))
+      .toThrow(/The parsing of the file was unsuccessful/);
+  });
+
 });

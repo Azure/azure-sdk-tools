@@ -30,6 +30,9 @@ parameters:
       - authoring
       - mcpserver
       - apistewardshipboard
+  - name: maxConcurrency
+    type: number
+    default: 2
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -97,7 +100,7 @@ extends:
                         python evals_run.py \
                           --dataset "qa-bot-perf-${{ scenario }}:latest" \
                           --run_context "perf-evaluation" \
-                          --max_concurrency 2 \
+                          --max_concurrency ${{ parameters.maxConcurrency }} \
                           --baseline_check False \
                           --cache_result full
                     env:

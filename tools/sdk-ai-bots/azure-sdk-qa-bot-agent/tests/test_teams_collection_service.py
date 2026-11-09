@@ -169,18 +169,22 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn("collectorPrincipalId", parameters)
                 self.assertNotIn("cosmosAccountName", parameters)
 
-    def test_backfill_pipeline_does_not_deploy_a_hosted_agent(self):
+    def test_backfill_pipeline_reuses_the_shared_arm_deployment_task(self):
         project = Path(__file__).resolve().parents[1]
         agent_pipeline = (project / "pipelines/agent-cd.yml").read_text()
         logicapp_pipeline = (project / "pipelines/logicapp-cd.yml").read_text()
+        readme = (project / "README.md").read_text()
         self.assertNotIn("teams_collection_agent", agent_pipeline)
         self.assertIn("- teams-collection", logicapp_pipeline)
+        self.assertIn("name: templateFile", logicapp_pipeline)
+        self.assertIn("name: parametersFile", logicapp_pipeline)
+        self.assertEqual(logicapp_pipeline.count("- task: AzureCLI@2"), 1)
         self.assertIn("az deployment group create", logicapp_pipeline)
-        self.assertIn("/triggers/manual/listCallbackUrl?api-version=2019-05-01",
-                      logicapp_pipeline)
-        self.assertIn("SAS_FREE_URL=", logicapp_pipeline)
-        self.assertIn("az appconfig kv set", logicapp_pipeline)
-        self.assertIn("TEAMS_COLLECTION_LOGIC_APP_URL", logicapp_pipeline)
+        self.assertNotIn("listCallbackUrl", logicapp_pipeline)
+        self.assertNotIn("az appconfig kv set", logicapp_pipeline)
+        self.assertIn("listCallbackUrl", readme)
+        self.assertIn("TEAMS_COLLECTION_LOGIC_APP_URL", readme)
+        self.assertIn("SAS query parameters", readme)
         self.assertNotIn("python scripts/deploy_hosted_agent.py teams-collection deploy",
                          logicapp_pipeline)
         self.assertNotIn("PipAuthenticate", logicapp_pipeline)

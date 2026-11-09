@@ -251,11 +251,34 @@ python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 Backfill imports configured Teams channel history into the existing `conversation-messages` container. It runs on the backend server, pages the dedicated Logic App through the existing Teams connector, and writes messages in the same shape as live traffic without invoking a model.
 
 - Deploy with [pipelines/logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml), selecting `workflow: teams-collection` and the target environment. The backend server must already be deployed; the pipeline uses its App Service identity as the only caller admitted by the Logic App.
-- The pipeline writes the Logic App's SAS-free callback URL to `TEAMS_COLLECTION_LOGIC_APP_URL` in the environment's App Configuration store.
+- After deploying the Logic App, configure its SAS-free callback URL as `TEAMS_COLLECTION_LOGIC_APP_URL` in the environment's App Configuration store (see [Configure the Callback URL](#configure-the-callback-url)).
 - Each backfill job loads a fresh App Configuration snapshot before reading the callback URL. Publishing or updating the URL through the pipeline or manual deployment does not require restarting the backend.
 - The Teams API connection is an existing delegated connection and is not created or reauthorized by this pipeline. Its identity must be able to read the requested channel.
 - Backfill requests provide the team ID, channel ID, and `tenant_key`; the tenant key is written as `tenant_id` on each stored message and must match the channel's tenant in `bot-configs/channel.yaml` (mirrored at [azure-sdk-qa-bot/config/channel.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot/config/channel.yaml)).
-- The deployment service connection needs Logic App deployment permissions and App Configuration data write access. No Cosmos role assignment is needed here: the backend identity already writes live messages to `conversation-messages`.
+- The deployment service connection needs Logic App deployment permissions. The operator configuring the callback URL needs App Configuration data write access. No Cosmos role assignment is needed here: the backend identity already writes live messages to `conversation-messages`.
+
+#### Configure the Callback URL
+
+After deploying the Teams collection Logic App, retrieve its callback URL and store only the host, path, and `api-version` in App Configuration. Do not store the SAS query parameters.
+
+```powershell
+$resourceGroup = "azure-sdk-qa-bot-dev"
+$logicAppName = "azuresdkqabot-dev-teams-collection"
+$workflowResourceId = az resource show --resource-group $resourceGroup --name $logicAppName `
+   --resource-type Microsoft.Logic/workflows --query id --output tsv
+$callbackUrl = az rest --method post `
+   --url "https://management.azure.com$workflowResourceId/triggers/manual/listCallbackUrl?api-version=2019-05-01" `
+   --query value --output tsv
+$callbackUri = [Uri]$callbackUrl
+$apiVersion = $callbackUri.Query.TrimStart('?').Split('&') |
+   Where-Object { $_ -like "api-version=*" } | Select-Object -First 1
+if (-not $apiVersion) { throw "Callback URL did not contain api-version." }
+$sasFreeUrl = "$($callbackUri.GetLeftPart([UriPartial]::Path))?$apiVersion"
+az appconfig kv set --endpoint $env:AZURE_APPCONFIG_ENDPOINT --auth-mode login `
+   --key TEAMS_COLLECTION_LOGIC_APP_URL --value $sasFreeUrl --yes
+```
+
+Use the target environment's resource group, Logic App name, and `AZURE_APPCONFIG_ENDPOINT`; the example above is for dev. Repeat this setup after redeploying the Logic App if its callback URL changes.
 
 #### Backfill a Channel
 

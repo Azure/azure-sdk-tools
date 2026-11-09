@@ -28,7 +28,7 @@ describe('server CD job separation', () => {
         expect(server.condition).toBe("and(succeeded(), ${{ ne(parameters.deploymentTarget, 'knowledge-sync') }})");
         expect(server.steps.map((step: any) => step.displayName)).toEqual([
             'Checkout repository', 'Resolve Image Tag', 'Build & Push Image',
-            'Validate Image Exists', 'Update App Service', 'Health Check'
+            'Validate Image Exists', 'Configure Agent Routing', 'Update App Service', 'Health Check'
         ]);
         expect(server.steps[2].condition).toBe("and(succeeded(), ne('${{ parameters.environment }}','prod'))");
         expect(JSON.stringify(server.steps)).not.toContain('deploymentTarget');
@@ -42,14 +42,14 @@ describe('server CD job separation', () => {
             'Checkout repository', '/eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml',
             'Use Node.js 24.x for Scheduled Knowledge Sync', 'Install Scheduled Knowledge Sync Dependencies',
             'Test Scheduled Knowledge Sync', 'Build and Package Scheduled Knowledge Sync',
-            "${{ if eq(parameters.deploymentTarget, 'all') }}", 'Deploy Scheduled Knowledge Sync WebJob'
+            "${{ if in(parameters.deploymentTarget, 'all', 'knowledge-sync') }}", 'Deploy Scheduled Knowledge Sync WebJob'
         ]);
         expect(knowledge.steps[2].inputs.versionSpec).toBe('24.x');
         expect(knowledge.steps.slice(3, 6).map((step: any) => step.bash)).toEqual([
             'npm ci', 'npm test -- --no-file-parallelism',
             'npm run build:webjob -- $(Build.ArtifactStagingDirectory)/knowledge-sync/knowledge-sync.zip'
         ]);
-        expect(knowledge.steps[6]["${{ if eq(parameters.deploymentTarget, 'all') }}"].map((step: any) => step.displayName)).toEqual([
+        expect(knowledge.steps[6]["${{ if in(parameters.deploymentTarget, 'all', 'knowledge-sync') }}"].map((step: any) => step.displayName)).toEqual([
             'Download Knowledge Sync SSH Key', 'Configure Knowledge Sync SSH Key'
         ]);
         expect(knowledge.steps[7].inputs.inlineScript).toBe('node "$(syncWorkingDirectory)/scripts/deploy-webjob.mjs"');

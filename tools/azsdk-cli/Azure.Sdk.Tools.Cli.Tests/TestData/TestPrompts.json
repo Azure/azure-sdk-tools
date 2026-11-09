@@ -159,7 +159,7 @@
     { "toolName": "azsdk_package_generate_samples", "prompt": "Create sample code for my package based on these scenarios", "category": "all" },
     { "toolName": "azsdk_package_generate_samples", "prompt": "Generate samples for my package using this prompt", "category": "all" },
 
-    { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon the release plan for work item 12345", "category": "all" },
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon Release Plan ID 12345", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel and abandon my release plan", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Mark the release plan as abandoned", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon my release plan", "category": "all" },

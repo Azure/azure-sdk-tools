@@ -21,6 +21,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
     private readonly Dictionary<(string Repository, string Commit, string Directory), Task<string?>> _generationLocations = [];
     internal readonly record struct SdkSnapshot(string Repository, string HeadSha, SdkLanguage Language, string BaseRepository, string BaseSha, PackageInfo? LocalPackage = null);
     private sealed record GenerationLocation(string Directory, string CommitSha, string Repository);
+    private sealed record GenerationLocationEvidence(GenerationLocation? Location, string Plane, List<string> Issues);
 
     public Task<GenerationEvidence> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
     {
@@ -50,48 +51,51 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
     private async Task<GenerationEvidence> ReadGenerationSourcesAsync(
         ChangedPackages changedPackages, SdkSnapshot sdk, CancellationToken ct)
     {
-        var packages = changedPackages.Packages;
-        var knownAtHead = changedPackages.KnownAtHead;
-        var issues = new List<string>(changedPackages.Issues);
-        var sources = new List<PackageApiSource>();
-        var planes = new HashSet<string>();
-        if (issues.Count > 0)
+        var packageEvidence = new List<GenerationEvidence>();
+        foreach (var package in changedPackages.Packages.Order(StringComparer.Ordinal))
+        {
+            var evidence = await ReadPackageGenerationEvidenceAsync(package, changedPackages.KnownAtHead.Contains(package), sdk, ct);
+            if (evidence is not null)
+            {
+                packageEvidence.Add(evidence);
+            }
+        }
+        var issues = changedPackages.Issues.Concat(packageEvidence.SelectMany(evidence => evidence.Issues)).ToList();
+        var planes = packageEvidence.Select(evidence => evidence.Plane).ToHashSet(StringComparer.Ordinal);
+        if (changedPackages.Issues.Count > 0)
         {
             planes.Add(UnknownPlane);
-        }
-        var survivingPackages = 0;
-        foreach (var package in packages.Order(StringComparer.Ordinal))
-        {
-            // Deleted and renamed source packages still count if their directory survives at this head.
-            bool? exists = knownAtHead.Contains(package) ? true : await PackageExistsAtHeadAsync(package, sdk, ct);
-            if (exists == false)
-            {
-                continue;
-            }
-            if (exists is null)
-            {
-                planes.Add(UnknownPlane);
-                issues.Add($"{package}: SDK package directory could not be established at the checked head.");
-                continue;
-            }
-            survivingPackages++;
-            var (location, plane) = await ReadGenerationLocationAsync(package, sdk, issues, ct);
-            planes.Add(plane);
-            if (location is null || plane == DataPlane)
-            {
-                continue;
-            }
-            sources.AddRange(await ReadPackageSourcesAsync(package, location, sdk, issues, ct));
         }
         if (planes.Count > 1)
         {
             issues.Add("Mixed SDK API planes require separate checks.");
         }
-        if (survivingPackages == 0)
+        if (packageEvidence.Count == 0)
         {
             issues.Add("No currently changed SDK packages remain at the checked head.");
         }
-        return new(sources, planes.Count == 1 ? planes.Single() : UnknownPlane, issues);
+        return new([.. packageEvidence.SelectMany(evidence => evidence.Sources)], planes.Count == 1 ? planes.Single() : UnknownPlane, issues);
+    }
+
+    private async Task<GenerationEvidence?> ReadPackageGenerationEvidenceAsync(string package, bool knownAtHead, SdkSnapshot sdk, CancellationToken ct)
+    {
+        // Deleted and renamed source packages still count if their directory survives at this head.
+        bool? exists = knownAtHead ? true : await PackageExistsAtHeadAsync(package, sdk, ct);
+        if (exists == false)
+        {
+            return null;
+        }
+        if (exists is null)
+        {
+            return new([], UnknownPlane, [$"{package}: SDK package directory could not be established at the checked head."]);
+        }
+        var evidence = await ReadGenerationLocationAsync(package, sdk, ct);
+        if (evidence.Location is null || evidence.Plane == DataPlane)
+        {
+            return new([], evidence.Plane, evidence.Issues);
+        }
+        var sources = await ReadPackageSourcesAsync(package, evidence.Location, sdk, evidence.Issues, ct);
+        return new(sources, evidence.Plane, evidence.Issues);
     }
 
     private async Task<bool?> PackageExistsAtHeadAsync(string package, SdkSnapshot sdk, CancellationToken ct)
@@ -101,8 +105,8 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         return listing switch { null => false, JsonArray => true, _ => null };
     }
 
-    private async Task<(GenerationLocation? Location, string Plane)> ReadGenerationLocationAsync(
-        string package, SdkSnapshot sdk, List<string> issues, CancellationToken ct)
+    private async Task<GenerationLocationEvidence> ReadGenerationLocationAsync(
+        string package, SdkSnapshot sdk, CancellationToken ct)
     {
         var path = $"{package}/{GenerationLocationFile}";
         var text = sdk.LocalPackage is null
@@ -110,8 +114,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             : await ReadLocalFileAsync(Path.Combine(sdk.LocalPackage.PackagePath, GenerationLocationFile), ct);
         if (text is null)
         {
-            issues.Add($"{package}: missing SDK generation metadata ({path}).");
-            return (null, UnknownPlane);
+            return new(null, UnknownPlane, [$"{package}: missing SDK generation metadata ({path})."]);
         }
         try
         {
@@ -122,15 +125,13 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             // Validate provenance before a data-plane hint can make the check not applicable.
             if (!IsSpecificationProjectDirectory(directory) || !GeneratedSdkMetadataHelper.IsCommitSha(commit) || repository is null)
             {
-                issues.Add($"{package}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository.");
-                return (null, UnknownPlane);
+                return new(null, UnknownPlane, [$"{package}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository."]);
             }
-            return (new GenerationLocation(directory, commit, repository), GetProjectPlane(directory));
+            return new(new(directory, commit, repository), GetProjectPlane(directory), []);
         }
         catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or FormatException)
         {
-            issues.Add($"{package}: invalid YAML generation metadata.");
-            return (null, UnknownPlane);
+            return new(null, UnknownPlane, [$"{package}: invalid YAML generation metadata."]);
         }
     }
 
@@ -260,7 +261,8 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             issues.Add($"{package}: conflicting API versions across SDK metadata files; no latest-version selection.");
             return [];
         }
-        return sources.DistinctBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase).ToList();
+        return sources.GroupBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(group => group.DistinctBy(source => source.NamespaceIsInferred)).ToList();
     }
 
     private static Dictionary<string, string> ReadPackageApiVersions(string package, string text, GenerationLocation location, List<string> issues)

@@ -15,7 +15,7 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
     private const int MaxDirectoryEntries = 1000;
     private const string ConfigurationSuffix = "/tspconfig.yaml";
 
-    public sealed record ResourceTypeEvidence(PackageResourceType[] ResourceTypes, List<string> MissingEvidence);
+    public sealed record ResourceTypeEvidence(PackageResourceType[] ResourceTypes, string[] ProviderNamespaces, List<string> MissingEvidence);
     private sealed record SpecMapping(string Namespace, string? SwaggerPattern, List<string> MissingEvidence);
     private sealed record ProjectSource(string SpecRepository, string CommitSha, string Configuration, string ApiVersion);
 
@@ -33,9 +33,10 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
         var source = new ProjectSource(specRepository, commitSha, configuration, apiVersion);
         var mapping = await ReadPinnedSwaggerMappingAsync(source, ct);
         var types = new HashSet<PackageResourceType>();
+        var providers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (mapping.SwaggerPattern is null)
         {
-            return new([], mapping.MissingEvidence);
+            return new([], [], mapping.MissingEvidence);
         }
         var files = await DiscoverSwaggerFilesAsync(mapping.SwaggerPattern, source, ct);
         foreach (var file in files)
@@ -43,7 +44,7 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
             var text = await ReadFileAsync(source, file, ct);
             if (text is not null)
             {
-                AddSwaggerResourceTypes(text, file, source.ApiVersion, types, mapping.MissingEvidence);
+                AddSwaggerResourceTypes(text, file, source.ApiVersion, types, providers, mapping.MissingEvidence);
             }
         }
         if (types.Count == 0)
@@ -51,7 +52,8 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
             mapping.MissingEvidence.Add("resource-type mapping");
         }
         return new([.. types.OrderBy(type => type.Namespace, StringComparer.Ordinal)
-            .ThenBy(type => type.ApiVersion, StringComparer.Ordinal).ThenBy(type => type.ResourceType, StringComparer.Ordinal)], mapping.MissingEvidence);
+            .ThenBy(type => type.ApiVersion, StringComparer.Ordinal).ThenBy(type => type.ResourceType, StringComparer.Ordinal)],
+            [.. providers.Order(StringComparer.Ordinal)], mapping.MissingEvidence);
     }
 
     private async Task<SpecMapping> ReadPinnedSwaggerMappingAsync(
@@ -142,7 +144,7 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
     }
 
     private static void AddSwaggerResourceTypes(string text, string file, string apiVersion,
-        HashSet<PackageResourceType> types, List<string> missing)
+        HashSet<PackageResourceType> types, HashSet<string> providers, List<string> missing)
     {
         JsonObject? document;
         try
@@ -168,7 +170,7 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
             foreach (var route in paths)
             {
                 var collection = route.Value is JsonObject operations && operations.ContainsKey("get");
-                types.UnionWith(ResourceTypesFromPath(route.Key, apiVersion, collection));
+                AddResourceTypesFromPath(route.Key, apiVersion, collection, types, providers, missing);
             }
         }
     }
@@ -253,21 +255,26 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
         return pattern.StartsWith("specification/", StringComparison.Ordinal) && pattern.EndsWith(".json", StringComparison.Ordinal) ? pattern : null;
     }
 
-    private static IEnumerable<PackageResourceType> ResourceTypesFromPath(string path, string apiVersion, bool collection)
+    private static void AddResourceTypesFromPath(string path, string apiVersion, bool collection,
+        HashSet<PackageResourceType> types, HashSet<string> providers, List<string> missing)
     {
         var segments = path.Split('?')[0].Split('/', StringSplitOptions.RemoveEmptyEntries);
-        for (var index = 0; index < segments.Length - 1; index++)
+        var index = Array.FindLastIndex(segments, segment => segment.Equals("providers", StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
         {
-            if (!segments[index].Equals("providers", StringComparison.OrdinalIgnoreCase) ||
-                !Regex.IsMatch(segments[index + 1], @"\A[\w-]+(?:\.[\w-]+)+\z"))
-            {
-                continue;
-            }
-            var type = ReadResourceType(segments, index + 2, collection);
-            if (type is not null)
-            {
-                yield return new(segments[index + 1], apiVersion, type);
-            }
+            return;
+        }
+        if (index + 1 >= segments.Length || !Regex.IsMatch(segments[index + 1], @"\A[\w-]+(?:\.[\w-]+)+\z"))
+        {
+            missing.Add($"Unresolved resource-provider mapping: {path}");
+            return;
+        }
+        var providerNamespace = segments[index + 1];
+        providers.Add(providerNamespace);
+        var type = ReadResourceType(segments, index + 2, collection);
+        if (type is not null)
+        {
+            types.Add(new(providerNamespace, apiVersion, type));
         }
     }
 

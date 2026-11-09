@@ -219,6 +219,11 @@ Identical versions are
 deduplicated. Missing or malformed files and conflicting versions or provenance
 are Inconclusive. All matching Java metadata files must be valid.
 
+When matching files contain both scalar and explicit-provider metadata, both
+evidence scopes are retained until project providers are resolved. Only the
+resolved RP/version checks are deduplicated; metadata filename order cannot
+change which providers are checked.
+
 Deletion-only packages and rename source packages are checked unless their
 directory is absent at the captured head. No surviving affected package is
 Inconclusive. The validated project directory determines the plane:
@@ -240,6 +245,11 @@ The evidence flow is:
 4. `ReadTenantProviderAsync` reads ARM metadata once per provider namespace.
 5. Compare each project's exact version and aggregate the four-state result.
 
+Generation discovery returns a per-package evidence model containing `Sources`,
+`Plane`, and `Issues`. Its location-reading result also carries `Location`,
+`Plane`, and `Issues`, so the caller does not combine a tuple with a separate
+mutated issue list.
+
 Package roots come from the nearest pinned `tsp-location.yaml`, not a fixed
 directory depth. Discovery caches location reads and permits at most 128 candidate
 directories across the head and base revisions. The pinned base is used only to
@@ -250,6 +260,11 @@ The command reads explicit checked-in Swagger mappings from pinned TypeSpec
 configuration. It does not compile TypeSpec or scan the repository. Swagger
 `info.version` must equal the SDK metadata version. Resource paths identify the
 provider's resource types; an unresolved child cannot pass using its parent.
+Provider discovery is tracked separately from successfully mapped resource
+types. An unresolved provider expression, or a required RP with no resolvable
+resource type, makes the check Inconclusive even when another RP matches. For
+extension-resource paths, the last `providers` segment owns the resource;
+earlier providers describe its parent scope, not extra SDK requirements.
 
 One ARM request per provider namespace uses
 `GET https://management.azure.com/providers/{namespace}?api-version=2021-04-01`.

@@ -259,6 +259,92 @@ public class ServiceApiReadinessServiceTests
         Assert.That(ArmRequests().Count(), Is.EqualTo(2));
     }
 
+    [TestCase(true, true)]
+    [TestCase(true, false)]
+    [TestCase(false, true)]
+    [TestCase(false, false)]
+    public async Task MixedJavaMetadataKeepsEveryProviderRegardlessOfFilenameOrder(bool mappedFileFirst, bool otherProviderAdvertisesVersion)
+    {
+        var scalar = JsonSerializer.Serialize(new { apiVersion = Version });
+        var mapped = JsonSerializer.Serialize(new { apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = Version } });
+        SetFile(_repository, Head, $"{Package}/{Metadata}", mappedFileFirst ? mapped : scalar);
+        SetFile(_repository, Head, $"{Package}/src/main/resources/META-INF/z_other_metadata.json", mappedFileFirst ? scalar : mapped);
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json", JsonSerializer.Serialize(new
+        {
+            info = new { version = Version },
+            paths = new Dictionary<string, object>
+            {
+                ["/providers/Microsoft.Example/widgets/{name}"] = new { get = new { } },
+                ["/providers/Microsoft.Other/widgets/{name}"] = new { get = new { } }
+            }
+        }));
+        _providerVersions["Microsoft.Other"] = otherProviderAdvertisesVersion ? [Version] : ["2025-01-01"];
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(otherProviderAdvertisesVersion ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected));
+        Assert.That(response.Projects.Select(project => project.Namespace), Is.EquivalentTo(new[] { "Microsoft.Example", "Microsoft.Other" }));
+        Assert.That(response.Packages.Single().ResourceTypes.Select(type => type.Namespace), Is.EquivalentTo(new[] { "Microsoft.Example", "Microsoft.Other" }));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(2));
+    }
+
+    [TestCase("/providers/Microsoft.Other/widgets/{name}/{childType}/{childName}")]
+    [TestCase("/providers/Microsoft.Other/{resourceType}/{name}")]
+    [TestCase("/providers/{providerNamespace}/widgets/{name}")]
+    public async Task UnresolvedSecondProviderCannotBeHiddenByAPassingFirstProvider(string unresolvedRoute)
+    {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json", JsonSerializer.Serialize(new
+        {
+            info = new { version = Version },
+            paths = new Dictionary<string, object>
+            {
+                ["/providers/Microsoft.Example/widgets/{name}"] = new { get = new { } },
+                [unresolvedRoute] = new { get = new { } }
+            }
+        }));
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(response.Projects.All(project => project.ReadinessStatus != ServiceApiReadinessResponse.Passed), Is.True);
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
+    public async Task ExplicitProviderMetadataDoesNotRequireAnUnreferencedProviderMapping()
+    {
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json", JsonSerializer.Serialize(new
+        {
+            info = new { version = Version },
+            paths = new Dictionary<string, object>
+            {
+                ["/providers/Microsoft.Example/widgets/{name}"] = new { get = new { } },
+                ["/providers/Microsoft.Other/widgets/{name}/{childType}/{childName}"] = new { get = new { } }
+            }
+        }));
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.Projects.Single().Namespace, Is.EqualTo("Microsoft.Example"));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ExtensionResourceChecksItsOwningProviderRatherThanTheParentScope()
+    {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
+        SetSwagger(Version, "/providers/Microsoft.Parent/parents/{parentName}/providers/Microsoft.Example/widgets/{name}", true);
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.Projects.Single().Namespace, Is.EqualTo("Microsoft.Example"));
+        Assert.That(response.Packages.Single().ResourceTypes.Single().Namespace, Is.EqualTo("Microsoft.Example"));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
     [Test]
     public async Task PackageDiscoveryReusesGenerationLocationReadsAcrossChangedFiles()
     {

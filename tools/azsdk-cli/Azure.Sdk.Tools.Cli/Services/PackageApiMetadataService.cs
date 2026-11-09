@@ -68,7 +68,7 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
             foreach (var source in group)
             {
                 var namespaces = source.NamespaceIsInferred
-                    ? resourceEvidence.ResourceTypes.Select(type => type.Namespace).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
+                    ? resourceEvidence.ProviderNamespaces
                     : [source.ExpectedNamespace];
                 foreach (var providerNamespace in namespaces)
                 {
@@ -94,6 +94,8 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
         }
         package.ResourceTypes = [.. resources.OrderBy(type => type.Namespace, StringComparer.Ordinal)
             .ThenBy(type => type.ApiVersion, StringComparer.Ordinal).ThenBy(type => type.ResourceType, StringComparer.Ordinal)];
-        return new(package, resolvedSources, [.. issues.Distinct(StringComparer.Ordinal)]);
+        var distinctSources = resolvedSources.GroupBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(group => group.DistinctBy(source => source.ApiVersion)).ToList();
+        return new(package, distinctSources, [.. issues.Distinct(StringComparer.Ordinal)]);
     }
 }

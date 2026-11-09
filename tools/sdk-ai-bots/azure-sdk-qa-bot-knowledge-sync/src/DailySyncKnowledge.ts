@@ -101,6 +101,9 @@ export async function processDailySyncKnowledge(): Promise<void> {
         // Process each documentation source
         for (const source of documentationSources) {
             const sourceDir = path.join(workingDir, source.path);
+            const citationRoot = source.citationRoot
+                ? path.join(workingDir, source.citationRoot)
+                : undefined;
             const targetDir = path.join(tempDocsDir, source.folder);
             
             if (!fs.existsSync(sourceDir)) {
@@ -126,7 +129,8 @@ export async function processDailySyncKnowledge(): Promise<void> {
                     source, 
                     targetDir, 
                     existingBlobs,
-                    blobService
+                    blobService,
+                    citationRoot
                 );
                 
                 totalProcessed += result.totalProcessed;
@@ -359,12 +363,13 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
 /**
  * Process files in a source directory
  */
-async function processSourceDirectory(
+export async function processSourceDirectory(
     sourceDir: string,
     source: DocumentationSource,
     targetDir: string,
     existingBlobs: Map<string, any>,
-    blobService: BlobService
+    blobService: BlobService,
+    citationRoot?: string
 ): Promise<ProcessSourceDirectoryResult> {
     
     let totalProcessed = 0;
@@ -426,7 +431,7 @@ async function processSourceDirectory(
     const isFile = fs.existsSync(sourceDir) && fs.statSync(sourceDir).isFile();
     
     if (isFile) {
-        processSingleFile(sourceDir, path.dirname(sourceDir));
+        processSingleFile(sourceDir, citationRoot ?? path.dirname(sourceDir));
         
         return { totalProcessed, changedDocuments, unchangedDocuments, changedFiles, metadataChangedFiles, unchangedFiles };
     }
@@ -447,7 +452,9 @@ async function processSourceDirectory(
                     if (source.isGenerated) {
                         if (source.ignoredPaths.some(p => entry.name.startsWith(p.replace(/[\\/]/g, "#")))) continue;
                     } else {
-                        if (source.ignoredPaths.some(p => relativePath.startsWith(p))) continue;
+                        if (source.ignoredPaths.some(p =>
+                            relativePath.replace(/\\/g, '/').startsWith(p.replace(/\\/g, '/'))
+                        )) continue;
                     }
                 }
 
@@ -456,7 +463,7 @@ async function processSourceDirectory(
                     continue;
                 }
                 
-                processSingleFile(fullPath, sourceDir);
+                processSingleFile(fullPath, citationRoot ?? sourceDir);
             }
         }
     }

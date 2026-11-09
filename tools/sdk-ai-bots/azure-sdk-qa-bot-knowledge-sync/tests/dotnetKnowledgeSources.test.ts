@@ -43,7 +43,9 @@ describe('.NET knowledge configuration', () => {
 
         const sources = ConfigurationLoader.getDocumentationSources()
             .filter(source => source.folder === 'azure_sdk_for_net_docs');
-        expect(sources.every(source => source.path === 'docs/azure-sdk-for-net')).toBe(true);
+        expect(sources.map(source => source.path)).toEqual(
+            expectedPaths.map(entry => `docs/azure-sdk-for-net${entry}`));
+        expect(sources.every(source => source.citationRoot === 'docs/azure-sdk-for-net')).toBe(true);
         expect(sources.map(source => source.metadata)).toEqual(
             expectedPaths.map(() => ({ scope: 'branded' })));
         const repo = ConfigurationLoader.getRepositoryConfigs()
@@ -51,7 +53,7 @@ describe('.NET knowledge configuration', () => {
         expect(repo?.sparseCheckout).toEqual(expectedPaths);
     });
 
-    it('applies identical metadata to .NET documents across all shared-root entries', () => {
+    it('keeps configured metadata for repository-relative .NET documents', () => {
         ConfigurationLoader.setConfigPath(configPath);
         const sources = ConfigurationLoader.getDocumentationSources()
             .filter(source => source.folder === 'azure_sdk_for_net_docs');

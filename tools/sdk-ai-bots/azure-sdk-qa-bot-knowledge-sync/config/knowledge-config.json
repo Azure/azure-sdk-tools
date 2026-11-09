@@ -154,26 +154,6 @@
     },
     {
       "repository": {
-        "url": "https://github.com/Azure/azure-rest-api-specs.wiki.git",
-        "branch": "master",
-        "authType": "public",
-        "issueTracker": {
-          "provider": "github",
-          "repository": "Azure/azure-rest-api-specs"
-        }
-      },
-      "paths": [
-        {
-          "description": "Wiki documentation for Azure REST API specifications",
-          "folder": "azure_rest_api_specs_wiki",
-          "metadata": {
-            "scope": "branded"
-          }
-        }
-      ]
-    },
-    {
-      "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-python.git",
         "branch": "main",
         "authType": "public",
@@ -828,19 +808,19 @@
       },
       "paths": [
         {
-          "description": "Azure REST API Breaking Change and Oad Rules Mapping",
-          "path": "/documentation/BreakingChange-Oad-Rules-Mapping.md",
+          "description": "Azure REST API specification contributor workflows, specification guidelines, validation checks, SDK breaking-change review, and CI troubleshooting",
+          "path": "/documentation",
           "folder": "azure_rest_api_specs_docs",
           "relativeByRepoPath": true,
-          "metadata": {
-            "scope": "branded"
-          }
-        },
-        {
-          "description": "Azure REST API specs CI troubleshooting, SDK breaking-change review prerequisites, and reviewer contacts",
-          "path": "/documentation/ci-fix.md",
-          "folder": "azure_rest_api_specs_docs",
-          "relativeByRepoPath": true,
+          "ignoredPaths": [
+            "Getting started with OpenAPI specifications.md",
+            "samplefiles/",
+            "samplefiles-dp/",
+            "api-scenario/",
+            "restler/",
+            "backlog-triage.md",
+            "api-reviewer-agent.md"
+          ],
           "metadata": {
             "scope": "branded"
           }

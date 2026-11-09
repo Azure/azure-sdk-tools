@@ -458,8 +458,9 @@ export async function processSourceDirectory(
                     }
                 }
 
-                // Skip reference files and dated release notes (release-YYYY-MM-DD)
-                if (relativePath.startsWith('reference') || /^release-\d{4}-\d{2}-\d{2}\.(md|mdx)$/.test(entry.name)) {
+                // Skip root reference files and dated release notes (release-YYYY-MM-DD)
+                const citationRelativePath = path.relative(citationRoot ?? sourceDir, fullPath);
+                if (citationRelativePath.startsWith('reference') || /^release-\d{4}-\d{2}-\d{2}\.(md|mdx)$/.test(entry.name)) {
                     continue;
                 }
                 

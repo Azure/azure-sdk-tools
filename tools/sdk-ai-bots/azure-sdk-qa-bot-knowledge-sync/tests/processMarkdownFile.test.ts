@@ -154,12 +154,40 @@ describe('processMarkdownFile', () => {
       );
       expect(result.totalProcessed).toBe(0);
     }
-    fs.writeFileSync(path.join(root, 'nested#guide.md'), '# Generated\n\nContent.');
-    const generated = await processSourceDirectory(
-      root, { path: root, folder: 'folder', ignoredPaths: ['nested/'], isGenerated: true },
-      target, new Map(), new BlobService()
-    );
-    expect(generated.changedFiles.map(file => file.filename)).toEqual(['nested#guide.md']);
+    const generatedRoot = fs.mkdtempSync(path.join(process.cwd(), 'tmp-'));
+    tmpDirs.push(generatedRoot);
+    fs.writeFileSync(path.join(generatedRoot, 'nested#excluded.md'), '# Excluded\n\nContent.');
+    fs.writeFileSync(path.join(generatedRoot, 'included#guide.md'), '# Included\n\nContent.');
+    for (const ignoredPath of ['nested/', 'nested\\']) {
+      const generated = await processSourceDirectory(
+        generatedRoot, {
+          path: generatedRoot, folder: 'folder', ignoredPaths: [ignoredPath], isGenerated: true
+        },
+        target, new Map(), new BlobService()
+      );
+      expect(generated.totalProcessed).toBe(1);
+      expect(generated.changedFiles.map(file => file.filename)).toEqual(['included#guide.md']);
+      expect(generated.changedFiles[0].content).toContain('# Included');
+    }
+  });
+
+  it('keeps excluding root reference files and dated release notes', async () => {
+    const root = fs.mkdtempSync(path.join(process.cwd(), 'tmp-'));
+    tmpDirs.push(root);
+    for (const relativePath of ['reference/guide.md', 'references/guide.md', 'release-2026-11-09.md', 'guide.md']) {
+      const file = path.join(root, relativePath);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, '# Guide\n\nContent.');
+    }
+    const target = fs.mkdtempSync(path.join(process.cwd(), 'tmp-'));
+    tmpDirs.push(target);
+    for (const citationRoot of [undefined, root]) {
+      const result = await processSourceDirectory(
+        root, { path: root, folder: 'folder' }, target, new Map(), new BlobService(), citationRoot
+      );
+      expect(result.totalProcessed).toBe(1);
+      expect(result.changedFiles.map(file => file.filename)).toEqual(['guide.md']);
+    }
   });
 
   afterAll(() => {

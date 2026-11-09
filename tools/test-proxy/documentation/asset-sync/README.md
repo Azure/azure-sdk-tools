@@ -1,6 +1,7 @@
 # Asset Sync (Retrieve External Test Recordings)
 
 - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
+  - [Git requirements and checkout performance](#git-requirements-and-checkout-performance)
   - [The `assets.json` and how it enables external recordings](#the-assetsjson-and-how-it-enables-external-recordings)
     - [How does the test-proxy relate to the `assets.json`?](#how-does-the-test-proxy-relate-to-the-assetsjson)
   - [Restore, push, reset when proxy is waiting for requests](#restore-push-reset-when-proxy-is-waiting-for-requests)
@@ -31,7 +32,7 @@ The `test-proxy` optionally offers integration with other git repositories for *
 
 Colloquially, any file that is stored externally using the `asset-sync` feature of the `test-proxy` is called an `asset`.
 
-![asset sync block diagram](../_images/asset_sync_block_diagram.png)
+![asset sync block diagram](https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/documentation/_images/asset_sync_block_diagram.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature. To update recordings, the only change alongside the source code is to update the targeted tag.
 
@@ -40,6 +41,39 @@ With the addition of asset-sync capabilities, the test-proxy now responds to a n
 The header `x-recording-assets-file` will contain a value of where the `assets.json` is located within the language repo, expressed as a relative path. EG `sdk/tables/assets.json`.
 
 The combination of the the `assets.json` context and the original test-path will allow the test-proxy to restore a set of recordings to a path, then _load_ the recording from that newly gathered data. The path to the recording file within the external assets repo can be _predictably_ calculated and retrieved given just the location of the `assets.json` within the code repo, the requested file name during playback or record start, and the properties within the assets.json itself. The diagram above has colors to show how the paths are used in context.
+
+## Git requirements and checkout performance
+
+Git **2.51.0 or newer** is required on `PATH`.
+
+Asset repositories use:
+
+- Targeted blobless partial clones (`--filter=blob:none --no-tags`): only the requested tag's history is cloned, rather
+  than metadata for every recording tag. The selected history is not shallow, while recording contents are fetched as
+  needed. Other tags are fetched explicitly when requested. With an empty tag, the default branch is cloned instead.
+  Push fetches `main` on demand for its engineering-file updates.
+- Cone-mode sparse checkout with a sparse index: the selected recording directory and `eng` are included recursively.
+  Root files, including `.gitignore`, and files immediately inside ancestor directories are also included. Other
+  directories remain excluded. An `assets.json` at the repository root with no prefix disables sparse checkout to
+  select the entire assets repository.
+- Protocol v2, index v4 path compression, and the untracked cache. Threaded index loading and checkout's bulk fetching
+  of missing blobs are already Git defaults; the index checksum remains enabled. Fresh clones persist their settings
+  during `git clone` and create v4 indexes directly, avoiding separate configuration and index-conversion commands.
+  Existing caches still use explicit migration.
+
+Existing caches are upgraded in place on their first restore. Successful setup is recorded by a versioned marker in the
+repository's Git metadata, so later proxy instances reuse that configuration without running setup commands again.
+Restoring the same tag preserves staged, unstaged, and untracked recordings, without cleaning or checking out the tag
+again. Existing objects are retained, and subsequent fetches use the blobless filter; old trees that were not
+downloaded previously can still require lazy fetching. Switching to a different tag retains the existing behavior of
+discarding local changes.
+
+For linked worktrees in containers, the assets directory is registered with Git's `safe.directory` before resolving
+the worktree's Git metadata, including on cached restores. Ordinary cached clones still avoid Git commands.
+
+Breadcrumb updates still read the stored entries to detect external changes. When the requested entry's hash and tag
+already match, its file is left unchanged. Missing or changed entries are still persisted, and deleted breadcrumb files
+are recreated on the next restore.
 
 ## The `assets.json` and how it enables external recordings
 
@@ -201,7 +235,7 @@ All new packages in `azure-sdk` must externalize their recordings, so begin by c
 You could...
 
 - **Manually** generate it from the example `assets.json` [further up in this document](#the-assetsjson-and-how-it-enables-external-recordings)
-- Utilize the powershell script `eng/common/testproxy/onboarding/generate-assets-json.ps1` **without** `-InitialPush` flag. [The README is here.](/eng/common/testproxy/onboarding/README.md)
+- Utilize the powershell script `eng/common/testproxy/onboarding/generate-assets-json.ps1` **without** `-InitialPush` flag. [The README is here.](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/onboarding/README.md)
 
 Given the relative lack of complexity present in an `assets.json`, manual generation is recommended _unless recordings already exist_. In which case [this later section has you covered.](#im-a-dev-who-uses-the-test-proxy-currently-how-do-i-externalize-my-recordings)
 
@@ -225,11 +259,11 @@ First, ensure that your language-specific "shim" supports the automatic addition
 - [PR Enabling in JS](https://github.com/Azure/azure-sdk-for-js/pull/23405)
 - [PR Enabling in Go](https://github.com/Azure/azure-sdk-for-go/pull/19322)
 
-Use [the transition script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/onboarding/generate-assets-json.ps1) and follow the [readme](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/transition-scripts/README.md)!
+Use [the transition script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/onboarding/generate-assets-json.ps1) and follow the [readme](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/onboarding/README.md)!
 
 In summary, once an assets.json is present, the shim _must_ be updated to **actually send** a reference to that assets.json inside the `record/start` or `playback/start` requests!
 
-![request with and without assets.json](../_images/before_after.png)
+![request with and without assets.json](https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/documentation/_images/before_after.png)
 
 ### What does this look like in practice?
 
@@ -239,13 +273,13 @@ Once a package or service has an assets.json and a targeted tag, each language-r
 
 In practice, this is what a code repo will look like after running `playback`-mode for a couple packages. Specifically, this is for the python repo.
 
-![assets store](../_images/assets_on_disk.png)
+![assets store](https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/documentation/_images/assets_on_disk.png)
 
 One can see the automatically restored assets repos within the `.assets` folder. Each of the top-level folders within the `.assets` folder contains a single slice of the assets repo.
 
 The below diagram illustrates how an individual assets.json, language repo, and assets repo relate to each other.
 
-![assets diagram](../_images/organization_of_assets.png)
+![assets diagram](https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/documentation/_images/organization_of_assets.png)
 
 A user can use the `config` verb to access this the location of their assets on disk! Using assets diagram directly as a reference. we can work an example:
 

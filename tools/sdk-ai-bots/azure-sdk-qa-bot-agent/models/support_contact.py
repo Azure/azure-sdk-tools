@@ -1,8 +1,7 @@
-"""Validated repository support configuration and cached catalog loading."""
+"""Validated support configuration and cached agent-context serialization."""
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 from functools import lru_cache
@@ -21,23 +20,25 @@ CatalogKey = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]*$")]
 
 
 class SupportModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid")
 
 
 class SupportArea(SupportModel):
     key: CatalogKey
     description: str = Field(min_length=1)
-    github_username: GitHubUsername
+    github_usernames: list[GitHubUsername] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def validate_description(self) -> SupportArea:
+    def validate_area(self) -> SupportArea:
         if not self.description.strip():
             raise ValueError("A support-area description must not be blank.")
+        if len(self.github_usernames) != len(set(self.github_usernames)):
+            raise ValueError("GitHub usernames within a support area must be unique.")
         return self
 
 
 class SupportContactCatalog(SupportModel):
-    support_areas: tuple[SupportArea, ...]
+    support_areas: list[SupportArea]
 
     @model_validator(mode="after")
     def validate_catalog(self) -> SupportContactCatalog:
@@ -46,16 +47,9 @@ class SupportContactCatalog(SupportModel):
             raise ValueError("Support-area keys must be unique.")
         return self
 
-    @property
-    def revision(self) -> str:
-        return hashlib.sha256(self.model_dump_json().encode("utf-8")).hexdigest()
-
     def model_context(self) -> str:
         return "[support_catalog]\n" + json.dumps(
-            {
-                "revision": self.revision,
-                "support_areas": [area.model_dump() for area in self.support_areas],
-            },
+            self.model_dump(),
             ensure_ascii=True,
             separators=(",", ":"),
         )
@@ -91,17 +85,17 @@ def parse_support_catalog(data: bytes) -> SupportContactCatalog:
 
 
 @lru_cache(maxsize=1)
-def get_support_catalog() -> SupportContactCatalog | None:
+def get_support_catalog_context() -> str:
+    """Cache serialized context, or an empty string if unavailable or empty."""
     try:
         catalog = parse_support_catalog(SUPPORT_CONTACT_PATH.read_bytes())
     except (OSError, ValueError, yaml.YAMLError) as exc:
         logger.error(
-            "Support-contact configuration failed: path=%s error=%s",
+            "Support-contact configuration failed; continuing without catalog context: path=%s error=%s",
             SUPPORT_CONTACT_PATH, type(exc).__name__,
         )
-        raise RuntimeError("Unable to load valid support-contact configuration.") from exc
+        return ""
     logger.info(
-        "Support-contact catalog loaded: revision=%s areas=%d",
-        catalog.revision, len(catalog.support_areas),
+        "Support-contact catalog loaded: areas=%d", len(catalog.support_areas),
     )
-    return catalog if catalog.support_areas else None
+    return catalog.model_context() if catalog.support_areas else ""

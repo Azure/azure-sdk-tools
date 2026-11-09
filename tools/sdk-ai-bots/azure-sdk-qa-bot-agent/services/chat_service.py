@@ -28,7 +28,7 @@ from models.chat import (
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from models.identity import ResolveGitHubUsersResult, TeamsMention
-from models.support_contact import get_support_catalog
+from models.support_contact import get_support_catalog_context
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
@@ -136,7 +136,7 @@ class ChatService:
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
-        support_catalog = get_support_catalog()
+        support_context = get_support_catalog_context()
         project_client = self._get_project_client()
         tenant_config = get_tenant_config(req.tenant_id)
         agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
@@ -185,10 +185,7 @@ class ChatService:
             ResponseInputItemParam,
             ConversationItem(
                 role=Role.System,
-                content=(
-                    support_catalog.model_context() if support_catalog is not None
-                    else '[support_catalog]\n{"revision":null,"support_areas":[]}'
-                ),
+                content=support_context,
             ).model_dump(mode="json", exclude_none=True),
         )
         conversation_items.append(support_context_item)

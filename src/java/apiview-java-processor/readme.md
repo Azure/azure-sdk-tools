@@ -12,7 +12,7 @@ The existing APIView CI pipeline validates changes to this project. To publish
 `com.azure:apiview-java-processor` to the Java dev feed, manually run `release.yml` from `main`
 with **Publish to the Java dev feed** enabled.
 
-Publishing a version is immutable. Before releasing a new package, update the version in `pom.xml`, the `JavaProcessor` path in `../../dotnet/APIView/APIViewWeb/APIViewWeb.csproj`, and `VersionString` in `../../dotnet/APIView/APIViewWeb/Languages/JavaLanguageService.cs`.
+Publishing a version is immutable. Before releasing a new package, update the version in `pom.xml`.
 The pipeline builds and tests on Linux, then signs and publishes on Windows.
 It signs and verifies the JARs through ESRP, then GPG-signs and publishes the package,
 including sources and Javadoc JARs, to the Azure Artifacts Java dev feed, not Maven Central.

@@ -65,6 +65,12 @@ public static class GeneratedSdkMetadataHelper
         }
     }
 
+    public static TypeSpecLocation ParseTypeSpecLocation(string text)
+    {
+        var metadata = ParseYaml(text);
+        return new(Scalar(metadata, "directory"), Scalar(metadata, "commit"), Scalar(metadata, "repo"));
+    }
+
     internal static string ProviderNamespace(string main)
     {
         main = Regex.Replace(Regex.Replace(main, @"/\*[\s\S]*?\*/", ""), @"//[^\n]*", "");

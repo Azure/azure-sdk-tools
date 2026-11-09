@@ -25,6 +25,8 @@ public class ServiceApiReadinessServiceTests
     private const string Package = "sdk/example/azure-resourcemanager-example";
     private const string Metadata = "src/main/resources/META-INF/azure-resourcemanager-example_metadata.json";
     private const string SwaggerDirectory = "specification/example/resource-manager/swagger";
+    private const string ManagementConfiguration = "linter:\n  extends: ['@azure-tools/typespec-azure-rulesets/resource-manager']\n";
+    private const string DataConfiguration = "linter:\n  extends: ['@azure-tools/typespec-azure-rulesets/data-plane']\n";
     private readonly Dictionary<string, string> _files = [];
     private readonly Dictionary<string, JsonArray> _directories = [];
     private readonly HashSet<string> _rawFiles = [];
@@ -34,6 +36,7 @@ public class ServiceApiReadinessServiceTests
     private readonly List<string> _labels = [];
     private readonly List<(HttpMethod Method, Uri Uri, string? Token)> _requests = [];
     private Mock<IGitHubService> _github = null!;
+    private Mock<IAzureService> _azure = null!;
     private ServiceApiReadinessService _service = null!;
     private HttpClient _http = null!;
     private string _repository = "helen229/azure-sdk-for-java";
@@ -75,8 +78,8 @@ public class ServiceApiReadinessServiceTests
         var credential = new Mock<TokenCredential>();
         credential.Setup(value => value.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
             .Returns(new ValueTask<AccessToken>(new AccessToken("azure-test-token", DateTimeOffset.UtcNow.AddHours(1))));
-        var azure = new Mock<IAzureService>();
-        azure.Setup(service => service.GetCredential(It.IsAny<string?>())).Returns(credential.Object);
+        _azure = new Mock<IAzureService>();
+        _azure.Setup(service => service.GetCredential(It.IsAny<string?>())).Returns(credential.Object);
         var handler = new Mock<HttpMessageHandler>();
         handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .Returns<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
@@ -87,12 +90,40 @@ public class ServiceApiReadinessServiceTests
         var factory = new Mock<IHttpClientFactory>();
         _http = new HttpClient(handler.Object);
         factory.Setup(value => value.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(_http);
-        _service = new ServiceApiReadinessService(_github.Object, azure.Object, factory.Object);
+        _service = new ServiceApiReadinessService(_github.Object, _azure.Object, factory.Object,
+            new PackageApiMetadataService(_github.Object, factory.Object));
         AddPackage(Package, Metadata, Version);
     }
 
     [TearDown]
     public void TearDown() => _http.Dispose();
+
+    [Test]
+    public async Task ReadinessConsumesTheInjectedMetadataInterface()
+    {
+        var package = new PackageInfo
+        {
+            DirectoryPath = Package,
+            ResourceTypes = [new("Microsoft.Example", Version, "widgets")]
+        };
+        var source = new PackageApiSource { PackagePath = Package, ApiVersion = Version, ExpectedNamespace = "Microsoft.Example" };
+        var metadata = new Mock<IPackageApiMetadataService>(MockBehavior.Strict);
+        metadata.Setup(service => service.ReadLocalGenerationEvidenceAsync(package, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PackageGenerationEvidence([source], "management-plane", []));
+        metadata.Setup(service => service.PopulateResourceTypesAsync(package, It.IsAny<IEnumerable<PackageApiSource>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PackageApiEvidence(package, [source], []));
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(clients => clients.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(_http);
+        var service = new ServiceApiReadinessService(_github.Object, _azure.Object, factory.Object, metadata.Object);
+
+        var result = await service.CheckPackageAsync(package, CancellationToken.None);
+
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        metadata.Verify(service => service.ReadLocalGenerationEvidenceAsync(package, It.IsAny<CancellationToken>()), Times.Once);
+        metadata.Verify(service => service.PopulateResourceTypesAsync(package, It.IsAny<IEnumerable<PackageApiSource>>(), It.IsAny<CancellationToken>()), Times.Once);
+        _github.Verify(service => service.GetAuthToken(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
 
     [TestCase(SdkLanguage.Java, "src/main/resources/META-INF", "*_metadata.json")]
     [TestCase(SdkLanguage.JavaScript, "", "metadata.json")]
@@ -170,7 +201,10 @@ public class ServiceApiReadinessServiceTests
         Assert.That(evidence.Issues, Is.Empty);
         Assert.That(evidence.Sources, Has.Count.EqualTo(2));
         Assert.That(evidence.Sources.Select(source => source.PackagePath), Is.All.EqualTo(Package));
-        Assert.That(_requests, Is.Empty);
+        Assert.That(_requests, Has.Count.EqualTo(1));
+        Assert.That(Uri.UnescapeDataString(_requests.Single().Uri.AbsolutePath), Does.EndWith($"{Project}/tspconfig.yaml"));
+        Assert.That(QueryHelpers.ParseQuery(_requests.Single().Uri.Query)["ref"].ToString(), Is.EqualTo(SpecCommit));
+        Assert.That(_pullRequestReads, Is.Zero);
     }
 
     [TestCase(false)]
@@ -570,6 +604,7 @@ public class ServiceApiReadinessServiceTests
     public async Task DataPlaneLocationSkipsArm()
     {
         SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: specification/example/data-plane/Example\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        SetFile(SpecRepository, SpecCommit, "specification/example/data-plane/Example/tspconfig.yaml", DataConfiguration);
         var response = await CheckAsync();
         Assert.That(response.Plane, Is.EqualTo("data-plane"));
         Assert.That(ArmRequests(), Is.Empty);
@@ -581,6 +616,7 @@ public class ServiceApiReadinessServiceTests
     {
         _files.Remove(Key(_repository, Head, $"{Package}/{Metadata}"));
         SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: specification/example/data-plane/Example\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        SetFile(SpecRepository, SpecCommit, "specification/example/data-plane/Example/tspconfig.yaml", DataConfiguration);
         var response = await CheckAsync();
         Assert.That(response.Plane, Is.EqualTo("data-plane"));
         Assert.That(ArmRequests(), Is.Empty);
@@ -593,6 +629,7 @@ public class ServiceApiReadinessServiceTests
         const string dataPackage = "sdk/data/azure-resourcemanager-data";
         AddPackage(dataPackage, "src/main/resources/META-INF/data_metadata.json", Version);
         SetFile(_repository, Head, $"{dataPackage}/tsp-location.yaml", $"directory: specification/example/data-plane/Example\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        SetFile(SpecRepository, SpecCommit, "specification/example/data-plane/Example/tspconfig.yaml", DataConfiguration);
         _files.Remove(Key(_repository, Head, $"{Package}/{Metadata}"));
         if (missingLocation)
         {
@@ -626,7 +663,7 @@ public class ServiceApiReadinessServiceTests
 
     [TestCase(false)]
     [TestCase(true)]
-    public async Task ManagementNamespaceLayoutIsAuthoritativeBeforeLabels(bool dataPlaneLabel)
+    public async Task PinnedConfigurationIsAuthoritativeBeforeLabels(bool dataPlaneLabel)
     {
         const string project = "specification/testcontoso/Contoso.Management";
         if (dataPlaneLabel)
@@ -635,12 +672,44 @@ public class ServiceApiReadinessServiceTests
         }
         SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: {project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
         SetFile(SpecRepository, SpecCommit, $"{project}/main.tsp", "@armProviderNamespace\nnamespace Microsoft.Example;");
-        SetFile(SpecRepository, SpecCommit, $"{project}/tspconfig.yaml", "options:\n  \"@azure-tools/typespec-autorest\":\n    emitter-output-dir: \"{project-root}\"\n    output-file: \"example.json\"\n");
+        SetFile(SpecRepository, SpecCommit, $"{project}/tspconfig.yaml", ManagementConfiguration + "options:\n  \"@azure-tools/typespec-autorest\":\n    emitter-output-dir: \"{project-root}\"\n    output-file: \"example.json\"\n");
         SetFile(SpecRepository, SpecCommit, $"{project}/example.json", _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")]);
         var response = await CheckAsync();
         Assert.That(response.Plane, Is.EqualTo("management-plane"));
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
+    [TestCase("specification/example/data-plane/Example", ManagementConfiguration, "management-plane", ServiceApiReadinessResponse.Passed)]
+    [TestCase(Project, DataConfiguration, "data-plane", ServiceApiReadinessResponse.Inconclusive)]
+    [TestCase(Project, "options: {}\n", "unknown", ServiceApiReadinessResponse.Inconclusive)]
+    [TestCase(Project, "options: [", "unknown", ServiceApiReadinessResponse.Inconclusive)]
+    [TestCase(Project, null, "unknown", ServiceApiReadinessResponse.Inconclusive)]
+    public async Task PinnedConfigurationDeterminesPlaneInsteadOfTheDirectoryName(string project, string? configuration, string expectedPlane, string expectedStatus)
+    {
+        SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: {project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        SetFile(SpecRepository, SpecCommit, $"{project}/main.tsp", "@armProviderNamespace\nnamespace Microsoft.Example;");
+        SetFile(SpecRepository, SpecCommit, $"{project}/example.json", _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")]);
+        if (configuration is null)
+        {
+            _files.Remove(Key(SpecRepository, SpecCommit, $"{project}/tspconfig.yaml"));
+        }
+        else
+        {
+            var outputMapping = expectedPlane == "management-plane"
+                ? "options:\n  '@azure-tools/typespec-autorest':\n    emitter-output-dir: '{project-root}'\n    output-file: example.json\n" : "";
+            SetFile(SpecRepository, SpecCommit, $"{project}/tspconfig.yaml", configuration + outputMapping);
+        }
+
+        var response = await CheckAsync();
+
+        Assert.That(response.Plane, Is.EqualTo(expectedPlane));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(expectedStatus));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(expectedPlane == "management-plane" ? 1 : 0));
+        if (expectedPlane != "management-plane")
+        {
+            Assert.That(_requests.Where(request => request.Uri.AbsolutePath.Contains("/META-INF", StringComparison.Ordinal)), Is.Empty);
+        }
     }
 
     [Test]
@@ -659,7 +728,7 @@ public class ServiceApiReadinessServiceTests
         const string project = "specification/example/resource-manager/project.json";
         SetFile(_repository, Head, $"{Package}/tsp-location.yaml", $"directory: {project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
         SetFile(SpecRepository, SpecCommit, $"{project}/main.tsp", "@armProviderNamespace\nnamespace Microsoft.Example;");
-        SetFile(SpecRepository, SpecCommit, $"{project}/tspconfig.yaml", "options:\n  \"@azure-tools/typespec-autorest\":\n    emitter-output-dir: \"{project-root}\"\n    output-file: \"example.json\"\n");
+        SetFile(SpecRepository, SpecCommit, $"{project}/tspconfig.yaml", ManagementConfiguration + "options:\n  \"@azure-tools/typespec-autorest\":\n    emitter-output-dir: \"{project-root}\"\n    output-file: \"example.json\"\n");
         SetFile(SpecRepository, SpecCommit, $"{project}/example.json", _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")]);
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
@@ -886,7 +955,7 @@ public class ServiceApiReadinessServiceTests
     [Test]
     public async Task InheritedSwaggerMappingIsNotGuessed()
     {
-        SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", "extends: ../tspconfig.yaml\n");
+        SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", ManagementConfiguration + "extends: ../tspconfig.yaml\n");
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
         Assert.That(ArmRequests(), Is.Empty);
@@ -1040,7 +1109,7 @@ public class ServiceApiReadinessServiceTests
         SetSwagger(version, "/providers/Microsoft.Example/widgets/{name}", true);
     }
 
-    private static string Config(string output) => $"options:\n  \"@azure-tools/typespec-autorest\":\n    emitter-output-dir: \"{{project-root}}/../swagger\"\n    output-file: \"{output}\"\n";
+    private static string Config(string output) => ManagementConfiguration + $"options:\n  \"@azure-tools/typespec-autorest\":\n    emitter-output-dir: \"{{project-root}}/../swagger\"\n    output-file: \"{output}\"\n";
 
     private void SetSwagger(string version, string route, bool collection)
     {

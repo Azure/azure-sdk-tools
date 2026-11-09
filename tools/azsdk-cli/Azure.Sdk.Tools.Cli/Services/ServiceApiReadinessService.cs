@@ -14,13 +14,12 @@ public interface IServiceApiReadinessService
 }
 
 public class ServiceApiReadinessService(IGitHubService github, IAzureService azure, IHttpClientFactory clients,
-    PackageApiMetadataService? packageMetadataService = null) : IServiceApiReadinessService
+    IPackageApiMetadataService packageMetadataService) : IServiceApiReadinessService
 {
     public const string HttpClientName = PackageApiMetadataService.HttpClientName;
     // This selects the ARM metadata endpoint, not the SDK's service API version.
     public const string ArmMetadataApiVersion = "2021-04-01";
     private readonly HttpClient _http = clients.CreateClient(HttpClientName);
-    private readonly PackageApiMetadataService _packageMetadataService = packageMetadataService ?? new(github, clients);
 
     public async Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct)
     {
@@ -80,7 +79,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         ct = budget.Token;
         try
         {
-            var evidence = await _packageMetadataService.ReadLocalGenerationEvidenceAsync(package, ct);
+            var evidence = await packageMetadataService.ReadLocalGenerationEvidenceAsync(package, ct);
             if (!HasValidationEvidence(evidence, result))
             {
                 return result;
@@ -98,7 +97,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         return result;
     }
 
-    private static bool HasValidationEvidence(SdkPackageMetadataHelper.GenerationEvidence evidence, ServiceApiReadinessResponse result)
+    private static bool HasValidationEvidence(PackageGenerationEvidence evidence, ServiceApiReadinessResponse result)
     {
         result.Plane = evidence.Plane;
         if (evidence.Plane == SdkPackageMetadataHelper.DataPlane)
@@ -128,10 +127,10 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 package = new PackageInfo { DirectoryPath = group.Key };
                 result.Packages.Add(package);
             }
-            PackageApiMetadataService.PackageEvidence evidence;
+            PackageApiEvidence evidence;
             try
             {
-                evidence = await _packageMetadataService.PopulateResourceTypesAsync(package, group, ct);
+                evidence = await packageMetadataService.PopulateResourceTypesAsync(package, group, ct);
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {

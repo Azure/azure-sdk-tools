@@ -226,11 +226,14 @@ change which providers are checked.
 
 Deletion-only packages and rename source packages are checked unless their
 directory is absent at the captured head. No surviving affected package is
-Inconclusive. The validated project directory determines the plane:
-`resource-manager` or `.Management` means management; `data-plane` is not
-applicable and stops before version or ARM reads. Missing, invalid, unknown, or
-mixed plane evidence is Inconclusive. Directories with filename-like suffixes
-are allowed when their recorded project files exist inside `specification`.
+Inconclusive. The recorded directory locates the pinned `tspconfig.yaml`, whose explicit
+configuration markers determine management or data plane. The shared
+`TypeSpecProject.ClassifySdkType` recognizes the resource-manager/data-plane
+linter rulesets and the AutoRest resource-provider folder. Directory names and
+PR labels are not plane evidence. Missing, malformed, conflicting, inherited-only,
+or unmarked configuration is unresolved; readiness remains Inconclusive without
+version or ARM reads. Confirmed data-plane configuration is not applicable.
+Directories with filename-like suffixes remain valid inside `specification`.
 
 #### Evaluation and limits
 
@@ -245,10 +248,24 @@ The evidence flow is:
 4. `ReadTenantProviderAsync` reads ARM metadata once per provider namespace.
 5. Compare each project's exact version and aggregate the four-state result.
 
-Generation discovery returns a per-package evidence model containing `Sources`,
-`Plane`, and `Issues`. Its location-reading result also carries `Location`,
+Generation discovery returns the shared `PackageGenerationEvidence` model containing
+`Sources`, `Plane`, and `Issues`. Its location-reading result also carries `Location`,
 `Plane`, and `Issues`, so the caller does not combine a tuple with a separate
 mutated issue list.
+
+`IPackageApiMetadataService` is the metadata boundary for both package inspection
+and readiness. It exposes local generation evidence, resource enrichment, and
+the enriched package operation. Readiness requires the injected interface and
+does not construct a concrete fallback. Its `PackageApiEvidence` and
+`PackageGenerationEvidence` result classes live under Models rather than inside
+the implementation service/helper.
+
+`GeneratedSdkMetadataHelper.ParseTypeSpecLocation` parses location YAML text into
+the shared `TypeSpecLocation` model. Local language package metadata and pinned
+readiness discovery use that same parser. File transport and the strict readiness
+policy for allowed repositories, full commit IDs, and safe directories remain
+separate. Plain package-info inspection is still local and does not fetch project
+configuration unless resource enrichment or readiness is requested.
 
 Package roots come from the nearest pinned `tsp-location.yaml`, not a fixed
 directory depth. Discovery caches location reads and permits at most 128 candidate
@@ -321,6 +338,9 @@ language-specific metadata locations, using the shared `PackageInfoHelper`
 parser. `SdkPackageMetadataHelper` resolves local or pinned remote generation
 evidence. `PackageApiMetadataService.GetPackageInfoAsync` returns enriched
 `PackageInfo` independently of a readiness check or Azure credentials.
+Both callers depend on `IPackageApiMetadataService`. Local `TypeSpecProject`
+classification and pinned readiness classification share the pure configuration
+classifier instead of separate path/string heuristics.
 `ProjectResourceTypeHelper` resolves pinned Swagger mappings without a PR DTO.
 `GitHubService` supplies bounded JSON and file reads shared by these helpers.
 

@@ -43,8 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
-            services.AddSingleton<PackageApiMetadataService>();
-            services.AddSingleton<IPackageApiMetadataService>(provider => provider.GetRequiredService<PackageApiMetadataService>());
+            services.AddSingleton<IPackageApiMetadataService, PackageApiMetadataService>();
             services.AddSingleton<IServiceApiReadinessService, ServiceApiReadinessService>();
             services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
             services.AddSingleton<IUpgradeService, UpgradeService>();

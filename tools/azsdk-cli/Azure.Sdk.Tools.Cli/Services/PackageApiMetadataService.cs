@@ -6,6 +6,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface IPackageApiMetadataService
 {
     Task<PackageInfo> GetPackageInfoAsync(PackageInfo package, CancellationToken ct = default);
+    Task<PackageGenerationEvidence> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default);
+    Task<PackageApiEvidence> PopulateResourceTypesAsync(PackageInfo package, IEnumerable<PackageApiSource> generationSources, CancellationToken ct = default);
 }
 
 public sealed class PackageApiMetadataService(IGitHubService github, IHttpClientFactory clients) : IPackageApiMetadataService
@@ -13,8 +15,6 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
     public const string HttpClientName = "PackageApiMetadata";
     internal static readonly TimeSpan EvidenceTimeout = TimeSpan.FromSeconds(40);
     private readonly HttpClient _http = clients.CreateClient(HttpClientName);
-
-    internal sealed record PackageEvidence(PackageInfo Package, List<PackageApiSource> Sources, List<string> Issues);
 
     public async Task<PackageInfo> GetPackageInfoAsync(PackageInfo package, CancellationToken ct = default)
     {
@@ -39,12 +39,12 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
         return evidence.Package;
     }
 
-    internal Task<SdkPackageMetadataHelper.GenerationEvidence> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct)
+    public Task<PackageGenerationEvidence> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
     {
         return new SdkPackageMetadataHelper(_http, github.GetAuthToken(ct)).ReadLocalGenerationEvidenceAsync(package, ct);
     }
 
-    internal async Task<PackageEvidence> PopulateResourceTypesAsync(PackageInfo package, IEnumerable<PackageApiSource> generationSources, CancellationToken ct)
+    public async Task<PackageApiEvidence> PopulateResourceTypesAsync(PackageInfo package, IEnumerable<PackageApiSource> generationSources, CancellationToken ct = default)
     {
         var sources = generationSources.ToArray();
         package.ApiVersions = [.. sources.Select(source => new PackageApiVersion(source.ApiVersion, source.NamespaceIsInferred ? null : source.ExpectedNamespace))

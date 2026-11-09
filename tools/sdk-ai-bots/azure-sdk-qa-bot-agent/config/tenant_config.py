@@ -549,9 +549,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     TenantID.TYPESPEC_CHANNEL_QA_BOT: TenantConfig(
         display_name="TypeSpec",
         skill_name="typespec",
-        scope="TypeSpec authoring, TypeSpec validation, and Azure API design.",
+        scope="TypeSpec authoring, TypeSpec validation, Azure API design, and TypeSpec PR design review.",
         topics=[
             "TypeSpec syntax, decorators, models, operations usage",
+            "TypeSpec PR design review and requests for review/comments on models, operations, and ARM resource patterns",
             "Azure management-plane or data-plane patterns",
             "TypeSpec migration from OpenAPI",
             "TypeSpec validation and configurations (tspconfig.yaml)",
@@ -623,7 +624,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     TenantID.API_SPEC_REVIEW_BOT: TenantConfig(
         display_name="API Spec Review",
         skill_name="api-spec-review",
-        scope="Azure REST API specification PR review process and failing checks (not API design questions).",
+        scope="Azure REST API specification PR review process and failing checks (not API design or TypeSpec PR design review).",
         topics=[
             "Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories",
             "Specification PR authoring requirements, validation, review status, scheduling, blockers, and merge process",
@@ -633,7 +634,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         exclusions=[
             "Language-specific SDK generation/validation errors — route to that language's SDK tenant",
             "TypeSpec validation errors — route to typespec_channel_qa_bot",
-            "API design or spec authoring questions — route to typespec_channel_qa_bot",
+            "API design, TypeSpec PR design review (including requests for review/comments), or spec authoring questions — route to typespec_channel_qa_bot",
         ],
         sources=_sources(
             SRC_STATIC_AZURE_DOCS,

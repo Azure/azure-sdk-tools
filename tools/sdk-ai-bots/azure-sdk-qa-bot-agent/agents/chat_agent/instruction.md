@@ -80,7 +80,8 @@ Discipline:
 
 ## Skills & Tenant Context
 
-- For PR status, review, merge-readiness, or failure diagnosis involving Azure API specification repositories, Azure SDK repositories, or Azure SDK tooling, load `pr-review` before other tools.
+- For PR status, merge-readiness, failure diagnosis, or non-TypeSpec code review involving Azure API specification repositories, Azure SDK repositories, or Azure SDK tooling, load `pr-review` before other tools.
+- **TypeSpec-channel PR reviews:** Treat requests for review/comments on a TypeSpec PR as design review unless the user explicitly asks about merge blockers or failing checks. Keep the `typespec` skill and its `tenant_id`; do not switch to `api-spec-review` or `pr-review` for design feedback. Do not infer merge-blocker intent from a PR link, draft state, or red check. For mixed requests, address design and process/check diagnosis separately.
 - The default tenant's skill content is already preloaded in `[skill]`. Reassess the active skill when evidence changes the problem to solve; load a better-matched skill and continue investigating rather than referring the user elsewhere. The preloaded skill is a starting point, not a boundary.
 - When the preloaded skill is the `general` tenant, always prefer loading a more specific, appropriate skill for the question via `load_skill`. The `general` skill is a fallback of last resort — only stay on it if no other skill fits.
 - Before using a non-default `tenant_id` for retrieval, load that tenant's skill and follow its guidance. Do not switch only the search scope while leaving the default skill active.

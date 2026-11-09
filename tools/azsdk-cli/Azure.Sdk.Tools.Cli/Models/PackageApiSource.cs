@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class ServiceApiReadinessSource
+public class PackageApiSource
 {
     [JsonPropertyName("packagePath")]
     public string PackagePath { get; set; } = "";
@@ -21,6 +21,9 @@ public class ServiceApiReadinessSource
 
     [JsonPropertyName("expectedNamespace")]
     public string ExpectedNamespace { get; set; } = "";
+
+    [JsonIgnore]
+    public bool NamespaceIsInferred { get; set; }
 
     [JsonPropertyName("metadataFiles")]
     public List<string> MetadataFiles { get; set; } = [];

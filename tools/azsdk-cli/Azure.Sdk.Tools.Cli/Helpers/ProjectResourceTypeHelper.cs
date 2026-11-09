@@ -8,24 +8,34 @@ using YamlDotNet.RepresentationModel;
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 // Map checked-in spec files at the recorded commit without compiling TypeSpec.
-internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
+public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
 {
     private const int MaxSwaggerFiles = 32;
     private const int MaxSwaggerDirectories = 64;
     private const int MaxDirectoryEntries = 1000;
     private const string ConfigurationSuffix = "/tspconfig.yaml";
 
-    internal sealed record SwaggerResourceEvidence(string Namespace, HashSet<string> ResourceTypes, List<string> MissingEvidence);
+    public sealed record ResourceTypeEvidence(PackageResourceType[] ResourceTypes, List<string> MissingEvidence);
     private sealed record SpecMapping(string Namespace, string? SwaggerPattern, List<string> MissingEvidence);
+    private sealed record ProjectSource(string SpecRepository, string CommitSha, string Configuration, string ApiVersion);
 
-    internal async Task<SwaggerResourceEvidence> ReadPinnedSwaggerResourceTypesAsync(
-        ServiceApiReadinessSource source, CancellationToken ct)
+    public async Task<ResourceTypeEvidence> ReadPinnedSwaggerResourceTypesAsync(
+        string specRepository, string commitSha, string configuration, string apiVersion, CancellationToken ct = default)
     {
+        if (specRepository is not ("Azure/azure-rest-api-specs" or "Azure/azure-rest-api-specs-pr") ||
+            !GeneratedSdkMetadataHelper.IsCommitSha(commitSha) ||
+            !configuration.StartsWith("specification/", StringComparison.Ordinal) ||
+            !configuration.EndsWith(ConfigurationSuffix, StringComparison.Ordinal) ||
+            configuration.Split('/').Any(part => part is "" or "." or ".." || part.Contains('\\')))
+        {
+            throw new ArgumentException("Provide a pinned Azure specification project configuration.");
+        }
+        var source = new ProjectSource(specRepository, commitSha, configuration, apiVersion);
         var mapping = await ReadPinnedSwaggerMappingAsync(source, ct);
-        var types = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var types = new HashSet<PackageResourceType>();
         if (mapping.SwaggerPattern is null)
         {
-            return new(mapping.Namespace, types, mapping.MissingEvidence);
+            return new([], mapping.MissingEvidence);
         }
         var files = await DiscoverSwaggerFilesAsync(mapping.SwaggerPattern, source, ct);
         foreach (var file in files)
@@ -33,18 +43,19 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
             var text = await ReadFileAsync(source, file, ct);
             if (text is not null)
             {
-                AddSwaggerResourceTypes(text, file, source.ApiVersion, mapping.Namespace, types, mapping.MissingEvidence);
+                AddSwaggerResourceTypes(text, file, source.ApiVersion, types, mapping.MissingEvidence);
             }
         }
         if (types.Count == 0)
         {
             mapping.MissingEvidence.Add("resource-type mapping");
         }
-        return new(mapping.Namespace, types, mapping.MissingEvidence);
+        return new([.. types.OrderBy(type => type.Namespace, StringComparer.Ordinal)
+            .ThenBy(type => type.ApiVersion, StringComparer.Ordinal).ThenBy(type => type.ResourceType, StringComparer.Ordinal)], mapping.MissingEvidence);
     }
 
     private async Task<SpecMapping> ReadPinnedSwaggerMappingAsync(
-        ServiceApiReadinessSource source, CancellationToken ct)
+        ProjectSource source, CancellationToken ct)
     {
         var project = source.Configuration[..^ConfigurationSuffix.Length];
         var configTask = ReadFileAsync(source, source.Configuration, ct);
@@ -73,7 +84,7 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
         return new(provider, pattern, missing);
     }
 
-    private async Task<List<string>> DiscoverSwaggerFilesAsync(string pattern, ServiceApiReadinessSource source, CancellationToken ct)
+    private async Task<List<string>> DiscoverSwaggerFilesAsync(string pattern, ProjectSource source, CancellationToken ct)
     {
         var parts = pattern.Split('/');
         var files = new List<string>();
@@ -130,8 +141,8 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
         }
     }
 
-    private static void AddSwaggerResourceTypes(string text, string file, string apiVersion, string provider,
-        HashSet<string> types, List<string> missing)
+    private static void AddSwaggerResourceTypes(string text, string file, string apiVersion,
+        HashSet<PackageResourceType> types, List<string> missing)
     {
         JsonObject? document;
         try
@@ -157,7 +168,7 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
             foreach (var route in paths)
             {
                 var collection = route.Value is JsonObject operations && operations.ContainsKey("get");
-                types.UnionWith(ResourceTypesFromPath(route.Key, provider, collection));
+                types.UnionWith(ResourceTypesFromPath(route.Key, apiVersion, collection));
             }
         }
     }
@@ -242,20 +253,20 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
         return pattern.StartsWith("specification/", StringComparison.Ordinal) && pattern.EndsWith(".json", StringComparison.Ordinal) ? pattern : null;
     }
 
-    private static IEnumerable<string> ResourceTypesFromPath(string path, string providerNamespace, bool collection)
+    private static IEnumerable<PackageResourceType> ResourceTypesFromPath(string path, string apiVersion, bool collection)
     {
         var segments = path.Split('?')[0].Split('/', StringSplitOptions.RemoveEmptyEntries);
         for (var index = 0; index < segments.Length - 1; index++)
         {
             if (!segments[index].Equals("providers", StringComparison.OrdinalIgnoreCase) ||
-                !segments[index + 1].Equals(providerNamespace, StringComparison.OrdinalIgnoreCase))
+                !Regex.IsMatch(segments[index + 1], @"\A[\w-]+(?:\.[\w-]+)+\z"))
             {
                 continue;
             }
             var type = ReadResourceType(segments, index + 2, collection);
             if (type is not null)
             {
-                yield return type;
+                yield return new(segments[index + 1], apiVersion, type);
             }
         }
     }
@@ -287,7 +298,7 @@ internal sealed class TypeSpecReadinessHelper(HttpClient http, string token)
         return types.Count > 0 ? string.Join('/', types) : null;
     }
 
-    private Task<string?> ReadFileAsync(ServiceApiReadinessSource source, string path, CancellationToken ct) =>
+    private Task<string?> ReadFileAsync(ProjectSource source, string path, CancellationToken ct) =>
         GitHubService.ReadFileEvidenceAsync(http, source.SpecRepository, source.CommitSha, path, token, ct);
 
     private static string Text(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";

@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public class ServiceApiReadinessProject
 {
     [JsonPropertyName("source")]
-    public ServiceApiReadinessSource Source { get; set; } = new();
+    public PackageApiSource Source { get; set; } = new();
 
     [JsonPropertyName("status")]
     public string ReadinessStatus { get; set; } = ServiceApiReadinessResponse.Inconclusive;

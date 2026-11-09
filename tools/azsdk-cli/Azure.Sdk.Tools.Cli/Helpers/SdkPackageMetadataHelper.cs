@@ -6,12 +6,12 @@ using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-internal sealed class SdkReadinessMetadataHelper(HttpClient http, string token)
+public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
 {
     internal const string ManagementPlane = "management-plane";
     internal const string DataPlane = "data-plane";
     internal const string UnknownPlane = "unknown";
-    internal sealed record GenerationEvidence(List<ServiceApiReadinessSource> Sources, string Plane, List<string> Issues);
+    public sealed record GenerationEvidence(List<PackageApiSource> Sources, string Plane, List<string> Issues);
     private sealed record ChangedPackages(HashSet<string> Packages, HashSet<string> KnownAtHead, List<string> Issues);
 
     private const int MaxMetadataFiles = 32;
@@ -19,8 +19,22 @@ internal sealed class SdkReadinessMetadataHelper(HttpClient http, string token)
     private const int MaxPackageDirectories = 128;
     private const string GenerationLocationFile = "tsp-location.yaml";
     private readonly Dictionary<(string Repository, string Commit, string Directory), Task<string?>> _generationLocations = [];
-    internal readonly record struct SdkSnapshot(string Repository, string HeadSha, SdkLanguage Language, string BaseRepository, string BaseSha);
+    internal readonly record struct SdkSnapshot(string Repository, string HeadSha, SdkLanguage Language, string BaseRepository, string BaseSha, PackageInfo? LocalPackage = null);
     private sealed record GenerationLocation(string Directory, string CommitSha, string Repository);
+
+    public Task<GenerationEvidence> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        var path = Path.GetFullPath(package.PackagePath);
+        if (!Directory.Exists(path))
+        {
+            throw new DirectoryNotFoundException("The local SDK package directory does not exist.");
+        }
+        var relativePath = string.IsNullOrEmpty(package.RepoRoot) ? Path.GetFileName(path) : Path.GetRelativePath(package.RepoRoot, path).Replace('\\', '/');
+        package.DirectoryPath = relativePath;
+        var sdk = new SdkSnapshot("", "", package.Language, "", "", package);
+        return ReadGenerationSourcesAsync(new([relativePath], [relativePath], []), sdk, ct);
+    }
 
     internal async Task<GenerationEvidence> ReadGenerationEvidenceAsync(
         string prPath, SdkSnapshot sdk, CancellationToken ct)
@@ -39,7 +53,7 @@ internal sealed class SdkReadinessMetadataHelper(HttpClient http, string token)
         var packages = changedPackages.Packages;
         var knownAtHead = changedPackages.KnownAtHead;
         var issues = new List<string>(changedPackages.Issues);
-        var sources = new List<ServiceApiReadinessSource>();
+        var sources = new List<PackageApiSource>();
         var planes = new HashSet<string>();
         if (issues.Count > 0)
         {
@@ -91,7 +105,9 @@ internal sealed class SdkReadinessMetadataHelper(HttpClient http, string token)
         string package, SdkSnapshot sdk, List<string> issues, CancellationToken ct)
     {
         var path = $"{package}/{GenerationLocationFile}";
-        var text = await ReadGenerationLocationTextAsync(sdk.Repository, sdk.HeadSha, package, ct);
+        var text = sdk.LocalPackage is null
+            ? await ReadGenerationLocationTextAsync(sdk.Repository, sdk.HeadSha, package, ct)
+            : await ReadLocalFileAsync(Path.Combine(sdk.LocalPackage.PackagePath, GenerationLocationFile), ct);
         if (text is null)
         {
             issues.Add($"{package}: missing SDK generation metadata ({path}).");
@@ -143,9 +159,32 @@ internal sealed class SdkReadinessMetadataHelper(HttpClient http, string token)
     {
         var location = GeneratedSdkMetadataHelper.GetMetadataFileLocation(sdk.Language);
         var directory = location.Directory.Length == 0 ? package : $"{package}/{location.Directory}";
+        if (string.IsNullOrEmpty(location.Pattern))
+        {
+            issues.Add($"{package}: SDK metadata layout is unavailable for this language.");
+            return [];
+        }
         if (sdk.Language != SdkLanguage.Java)
         {
             return [$"{directory}/{location.Pattern}"];
+        }
+        if (sdk.LocalPackage is not null)
+        {
+            var localDirectory = Path.Combine(sdk.LocalPackage.PackagePath, location.Directory);
+            var localPaths = Directory.Exists(localDirectory)
+                ? Directory.EnumerateFiles(localDirectory, location.Pattern, SearchOption.TopDirectoryOnly).Take(MaxMetadataFiles + 1)
+                    .Order(StringComparer.Ordinal).Select(path => $"{directory}/{Path.GetFileName(path)}").ToList()
+                : [];
+            if (localPaths.Count > MaxMetadataFiles)
+            {
+                issues.Add($"{package}: Java metadata exceeds the 32-file evidence limit.");
+                return [];
+            }
+            if (localPaths.Count == 0)
+            {
+                issues.Add($"{package}: missing SDK generation metadata ({directory}/{location.Pattern}).");
+            }
+            return localPaths;
         }
         var encoded = string.Join('/', directory.Split('/').Select(Uri.EscapeDataString));
         var listing = await ReadGitHubAsync($"repos/{sdk.Repository}/contents/{encoded}?ref={sdk.HeadSha}", ct);
@@ -170,15 +209,17 @@ internal sealed class SdkReadinessMetadataHelper(HttpClient http, string token)
         return paths;
     }
 
-    private async Task<List<ServiceApiReadinessSource>> ReadPackageSourcesAsync(
+    private async Task<List<PackageApiSource>> ReadPackageSourcesAsync(
         string package, GenerationLocation location, SdkSnapshot sdk, List<string> issues, CancellationToken ct)
     {
         var metadataPaths = await ReadMetadataPathsAsync(package, sdk, issues, ct);
-        var sources = new List<ServiceApiReadinessSource>();
+        var sources = new List<PackageApiSource>();
         string? inferredProvider = null;
         foreach (var metadataPath in metadataPaths)
         {
-            var text = await ReadFileAsync(sdk.Repository, sdk.HeadSha, metadataPath, ct);
+            var text = sdk.LocalPackage is null
+                ? await ReadFileAsync(sdk.Repository, sdk.HeadSha, metadataPath, ct)
+                : await ReadLocalFileAsync(Path.Combine(sdk.LocalPackage.PackagePath, metadataPath[(package.Length + 1)..]), ct);
             if (text is null)
             {
                 issues.Add($"{package}: missing SDK generation metadata ({metadataPath}).");
@@ -200,13 +241,14 @@ internal sealed class SdkReadinessMetadataHelper(HttpClient http, string token)
                     issues.Add($"{package}: invalid namespace/API-version entry.");
                     continue;
                 }
-                sources.Add(new ServiceApiReadinessSource
+                sources.Add(new PackageApiSource
                 {
                     PackagePath = package,
                     Configuration = $"{location.Directory}/tspconfig.yaml",
                     CommitSha = location.CommitSha,
                     SpecRepository = location.Repository,
                     ExpectedNamespace = provider,
+                    NamespaceIsInferred = entry.Key.Length == 0,
                     ApiVersion = entry.Value,
                     MetadataFiles = [$"{package}/{GenerationLocationFile}", .. metadataPaths]
                 });
@@ -374,6 +416,22 @@ internal sealed class SdkReadinessMetadataHelper(HttpClient http, string token)
 
     private Task<string?> ReadFileAsync(string repository, string commit, string path, CancellationToken ct) =>
         GitHubService.ReadFileEvidenceAsync(http, repository, commit, path, token, ct);
+
+    private static async Task<string?> ReadLocalFileAsync(string path, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+        await using var stream = File.OpenRead(path);
+        if (stream.Length > HttpResponseHelper.MaxEvidenceBytes)
+        {
+            throw new InvalidOperationException("SDK metadata exceeded the evidence size limit.");
+        }
+        using var reader = new StreamReader(stream);
+        return await reader.ReadToEndAsync(ct);
+    }
 
     private static string Text(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";
 }

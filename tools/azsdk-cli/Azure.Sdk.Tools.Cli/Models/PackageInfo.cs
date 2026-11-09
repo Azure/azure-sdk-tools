@@ -37,6 +37,9 @@ public class PackageInfo
     [JsonPropertyName("ApiVersions")]
     public PackageApiVersion[] ApiVersions { get; set; } = [];
 
+    [JsonPropertyName("ResourceTypes")]
+    public PackageResourceType[] ResourceTypes { get; set; } = [];
+
     /// <summary>
     /// Directory path relative to repo root (e.g., "sdk/storage/Azure.Storage.Blobs").
     /// </summary>

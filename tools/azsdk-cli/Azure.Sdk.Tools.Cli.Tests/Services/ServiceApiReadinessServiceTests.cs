@@ -6,6 +6,7 @@ using Azure.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.AspNetCore.WebUtilities;
 using Moq;
 using Moq.Protected;
@@ -34,8 +35,10 @@ public class ServiceApiReadinessServiceTests
     private readonly List<(HttpMethod Method, Uri Uri, string? Token)> _requests = [];
     private Mock<IGitHubService> _github = null!;
     private ServiceApiReadinessService _service = null!;
+    private HttpClient _http = null!;
     private string _repository = "helen229/azure-sdk-for-java";
     private string[] _advertisedVersions = [Version];
+    private readonly Dictionary<string, string[]> _providerVersions = [];
     private HttpStatusCode _githubStatus;
     private HttpStatusCode _evidenceStatus;
     private HttpStatusCode _armStatus;
@@ -58,6 +61,7 @@ public class ServiceApiReadinessServiceTests
         _requests.Clear();
         _repository = "helen229/azure-sdk-for-java";
         _advertisedVersions = [Version];
+        _providerVersions.Clear();
         _githubStatus = HttpStatusCode.OK;
         _evidenceStatus = HttpStatusCode.OK;
         _armStatus = HttpStatusCode.OK;
@@ -81,10 +85,14 @@ public class ServiceApiReadinessServiceTests
                 return Task.FromResult(Respond(request));
             });
         var factory = new Mock<IHttpClientFactory>();
-        factory.Setup(value => value.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(new HttpClient(handler.Object));
+        _http = new HttpClient(handler.Object);
+        factory.Setup(value => value.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(_http);
         _service = new ServiceApiReadinessService(_github.Object, azure.Object, factory.Object);
         AddPackage(Package, Metadata, Version);
     }
+
+    [TearDown]
+    public void TearDown() => _http.Dispose();
 
     [TestCase(SdkLanguage.Java, "src/main/resources/META-INF", "*_metadata.json")]
     [TestCase(SdkLanguage.JavaScript, "", "metadata.json")]
@@ -139,6 +147,118 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.Projects.Single().Source.PackagePath, Is.EqualTo(Package));
     }
 
+    [TestCase(SdkLanguage.JavaScript, "metadata.json")]
+    [TestCase(SdkLanguage.Java, Metadata)]
+    [TestCase(SdkLanguage.Go, "testdata/_metadata.json")]
+    [TestCase(SdkLanguage.Python, "_metadata.json")]
+    [TestCase(SdkLanguage.DotNet, "metadata.json")]
+    public async Task LocalPackageMetadataDoesNotRequireAGitHubPullRequest(SdkLanguage language, string metadataFile)
+    {
+        using var directory = TempDirectory.Create("LocalPackageMetadata");
+        var packagePath = Path.Combine(directory.DirectoryPath, Package);
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(packagePath, metadataFile))!);
+        await File.WriteAllTextAsync(Path.Combine(packagePath, "tsp-location.yaml"), $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        await File.WriteAllTextAsync(Path.Combine(packagePath, metadataFile), JsonSerializer.Serialize(new
+        {
+            apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = Version, ["Microsoft.Other"] = "2026-03-01" }
+        }));
+        var package = new PackageInfo { PackagePath = packagePath, RepoRoot = directory.DirectoryPath, Language = language };
+
+        var evidence = await new SdkPackageMetadataHelper(_http, "github-test-token").ReadLocalGenerationEvidenceAsync(package, CancellationToken.None);
+
+        Assert.That(evidence.Plane, Is.EqualTo("management-plane"));
+        Assert.That(evidence.Issues, Is.Empty);
+        Assert.That(evidence.Sources, Has.Count.EqualTo(2));
+        Assert.That(evidence.Sources.Select(source => source.PackagePath), Is.All.EqualTo(Package));
+        Assert.That(_requests, Is.Empty);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task SharedMetadataServiceReturnsPackageInfoWithoutAnArmLookup(bool scalarVersion)
+    {
+        using var directory = TempDirectory.Create("SharedPackageInfo");
+        var packagePath = Path.Combine(directory.DirectoryPath, Package);
+        Directory.CreateDirectory(packagePath);
+        await File.WriteAllTextAsync(Path.Combine(packagePath, "tsp-location.yaml"), $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        var metadata = scalarVersion
+            ? JsonSerializer.Serialize(new { apiVersion = Version })
+            : JsonSerializer.Serialize(new { apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = Version, ["Microsoft.Other"] = Version } });
+        await File.WriteAllTextAsync(Path.Combine(packagePath, "metadata.json"), metadata);
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json", JsonSerializer.Serialize(new
+        {
+            info = new { version = Version },
+            paths = new Dictionary<string, object>
+            {
+                ["/providers/Microsoft.Example/widgets/{name}"] = new { get = new { } },
+                ["/providers/Microsoft.Other/widgets/{name}"] = new { get = new { } }
+            }
+        }));
+        var package = new PackageInfo { PackageName = "local-package", PackagePath = packagePath, RepoRoot = directory.DirectoryPath, Language = SdkLanguage.JavaScript };
+        var clients = new Mock<IHttpClientFactory>();
+        clients.Setup(factory => factory.CreateClient(PackageApiMetadataService.HttpClientName)).Returns(_http);
+
+        var result = await new PackageApiMetadataService(_github.Object, clients.Object).GetPackageInfoAsync(package);
+
+        Assert.That(result, Is.SameAs(package));
+        Assert.That(result.PackageName, Is.EqualTo("local-package"));
+        Assert.That(result.ApiVersions.Length, Is.EqualTo(scalarVersion ? 1 : 2));
+        Assert.That(result.ResourceTypes.Select(type => type.Namespace), Is.EquivalentTo(new[] { "Microsoft.Example", "Microsoft.Other" }));
+        Assert.That(result.ResourceTypes.All(type => type.ApiVersion == Version), Is.True);
+        Assert.That(ArmRequests(), Is.Empty);
+        Assert.That(_pullRequestReads, Is.Zero);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task LocalPackageReadinessUsesTheSharedPackageInfo(bool advertised)
+    {
+        using var directory = TempDirectory.Create("LocalPackageReadiness");
+        var packagePath = Path.Combine(directory.DirectoryPath, Package);
+        Directory.CreateDirectory(packagePath);
+        await File.WriteAllTextAsync(Path.Combine(packagePath, "tsp-location.yaml"), $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        await File.WriteAllTextAsync(Path.Combine(packagePath, "metadata.json"), JsonSerializer.Serialize(new
+        {
+            apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = Version }
+        }));
+        var package = new PackageInfo { PackageName = "local-package", PackagePath = packagePath, RepoRoot = directory.DirectoryPath, Language = SdkLanguage.JavaScript };
+        _advertisedVersions = advertised ? [Version] : ["2025-01-01"];
+
+        var response = await _service.CheckPackageAsync(package, CancellationToken.None);
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(advertised ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected));
+        Assert.That(response.InputKind, Is.EqualTo("package"));
+        Assert.That(response.HeadSha, Is.Empty);
+        Assert.That(response.Packages.Single(), Is.SameAs(package));
+        Assert.That(package.ResourceTypes, Is.EqualTo(new[] { new PackageResourceType("Microsoft.Example", Version, "widgets") }));
+        Assert.That(response.Detail, Does.Contain("local SDK metadata").And.Contain("not a PR-head attestation"));
+        Assert.That(_pullRequestReads, Is.Zero);
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ScalarVersionChecksEveryProviderDiscoveredInTheProject()
+    {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json", JsonSerializer.Serialize(new
+        {
+            info = new { version = Version },
+            paths = new Dictionary<string, object>
+            {
+                ["/providers/Microsoft.Example/widgets/{name}"] = new { get = new { } },
+                ["/providers/Microsoft.Other/widgets/{name}"] = new { get = new { } }
+            }
+        }));
+        _providerVersions["Microsoft.Other"] = ["2025-01-01"];
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.NotDetected));
+        Assert.That(response.Projects, Has.Count.EqualTo(2));
+        Assert.That(response.Packages.Single().ApiVersions.Single().Namespace, Is.Null);
+        Assert.That(ArmRequests().Count(), Is.EqualTo(2));
+    }
+
     [Test]
     public async Task PackageDiscoveryReusesGenerationLocationReadsAcrossChangedFiles()
     {
@@ -183,6 +303,37 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.NotDetected));
         Assert.That(response.ExitCode, Is.Zero);
         Assert.That(response.Projects.Single().Detail, Does.Contain("not a confirmed deployment failure"));
+    }
+
+    [TestCase(Version, true)]
+    [TestCase(Version, false)]
+    [TestCase("2026-03-01", true)]
+    [TestCase("2026-03-01", false)]
+    public async Task OnePackageKeepsEveryProviderAndVersionDistinct(string otherVersion, bool otherProviderAdvertisesVersion)
+    {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new
+        {
+            apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = Version, ["Microsoft.Other"] = otherVersion }
+        }));
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{otherVersion}/example.json", JsonSerializer.Serialize(new
+        {
+            info = new { version = otherVersion },
+            paths = new Dictionary<string, object>
+            {
+                ["/providers/Microsoft.Example/widgets/{name}"] = new { get = new { } },
+                ["/providers/Microsoft.Other/widgets/{name}"] = new { get = new { } }
+            }
+        }));
+        _providerVersions["Microsoft.Other"] = otherProviderAdvertisesVersion ? [otherVersion] : ["2025-01-01"];
+
+        var response = await CheckAsync();
+        var package = response.Packages.Single();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(otherProviderAdvertisesVersion ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected));
+        Assert.That(package.ApiVersions, Is.EquivalentTo(new[] { new PackageApiVersion(Version, "Microsoft.Example"), new PackageApiVersion(otherVersion, "Microsoft.Other") }));
+        Assert.That(package.ResourceTypes, Is.EquivalentTo(new[] { new PackageResourceType("Microsoft.Example", Version, "widgets"), new PackageResourceType("Microsoft.Other", otherVersion, "widgets") }));
+        Assert.That(response.Projects, Has.Count.EqualTo(2));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(2));
     }
 
     [TestCase("js", "sdk/example/arm-example", "metadata.json", Version)]
@@ -820,10 +971,11 @@ public class ServiceApiReadinessServiceTests
         _requests.Add((request.Method, uri, request.Headers.Authorization?.Parameter));
         if (uri.Host == "management.azure.com")
         {
+            var providerNamespace = Uri.UnescapeDataString(uri.Segments[^1]);
             return _armStatus == HttpStatusCode.OK ? Json(new
             {
-                @namespace = "Microsoft.Example",
-                resourceTypes = new[] { new { resourceType = "widgets", apiVersions = _advertisedVersions, locations = new[] { "East US" } } }
+                @namespace = providerNamespace,
+                resourceTypes = new[] { new { resourceType = "widgets", apiVersions = _providerVersions.GetValueOrDefault(providerNamespace, _advertisedVersions), locations = new[] { "East US" } } }
             }) : Json(new { error = "private transport details" }, _armStatus);
         }
         if (_githubStatus != HttpStatusCode.OK)

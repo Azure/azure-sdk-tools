@@ -15,6 +15,9 @@ public class ServiceApiReadinessResponse : CommandResponse
     [JsonPropertyName("status")]
     public string ReadinessStatus { get; set; } = Inconclusive;
 
+    [JsonPropertyName("inputKind")]
+    public string InputKind { get; set; } = "pull-request";
+
     [JsonPropertyName("headSha")]
     public string HeadSha { get; set; } = "";
 
@@ -32,6 +35,9 @@ public class ServiceApiReadinessResponse : CommandResponse
 
     [JsonPropertyName("projects")]
     public List<ServiceApiReadinessProject> Projects { get; set; } = [];
+
+    [JsonPropertyName("packages")]
+    public List<PackageInfo> Packages { get; set; } = [];
 
     protected override string Format()
     {

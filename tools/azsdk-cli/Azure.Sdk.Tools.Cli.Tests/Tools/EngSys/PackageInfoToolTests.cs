@@ -6,6 +6,7 @@ using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
@@ -20,6 +21,7 @@ public class PackageInfoToolTests
     private Mock<IGitHelper> _git = null!;
     private Mock<LanguageService> _languageService = null!;
     private Mock<IPackageInfoHelper> _helper = null!;
+    private Mock<IPackageApiMetadataService> _apiMetadata = null!;
     private PackageInfoTool _tool = null!;
     private PackageInfo _package = null!;
 
@@ -43,7 +45,8 @@ public class PackageInfoToolTests
         _languageService.Setup(service => service.GetPackageInfo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_package);
         _helper = new Mock<IPackageInfoHelper>(MockBehavior.Strict);
-        _tool = new PackageInfoTool(_git.Object, new TestLogger<PackageInfoTool>(), _helper.Object, [_languageService.Object]);
+        _apiMetadata = new Mock<IPackageApiMetadataService>(MockBehavior.Strict);
+        _tool = new PackageInfoTool(_git.Object, new TestLogger<PackageInfoTool>(), _helper.Object, [_languageService.Object], _apiMetadata.Object);
     }
 
     [TearDown]
@@ -66,6 +69,29 @@ public class PackageInfoToolTests
         _languageService.Verify(service => service.DiscoverPackagesAsync(
             It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
         _helper.VerifyNoOtherCalls();
+        _apiMetadata.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task SinglePackageCanResolveResourceTypesWithoutAReadinessCheck()
+    {
+        _package.ResourceTypes = [new("Microsoft.Example", "2025-01-01", "widgets")];
+        _apiMetadata.Setup(service => service.GetPackageInfoAsync(_package, It.IsAny<CancellationToken>())).ReturnsAsync(_package);
+
+        var response = await Invoke("--package-path", _directory.DirectoryPath, "--include-resource-types");
+
+        Assert.That(response.ExitCode, Is.Zero);
+        Assert.That(((DefaultCommandResponse)response).Result, Is.SameAs(_package));
+        _apiMetadata.Verify(service => service.GetPackageInfoAsync(_package, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task ResourceTypeLookupCannotBecomeAnImplicitBulkNetworkScan()
+    {
+        var response = await Invoke("--include-resource-types", "--out-dir", "out");
+        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(response.ResponseError, Does.Contain("requires --package-path"));
+        _apiMetadata.VerifyNoOtherCalls();
     }
 
     [Test]
@@ -76,6 +102,21 @@ public class PackageInfoToolTests
         Assert.That(response.ExitCode, Is.Zero);
         Assert.That(_package.DevVersion, Is.EqualTo(_package.PackageVersion));
         _languageService.Verify(service => service.GetPackageInfo(_directory.DirectoryPath, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task SinglePackagePreservesProviderAndVersionScopedResourceTypes()
+    {
+        _package.ApiVersions = [new("2025-01-01", "Microsoft.Compute"), new("2026-01-01", "Microsoft.Network")];
+        _package.ResourceTypes = [new("Microsoft.Compute", "2025-01-01", "virtualMachines"), new("Microsoft.Network", "2026-01-01", "virtualNetworks")];
+
+        var response = await Invoke("--package-path", _directory.DirectoryPath, "--output", "json");
+        using var json = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Json).Format(response));
+        var package = json.RootElement.GetProperty("result");
+
+        Assert.That(response.ExitCode, Is.Zero);
+        Assert.That(package.GetProperty("ApiVersions").GetArrayLength(), Is.EqualTo(2));
+        Assert.That(package.GetProperty("ResourceTypes").Deserialize<PackageResourceType[]>(), Is.EqualTo(_package.ResourceTypes));
     }
 
     [Test]

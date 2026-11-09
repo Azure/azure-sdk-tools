@@ -10,21 +10,24 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface IServiceApiReadinessService
 {
     Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct);
+    Task<ServiceApiReadinessResponse> CheckPackageAsync(PackageInfo package, CancellationToken ct);
 }
 
-public class ServiceApiReadinessService(IGitHubService github, IAzureService azure, IHttpClientFactory clients) : IServiceApiReadinessService
+public class ServiceApiReadinessService(IGitHubService github, IAzureService azure, IHttpClientFactory clients,
+    PackageApiMetadataService? packageMetadataService = null) : IServiceApiReadinessService
 {
-    public const string HttpClientName = "ServiceApiReadiness";
+    public const string HttpClientName = PackageApiMetadataService.HttpClientName;
     // This selects the ARM metadata endpoint, not the SDK's service API version.
     public const string ArmMetadataApiVersion = "2021-04-01";
     private readonly HttpClient _http = clients.CreateClient(HttpClientName);
+    private readonly PackageApiMetadataService _packageMetadataService = packageMetadataService ?? new(github, clients);
 
     public async Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct)
     {
         var result = new ServiceApiReadinessResponse();
         // Authentication and all evidence reads share one deadline.
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        budget.CancelAfter(TimeSpan.FromSeconds(40));
+        budget.CancelAfter(PackageApiMetadataService.EvidenceTimeout);
         ct = budget.Token;
         try
         {
@@ -48,22 +51,15 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 return result;
             }
             var language = SdkLanguageHelpers.GetLanguageForRepo(repository);
-            var metadata = new SdkReadinessMetadataHelper(_http, token);
-            var snapshot = new SdkReadinessMetadataHelper.SdkSnapshot(result.HeadRepository, result.HeadSha, language,
+            var metadataHelper = new SdkPackageMetadataHelper(_http, token);
+            var snapshot = new SdkPackageMetadataHelper.SdkSnapshot(result.HeadRepository, result.HeadSha, language,
                 Text(pr["base"]?["repo"]?["full_name"]), Text(pr["base"]?["sha"]));
-            var evidence = await metadata.ReadGenerationEvidenceAsync(prPath, snapshot, ct);
-            result.Plane = evidence.Plane;
-            if (evidence.Plane == SdkReadinessMetadataHelper.DataPlane)
+            var evidence = await metadataHelper.ReadGenerationEvidenceAsync(prPath, snapshot, ct);
+            if (!HasValidationEvidence(evidence, result))
             {
-                result.Detail = "Data-plane SDK; ARM provider metadata is not applicable.";
                 return result;
             }
-            if (evidence.Issues.Count > 0 || evidence.Sources.Count == 0 || evidence.Plane == SdkReadinessMetadataHelper.UnknownPlane)
-            {
-                result.Detail = evidence.Issues.Count > 0 ? string.Join(" ", evidence.Issues) : "Authoritative SDK generation metadata or API plane is unavailable.";
-                return result;
-            }
-            await ValidateProjectsAsync(evidence.Sources, result, token, ct);
+            await ValidateProjectsAsync(evidence.Sources, result, ct);
             SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -76,49 +72,110 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         return result;
     }
 
-    private async Task ValidateProjectsAsync(IEnumerable<ServiceApiReadinessSource> sources, ServiceApiReadinessResponse result, string token, CancellationToken ct)
+    public async Task<ServiceApiReadinessResponse> CheckPackageAsync(PackageInfo package, CancellationToken ct)
+    {
+        var result = new ServiceApiReadinessResponse { InputKind = "package", Packages = [package] };
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        budget.CancelAfter(PackageApiMetadataService.EvidenceTimeout);
+        ct = budget.Token;
+        try
+        {
+            var evidence = await _packageMetadataService.ReadLocalGenerationEvidenceAsync(package, ct);
+            if (!HasValidationEvidence(evidence, result))
+            {
+                return result;
+            }
+            await ValidateProjectsAsync(evidence.Sources, result, ct);
+            SetOverallResult(result);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            result.ReadinessStatus = ServiceApiReadinessResponse.Error;
+            result.Detail = exception is ArgumentException or DirectoryNotFoundException
+                ? "Provide an existing local SDK package directory." : SafeError(exception);
+            result.ResponseError = result.Detail;
+        }
+        return result;
+    }
+
+    private static bool HasValidationEvidence(SdkPackageMetadataHelper.GenerationEvidence evidence, ServiceApiReadinessResponse result)
+    {
+        result.Plane = evidence.Plane;
+        if (evidence.Plane == SdkPackageMetadataHelper.DataPlane)
+        {
+            result.Detail = "Data-plane SDK; ARM provider metadata is not applicable.";
+            return false;
+        }
+        if (evidence.Issues.Count > 0 || evidence.Sources.Count == 0 || evidence.Plane == SdkPackageMetadataHelper.UnknownPlane)
+        {
+            result.Detail = evidence.Issues.Count > 0 ? string.Join(" ", evidence.Issues) : "Authoritative SDK generation metadata or API plane is unavailable.";
+            return false;
+        }
+        return true;
+    }
+
+    private async Task ValidateProjectsAsync(IEnumerable<PackageApiSource> sources, ServiceApiReadinessResponse result, CancellationToken ct)
     {
         // Cache failed lookup tasks too, so projects do not retry the same ARM failure.
         var providers = new Dictionary<string, Task<JsonNode?>>(StringComparer.OrdinalIgnoreCase);
-        var specifications = new TypeSpecReadinessHelper(_http, token);
         TokenCredential? credential = null;
-        foreach (var source in sources)
+        foreach (var group in sources.GroupBy(source => source.PackagePath, StringComparer.Ordinal))
         {
             ct.ThrowIfCancellationRequested();
-            var project = new ServiceApiReadinessProject { Source = source };
-            result.Projects.Add(project);
+            var package = result.Packages.SingleOrDefault(package => package.DirectoryPath.ToString() == group.Key);
+            if (package is null)
+            {
+                package = new PackageInfo { DirectoryPath = group.Key };
+                result.Packages.Add(package);
+            }
+            PackageApiMetadataService.PackageEvidence evidence;
             try
             {
-                var spec = await specifications.ReadPinnedSwaggerResourceTypesAsync(source, ct);
-                project.Namespace = spec.Namespace;
-                if (spec.MissingEvidence.Count > 0)
-                {
-                    project.Detail = $"Missing or unresolved: {string.Join(", ", spec.MissingEvidence)}.";
-                    continue;
-                }
-                if (!spec.Namespace.Equals(source.ExpectedNamespace, StringComparison.OrdinalIgnoreCase))
-                {
-                    project.Detail = "SDK metadata namespace conflicts with the pinned spec provider namespace.";
-                    continue;
-                }
-                if (!providers.TryGetValue(spec.Namespace, out var providerTask))
-                {
-                    credential ??= azure.GetCredential();
-                    providerTask = ReadTenantProviderAsync(spec.Namespace, credential, ct);
-                    providers.Add(spec.Namespace, providerTask);
-                }
-                var provider = await providerTask;
-                if (provider is null)
-                {
-                    project.Detail = "The provider is unavailable in the validation tenant.";
-                    continue;
-                }
-                CompareApiVersion(project, provider, spec.ResourceTypes);
+                evidence = await _packageMetadataService.PopulateResourceTypesAsync(package, group, ct);
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
-                project.ReadinessStatus = ServiceApiReadinessResponse.Error;
-                project.Detail = SafeError(exception);
+                result.Projects.AddRange(group.Select(source => new ServiceApiReadinessProject
+                {
+                    Source = source,
+                    Namespace = source.ExpectedNamespace,
+                    ReadinessStatus = ServiceApiReadinessResponse.Error,
+                    Detail = SafeError(exception)
+                }));
+                continue;
+            }
+            foreach (var source in evidence.Sources)
+            {
+                var project = new ServiceApiReadinessProject { Source = source, Namespace = source.ExpectedNamespace };
+                result.Projects.Add(project);
+                if (evidence.Issues.Count > 0)
+                {
+                    project.Detail = $"Missing or unresolved: {string.Join(", ", evidence.Issues)}.";
+                    continue;
+                }
+                var resourceTypes = package.ResourceTypes.Where(type => type.Namespace.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == source.ApiVersion)
+                    .Select(type => type.ResourceType).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                try
+                {
+                    if (!providers.TryGetValue(project.Namespace, out var providerTask))
+                    {
+                        credential ??= azure.GetCredential();
+                        providerTask = ReadTenantProviderAsync(project.Namespace, credential, ct);
+                        providers.Add(project.Namespace, providerTask);
+                    }
+                    var provider = await providerTask;
+                    if (provider is null)
+                    {
+                        project.Detail = "The provider is unavailable in the validation tenant.";
+                        continue;
+                    }
+                    CompareApiVersion(project, provider, resourceTypes);
+                }
+                catch (Exception exception) when (exception is not OutOfMemoryException)
+                {
+                    project.ReadinessStatus = ServiceApiReadinessResponse.Error;
+                    project.Detail = SafeError(exception);
+                }
             }
         }
     }
@@ -174,12 +231,15 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         {
             result.ReadinessStatus = ServiceApiReadinessResponse.NotDetected;
         }
-        result.Detail = "API versions were read from SDK metadata files at the checked PR head. Provider metadata is evidence, not release approval or proof of regional deployment.";
+        result.Detail = result.InputKind == "package"
+            ? "API versions were read from local SDK metadata. Working-tree content was inspected; this is not a PR-head attestation. Provider metadata is evidence, not release approval or proof of regional deployment."
+            : "API versions were read from SDK metadata files at the checked PR head. Provider metadata is evidence, not release approval or proof of regional deployment.";
         if (result.ReadinessStatus == ServiceApiReadinessResponse.Error)
         {
             var failures = result.Projects.Where(project => project.ReadinessStatus == ServiceApiReadinessResponse.Error)
                 .Select(project => $"{project.Source.PackagePath}: {project.Detail}");
-            result.ResponseError = $"Checked SDK head: {result.HeadRepository}@{result.HeadSha}{Environment.NewLine}" +
+            var context = result.InputKind == "package" ? "Local SDK package check:" : $"Checked SDK head: {result.HeadRepository}@{result.HeadSha}";
+            result.ResponseError = $"{context}{Environment.NewLine}" +
                 string.Join(Environment.NewLine, failures);
         }
     }

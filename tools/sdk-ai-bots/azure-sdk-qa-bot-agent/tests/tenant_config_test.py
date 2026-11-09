@@ -125,6 +125,26 @@ def test_pr_review_checks_lifecycle_before_diagnosing_blockers() -> None:
     assert "continue only for unresolved needs in the user's request" in pr_review
 
 
+def test_pr_review_prioritizes_compatibility_diagnostics_and_baseline() -> None:
+    pr_review = _read_pr_review_skill()
+
+    assert (
+        "Read failed-check diagnostics (for Actions, `get_job_logs` with "
+        "`return_content=true`) before `get_files` or comments"
+    ) in pr_review
+    assert "affected field, actual compared refs/versions and supported remedy" in pr_review
+    assert "report baseline may differ from the PR target" in pr_review
+    assert "For PR review, failure troubleshooting or compatibility questions" in pr_review
+    assert "failure diagnosis, compatibility, review or merge-readiness requests" in pr_review
+    board = (
+        _AGENT_ROOT / "prompts" / "tenants" / "api_stewardship_board.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "Answer compatibility reviews with actual changed fields/constraints "
+        "and compared refs/versions from failed-check diagnostics"
+    ) in board
+
+
 def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
     config = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
     assert config is not None

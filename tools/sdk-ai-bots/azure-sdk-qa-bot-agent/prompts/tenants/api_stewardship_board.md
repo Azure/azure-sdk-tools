@@ -24,7 +24,7 @@ Retrieve maintained guidance for the unresolved question identified from the PR 
 As applicable:
 
 - Keep REST signoff, breaking-change exceptions, SDK/API review and package-name approval separate. Verify live `.github/protected-labels.yml` for approval authority; approval does not transfer to another PR.
-- Distinguish published-version edits from new versions, preview from GA, and REST from SDK compatibility. Verify the applicable baseline and policy; do not invent requirements for inaccessible material.
+- Distinguish published-version edits from new versions, preview from GA, and REST from SDK compatibility. Answer compatibility reviews with actual changed fields/constraints and compared refs/versions from failed-check diagnostics.
 - Separate SDK/documentation visibility from service authorization. Verify preview classification from policy and availability, not AFEC alone.
 - For retirement, verify affected versions, applicable notice requirements and approval evidence; do not generalize prior approvals.
 

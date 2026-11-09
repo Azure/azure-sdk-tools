@@ -6,7 +6,7 @@ type: capability
 tags:
   tier: unit
   area: customization
-  input: customRequest
+  input: customizationRequest
 
 environment: azsdk-mcp-live
 
@@ -156,6 +156,8 @@ stimuli:
             - azsdk_customized_code_update
 
   - name: 001001-rename-model-ALL
+    tags:
+      editScope: CustomCode
     prompt: |
       First, use the shell to resolve
       azure-sdk-for-java/sdk/widget/azure-resourcemanager-widget against your current working

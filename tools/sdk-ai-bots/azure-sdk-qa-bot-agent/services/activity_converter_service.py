@@ -3,14 +3,35 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from html.parser import HTMLParser
+import logging
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
+
+from utils.teams_image import validate_teams_image_url
+
+logger = logging.getLogger(__name__)
+
+
+class _InlineImageParser(HTMLParser):
+    """Collect HTML image source URLs without downloading their content."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.sources: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "img":
+            source = dict(attrs).get("src")
+            if source:
+                self.sources.append(source)
 
 
 class ActivityConverterService:
     """Convert a Graph chatMessage payload to a Bot Framework Activity payload."""
 
     def convert_to_activity(self, chat_message: dict[str, Any]) -> dict[str, Any]:
+        """Return a Bot Framework activity dictionary from a Graph chatMessage."""
         web_url = chat_message.get("webUrl") or ""
         tenant_id = self._extract_tenant_id(web_url)
         body = chat_message.get("body") or {}
@@ -30,7 +51,7 @@ class ActivityConverterService:
             "serviceUrl": "https://smba.trafficmanager.net/apac/" + tenant_id,
             "text": body.get("content") or "",
             "textFormat": "plain",
-            "attachments": self._convert_attachments(body),
+            "attachments": self._convert_attachments(chat_message),
             "from": {
                 "id": from_user.get("id") or "",
                 "name": from_user.get("displayName") or "",
@@ -79,12 +100,75 @@ class ActivityConverterService:
         query = parse_qs(urlparse(web_url).query)
         return query.get("tenantId", [""])[0]
 
-    def _convert_attachments(self, body: dict[str, Any]) -> list[dict[str, Any]]:
-        if body.get("contentType") != "html":
-            return []
-        return [{"contentType": "text/html", "content": body.get("content")}]
+    def _convert_attachments(self, chat_message: dict[str, Any]) -> list[dict[str, Any]]:
+        """Return Bot Framework attachment dictionaries for HTML and inline images.
+
+        Each dictionary has a contentType and either content (original HTML) or
+        contentUrl (validated image URL). Image URLs are deduplicated; unsupported
+        sources are logged and skipped. Non-HTML messages return an empty list.
+        """
+        body = chat_message.get("body") or {}
+        attachments: list[dict[str, Any]] = []
+        parser = _InlineImageParser()
+        if body.get("contentType") == "html":
+            attachments.append({"contentType": "text/html", "content": body.get("content")})
+            parser.feed(body.get("content") or "")
+        seen: set[str] = set()
+        for source in parser.sources:
+            try:
+                url = self._resolve_inline_image_url(source, chat_message)
+            except ValueError:
+                logger.warning(
+                    "Ignoring unsupported inline image in message %s",
+                    chat_message.get("id") or "",
+                )
+                continue
+            if url not in seen:
+                seen.add(url)
+                # The actual MIME type is checked when the image is downloaded.
+                attachments.append({"contentType": "image/*", "contentUrl": url})
+        return attachments
+
+    def _resolve_inline_image_url(self, source: str, chat_message: dict[str, Any]) -> str:
+        """Return a validated absolute image URL, resolving relative HTML sources.
+
+        Graph hosted-content URLs must belong to this message or reply.
+        Raise ValueError for unsupported URLs or mismatched message ownership.
+        No image is downloaded here.
+        """
+        channel = chat_message.get("channelIdentity") or {}
+        message_id = chat_message.get("id") or ""
+        root_id = chat_message.get("replyToId") or message_id
+        message_url = ""
+        if channel.get("teamId") and channel.get("channelId") and message_id:
+            message_url = (
+                "https://graph.microsoft.com/v1.0/teams/"
+                + quote(channel["teamId"], safe="")
+                + "/channels/" + quote(channel["channelId"], safe="")
+                + "/messages/" + quote(root_id, safe="")
+            )
+            if root_id != message_id:
+                message_url += "/replies/" + quote(message_id, safe="")
+            message_url += "/"
+        url = urljoin(message_url, source)
+        validate_teams_image_url(url)
+        parsed = urlparse(url)
+        if (
+            parsed.hostname == "graph.microsoft.com"
+            and parsed.path.split("/", 3)[2] == "teams"
+        ):
+            if not message_url:
+                raise ValueError("Graph images require source message metadata")
+            image_message_path = parsed.path.split("/", 2)[2].rsplit(
+                "/hostedContents/", 1
+            )[0]
+            expected_path = urlparse(message_url).path.split("/", 2)[2].rstrip("/")
+            if unquote(image_message_path) != unquote(expected_path):
+                raise ValueError("Graph image must belong to the source message")
+        return url
 
     def _convert_mentions(self, mentions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Return Bot Framework mention entities with mentioned, text, and type fields."""
         converted_mentions: list[dict[str, Any]] = []
         for mention in mentions:
             application = ((mention.get("mentioned") or {}).get("application") or {})

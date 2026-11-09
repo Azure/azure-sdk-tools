@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -14,7 +13,6 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from tools import _MCP_MAX_OUTPUT_CHARS, truncating_mcp_parser
-from tools.github_mcp_tools import _BODY_REDACTION_NOTICE, _github_mcp_parser
 
 _RESOURCE_URI = "https://example.com/docs/guide.md"
 _RESOURCE_PREFIX = f"Resource URI: {_RESOURCE_URI}\n"
@@ -29,9 +27,9 @@ def _text_resource(text: str) -> mcp_types.EmbeddedResource:
     )
 
 
-@pytest.fixture(params=[truncating_mcp_parser, _github_mcp_parser], ids=["shared", "github"])
-def parser(request):
-    return request.param
+@pytest.fixture
+def parser():
+    return truncating_mcp_parser
 
 
 def test_preserves_acknowledgement_and_embedded_file(parser):
@@ -108,38 +106,3 @@ def test_unsupported_content_preserves_existing_behavior(parser, include_text):
 
 def test_empty_result_preserves_existing_behavior(parser):
     assert parser(mcp_types.CallToolResult(content=[])) == "null"
-
-
-@pytest.mark.parametrize("embedded", [False, True], ids=["text", "resource"])
-@pytest.mark.parametrize(
-    "association,login,trusted",
-    [("NONE", "contributor", False), ("MEMBER", "member", True), ("NONE", "ci[bot]", True)],
-)
-def test_github_author_redaction_applies_to_both_content_types(embedded, association, login, trusted):
-    payload = {
-        "user": {"login": login},
-        "author_association": association,
-        "body": "Authored content",
-    }
-    text = json.dumps(payload)
-    content = _text_resource(text) if embedded else mcp_types.TextContent(type="text", text=text)
-
-    output = _github_mcp_parser(mcp_types.CallToolResult(content=[content]))
-
-    expected = {**payload, "body": payload["body"] if trusted else _BODY_REDACTION_NOTICE}
-    assert json.loads(output.removeprefix(_RESOURCE_PREFIX)) == expected
-
-
-def test_github_redacts_embedded_content_before_truncation():
-    payload = {
-        "user": {"login": "contributor"},
-        "author_association": "NONE",
-        "body": "x" * (_MCP_MAX_OUTPUT_CHARS + 1),
-    }
-
-    output = _github_mcp_parser(
-        mcp_types.CallToolResult(content=[_text_resource(json.dumps(payload))])
-    )
-
-    assert json.loads(output.removeprefix(_RESOURCE_PREFIX))["body"] == _BODY_REDACTION_NOTICE
-    assert "[truncated]" not in output

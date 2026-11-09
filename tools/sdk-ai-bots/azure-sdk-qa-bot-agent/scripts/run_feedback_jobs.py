@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -194,10 +195,10 @@ async def _run(args: argparse.Namespace) -> None:
             )
         except Exception:
             logger.exception("Analysis persistence failed for %s", record.id)
-            counts["skipped"] += 1
+            counts["evolution_failed"] += 1
             continue
         if result is None:
-            counts["skipped"] += 1
+            counts["evolution_failed"] += 1
         elif result.outcome in (
             ChatbotEvolutionAgentOutcome.processing_failed,
             ChatbotEvolutionAgentOutcome.remediation_failed,
@@ -224,6 +225,16 @@ async def _run(args: argparse.Namespace) -> None:
         counts["evolution_failed"],
         counts["skipped"],
     )
+    failed_count = counts["evolution_failed"] + counts["validation_failed"]
+    if failed_count:
+        message = f"Evolution scan completed with {failed_count} failed job(s)."
+        logger.warning(message)
+        if os.environ.get("TF_BUILD", "").lower() == "true":
+            print(f"##vso[task.logissue type=warning]{message}", flush=True)
+            print(
+                f"##vso[task.complete result=SucceededWithIssues;]{message}",
+                flush=True,
+            )
 
 
 async def main() -> None:

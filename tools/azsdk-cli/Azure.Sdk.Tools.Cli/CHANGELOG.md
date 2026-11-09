@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.57 (Unreleased)
+## 0.6.57 (2026-11-06)
 
 ### Features Added
 
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
+- Updated `azsdk_customized_code_update` to modify only the content required by the request and preserve unrelated existing `client.tsp` content.
 
 ## 0.6.56 (2026-10-28)
 

@@ -53,6 +53,9 @@ and `server.log`. You can ask Copilot to analyze the failed cases, identify prom
 or tool changes, and improve the implementation. Push the changes, deploy the agent
 again, and rerun the same scenarios to compare results.
 
+Groundedness uses evidence from every knowledge-base and wiki search. Duplicate
+documents are removed from the grading context without dropping distinct sections.
+
 See the [evaluation guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/README.md) for grading
 details and result formats.
 

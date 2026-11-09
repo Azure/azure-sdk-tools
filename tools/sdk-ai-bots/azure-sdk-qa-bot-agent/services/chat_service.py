@@ -653,7 +653,10 @@ class ChatService:
         agent_conversation_id: str | None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
-        tool_results = self._extract_tool_results(response.output)
+        context_references: list[Reference] | None = [] if req.with_full_context else None
+        tool_results = self._extract_tool_results(
+            response.output, knowledge_references=context_references,
+        )
         search = tool_results.get("search_knowledge_base")
         tool_references = (
             search.results if isinstance(search, SearchKnowledgeBaseResult) else []
@@ -671,14 +674,18 @@ class ChatService:
             output_text, tool_references
         )
 
-        # Build full_context from search tool results when requested.
+        # Build full_context from every KB and wiki search when requested.
         # Keys use "document_" prefix for compatibility with the eval pipeline.
         full_context = None
-        if req.with_full_context and tool_references:
+        if context_references:
+            unique_references = {
+                (ref.title, ref.source, ref.link, ref.content): ref
+                for ref in context_references
+            }
             full_context = json.dumps(
                 [
                     DocumentContext.from_reference(r).model_dump(mode="json")
-                    for r in tool_references
+                    for r in unique_references.values()
                 ]
             )
 
@@ -802,11 +809,14 @@ class ChatService:
         return None
 
     def _extract_tool_results(
-        self, items: list[ResponseOutputItem]
+        self,
+        items: list[ResponseOutputItem],
+        *,
+        knowledge_references: list[Reference] | None = None,
     ) -> dict[str, object]:
         """Decode tool outputs using TOOL_REGISTRY models.
 
-        Returns a dict mapping tool name to its decoded Pydantic model instance.
+        Returns the latest model per tool, optionally collecting all knowledge references.
         """
         results: dict[str, object] = {}
 
@@ -843,6 +853,11 @@ class ChatService:
                 json_str = self._unwrap_json(output)
                 if json_str:
                     decoded = response_model.model_validate_json(json_str)
+                    if (
+                        knowledge_references is not None
+                        and isinstance(decoded, SearchKnowledgeBaseResult)
+                    ):
+                        knowledge_references.extend(decoded.results)
                     previous = results.get(tool_name)
                     if isinstance(previous, ResolveGitHubUsersResult) and isinstance(
                         decoded, ResolveGitHubUsersResult

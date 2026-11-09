@@ -161,6 +161,113 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         }]
 
 
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+@pytest.mark.parametrize("with_full_context", [True, False])
+@pytest.mark.parametrize("searches", ["mixed", "wiki_only", "empty"])
+def test_full_context_collects_all_search_calls_without_changing_references(
+    output_type, with_full_context, searches
+):
+    import json
+
+    from openai.types.responses import (
+        Response, ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage, ResponseOutputText,
+    )
+
+    from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
+
+    earlier = Reference(
+        title="Earlier section", source="azure-sdk-docs-eng",
+        link="https://example.test/shared", content="Earlier evidence",
+    )
+    later = earlier.model_copy(update={
+        "title": "Later section", "content": "Additional evidence from the same document",
+    })
+    repeated = Reference(
+        title="Repeated document", source="azure-sdk-docs-eng",
+        link="https://example.test/repeated", content="Repeated evidence",
+    )
+    wiki = Reference(
+        title="Wiki guidance", source="azure-sdk-docs-eng",
+        link="https://example.test/wiki", content="Wiki evidence",
+    )
+    calls = {
+        "mixed": [
+            ("search_knowledge_base", [earlier, repeated]),
+            ("wiki_search", [wiki, repeated]),
+            ("search_knowledge_base", [later, repeated]),
+        ],
+        "wiki_only": [("wiki_search", [wiki, repeated])],
+        "empty": [("search_knowledge_base", []), ("wiki_search", [])],
+    }[searches]
+    expected_context = {
+        "mixed": [earlier, repeated, wiki, later],
+        "wiki_only": [wiki, repeated],
+        "empty": [],
+    }[searches]
+    output = []
+    for index, (name, references) in enumerate(calls):
+        call_id = f"search-{index}"
+        result = SearchKnowledgeBaseResult(results=references)
+        wrapped_output = json.dumps([result.model_dump_json()])
+        tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
+        if output_type == "function_call_output":
+            tool_output = ResponseFunctionToolCallOutputItem.model_construct(
+                type=output_type, id=call_id, call_id=call_id,
+                output=wrapped_output, status="completed",
+            )
+        else:
+            tool_output = ResponseOutputMessage.model_construct(
+                type="message", id=call_id, role="assistant", status="completed", content=[],
+                call_id=call_id, output=wrapped_output,
+            )
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call", name=name, call_id=call_id, arguments="{}",
+            ),
+            tool_output,
+        ])
+    text = (
+        "Answer using retrieved evidence.\n\n**References**\n"
+        "- [Earlier section](https://example.test/shared)\n"
+        "- [Wiki guidance](https://example.test/wiki)\n"
+        "- [Repeated document](https://example.test/repeated)"
+    )
+    output.append(ResponseOutputMessage.model_construct(
+        type="message", id="answer", role="assistant", status="completed",
+        content=[ResponseOutputText.model_construct(
+            type="output_text", text=text, annotations=[],
+        )],
+    ))
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id="azure_sdk_qa_bot",
+        message=ChatMessage(role="user", content="Review this question"),
+        with_full_context=with_full_context,
+    )
+    last_kb_references = next(
+        (references for name, references in reversed(calls) if name == "search_knowledge_base"),
+        [],
+    )
+    service = ChatService()
+    expected_answer, expected_references = service._extract_references_from_text(
+        text, last_kb_references,
+    )
+
+    result = service._postprocess(request, response, "conversation")
+
+    assert result.answer == expected_answer
+    assert result.references == expected_references
+    assert result.agent_conversation_id == "conversation"
+    if with_full_context and expected_context:
+        assert json.loads(result.full_context) == [
+            DocumentContext.from_reference(ref).model_dump(mode="json")
+            for ref in expected_context
+        ]
+    else:
+        assert result.full_context is None
+
+
 # -- Memory scope handling ------------
 
 

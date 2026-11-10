@@ -1,14 +1,6 @@
 trigger: none
 pr: none
 
-schedules:
-  - cron: "0 0 1 * *"
-    displayName: Monthly past-due release plan cleanup
-    branches:
-      include:
-        - main
-    always: true
-
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
 
@@ -24,8 +16,17 @@ extends:
               image: $(LINUXVMIMAGE)
               os: linux
 
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  displayName: Publish private smoke-test evidence
+                  condition: succeededOrFailed()
+                  targetPath: $(Build.ArtifactStagingDirectory)/past-due-smoke-17552
+                  artifactName: past-due-smoke-17552
+
             steps:
               - checkout: self
+                fetchDepth: 2
 
               # Private Preview spec PRs require an authenticated GitHub read.
               - template: /eng/common/pipelines/templates/steps/login-to-github.yml
@@ -33,36 +34,27 @@ extends:
                   TokenOwners:
                     - Azure
 
+              - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
               - task: PowerShell@2
-                displayName: 'Install Azure SDK MCP'
+                displayName: Build PR CLI and render synthetic reminders without sending
+                env:
+                  AZSDKTOOLS_NOTIFICATION_SERVICE_URL: ''
                 inputs:
-                  targetType: 'inline'
-                  script: './eng/common/mcp/azure-sdk-mcp.ps1 -InstallDirectory $(System.DefaultWorkingDirectory)'
+                  targetType: filePath
+                  filePath: eng/verification/past-due-smoke/Invoke-PastDueSmoke.ps1
+                  arguments: '-Phase BuildAndRender -OutputDirectory "$(Build.ArtifactStagingDirectory)/past-due-smoke-17552"'
                   pwsh: true
                   workingDirectory: '$(System.DefaultWorkingDirectory)'
 
               - task: AzureCLI@2
-                displayName: Abandon inactive release plans after the overdue grace period
-                condition: and(succeeded(), eq(variables['Build.Reason'], 'Schedule'))
-                # Keep failures visible as partially succeeded without suppressing overdue reminders.
-                continueOnError: true
+                displayName: Read-only cleanup preview using PR-built CLI
                 env:
-                  AZSDKTOOLS_NOTIFICATION_SERVICE_URL: $(AzureSDKEmailerSasURL)
+                  AZSDKTOOLS_NOTIFICATION_SERVICE_URL: ''
                   GITHUB_TOKEN: $(GH_TOKEN)
                 inputs:
                   azureSubscription: opensource-api-connection
                   scriptType: pscore
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    & "$(System.DefaultWorkingDirectory)/azsdk" release-plan abandon-overdue --inactivity-days 30
-
-              - task: AzureCLI@2
-                displayName: Email product owners about overdue SDK release plans
-                env:
-                  GITHUB_TOKEN: $(GH_TOKEN)
-                inputs:
-                  azureSubscription: opensource-api-connection
-                  scriptType: pscore
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    & "$(System.DefaultWorkingDirectory)/azsdk" release-plan list-overdue --notify-owners true --emailer-uri "$(AzureSDKEmailerSasURL)"
+                  scriptLocation: scriptPath
+                  scriptPath: eng/verification/past-due-smoke/Invoke-PastDueSmoke.ps1
+                  arguments: '-Phase DryRun -OutputDirectory "$(Build.ArtifactStagingDirectory)/past-due-smoke-17552"'

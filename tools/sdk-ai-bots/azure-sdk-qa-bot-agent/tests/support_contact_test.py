@@ -461,10 +461,13 @@ def test_catalog_uses_shared_github_normalization(username):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("configuration", ["valid", "disabled", "invalid"])
-@pytest.mark.parametrize("existing", [False, True])
-@pytest.mark.parametrize("recover", [False, True])
-async def test_catalog_context_in_every_turn_and_recovery(
-    monkeypatch, support_config_path, configuration, existing, recover,
+@pytest.mark.parametrize("existing,recover,stateless", [
+    (False, False, False), (True, False, False),
+    (False, True, False), (True, True, False),
+    (False, False, True),
+])
+async def test_catalog_context_matches_tenant_instructions_on_creation_and_recovery(
+    monkeypatch, support_config_path, configuration, existing, recover, stateless,
 ):
     import services.chat_service as module
 
@@ -490,7 +493,10 @@ async def test_catalog_context_in_every_turn_and_recovery(
     service._get_agent = AsyncMock(return_value=SimpleNamespace(name="chat-agent", version="1"))
     service._resolve_agent_configuration = MagicMock(return_value=("chat-agent", "1"))
     service._build_tenant_system_message = MagicMock(return_value="Tenant instructions.")
-    service._resolve_conversation = AsyncMock(return_value=("hosted-conversation", not existing))
+    service._resolve_conversation = AsyncMock(side_effect=[
+        ("hosted-conversation", not existing),
+        ("recovered-conversation" if recover else "hosted-conversation", False),
+    ])
     service._rebuild_conversation_after_failure = AsyncMock(
         return_value=("recovered-conversation", [{"role": "user", "content": "Question"}])
     )
@@ -507,14 +513,23 @@ async def test_catalog_context_in_every_turn_and_recovery(
             if item.get("role") == "system"
             and (item["content"].startswith("[support_catalog]") or item["content"] == "")
         ]
-        assert len(contexts) == 1
-        assert contexts[0] == cached_context
+        needs_context = (
+            stateless
+            or (recover and len(seen) == 1)
+            or (not existing and not seen)
+        )
+        assert contexts == ([cached_context] if needs_context else [])
+        tenant_contexts = [
+            item["content"] for item in kwargs["conversation_items"]
+            if item.get("role") == "system" and item["content"] == "Tenant instructions."
+        ]
+        assert tenant_contexts == (["Tenant instructions."] if needs_context else [])
+        seen.append(contexts)
         if recover and not failed:
             failed = True
             raise ConversationBrokenError("Synthetic failure")
-        context = json.loads(contexts[0].split("\n", 1)[1]) if contexts[0] else None
-        seen.append(context)
-        if configuration == "valid":
+        context = json.loads(contexts[0].split("\n", 1)[1]) if contexts and contexts[0] else None
+        if configuration == "valid" and needs_context:
             assert all(set(area) == {"key", "description", "github_usernames"} for area in context["support_areas"])
             contacts = context["support_areas"][-1]["github_usernames"]
             assert contacts == ["reviewer-b", "reviewer-d"]
@@ -525,13 +540,18 @@ async def test_catalog_context_in_every_turn_and_recovery(
     monkeypatch.setattr(module, "HostedAgentClient", lambda _: SimpleNamespace(invoke=invoke))
     tasks = []
     monkeypatch.setattr(module.BackgroundTaskTracker, "instance", lambda: SimpleNamespace(track=tasks.append))
-    req = request(conversation_id="thread", conversation_type="teams_channel")
+    req = request(conversation_id=None if stateless else "thread", conversation_type="teams_channel")
     first = await service.chat(req)
     path.write_bytes(CONFIG.replace(b"reviewer-b", b"reviewer-c"))
     second = await service.chat(req)
     await asyncio.gather(*tasks)
-    assert first.answer == second.answer
-    assert seen[0] == seen[1]
+    assert seen == (
+        [[cached_context], [cached_context]] if stateless
+        else ([[] if existing else [cached_context]]
+              + ([[cached_context]] if recover else []) + [[]])
+    )
+    assert first.answer
+    assert second.answer
     assert service._rebuild_conversation_after_failure.await_count == int(recover)
     assert service._save_bot_answer_to_conversation.await_args.args[2] == second.answer
     assert "next_step" not in second.model_dump()

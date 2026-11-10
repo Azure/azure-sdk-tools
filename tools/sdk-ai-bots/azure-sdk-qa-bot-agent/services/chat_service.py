@@ -136,9 +136,9 @@ class ChatService:
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
-        support_context = get_support_catalog_context()
         project_client = self._get_project_client()
         tenant_config = get_tenant_config(req.tenant_id)
+        support_context = get_support_catalog_context()
         agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
         agent_version = configured_agent_version or None
         request_agent_version = await self._resolve_request_version(
@@ -177,10 +177,6 @@ class ChatService:
                 content=tenant_system_msg,
             ).model_dump(mode="json", exclude_none=True),
         )
-        conversation_items: list[ResponseInputItemParam] = []
-        if is_new:
-            conversation_items.append(tenant_system_item)
-
         support_context_item = cast(
             ResponseInputItemParam,
             ConversationItem(
@@ -188,7 +184,10 @@ class ChatService:
                 content=support_context,
             ).model_dump(mode="json", exclude_none=True),
         )
-        conversation_items.append(support_context_item)
+        conversation_items: list[ResponseInputItemParam] = []
+        if is_new:
+            conversation_items.append(tenant_system_item)
+            conversation_items.append(support_context_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:

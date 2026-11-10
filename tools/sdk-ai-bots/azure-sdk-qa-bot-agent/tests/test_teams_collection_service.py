@@ -112,8 +112,10 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("az deployment group create", pipeline)
         self.assertNotIn("listCallbackUrl", pipeline)
         self.assertNotIn("az appconfig kv set", pipeline)
-        self.assertIn("listCallbackUrl", guide)
-        self.assertIn("TEAMS_COLLECTION_LOGIC_APP_URL", guide)
+        self.assertIn("--logic-app-url", guide)
+        self.assertIn("--logic-app-scope", guide)
+        self.assertIn("--save-to-cosmos", guide)
+        self.assertIn("AZURE_APPCONFIG_ENDPOINT", guide)
         self.assertIn("SAS query parameters", guide)
         for workflow, team, environment in (
             ("chat", "azure_sdk", "dev"),

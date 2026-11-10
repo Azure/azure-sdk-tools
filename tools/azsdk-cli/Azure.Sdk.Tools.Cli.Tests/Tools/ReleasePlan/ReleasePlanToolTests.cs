@@ -3159,7 +3159,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(response.ExitCode, Is.Zero);
             Assert.That(captured, Has.Count.EqualTo(1));
-            Assert.That(captured.Single().GetProperty("Body").GetString(), Does.Contain("Abandon Release Plan 380").And.Contain("eligible for automatic abandonment now"));
+            var body = captured.Single().GetProperty("Body").GetString();
+            Assert.That(body, Does.Contain("Abandon Release Plan 380").And.Contain("the inactivity checks also pass"));
+            Assert.That(body, Does.Not.Contain("eligible for automatic abandonment now"));
             AssertDryRunHasNoSideEffects(service, notification);
         }
 

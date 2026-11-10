@@ -258,7 +258,7 @@ public class NotificationServiceTests
             if (releaseType == ApiReleaseType.PrivatePreview)
             {
                 Assert.That(reminder.Body, Does.Contain("Complete the required reviews and merge the pull request."));
-                Assert.That(reminder.Body, Does.Contain("opening a specification pull request is not sufficient to prevent abandonment"));
+                Assert.That(reminder.Body, Does.Contain("merge the specification pull request or update the target release month to keep the release plan on track"));
                 foreach (var body in new[] { reminder.Body, confirmation.Body })
                 {
                     Assert.That(body, Does.Not.Contain("publish the remaining SDKs"));
@@ -347,6 +347,33 @@ public class NotificationServiceTests
         });
     }
 
+    [TestCase(ApiReleaseType.GA)]
+    [TestCase(ApiReleaseType.PublicPreview)]
+    [TestCase(ApiReleaseType.PrivatePreview)]
+    public void OverdueReleasePlanEmail_RecentActivity_DoesNotAssertCleanupEligibility(ApiReleaseType releaseType)
+    {
+        var sentAt = ParseMaintenanceTime("2026-11-09T12:00:00Z");
+        var plan = CreateMaintenancePlan(releaseType);
+        plan.SDKReleaseMonth = "September 2026";
+        plan.ChangedDate = sentAt.AddDays(-1).UtcDateTime;
+        var reason = releaseType == ApiReleaseType.PrivatePreview
+            ? "No specification pull request is linked to this Release Plan."
+            : NoLinkedSdkReason;
+
+        var body = new OverdueReleasePlanEmail(plan, true, reason, sentAt).Body;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(body, Does.Not.Contain("is eligible for automatic abandonment now"));
+            Assert.That(body, Does.Not.Contain("this Release Plan will be marked"));
+            Assert.That(body, Does.Not.Contain("editing other details alone does not"));
+            Assert.That(body, Does.Contain("Automatic abandonment also requires verified inactivity for the configured window."));
+            Assert.That(body, Does.Contain("Recent release-plan edits, SDK PR commits, submitted reviews, or human comments can postpone automatic abandonment."));
+            Assert.That(body, Does.Contain("Missing or unreadable activity history prevents automatic abandonment."));
+            Assert.That(body, Does.Contain("Update the target release month for Release Plan 42"));
+        });
+    }
+
     [TestCase("December 2026", "2027-01-15T12:00:00Z", "January 2027", "February 1, 2027", "February 2027")]
     [TestCase("Dec 2026", "2027-01-31T23:59:00Z", "January 2027", "February 1, 2027", "February 2027")]
     [TestCase("September 2026", "2026-10-15T12:00:00Z", "October 2026", "November 1, 2026", "November 2026")]
@@ -362,7 +389,8 @@ public class NotificationServiceTests
         Assert.That(body, Does.Contain($"Please take action before {deadline}."));
         Assert.That(body, Does.Contain($"{graceMonth} is the grace month for the {targetMonth} target."));
         Assert.That(body, Does.Contain($"Starting with the {cleanupMonth} monthly cleanup"));
-        Assert.That(body, Does.Contain("Setting a future target release month moves the cleanup eligibility date; editing other details alone does not."));
+        Assert.That(body, Does.Contain("Setting a future target release month moves the calendar-based cleanup eligibility date."));
+        Assert.That(body, Does.Contain("and the inactivity checks also pass."));
         Assert.That(body, Does.Not.Contain("eligible for automatic abandonment now"));
     }
 
@@ -370,12 +398,12 @@ public class NotificationServiceTests
     [TestCase("2027-03-15T12:00:00Z", true)]
     [TestCase("2027-02-01T00:30:00+02:00", false)]
     [TestCase("2027-01-31T23:30:00-02:00", true)]
-    public void OverdueReleasePlanEmail_EligibilityUsesUtcDate_AndNeverGivesAPastActionDeadline(string sentAt, bool eligibleNow)
+    public void OverdueReleasePlanEmail_GracePeriodUsesUtcDate_AndNeverGivesAPastActionDeadline(string sentAt, bool gracePeriodEnded)
     {
         var body = new OverdueReleasePlanEmail(CreateMaintenancePlan(), true, NoLinkedSdkReason, ParseMaintenanceTime(sentAt)).Body;
-        const string nowMessage = "This Release Plan is eligible for automatic abandonment now. Please take action now.";
+        const string nowMessage = "The calendar-month grace period has ended. Please take action now.";
 
-        if (eligibleNow)
+        if (gracePeriodEnded)
         {
             Assert.That(body, Does.Contain(nowMessage));
             Assert.That(body, Does.Not.Contain("Please take action before"));

@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Automatic overdue release-plan cleanup now skips recently updated plans and SDK PRs with recent commits, submitted reviews, or human comments. The inactivity window defaults to 30 days and can be set with `--inactivity-days`. Routine bot comments and CI checks do not reset it. Missing or unreadable activity prevents abandonment and reports an error.
+- Automatic overdue release-plan cleanup now skips recently updated plans and SDK PRs with recent commits, submitted reviews, or human comments. The inactivity window defaults to 30 days and can be set with `--inactivity-days`. Routine bot comments and CI checks do not reset it. Missing or unreadable activity prevents abandonment and reports an error. Overdue reminders describe abandonment as conditional on those activity checks.
 
 ## 0.6.57 (2026-11-06)
 

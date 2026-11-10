@@ -2,6 +2,9 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "developerAppId": {
+      "value": "899da762-d510-48f2-911a-db9ea0cc41fd"
+    },
     "logicAppName": {
       "value": "azuresdkqabot-teams-collection"
     },

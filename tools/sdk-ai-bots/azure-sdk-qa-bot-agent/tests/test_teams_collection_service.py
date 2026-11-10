@@ -4,189 +4,112 @@ import json
 import sys
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 from urllib.parse import quote
 
+import httpx
+from azure.cosmos.exceptions import CosmosResourceExistsError
+from pydantic import ValidationError
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from services.conversation_service import (
-    TeamsCollectionService,
-    continuation_token,
-    thread_partition,
+from services.teams_collection_service import (
+    TeamsHistoryRequest,
+    build_message_document,
+    collect_channel_history,
+    export_history_to_json,
+    extract_skip_token,
+    fetch_teams_page,
+    normalize_message_content,
+    validate_history_request,
+)
+from scripts import collect_teams_history as script
+
+PROJECT = Path(__file__).resolve().parents[1]
+MODULE = "services.teams_collection_service"
+LOGIC_APP_URL = (
+    "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke"
+    "?api-version=2016-10-01"
 )
 
 
-TENANT_KEY = "typespec_channel_qa_bot"
-CHANNEL = {"teamId": "7ccc31f0-b371-450b-a73c-48f5a31a9b96",
-           "channelId": "19:test@thread.tacv2", "tenantKey": TENANT_KEY}
-def next_link(channel, message_id=None, token="next"):
-    path = f"/teams/{channel['teamId']}/channels/{quote(channel['channelId'], safe='')}/messages"
-    if message_id:
-        path = "/v1.0" + path + f"/{message_id}/replies"
-    else:
-        path = "/beta" + path
-    return f"https://logic-apis-westus2.azure-apim.net/apim/teams/connection{path}?$skiptoken={quote(token, safe='')}"
+def request(**overrides):
+    return TeamsHistoryRequest(**{
+        "team_id": "7ccc31f0-b371-450b-a73c-48f5a31a9b96",
+        "channel_id": "19:test@thread.tacv2",
+        "tenant_id": "typespec_channel_qa_bot",
+        **overrides,
+    })
 
 
-def graph_message(values):
-    message = {
+def next_link(message_id=None, token="next"):
+    channel = request()
+    path = f"/teams/{channel.team_id}/channels/{quote(channel.channel_id, safe='')}/messages"
+    path = "/beta" + path if message_id is None else "/v1.0" + path + f"/{message_id}/replies"
+    return (
+        f"https://logic-apis-westus2.azure-apim.net/apim/teams/connection{path}"
+        f"?$skiptoken={quote(token, safe='')}"
+    )
+
+
+def graph_message(message_id="root", **overrides):
+    return {
+        "id": message_id,
         "messageType": "message",
         "createdDateTime": "2026-09-01T00:00:00Z",
         "from": {"user": {"id": "user-id", "displayName": "Test User"}},
         "body": {"contentType": "html", "content": "<p>body</p>"},
         "webUrl": "https://teams.microsoft.com/l/message/thread/id",
-        **values,
-    }
-    return message
-
-
-def backfill_payload(**overrides):
-    return {
-        "team_id": CHANNEL["teamId"],
-        "channel_id": CHANNEL["channelId"],
-        "tenant_key": TENANT_KEY,
         **overrides,
     }
 
 
-class MemoryStore:
-    """Stand-in for CosmosMessageStore with the same create/update contract."""
+def message_container():
+    documents = {}
+    container = AsyncMock()
+    container.read.return_value = {"partitionKey": {"paths": ["/conversation_partition"]}}
 
-    def __init__(self):
-        self.items = {}
-        self.creates = 0
-        self.updates = 0
-        self.validated = 0
-        self.conflicts = set()
-        self.races = set()
+    async def create(*, body):
+        key = (body["conversation_partition"], body["id"])
+        if key in documents:
+            raise CosmosResourceExistsError(status_code=409, message="exists")
+        documents[key] = copy.deepcopy(body)
+        return body
 
-    def seed(self, document):
-        self.items[(document["conversation_partition"], document["id"])] = copy.deepcopy(document)
-
-    async def validate(self):
-        self.validated += 1
-
-    async def read_thread(self, partition):
-        return {document_id: {"id": document_id, "content": document["content"],
-                              "_etag": document.get("_etag", "version1"),
-                              "extra_info": copy.deepcopy(document.get("extra_info"))}
-                for (stored, document_id), document in self.items.items() if stored == partition}
-
-    async def create(self, document):
-        key = (document["conversation_partition"], document["id"])
-        if document["id"] in self.conflicts or key in self.items:
-            return False
-        self.items[key] = copy.deepcopy(document)
-        self.creates += 1
-        return True
-
-    async def update_message(self, document_id, partition, fields, expected_etag):
-        key = (partition, document_id)
-        if document_id in self.races or key not in self.items:
-            return False
-        document = self.items[key]
-        if document.get("_etag", "version1") != expected_etag:
-            return False
-        document["content"] = fields["content"]
-        document["extra_info"] = {**(document.get("extra_info") or {}),
-                                   "attachments": copy.deepcopy(fields["attachments"]),
-                                   "images": copy.deepcopy(fields["images"])}
-        self.updates += 1
-        return True
+    container.create_item.side_effect = create
+    return container, documents
 
 
-def stored_message(partition, message_id, content, *, ts=1, role="user",
-                   created_at="2026-09-01T00:00:00Z", link=None):
-    return {"id": message_id, "tenant_id": TENANT_KEY, "sender_role": role,
-            "sender_id": "user-id", "sender_name": "Test User", "content": content,
-            "created_at": created_at, "conversation_type": "teams_channel",
-            "conversation_partition": partition, "document_type": "conversation_message",
-            "extra_info": {"channel_id": CHANNEL["channelId"], "message_link": link},
-            "_ts": ts}
+async def save_history_to_cosmos(history_request, fetch, container):
+    history_request = history_request.model_copy(update={"save_to_cosmos": True})
+    with TemporaryDirectory() as directory:
+        return await export_history_to_json(
+            history_request, fetch, Path(directory) / "history.json", container=container,
+        )
 
 
 class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
-    def test_hosted_agent_cli_no_longer_accepts_collection_deployment(self):
-        from io import StringIO
-        from scripts.deploy_hosted_agent import main
-
-        with patch.object(sys, "argv", ["deploy_hosted_agent.py", "teams-collection", "run"]), \
-                patch("sys.stderr", new_callable=StringIO) as stderr:
-            with self.assertRaises(SystemExit) as failure:
-                main()
-        self.assertEqual(failure.exception.code, 2)
-        self.assertIn("unrecognized arguments: run", stderr.getvalue())
-
-    def test_backfill_template_contains_only_the_oauth_logic_app(self):
-        project = Path(__file__).resolve().parents[1]
-        template = json.loads((project / "pipelines/logicapp/template.teams-collection.json").read_text())
-        self.assertEqual([resource["type"] for resource in template["resources"]],
-                         ["Microsoft.Logic/workflows"])
-        self.assertNotIn("backfillPrincipalId", template["parameters"])
-        self.assertIn("serverIdentityResourceId", template["parameters"])
-        self.assertNotIn("collectorPrincipalId", template["parameters"])
-        self.assertNotIn("cosmosAccountName", template["parameters"])
-
-        workflow = template["resources"][0]
-        triggers = workflow["properties"]["accessControl"]["triggers"]
-        self.assertEqual(triggers["sasAuthenticationPolicy"]["state"], "Disabled")
-        policies = triggers["openAuthenticationPolicies"]["policies"]
-        backfill_claims = template["variables"]["backfillPolicy"]["backfill"]["claims"]
-        self.assertIn("[reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId]",
-                  [claim["value"] for claim in backfill_claims])
-        definition = workflow["properties"]["definition"]
-        self.assertNotIn("allowedChannels", json.dumps(template))
-        validate = definition["actions"]["Validate_request"]
-        self.assertIn("not(empty(triggerBody()?['messageId']))", validate["expression"])
-        cases = validate["actions"]["Select_operation"]["cases"]
-        self.assertEqual(set(cases), {"messages", "replies"})
-
-    def test_backfill_parameter_files_do_not_restrict_channels(self):
-        project = Path(__file__).resolve().parents[1]
-        expected = {
-            "dev": ("azuresdkqabot-dev-teams-collection", "azure-sdk-qa-bot-dev"),
-            "test": ("azuresdkqabot-test-teams-collection", "azure-sdk-qa-bot"),
-            "prod": ("azuresdkqabot-teams-collection", "azure-sdk-qa-bot"),
-        }
-        for environment, (workflow_name, resource_group) in expected.items():
-            with self.subTest(environment=environment):
-                path = project / f"pipelines/logicapp/parameters.teams-collection.azure_sdk.{environment}.json"
-                parameters = json.loads(path.read_text())["parameters"]
-                existing_logicapp = json.loads(
-                    (project / f"pipelines/logicapp/parameters.chat.azure_sdk.{environment}.json")
-                    .read_text()
-                )["parameters"]
-                self.assertEqual(parameters["logicAppName"]["value"], workflow_name)
-                self.assertIn(f"/resourceGroups/{resource_group}/",
-                              parameters["teamsConnectionResourceId"]["value"])
-                self.assertTrue(parameters["tenantId"]["value"])
-                self.assertEqual(
-                    parameters["serverIdentityResourceId"]["value"],
-                    existing_logicapp["serverIdentityResourceId"]["value"],
-                )
-                self.assertNotIn("allowedChannels", parameters)
-                self.assertNotIn("backfillPrincipalId", parameters)
-                self.assertNotIn("collectorPrincipalId", parameters)
-                self.assertNotIn("cosmosAccountName", parameters)
-
-    def test_backfill_pipeline_reuses_the_shared_arm_deployment_task(self):
-        project = Path(__file__).resolve().parents[1]
-        agent_pipeline = (project / "pipelines/agent-cd.yml").read_text()
-        logicapp_pipeline = (project / "pipelines/logicapp-cd.yml").read_text()
-        readme = (project / "README.md").read_text()
-        self.assertNotIn("teams_collection_agent", agent_pipeline)
-        self.assertIn("- teams-collection", logicapp_pipeline)
-        self.assertIn("name: templateFile", logicapp_pipeline)
-        self.assertIn("name: parametersFile", logicapp_pipeline)
-        self.assertIn("format('pipelines/logicapp/template.{0}.json', parameters.workflow)",
-                      logicapp_pipeline)
+    def test_workflow_templates_parameters_and_shared_deployment(self):
+        pipeline = (PROJECT / "pipelines/logicapp-cd.yml").read_text(encoding="utf-8")
+        guide = (PROJECT.parent / "doc/teams-channel-backfill.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("- teams-collection", pipeline)
+        self.assertEqual(pipeline.count("- task: AzureCLI@2"), 1)
+        self.assertIn("format('pipelines/logicapp/template.{0}.json', parameters.workflow)", pipeline)
         self.assertIn(
             "format('pipelines/logicapp/parameters.{0}.{1}.{2}.json', parameters.workflow, variables.listenerTeam, parameters.environment)",
-            logicapp_pipeline,
+            pipeline,
         )
-        self.assertIn("Unsupported Logic App configuration:", logicapp_pipeline)
-        self.assertFalse((project / "pipelines/teams-collection").is_dir()
-                         and any((project / "pipelines/teams-collection").iterdir()))
+        self.assertIn("Unsupported Logic App configuration:", pipeline)
+        self.assertIn("az deployment group create", pipeline)
+        self.assertNotIn("listCallbackUrl", pipeline)
+        self.assertNotIn("az appconfig kv set", pipeline)
+        self.assertIn("listCallbackUrl", guide)
+        self.assertIn("TEAMS_COLLECTION_LOGIC_APP_URL", guide)
+        self.assertIn("SAS query parameters", guide)
         for workflow, team, environment in (
             ("chat", "azure_sdk", "dev"),
             ("chat", "azure_sdk", "test"),
@@ -197,729 +120,552 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             ("teams-collection", "azure_sdk", "prod"),
         ):
             with self.subTest(workflow=workflow, team=team, environment=environment):
-                json.loads((project / f"pipelines/logicapp/template.{workflow}.json").read_text())
+                json.loads((PROJECT / f"pipelines/logicapp/template.{workflow}.json").read_text())
                 json.loads(
-                    (project / f"pipelines/logicapp/parameters.{workflow}.{team}.{environment}.json")
+                    (PROJECT / f"pipelines/logicapp/parameters.{workflow}.{team}.{environment}.json")
                     .read_text()
                 )
-        self.assertEqual(logicapp_pipeline.count("- task: AzureCLI@2"), 1)
-        self.assertIn("az deployment group create", logicapp_pipeline)
-        self.assertNotIn("listCallbackUrl", logicapp_pipeline)
-        self.assertNotIn("az appconfig kv set", logicapp_pipeline)
-        self.assertIn("listCallbackUrl", readme)
-        self.assertIn("TEAMS_COLLECTION_LOGIC_APP_URL", readme)
-        self.assertIn("SAS query parameters", readme)
-        self.assertNotIn("python scripts/deploy_hosted_agent.py teams-collection deploy",
-                         logicapp_pipeline)
-        self.assertNotIn("PipAuthenticate", logicapp_pipeline)
-        self.assertNotIn("collectorPrincipalId", logicapp_pipeline)
-        self.assertNotIn("az webapp identity show", logicapp_pipeline)
-        self.assertNotIn("BACKFILL_PRINCIPAL_ID", logicapp_pipeline)
-        self.assertNotIn("backfillPrincipalId", logicapp_pipeline)
 
-    async def test_backfill_reaches_service_and_store_through_logic_app(self):
-        import httpx
-        from types import SimpleNamespace
-        from unittest.mock import Mock
-        from services.conversation_service import backfill_channel
-
-        store = MemoryStore()
-        client = AsyncMock()
-        client.post.return_value = httpx.Response(200, json={"operation": "messages", "data": {
-            "value": [graph_message({
-                "id": "root", "subject": "Need help",
-                "replies": [graph_message({"id": "reply", "replyToId": "root"})],
-            })],
-        }})
-        client.__aenter__.return_value = client
-        credential = AsyncMock()
-        credential.get_token.return_value = SimpleNamespace(token="secret")
-        url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
-        settings = Mock(return_value=url)
-        with patch("services.conversation_service.get_conversation_message_container", new=AsyncMock()), \
-                patch("services.conversation_service.CosmosMessageStore", return_value=store), \
-                patch("services.conversation_service.get_credential", return_value=credential), \
-                patch("services.conversation_service.httpx.AsyncClient", return_value=client):
-            result = await backfill_channel(CHANNEL, settings)
-        self.assertEqual(result["messagesCreated"], 2)
-        self.assertEqual(result["threadsRead"], 1)
-        self.assertEqual(store.validated, 1)
-        settings.assert_called_once_with("TEAMS_COLLECTION_LOGIC_APP_URL", "")
-        self.assertEqual(client.post.call_args.args[0], url)
-        self.assertEqual(client.post.call_args.kwargs["json"], {
-            "teamId": CHANNEL["teamId"], "channelId": CHANNEL["channelId"],
-            "operation": "messages"})
-        credential.get_token.assert_awaited_once_with("https://management.core.windows.net/.default")
-
-    async def test_backfill_request_accepts_optional_page_limit(self):
-        from models.conversation import TeamsBackfillRequest
-
-        self.assertIsNone(TeamsBackfillRequest(**backfill_payload()).max_pages)
-        self.assertEqual(
-            TeamsBackfillRequest(**backfill_payload(max_pages=25)).max_pages, 25
+        template = json.loads(
+            (PROJECT / "pipelines/logicapp/template.teams-collection.json").read_text()
         )
-
-    async def _settled_backfill(self, service, job_id):
-        from models.conversation import TeamsBackfillStatus
-
-        for _ in range(500):
-            job = service.get(job_id)
-            if job is None or job.status is not TeamsBackfillStatus.running:
-                return job
-            await asyncio.sleep(0.01)
-        raise AssertionError("Backfill job never left the running state.")
-
-    async def test_server_accepts_one_backfill_at_a_time_and_reports_its_outcome(self):
-        import httpx
-        import server
-        from services.conversation_service import TeamsBackfillService
-
-        release = asyncio.Event()
-        entered = asyncio.Event()
-        calls = []
-
-        async def runner(channel, settings, max_pages):
-            calls.append((channel, settings, max_pages))
-            entered.set()
-            await release.wait()
-            return {"messagesCreated": 3}
-
-        service = TeamsBackfillService(runner=runner)
-        with patch.object(server, "_teams_backfill_service", service), \
-            patch("services.conversation_service.app_config.load", new=AsyncMock()):
-            transport = httpx.ASGITransport(app=server.app)
-            async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-                accepted = await client.post(
-                    "/teams/backfill",
-                    json=backfill_payload(start_time="2026-01-01T00:00:00Z"),
-                )
-                self.assertEqual(accepted.status_code, 202, accepted.text)
-                job_id = accepted.json()["job_id"]
-                self.assertEqual(accepted.json()["status"], "running")
-                self.assertIsNone(accepted.json()["summary"])
-                await asyncio.wait_for(entered.wait(), 5)
-
-                busy = await client.post("/teams/backfill", json=backfill_payload())
-                self.assertEqual(busy.status_code, 409)
-
-                release.set()
-                job = await self._settled_backfill(service, job_id)
-                self.assertEqual(job.status.value, "succeeded")
-                finished = await client.get("/teams/backfill/" + job_id)
-                self.assertEqual(finished.status_code, 200)
-                self.assertEqual(finished.json()["summary"], {"messagesCreated": 3})
-                self.assertIsNone(finished.json()["error"])
-                self.assertIsNotNone(finished.json()["completed_at"])
-
-                self.assertEqual((await client.get("/teams/backfill/missing-job")).status_code, 404)
-                custom_limit = await client.post(
-                    "/teams/backfill", json=backfill_payload(max_pages=12)
-                )
-                self.assertEqual(custom_limit.status_code, 202, custom_limit.text)
-                await self._settled_backfill(service, custom_limit.json()["job_id"])
-                for payload in (
-                    {"channel_id": CHANNEL["channelId"], "tenant_key": TENANT_KEY},
-                    backfill_payload(team_id="not-a-guid"),
-                    backfill_payload(tenant_key=""),
-                    backfill_payload(max_pages=0),
-                    backfill_payload(max_pages=1001),
-                    backfill_payload(start_time="2026-01-01"),
-                ):
-                    with self.subTest(payload=payload):
-                        rejected = await client.post("/teams/backfill", json=payload)
-                        self.assertEqual(rejected.status_code, 422, rejected.text)
-
-        self.assertEqual(len(calls), 2)
-        self.assertEqual(calls[0][0], {
-            "teamId": CHANNEL["teamId"], "channelId": CHANNEL["channelId"],
-            "tenantKey": TENANT_KEY, "startTime": "2026-01-01T00:00:00Z",
-        })
-        self.assertEqual(calls[0][2], 1000)
-        self.assertEqual(calls[1][2], 12)
-
-    async def test_backfill_job_reports_failure_without_echoing_raw_error_content(self):
-        from models.conversation import TeamsBackfillRequest
-        from services.conversation_service import TeamsBackfillService
-
-        service = TeamsBackfillService(
-            runner=AsyncMock(side_effect=RuntimeError("DO_NOT_LOG"))
+        self.assertEqual([resource["type"] for resource in template["resources"]],
+                         ["Microsoft.Logic/workflows"])
+        self.assertNotIn("allowedChannels", json.dumps(template))
+        triggers = template["resources"][0]["properties"]["accessControl"]["triggers"]
+        self.assertEqual(triggers["sasAuthenticationPolicy"]["state"], "Disabled")
+        claims = template["variables"]["backfillPolicy"]["backfill"]["claims"]
+        developer_claims = template["variables"]["developerPolicy"]["developers"]["claims"]
+        self.assertIn({"name": "roles", "value": "TeamsHistory.Invoke"}, developer_claims)
+        self.assertIn({"name": "aud", "value": "[parameters('developerAppId')]"}, developer_claims)
+        self.assertIn(
+            "[reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId]",
+            [claim["value"] for claim in claims],
         )
-        with patch("services.conversation_service.app_config.load", new=AsyncMock()), \
-            self.assertLogs("services.conversation_service", level="ERROR"):
-            accepted = await service.start(TeamsBackfillRequest(**backfill_payload()))
-            job = await self._settled_backfill(service, accepted.job_id)
-            self.assertEqual(job.status.value, "failed")
-            self.assertNotIn("DO_NOT_LOG", job.error)
-            self.assertIsNotNone(job.completed_at)
-            retried = await service.start(TeamsBackfillRequest(**backfill_payload()))
-            self.assertEqual(retried.status.value, "running")
-            self.assertEqual(
-                (await self._settled_backfill(service, retried.job_id)).status.value, "failed"
+        for environment in ("dev", "test", "prod"):
+            collection = json.loads(
+                (PROJECT / f"pipelines/logicapp/parameters.teams-collection.azure_sdk.{environment}.json")
+                .read_text()
+            )["parameters"]
+            chat = json.loads(
+                (PROJECT / f"pipelines/logicapp/parameters.chat.azure_sdk.{environment}.json")
+                .read_text()
+            )["parameters"]
+            self.assertEqual(collection["serverIdentityResourceId"], chat["serverIdentityResourceId"])
+            self.assertNotIn("allowedChannels", collection)
+
+    def test_normalization_keeps_title_forwarded_text_and_image_html(self):
+        html = '<p>See <attachment id="a1"></attachment></p><img src="https://example.com/image">'
+        for forwarded in (
+            {"body": {"content": "<p>forwarded</p>"}},
+            {"message": {"body": {"content": "<p>forwarded</p>"}}},
+            {"originalMessage": {"body": {"content": "<p>forwarded</p>"}}},
+            {"content": "<p>forwarded</p>"},
+        ):
+            message = graph_message(
+                subject="  Need help  ", body={"content": html},
+                attachments=[{"id": "a1", "contentType": "forwardedMessageReference",
+                              "content": json.dumps(forwarded)}],
             )
+            self.assertEqual(
+                normalize_message_content(message),
+                'title: Need help\n\n<p>See <p>forwarded</p></p><img src="https://example.com/image">',
+            )
+        self.assertEqual(normalize_message_content(graph_message()), "<p>body</p>")
+        self.assertEqual(normalize_message_content(graph_message(
+            body={"content": '<attachment id="a1"></attachment>'},
+            attachments=[{"id": "a1", "contentType": "forwardedMessageReference",
+                          "content": "not json"}],
+        )), "not json")
 
-    async def test_backfill_refreshes_configuration_without_changing_startup_snapshot(self):
-        from config import app_config
-        from models.conversation import TeamsBackfillRequest
-        from services.conversation_service import TeamsBackfillService
+    async def test_import_keeps_message_shape_attachments_and_original_images(self):
+        root = graph_message(
+            subject="Need help",
+            body={"content": '<p>body</p><img src="https://example.com/image">'},
+            attachments=[{"id": "file", "contentType": "reference", "name": "file.docx"}],
+            replies=[graph_message(
+                "reply", replyToId="root",
+                **{"from": {"application": {"id": "bot-id", "displayName": "QA Bot"}}},
+            )],
+        )
+        fetch = AsyncMock(return_value={"value": [root]})
+        container, documents = message_container()
+        summary = await save_history_to_cosmos(request(), fetch, container)
+        self.assertEqual(summary, {"channelsCompleted": 1, "threadsRead": 1, "messagesRead": 2,
+                                   "messagesCreated": 2, "messagesSkipped": 0, "messagesExported": 2})
+        partition = f"teams_channel:{request().channel_id};messageid=root"
+        document = documents[(partition, "root")]
+        self.assertEqual(document["conversation_id"], f"{request().channel_id};messageid=root")
+        self.assertEqual(document["tenant_id"], request().tenant_id)
+        self.assertEqual(document["created_at"], "2026-09-01T00:00:00Z")
+        self.assertEqual(document["content"], 'title: Need help\n\n<p>body</p><img src="https://example.com/image">')
+        self.assertEqual(document["extra_info"]["attachments"][0]["name"], "file.docx")
+        self.assertNotIn("images", document["extra_info"])
+        self.assertNotIn("should_reply", document)
+        self.assertNotIn("trace_id", document)
+        self.assertEqual(documents[(partition, "reply")]["sender_role"], "system")
+        container.upsert_item.assert_not_awaited()
+        container.replace_item.assert_not_awaited()
 
-        endpoint = "https://example.azconfig.io"
-        urls = [
-            "https://host.logic.azure.com/workflows/first/triggers/manual/paths/invoke?api-version=2016-10-01",
-            "https://host.logic.azure.com/workflows/second/triggers/manual/paths/invoke?api-version=2016-10-01",
-        ]
-        snapshots = [app_config.AppConfigSnapshot(endpoint, {"TEAMS_COLLECTION_LOGIC_APP_URL": url})
-                     for url in urls]
-        observed_urls = []
+    async def test_repeated_import_skips_existing_messages_even_when_teams_content_changes(self):
+        root = graph_message(replies=[])
+        fetch = AsyncMock(side_effect=[
+            {"value": [root]},
+            {"value": [root]},
+            {"value": [{**root, "body": {"content": "edited in Teams"}}]},
+        ])
+        container, documents = message_container()
+        self.assertEqual((await save_history_to_cosmos(request(), fetch, container))["messagesCreated"], 1)
+        before = copy.deepcopy(documents)
+        for _ in range(2):
+            summary = await save_history_to_cosmos(request(), fetch, container)
+            self.assertEqual(summary["messagesCreated"], 0)
+            self.assertEqual(summary["messagesSkipped"], 1)
+            self.assertEqual(documents, before)
+        container.read_item.assert_not_awaited()
+        container.query_items.assert_not_called()
+        container.replace_item.assert_not_awaited()
+        container.upsert_item.assert_not_awaited()
 
-        async def runner(channel, settings, max_pages):
-            observed_urls.append(settings("TEAMS_COLLECTION_LOGIC_APP_URL", ""))
-            return {"messagesCreated": 1}
+    async def test_live_write_during_reply_fetch_is_not_overwritten(self):
+        container, documents = message_container()
+        live = build_message_document(request(), graph_message(body={"content": "newer live edit"}), "root")
+        live.update(should_reply=True, trace_id="live-trace", _etag="new-version")
+        live["extra_info"]["images"] = [{"id": "existing-image", "contentUrl": "https://example.com/image"}]
 
-        service = TeamsBackfillService(runner=runner)
-        with patch.dict("os.environ", {"AZURE_APPCONFIG_ENDPOINT": endpoint}), \
-                patch.object(app_config, "_settings", {}), \
-                patch.object(app_config, "load", new=AsyncMock(side_effect=snapshots)) as load:
-            self.assertEqual(app_config.get("TEAMS_COLLECTION_LOGIC_APP_URL", ""), "")
-            for expected_url in urls:
-                accepted = await service.start(
-                    TeamsBackfillRequest(**backfill_payload())
+        async def fetch(message_id, token):
+            if message_id is None:
+                return {"value": [graph_message(body={"content": "stale snapshot"})]}
+            documents[(live["conversation_partition"], live["id"])] = copy.deepcopy(live)
+            return {"value": [graph_message("reply", replyToId="root")]}
+
+        summary = await save_history_to_cosmos(request(), fetch, container)
+        self.assertEqual(summary["messagesCreated"], 1)
+        self.assertEqual(summary["messagesSkipped"], 1)
+        self.assertEqual(documents[(live["conversation_partition"], "root")], live)
+        container.replace_item.assert_not_awaited()
+        container.upsert_item.assert_not_awaited()
+
+    async def test_save_checks_partition_and_propagates_non_conflict_failures(self):
+        container, _ = message_container()
+        container.read.return_value = {"partitionKey": {"paths": ["/wrong"]}}
+        with TemporaryDirectory() as directory, \
+                patch(MODULE + ".get_conversation_message_container", new=AsyncMock(return_value=container)):
+            with self.assertRaisesRegex(ValueError, "conversation_partition"):
+                await collect_channel_history(
+                    request(save_to_cosmos=True), Path(directory) / "history.json", LOGIC_APP_URL,
                 )
-                job = await self._settled_backfill(service, accepted.job_id)
-                self.assertEqual(job.status.value, "succeeded")
-                self.assertEqual(observed_urls[-1], expected_url)
-            self.assertEqual(load.await_count, 2)
-            load.assert_awaited_with(endpoint)
-            self.assertEqual(app_config.get("TEAMS_COLLECTION_LOGIC_APP_URL", ""), "")
-
-    def test_normalization_matches_the_realtime_workflow(self):
-        from services.conversation_service import normalized_content
-
-        forwarded = graph_message({
-            "id": "root", "subject": "  Need help  ",
-            "body": {"content": '<p>See <attachment id="a1"></attachment></p>'},
-            "attachments": [
-                {"id": "a1", "contentType": "forwardedMessageReference",
-                 "content": json.dumps({"body": {"content": "<p>forwarded</p>"}})},
-                {"id": "a2", "contentType": "reference", "content": "ignored"},
-            ],
-        })
-        self.assertEqual(normalized_content(forwarded),
-                         "title: Need help\n\n<p>See <p>forwarded</p></p>")
-        self.assertEqual(
-            normalized_content(graph_message({
-                "id": "reply", "body": {"content": "<p>plain</p>"}})),
-            "<p>plain</p>",
-        )
-        unparsable = graph_message({
-            "id": "root", "subject": None,
-            "body": {"content": '<attachment id="a1"></attachment>'},
-            "attachments": [{"id": "a1", "contentType": "forwardedMessageReference",
-                             "content": "not json"}],
-        })
-        self.assertEqual(normalized_content(unparsable), "not json")
-
-    async def test_backfill_writes_one_document_per_message_in_the_bot_shape(self):
-        fetch = AsyncMock(return_value={"value": [graph_message({
-            "id": "root", "subject": "Need help",
-            "replies": [graph_message({
-                "id": "reply", "replyToId": "root",
-                "createdDateTime": "2026-09-01T01:00:00Z",
-                "from": {"application": {"id": "bot-id", "displayName": "QA Bot"}},
-            })],
-        })]})
-        store = MemoryStore()
-
-        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL])
-
-        partition = thread_partition(CHANNEL["channelId"], "root")
-        self.assertEqual(result, {"channelsCompleted": 1, "threadsRead": 1, "messagesRead": 2,
-                                  "messagesCreated": 2, "messagesUpdated": 0,
-                                  "messagesUnchanged": 0, "messagesSkipped": 0})
-        root = store.items[(partition, "root")]
-        reply = store.items[(partition, "reply")]
-        self.assertEqual(root, {
-            "id": "root", "tenant_id": TENANT_KEY, "sender_role": "user",
-            "sender_id": "user-id", "sender_name": "Test User",
-            "content": "title: Need help\n\n<p>body</p>",
-            "created_at": "2026-09-01T00:00:00Z",
-            "conversation_id": f"{CHANNEL['channelId']};messageid=root",
-            "conversation_type": "teams_channel",
-            "extra_info": {"channel_id": CHANNEL["channelId"],
-                           "message_link": "https://teams.microsoft.com/l/message/thread/id",
-                           "attachments": [], "images": []},
-            "conversation_partition": partition,
-            "document_type": "conversation_message",
-        })
-        self.assertEqual(reply["conversation_partition"], partition)
-        self.assertEqual(reply["conversation_id"], root["conversation_id"])
-        self.assertEqual(reply["sender_role"], "system")
-        self.assertEqual(reply["sender_name"], "QA Bot")
-        self.assertEqual(reply["content"], "<p>body</p>")
-        self.assertNotIn("should_reply", root)
-        self.assertNotIn("trace_id", root)
-
-    async def test_existing_messages_are_kept_and_only_edited_content_is_updated(self):
-        root = graph_message({
-            "id": "root", "subject": "Need help",
-            "body": {"content": '<p>See <attachment id="a1"></attachment></p>'},
-            "attachments": [{"id": "a1", "contentType": "forwardedMessageReference",
-                             "content": json.dumps({"body": {"content": "<p>quoted</p>"}})}],
-        })
-        reply = graph_message({"id": "reply", "replyToId": "root",
-                               "body": {"content": "<p>original</p>"}})
-        edited = {**reply, "body": {"content": "<p>edited</p>"}}
-        edited_root = {**root, "body": {"content": "<p>updated</p>"}}
-        fetch = AsyncMock(side_effect=[
-            {"value": [{**root, "replies": [reply]}]},
-            {"value": [{**root, "replies": [reply]}]},
-            {"value": [{**edited_root, "replies": [edited]}]},
-        ])
-        store = MemoryStore()
-        service = TeamsCollectionService(fetch, store)
-
-        partition = thread_partition(CHANNEL["channelId"], "root")
-        created = await service.backfill([CHANNEL])
-        imported = store.items[(partition, "root")]["content"]
-        unchanged = await service.backfill([CHANNEL])
-        updated = await service.backfill([CHANNEL])
-
-        self.assertEqual(created["messagesCreated"], 2)
-        self.assertEqual(imported, "title: Need help\n\n<p>See <p>quoted</p></p>")
-        self.assertEqual(unchanged["messagesUnchanged"], 2)
-        self.assertEqual(unchanged["messagesCreated"], 0)
-        self.assertEqual(updated["messagesUpdated"], 2)
-        self.assertEqual(store.creates, 2)
-        self.assertEqual(store.updates, 2)
-        self.assertEqual(store.items[(partition, "reply")]["content"], "<p>edited</p>")
-        self.assertEqual(store.items[(partition, "root")]["content"],
-                         "title: Need help\n\n<p>updated</p>")
-
-    async def test_bot_messages_and_concurrent_writes_are_never_overwritten(self):
-        root = graph_message({"id": "root", "body": {"content": "<p>edited</p>"}})
-        fetch = AsyncMock(return_value={"value": [{**root, "replies": []}]})
-        store = MemoryStore()
-        partition = thread_partition(CHANNEL["channelId"], "root")
-        store.seed(stored_message(partition, "bot-answer", "<p>bot answer</p>", role="system"))
-        store.seed({**stored_message(partition, "root", "<p>original</p>"),
-                    "should_reply": True, "trace_id": "trace"})
-        store.races.add("root")
-
-        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL])
-
-        self.assertEqual(result["messagesRead"], 1)
-        self.assertEqual(result["messagesSkipped"], 1)
-        self.assertEqual(result["messagesUpdated"], 0)
-        self.assertEqual(store.items[(partition, "bot-answer")]["content"], "<p>bot answer</p>")
-        self.assertEqual(store.items[(partition, "root")]["content"], "<p>original</p>")
-        self.assertTrue(store.items[(partition, "root")]["should_reply"])
-
-    async def test_cosmos_store_creates_updates_and_yields_to_concurrent_writers(self):
-        from unittest.mock import Mock
-        from azure.core import MatchConditions
-        from azure.cosmos.exceptions import (
-            CosmosAccessConditionFailedError,
-            CosmosResourceExistsError,
-            CosmosResourceNotFoundError,
-        )
-        from services.conversation_service import CosmosMessageStore
-
-        container = AsyncMock()
-        container.read.return_value = {"partitionKey": {"paths": ["/conversation_partition"]}}
-        store = CosmosMessageStore(container)
-        await store.validate()
-        container.read.return_value = {"partitionKey": {"paths": ["/channel_key"]}}
-        with self.assertRaisesRegex(ValueError, "/conversation_partition"):
-            await store.validate()
-
-        document = {"id": "message", "conversation_partition": "partition"}
-        self.assertTrue(await store.create(document))
-        container.create_item.assert_awaited_once_with(body=document)
-        container.create_item.side_effect = CosmosResourceExistsError(status_code=409, message="exists")
-        self.assertFalse(await store.create(document))
-
-        container.read_item.return_value = {
-            "id": "message", "conversation_partition": "partition",
-            "content": "old", "should_reply": True, "_etag": "version1",
-            "extra_info": {"channel_id": "channel", "message_link": "link"},
-        }
-        attachment = {"id": "file", "contentType": "reference",
-                      "contentUrl": "https://contoso.sharepoint.com/file.docx",
-                      "content": None, "name": "file.docx", "thumbnailUrl": None,
-                      "teamsAppId": None}
-        fields = {"content": "new", "attachments": [attachment], "images": []}
-        self.assertTrue(await store.update_message("message", "partition", fields, "version1"))
-        replaced = container.replace_item.call_args.kwargs
-        self.assertEqual(replaced["body"]["content"], "new")
-        self.assertEqual(replaced["body"]["extra_info"], {
-            "channel_id": "channel", "message_link": "link",
-            "attachments": [attachment], "images": []})
-        self.assertTrue(replaced["body"]["should_reply"])
-        self.assertEqual(replaced["etag"], "version1")
-        self.assertEqual(replaced["match_condition"], MatchConditions.IfNotModified)
-        container.replace_item.reset_mock()
-        container.read_item.return_value = {**container.read_item.return_value, "content": "new",
-                                            "extra_info": {"attachments": [attachment]}}
-        self.assertFalse(await store.update_message("message", "partition", fields, "version1"))
-        container.replace_item.assert_not_awaited()
-        container.replace_item.side_effect = CosmosAccessConditionFailedError(
-            status_code=412, message="conflict")
-        self.assertFalse(await store.update_message(
-            "message", "partition", {**fields, "content": "newer"}, "version1"))
-        container.read_item.side_effect = CosmosResourceNotFoundError(status_code=404, message="gone")
-        self.assertFalse(await store.update_message(
-            "message", "partition", {**fields, "content": "newer"}, "version1"))
-
-        async def items():
-            yield {"id": "message", "content": "stored", "_etag": "version1"}
-
-        container.query_items = Mock(return_value=items())
-        self.assertEqual(await store.read_thread("partition"),
-                         {"message": {"id": "message", "content": "stored", "_etag": "version1"}})
-        self.assertEqual(container.query_items.call_args.kwargs["partition_key"], "partition")
-        self.assertIn("c.content", container.query_items.call_args.kwargs["query"])
-        self.assertIn("c.extra_info", container.query_items.call_args.kwargs["query"])
-        self.assertIn("c._etag", container.query_items.call_args.kwargs["query"])
-
-    async def test_backfill_skips_live_edit_after_thread_snapshot(self):
-        from services.conversation_service import CosmosMessageStore
-
-        partition = thread_partition(CHANNEL["channelId"], "root")
-        snapshot = {"id": "root", "content": "original", "_etag": "version1"}
-        current = {
-            **snapshot, "content": "newer live edit", "_etag": "version2",
-            "conversation_partition": partition, "should_reply": True,
-            "trace_id": "live-trace",
-            "extra_info": {"channel_id": CHANNEL["channelId"], "message_link": "live-link"},
-        }
-        container = AsyncMock()
-
-        async def items():
-            yield copy.deepcopy(snapshot)
-
-        container.query_items = Mock(return_value=items())
-        container.read_item.return_value = current
-        fetch = AsyncMock(return_value={"value": [graph_message({
-            "id": "root", "body": {"content": "stale Teams payload"}, "replies": [],
-        })]})
-        before = copy.deepcopy(current)
-
-        result = await TeamsCollectionService(fetch, CosmosMessageStore(container)).backfill([CHANNEL])
-
-        self.assertEqual(result["messagesSkipped"], 1)
-        self.assertEqual(result["messagesUpdated"], 0)
-        container.read_item.assert_awaited_once_with(item="root", partition_key=partition)
-        container.replace_item.assert_not_awaited()
-        self.assertEqual(current, before)
-
-    def test_images_are_lifted_from_the_body_and_emoji_are_skipped(self):
-        from services.conversation_service import message_images
-
-        hosted = ("https://graph.microsoft.com/v1.0/teams/team/channels/channel/messages/"
-                  "root/hostedContents/aWQ9eF8w/$value")
-        content = (
-            f'<p>Error:</p><img src="{hosted}" alt="image" width="250">'
-            '<img itemtype="http://schema.skype.com/Emoji" src="https://statics.teams.cdn.office.net/smile.png">'
-            f'<p>again</p><img src="{hosted}"/>'
-            '<img src="https://contoso.com/diagram.png" itemid="diagram">'
-            '<img alt="no source">'
-        )
-        self.assertEqual(
-            [image.model_dump(mode="json") for image in message_images(content)],
-            [{"id": "aWQ9eF8w", "contentUrl": hosted},
-             {"id": "diagram", "contentUrl": "https://contoso.com/diagram.png"}],
-        )
-        self.assertEqual(message_images("<p>plain</p>"), [])
-        self.assertEqual(message_images(None), [])
-
-    async def test_backfill_keeps_connector_attachments_and_images_and_fills_old_messages(self):
-        hosted = ("https://graph.microsoft.com/v1.0/teams/team/channels/channel/messages/"
-                  "root/hostedContents/aWQ9eF8w/$value")
-        attachment = {"id": "file", "contentType": "reference",
-                      "contentUrl": "https://contoso.sharepoint.com/file.docx",
-                      "content": None, "name": "file.docx", "thumbnailUrl": None}
-        root = graph_message({
-            "id": "root",
-            "body": {"content": f'<p>See</p><img src="{hosted}"><attachment id="file"></attachment>'},
-            "attachments": [{**attachment, "unexpected": "dropped"}],
-            "replies": [],
-        })
-        connector_attachment = {**attachment, "teamsAppId": None}
-        partition = thread_partition(CHANNEL["channelId"], "root")
-
-        store = MemoryStore()
-        created = await TeamsCollectionService(
-            AsyncMock(return_value={"value": [root]}), store).backfill([CHANNEL])
-        self.assertEqual(created["messagesCreated"], 1)
-        extra_info = store.items[(partition, "root")]["extra_info"]
-        self.assertEqual(extra_info["attachments"], [connector_attachment])
-        self.assertEqual(extra_info["images"], [{"id": "aWQ9eF8w", "contentUrl": hosted}])
-
-        again = await TeamsCollectionService(
-            AsyncMock(return_value={"value": [root]}), store).backfill([CHANNEL])
-        self.assertEqual(again["messagesUnchanged"], 1)
-        self.assertEqual(store.updates, 0)
-
-        # A live message saved before attachments were kept gains them in place.
-        live = MemoryStore()
-        live.seed({**stored_message(partition, "root", store.items[(partition, "root")]["content"],
-                                    link="live-link"), "should_reply": True})
-        filled = await TeamsCollectionService(
-            AsyncMock(return_value={"value": [root]}), live).backfill([CHANNEL])
-        self.assertEqual(filled["messagesUpdated"], 1)
-        document = live.items[(partition, "root")]
-        self.assertTrue(document["should_reply"])
-        self.assertEqual(document["extra_info"], {
-            "channel_id": CHANNEL["channelId"], "message_link": "live-link",
-            "attachments": [connector_attachment],
-            "images": [{"id": "aWQ9eF8w", "contentUrl": hosted}]})
-
-    async def test_saved_teams_message_keeps_attachments_and_derives_images(self):
-        from models.conversation import ConversationMessage
-        from services.conversation_service import ConversationService
-
-        hosted = ("https://graph.microsoft.com/v1.0/teams/team/channels/channel/messages/"
-                  "root/hostedContents/aWQ9eF8w/$value")
-        container = AsyncMock()
-        container.upsert_item.side_effect = lambda body: body
-        message = ConversationMessage.model_validate({
-            "id": "root", "sender_role": "user", "sender_id": "user-id",
-            "sender_name": "Test User", "content": f'<p>See</p><img src="{hosted}">',
-            "created_at": "2026-09-01T00:00:00Z",
-            "conversation_id": f"{CHANNEL['channelId']};messageid=root",
-            "conversation_type": "teams_channel",
-            "extra_info": {"channel_id": CHANNEL["channelId"], "message_link": "link",
-                           "attachments": [{"id": "file", "contentType": "reference",
-                                            "name": "file.docx"}]},
-        })
-        with patch("services.conversation_service.get_conversation_message_container",
-                   new=AsyncMock(return_value=container)):
-            await ConversationService().save_conversation(message)
-
-        saved = container.upsert_item.call_args.args[0]
-        self.assertEqual(saved["extra_info"]["attachments"], [{
-            "id": "file", "contentType": "reference", "contentUrl": None, "content": None,
-            "name": "file.docx", "thumbnailUrl": None, "teamsAppId": None}])
-        self.assertEqual(saved["extra_info"]["images"],
-                         [{"id": "aWQ9eF8w", "contentUrl": hosted}])
-
-    async def test_start_time_skips_older_posts_and_stops_after_the_activity_cutoff(self):
-        channel = {**CHANNEL, "startTime": "2026-09-01T08:00:00+08:00"}
-        fetch = AsyncMock(side_effect=[
-            {"value": [
-                graph_message({
-                    "id": "old-but-active", "createdDateTime": "2026-08-31T23:59:59Z",
-                    "lastModifiedDateTime": "2026-09-10T00:00:00Z", "replies": [],
-                }),
-                graph_message({
-                    "id": "boundary", "createdDateTime": "2026-09-01T00:00:00Z",
-                    "replies": [graph_message({
-                        "id": "reply", "replyToId": "boundary",
-                        "createdDateTime": "2026-09-02T00:00:00Z"})],
-                }),
-             ],
-             "@odata.nextLink": next_link(channel)},
-            {"value": [
-                graph_message({"id": "quiet", "createdDateTime": "2026-08-01T00:00:00Z",
-                               "lastModifiedDateTime": "2026-08-01T00:00:00Z", "replies": []}),
-                graph_message({"id": "never-read", "replies": []}),
-             ]},
-        ])
-        store = MemoryStore()
-
-        result = await TeamsCollectionService(fetch, store).backfill([channel])
-
-        self.assertEqual(result["threadsRead"], 1)
-        self.assertEqual(result["messagesCreated"], 2)
-        self.assertEqual(fetch.await_count, 2)
-        self.assertEqual({document_id for _partition, document_id in store.items},
-                         {"boundary", "reply"})
-
-    async def test_invalid_start_time_and_missing_tenant_key_fail_before_fetch(self):
-        for value in ("", "invalid", "2026-09-01", "2026-09-01T00:00:00", 123, False):
-            with self.subTest(startTime=value):
-                fetch = AsyncMock()
-                store = MemoryStore()
-                with self.assertRaisesRegex(ValueError, "startTime"):
-                    await TeamsCollectionService(fetch, store).backfill(
-                        [{**CHANNEL, "startTime": value}])
-                fetch.assert_not_awaited()
-                self.assertFalse(store.items)
-        for value in (None, "", "  ", 7):
-            with self.subTest(tenantKey=value):
-                fetch = AsyncMock()
-                with self.assertRaisesRegex(ValueError, "tenantKey"):
-                    await TeamsCollectionService(fetch, MemoryStore()).backfill(
-                        [{**CHANNEL, "tenantKey": value}])
-                fetch.assert_not_awaited()
-
-    async def test_post_without_a_creation_time_is_rejected(self):
-        channel = {**CHANNEL, "startTime": "2026-09-01T00:00:00Z"}
-        for value in (None, "invalid", "2026-09-02T00:00:00"):
-            with self.subTest(value=value):
-                root = graph_message({"id": "root", "replies": []})
-                root["createdDateTime"] = value
-                fetch = AsyncMock(return_value={"value": [root]})
-                store = MemoryStore()
-                with self.assertRaisesRegex(ValueError, "createdDateTime"):
-                    await TeamsCollectionService(fetch, store).backfill([channel])
-                self.assertFalse(store.items)
-
-    async def test_non_message_posts_and_replies_are_not_stored(self):
-        fetch = AsyncMock(return_value={"value": [
-            {"id": "system-root", "messageType": "systemEventMessage"},
-            graph_message({
-                "id": "root",
-                "replies": [
-                    {"id": "system-reply", "messageType": "systemEventMessage"},
-                    graph_message({"id": "reply", "replyToId": "root"}),
-                ],
-            }),
-        ]})
-        store = MemoryStore()
-
-        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL])
-
-        self.assertEqual(result["threadsRead"], 1)
-        self.assertEqual(result["messagesCreated"], 2)
-        self.assertEqual({document_id for _partition, document_id in store.items},
-                         {"root", "reply"})
-
-    async def test_partial_expansion_falls_back_to_full_reply_paging(self):
-        root = graph_message({"id": "root"})
-        reply1 = graph_message({"id": "reply1", "replyToId": "root",
-                                "createdDateTime": "2026-09-01T01:00:00Z"})
-        reply2 = graph_message({"id": "reply2", "replyToId": "root",
-                                "createdDateTime": "2026-09-01T02:00:00Z"})
-        fetch = AsyncMock(side_effect=[
-            {"value": [{**root, "replies": [reply1], "replies@odata.count": 1,
-                        "replies@odata.nextLink": next_link(CHANNEL, "root")}]},
-            {"value": [reply1], "@odata.nextLink": next_link(CHANNEL, "root")},
-            {"value": [reply2]},
-        ])
-        store = MemoryStore()
-
-        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL])
-
-        self.assertEqual(result["messagesCreated"], 3)
-        self.assertEqual(fetch.call_args_list[1].args, (CHANNEL, "root", None))
-        self.assertEqual(fetch.call_args_list[2].args, (CHANNEL, "root", "next"))
-
-    async def test_collects_multiple_channels_and_all_root_and_reply_pages(self):
-        second = {**CHANNEL, "channelId": "19:second@thread.tacv2"}
-        fetch = AsyncMock(side_effect=[
-            {"value": [graph_message({"id": "root"})], "@odata.nextLink": next_link(CHANNEL)},
-            {"value": [graph_message({"id": "reply1", "replyToId": "root"})],
-             "@odata.nextLink": next_link(CHANNEL, "root")},
-            {"value": [graph_message({"id": "reply2", "replyToId": "root"})]},
-            {"value": [graph_message({"id": "older"})]}, {"value": []},
-            {"value": [graph_message({"id": "root"})]}, {"value": []},
-        ])
-        store = MemoryStore()
-
-        result = await TeamsCollectionService(fetch, store).backfill([CHANNEL, second])
-
-        self.assertEqual(result["channelsCompleted"], 2)
-        self.assertEqual(result["threadsRead"], 3)
-        self.assertEqual(result["messagesCreated"], 5)
-        self.assertEqual(fetch.call_args_list[2].args, (CHANNEL, "root", "next"))
-        self.assertEqual(fetch.call_args_list[3].args, (CHANNEL, None, "next"))
-        self.assertEqual(
-            store.items[(thread_partition(second["channelId"], "root"), "root")]
-            ["conversation_partition"],
-            thread_partition(second["channelId"], "root"),
-        )
-
-    async def test_reply_failure_never_writes_a_partial_thread(self):
-        fetch = AsyncMock(side_effect=[
-            {"value": [graph_message({"id": "root"})]},
-            {"value": [], "@odata.nextLink": next_link(CHANNEL, "root")},
-            RuntimeError("unavailable"),
-        ])
-        store = MemoryStore()
+        container.create_item.side_effect = RuntimeError("unavailable")
+        fetch = AsyncMock(return_value={"value": [graph_message(replies=[])]})
         with self.assertRaisesRegex(RuntimeError, "unavailable"):
-            await TeamsCollectionService(fetch, store).backfill([CHANNEL])
-        self.assertFalse(store.items)
+            await save_history_to_cosmos(request(), fetch, container)
 
-    async def test_reply_page_limit_and_wrong_parent_do_not_save_partial_thread(self):
-        for page in ({"value": [], "@odata.nextLink": next_link(CHANNEL, "root")},
-                     {"value": [graph_message({"id": "reply", "replyToId": "other"})]}):
-            store = MemoryStore()
-            fetch = AsyncMock(side_effect=[{"value": [graph_message({"id": "root"})]}, page])
-            with self.assertRaises((RuntimeError, ValueError)):
-                await TeamsCollectionService(fetch, store, max_pages=1).backfill([CHANNEL])
-            self.assertFalse(store.items)
+    async def test_root_and_reply_paging_deduplicate_messages(self):
+        fetch = AsyncMock(side_effect=[
+            {"value": [graph_message()], "@odata.nextLink": next_link()},
+            {"value": [graph_message("reply", replyToId="root")], "@odata.nextLink": next_link("root")},
+            {"value": [graph_message("reply", replyToId="root"), graph_message("reply2", replyToId="root")]},
+            {"value": [graph_message(), graph_message("other", replies=[])]},
+        ])
+        container, documents = message_container()
+        summary = await save_history_to_cosmos(request(), fetch, container)
+        self.assertEqual(summary["threadsRead"], 2)
+        self.assertEqual(summary["messagesCreated"], 4)
+        self.assertEqual(len(documents), 4)
+        self.assertEqual([call.args for call in fetch.call_args_list],
+                         [(None, None), ("root", None), ("root", "next"), (None, "next")])
 
-    async def test_repeated_continuation_fails_without_writing_partial_replies(self):
-        page = {"value": [], "@odata.nextLink": next_link(CHANNEL, "root")}
-        fetch = AsyncMock(side_effect=[{"value": [graph_message({"id": "root"})]}, page, page])
-        store = MemoryStore()
+    async def test_partial_expansion_fetches_all_reply_pages(self):
+        fetch = AsyncMock(side_effect=[
+            {"value": [graph_message(replies=[graph_message("partial", replyToId="root")],
+                                     **{"replies@odata.nextLink": next_link("root")})]},
+            {"value": [graph_message("reply", replyToId="root")], "@odata.nextLink": next_link("root")},
+            {"value": [graph_message("reply2", replyToId="root")]},
+        ])
+        container, documents = message_container()
+        summary = await save_history_to_cosmos(request(max_pages=1), fetch, container)
+        self.assertEqual(summary["messagesCreated"], 3)
+        self.assertEqual(fetch.await_count, 3)
+        self.assertEqual({key[1] for key in documents}, {"root", "reply", "reply2"})
+
+    async def test_reply_failure_limits_and_wrong_parent_do_not_write_partial_thread(self):
+        for reply_result, overrides in (
+            (RuntimeError("unavailable"), {}),
+            ({"value": [], "@odata.nextLink": next_link("root")}, {"max_pages": 1}),
+            ({"value": [graph_message("reply", replyToId="wrong-root")]}, {}),
+            ({"value": [{"messageType": "message"}]}, {}),
+            ({"value": None}, {}),
+        ):
+            with self.subTest(reply_result=reply_result):
+                container, documents = message_container()
+                fetch = AsyncMock(side_effect=[{"value": [graph_message()]}, reply_result])
+                with patch(f"{MODULE}.MAX_HISTORY_PAGES", 1), self.assertRaises((RuntimeError, ValueError)):
+                    await save_history_to_cosmos(request(**overrides), fetch, container)
+                self.assertEqual(documents, {})
+
+    async def test_repeated_reply_token_fails_before_writing(self):
+        page = {"value": [], "@odata.nextLink": next_link("root")}
+        fetch = AsyncMock(side_effect=[{"value": [graph_message()]}, page, page])
+        container, documents = message_container()
         with self.assertRaisesRegex(RuntimeError, "repeated"):
-            await TeamsCollectionService(fetch, store).backfill([CHANNEL])
-        self.assertFalse(store.items)
+            await save_history_to_cosmos(request(), fetch, container)
+        self.assertEqual(documents, {})
 
-    def test_continuation_is_parsed_without_following_untrusted_urls(self):
-        self.assertEqual(continuation_token(next_link(CHANNEL, token="a+b/=c"), CHANNEL, None), "a+b/=c")
-        self.assertEqual(continuation_token(next_link(CHANNEL) + "&$expand=replies", CHANNEL, None), "next")
-        replies_link = next_link(CHANNEL, "root").replace(
-            "logic-apis-westus2.azure-apim.net/apim/teams/connection", "graph.microsoft.com")
-        self.assertEqual(continuation_token(replies_link, CHANNEL, "root"), "next")
-        for link in (next_link(CHANNEL).replace("logic-apis-westus2.azure-apim.net", "example.com"),
-                     next_link(CHANNEL).replace("/messages?", "/other?"), replies_link,
-                     next_link(CHANNEL) + "&$expand=unexpected",
-                     next_link(CHANNEL) + "&$expand=replies&$expand=replies"):
-            with self.assertRaises(ValueError):
-                continuation_token(link, CHANNEL, None)
+    async def test_root_page_limit_reports_incomplete_import(self):
+        fetch = AsyncMock(return_value={
+            "value": [graph_message(replies=[])], "@odata.nextLink": next_link(),
+        })
+        container, _ = message_container()
+        with self.assertRaisesRegex(RuntimeError, "Page limit"):
+            await save_history_to_cosmos(request(max_pages=1), fetch, container)
 
-    async def test_logic_app_passes_only_configured_channel_and_continuation(self):
-        import httpx
-        from types import SimpleNamespace
-        from services.conversation_service import LogicAppPageClient
+    async def test_start_time_filters_root_creation_and_stops_after_activity_cutoff(self):
+        fetch = AsyncMock(side_effect=[
+            {"value": [
+                graph_message("old-active", createdDateTime="2026-08-01T00:00:00Z",
+                              lastModifiedDateTime="2026-09-02T00:00:00Z", replies=[]),
+                graph_message("boundary", replies=[]),
+            ], "@odata.nextLink": next_link()},
+            {"value": [
+                graph_message("quiet", createdDateTime="2026-08-01T00:00:00Z", replies=[]),
+                graph_message("not-read", replies=[]),
+            ]},
+        ])
+        container, documents = message_container()
+        summary = await save_history_to_cosmos(
+            request(start_time="2026-09-01T08:00:00+08:00"), fetch, container,
+        )
+        self.assertEqual(summary["messagesCreated"], 1)
+        self.assertEqual({key[1] for key in documents}, {"boundary"})
+        self.assertEqual(fetch.await_count, 2)
 
+    async def test_system_events_are_ignored_and_expanded_replies_may_omit_parent(self):
+        fetch = AsyncMock(return_value={"value": [
+            {"id": "event", "messageType": "systemEventMessage"},
+            graph_message(replies=[
+                {"id": "reply-event", "messageType": "systemEventMessage"},
+                graph_message("reply"),
+            ]),
+        ]})
+        container, documents = message_container()
+        summary = await save_history_to_cosmos(request(), fetch, container)
+        self.assertEqual(summary["messagesCreated"], 2)
+        self.assertEqual({key[1] for key in documents}, {"root", "reply"})
+
+    def test_continuation_validation(self):
+        self.assertEqual(extract_skip_token(next_link(token="a+b/=c"), request(), None), "a+b/=c")
+        self.assertEqual(extract_skip_token(next_link() + "&$expand=replies", request(), None), "next")
+        graph_link = next_link("root").replace(
+            "logic-apis-westus2.azure-apim.net/apim/teams/connection", "graph.microsoft.com"
+        )
+        self.assertEqual(extract_skip_token(graph_link, request(), "root"), "next")
+        for link in (
+            next_link().replace("logic-apis-westus2.azure-apim.net", "example.com"),
+            next_link().replace("/messages?", "/other?"),
+            graph_link,
+            next_link() + "&$expand=unexpected",
+            next_link() + "&$expand=replies&$expand=replies",
+        ):
+            with self.subTest(link=link), self.assertRaises(ValueError):
+                extract_skip_token(link, request(), None)
+
+    async def test_logic_app_sends_bound_channel_and_managed_identity_token(self):
         client = AsyncMock()
         client.post.return_value = httpx.Response(200, json={"operation": "replies", "data": {"value": []}})
         credential = AsyncMock()
-        credential.get_token.return_value = SimpleNamespace(token="secret")
-        url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
-        channel = {**CHANNEL, "startTime": "2026-09-01T00:00:00Z"}
-        pages = LogicAppPageClient(client, credential, url, "https://management.core.windows.net/", [channel])
-        self.assertEqual(await pages.fetch_page(channel, "root", "continuation"), {"value": []})
-        self.assertEqual(client.post.call_args.kwargs["json"], {
-            "teamId": CHANNEL["teamId"], "channelId": CHANNEL["channelId"],
-            "operation": "replies", "messageId": "root", "skipToken": "continuation"})
-        self.assertFalse(client.post.call_args.kwargs["follow_redirects"])
-        credential.get_token.assert_awaited_with(
-            "https://management.core.windows.net/.default")
+        credential.get_token.return_value = SimpleNamespace(token="test-token")
         self.assertEqual(
-            client.post.call_args.kwargs["headers"], {"Authorization": "Bearer secret"})
-        with self.assertRaises(ValueError):
-            await pages.fetch_page({**CHANNEL, "channelId": "unapproved"}, None, None)
-        with self.assertRaises(ValueError):
-            LogicAppPageClient(client, credential, url + "&sig=secret", "https://management.core.windows.net/", [CHANNEL])
-        client.post.return_value = httpx.Response(403, json={"error": "secret"})
-        with self.assertRaisesRegex(RuntimeError, "HTTP 403") as failure:
-            await pages.fetch_page(channel, None, None)
-        self.assertNotIn("secret", str(failure.exception))
+            await fetch_teams_page(client, credential, LOGIC_APP_URL, request(), "root", "continuation"),
+            {"value": []},
+        )
+        self.assertEqual(client.post.call_args.kwargs["json"], {
+            "teamId": request().team_id, "channelId": request().channel_id,
+            "operation": "replies", "messageId": "root", "skipToken": "continuation",
+        })
+        self.assertEqual(client.post.call_args.kwargs["headers"], {"Authorization": "Bearer test-token"})
+        self.assertFalse(client.post.call_args.kwargs["follow_redirects"])
+        credential.get_token.assert_awaited_once_with("https://management.core.windows.net/.default")
+        for url in (LOGIC_APP_URL + "&sig=secret", LOGIC_APP_URL.replace("host.logic.azure.com", "example.com")):
+            with self.assertRaises(ValueError):
+                await fetch_teams_page(client, credential, url, request())
 
-    async def test_logic_app_retries_transient_failures(self):
-        import httpx
-        from types import SimpleNamespace
-        from services.conversation_service import LogicAppPageClient
-
-        url = "https://host.logic.azure.com/workflows/workflow/triggers/manual/paths/invoke?api-version=2016-10-01"
+    async def test_logic_app_retries_transient_failures_but_not_forbidden(self):
         credential = AsyncMock()
-        credential.get_token.return_value = SimpleNamespace(token="secret")
+        credential.get_token.return_value = SimpleNamespace(token="test-token")
         success = httpx.Response(200, json={"operation": "messages", "data": {"value": []}})
-        for transient in (httpx.ReadTimeout("timed out"), httpx.Response(503)):
-            with self.subTest(transient=type(transient).__name__):
-                client = AsyncMock()
-                client.post.side_effect = [transient, success]
-                pages = LogicAppPageClient(
-                    client, credential, url, "https://management.core.windows.net/", [CHANNEL]
-                )
-                with patch("services.conversation_service.asyncio.sleep", new=AsyncMock()) as sleep:
-                    self.assertEqual(await pages.fetch_page(CHANNEL, None, None), {"value": []})
-                self.assertEqual(client.post.await_count, 2)
-                sleep.assert_awaited_once_with(1)
+        for transient in (httpx.ReadTimeout("timeout"), httpx.Response(503), httpx.Response(429)):
+            client = AsyncMock()
+            client.post.side_effect = [transient, success]
+            with patch(MODULE + ".asyncio.sleep", new=AsyncMock()) as sleep:
+                result = await fetch_teams_page(client, credential, LOGIC_APP_URL, request())
+            self.assertEqual(result, {"value": []})
+            sleep.assert_awaited_once_with(1)
+        client = AsyncMock()
+        client.post.return_value = httpx.Response(403, json={"error": "private-response"})
+        with self.assertRaisesRegex(RuntimeError, "HTTP 403") as failure:
+            await fetch_teams_page(client, credential, LOGIC_APP_URL, request())
+        self.assertNotIn("private-response", str(failure.exception))
+        self.assertEqual(client.post.await_count, 1)
+
+    async def test_developer_authentication_requests_the_configured_scope(self):
+        client = AsyncMock()
+        client.post.return_value = httpx.Response(200, json={
+            "operation": "messages", "data": {"value": []},
+        })
+        credential = AsyncMock()
+        credential.get_token.return_value = SimpleNamespace(token="test-token")
+        scope = "api://azure-sdk-qa-bot-dev/.default"
+        await fetch_teams_page(client, credential, LOGIC_APP_URL, request(), token_scope=scope)
+        credential.get_token.assert_awaited_once_with(scope)
+
+    async def test_invalid_logic_app_response_fails_explicitly(self):
+        credential = AsyncMock()
+        for body in ({}, {"operation": "replies", "data": {}},
+                     {"operation": "messages", "data": []}):
+            client = AsyncMock()
+            client.post.return_value = httpx.Response(200, json=body)
+            with self.assertRaisesRegex(ValueError, "invalid collection response"):
+                await fetch_teams_page(client, credential, LOGIC_APP_URL, request())
+
+    async def test_collection_wires_configuration_client_and_cosmos(self):
+        client = AsyncMock()
+        client.__aenter__.return_value = client
+        client.post.return_value = httpx.Response(200, json={
+            "operation": "messages", "data": {"value": [graph_message(replies=[])]},
+        })
+        credential = AsyncMock()
+        credential.get_token.return_value = SimpleNamespace(token="test-token")
+        container, documents = message_container()
+        with TemporaryDirectory() as directory, \
+                patch(MODULE + ".get_conversation_message_container", new=AsyncMock(return_value=container)), \
+                patch(MODULE + ".get_credential", return_value=credential), \
+                patch(MODULE + ".httpx.AsyncClient", return_value=client):
+            summary = await collect_channel_history(
+                request(save_to_cosmos=True), Path(directory) / "history.json", LOGIC_APP_URL,
+            )
+        self.assertEqual(summary["messagesCreated"], 1)
+        self.assertEqual(len(documents), 1)
+        container.read.assert_awaited_once()
+
+    async def test_export_preserves_raw_threads_and_applies_the_root_time_filter(self):
+        root = graph_message(
+            "root", subject="History", body={"content": "<p>\u5386\u53f2 <img src='image'></p>"},
+            attachments=[{"id": "attachment", "contentType": "reference", "name": "file.txt"}],
+        )
+        reply = graph_message("reply", replyToId="root")
+        fetch = AsyncMock(side_effect=[
+            {"value": [
+                root,
+                graph_message("other", replies=[]),
+                graph_message("old", createdDateTime="2026-08-01T00:00:00Z",
+                              lastModifiedDateTime="2026-09-02T00:00:00Z", replies=[]),
+            ]},
+            {"value": [reply], "@odata.nextLink": next_link("root")},
+            {"value": [reply, graph_message("reply2", replyToId="root")]},
+        ])
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "history.json"
+            summary = await export_history_to_json(
+                request(start_time="2026-09-01T00:00:00Z", max_pages=1), fetch, path,
+            )
+            result = json.loads(path.read_text(encoding="utf-8"))
+        self.assertFalse(result["request"]["save_to_cosmos"])
+        self.assertEqual(result["threads"][0]["post"], root)
+        self.assertEqual([item["id"] for item in result["threads"][0]["replies"]], ["reply", "reply2"])
+        self.assertEqual(result["threads"][1], {"post": graph_message("other"), "replies": []})
+        self.assertEqual(summary, {
+            "channelsCompleted": 1, "threadsRead": 2, "messagesRead": 4, "messagesExported": 4,
+        })
+
+    async def test_empty_export_is_valid_json(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "history.json"
+            summary = await export_history_to_json(
+                request(), AsyncMock(return_value={"value": []}), path,
+            )
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["threads"], [])
+        self.assertEqual(summary, {
+            "channelsCompleted": 1, "threadsRead": 0, "messagesRead": 0, "messagesExported": 0,
+        })
+
+    async def test_default_collection_exports_without_cosmos_access(self):
+        with TemporaryDirectory() as directory, \
+                patch(MODULE + ".get_credential", return_value=Mock()), \
+                patch(MODULE + ".fetch_teams_page", new=AsyncMock(
+                    return_value={"value": [graph_message(replies=[])]},
+                )), \
+                patch(MODULE + ".get_conversation_message_container", new=AsyncMock()) as cosmos:
+            path = Path(directory) / "history.json"
+            summary = await collect_channel_history(request(tenant_id=None), path, LOGIC_APP_URL)
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["threads"], [
+                {"post": graph_message(), "replies": []},
+            ])
+        cosmos.assert_not_awaited()
+        self.assertEqual(summary["messagesExported"], 1)
+        self.assertNotIn("messagesCreated", summary)
+
+    async def test_failed_or_cancelled_export_removes_partial_file(self):
+        for result in (
+            {"value": [graph_message(replies=[])], "@odata.nextLink": next_link()},
+            RuntimeError("unavailable"),
+            asyncio.CancelledError(),
+        ):
+            with self.subTest(result=result), TemporaryDirectory() as directory:
+                path = Path(directory) / "history.json"
+                fetch = AsyncMock(side_effect=[result])
+                with self.assertRaises((RuntimeError, asyncio.CancelledError)):
+                    await export_history_to_json(request(max_pages=1), fetch, path)
+                self.assertFalse(path.exists())
+
+    async def test_export_does_not_overwrite_existing_file(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "history.json"
+            path.write_text("existing history", encoding="utf-8")
+            fetch = AsyncMock()
+            with self.assertRaises(FileExistsError):
+                await export_history_to_json(request(), fetch, path)
+            self.assertEqual(path.read_text(encoding="utf-8"), "existing history")
+            fetch.assert_not_awaited()
+
+    async def test_export_ignores_container_without_explicit_save_flag(self):
+        container, documents = message_container()
+        with TemporaryDirectory() as directory:
+            await export_history_to_json(
+                request(), AsyncMock(return_value={"value": [graph_message(replies=[])]}),
+                Path(directory) / "history.json", container=container,
+            )
+        self.assertEqual(documents, {})
+        container.create_item.assert_not_awaited()
+
+    async def test_invalid_request_fails_before_fetch(self):
+        for overrides in ({"team_id": "invalid"}, {"channel_id": " "},
+                          {"tenant_id": " "}, {"start_time": "invalid"}):
+            fetch = AsyncMock()
+            container, _ = message_container()
+            with self.assertRaises(ValueError):
+                await save_history_to_cosmos(request(**overrides), fetch, container)
+            fetch.assert_not_awaited()
+        with self.assertRaises(ValidationError):
+            request(max_pages=1001)
+
+    def test_tenant_is_required_only_for_cosmos_writes(self):
+        validate_history_request(request(tenant_id=None))
+        with self.assertRaisesRegex(ValueError, "tenant_id"):
+            validate_history_request(request(tenant_id=None, save_to_cosmos=True))
+
+    def test_script_save_flag_is_opt_in(self):
+        arguments = [
+            "--team-id", request().team_id, "--channel-id", request().channel_id,
+            "--output", "history.json",
+        ]
+        self.assertFalse(script.parse_args(arguments).save_to_cosmos)
+        with patch("sys.stderr"), self.assertRaises(SystemExit) as failure:
+            script.parse_args([*arguments, "--save-to-cosmos"])
+        self.assertEqual(failure.exception.code, 2)
+        args = script.parse_args([*arguments, "--save-to-cosmos", "--tenant-id", request().tenant_id])
+        self.assertTrue(args.save_to_cosmos)
+
+    async def test_script_exports_json_and_only_saves_when_requested(self):
+        for save in (False, True):
+            with self.subTest(save=save), TemporaryDirectory() as directory:
+                path = Path(directory) / "history.json"
+                arguments = [
+                    "collect_teams_history.py", "--team-id", request().team_id,
+                    "--channel-id", request().channel_id, "--output", str(path),
+                    "--logic-app-url", LOGIC_APP_URL,
+                ]
+                if save:
+                    arguments += ["--save-to-cosmos", "--tenant-id", request().tenant_id]
+                container, documents = message_container()
+                with patch("sys.argv", arguments), patch("builtins.print") as report, \
+                        patch.object(script.app_config, "init", new=AsyncMock()) as init, \
+                        patch.object(script, "close_cosmos_client", new=AsyncMock()), \
+                        patch.object(script, "close_credential", new=AsyncMock()), \
+                        patch(MODULE + ".get_credential", return_value=Mock()), \
+                        patch(MODULE + ".fetch_teams_page", new=AsyncMock(return_value={
+                            "value": [graph_message(replies=[graph_message("reply")])],
+                        })) as fetch, \
+                        patch(MODULE + ".get_conversation_message_container",
+                              new=AsyncMock(return_value=container)) as cosmos:
+                    await script.main()
+                exported = json.loads(path.read_text(encoding="utf-8"))
+                summary = json.loads(report.call_args.args[0])["summary"]
+                self.assertEqual(exported["request"]["save_to_cosmos"], save)
+                self.assertEqual(len(exported["threads"]), 1)
+                self.assertEqual(summary["messagesExported"], 2)
+                fetch.assert_awaited_once()
+                if save:
+                    cosmos.assert_awaited_once()
+                    init.assert_awaited_once()
+                    self.assertEqual(summary["messagesCreated"], 2)
+                    self.assertEqual(len(documents), 2)
+                else:
+                    cosmos.assert_not_awaited()
+                    init.assert_not_awaited()
+                    self.assertEqual(documents, {})
+                    self.assertNotIn("messagesCreated", summary)
+
+    async def test_script_skips_app_config_for_export_with_explicit_callback(self):
+        args = script.parse_args([
+            "--team-id", request().team_id, "--channel-id", request().channel_id,
+            "--output", "history.json", "--logic-app-url", LOGIC_APP_URL,
+            "--logic-app-scope", "api://azure-sdk-qa-bot-dev/.default",
+        ])
+        with TemporaryDirectory() as directory, \
+                patch.object(script.app_config, "init", new=AsyncMock()) as init, \
+                patch.object(script, "collect_channel_history", new=AsyncMock(return_value={})) as collect, \
+                patch.object(script, "close_cosmos_client", new=AsyncMock()) as close_cosmos, \
+                patch.object(script, "close_credential", new=AsyncMock()) as close_credential:
+            args.output = Path(directory) / "history.json"
+            await script.run(args)
+        init.assert_not_awaited()
+        self.assertFalse(collect.call_args.args[0].save_to_cosmos)
+        self.assertEqual(collect.call_args.args[2], LOGIC_APP_URL)
+        self.assertEqual(collect.call_args.kwargs["token_scope"], "api://azure-sdk-qa-bot-dev/.default")
+        close_cosmos.assert_awaited_once()
+        close_credential.assert_awaited_once()
+
+    async def test_script_loads_config_for_cosmos_and_closes_clients_on_failure(self):
+        args = script.parse_args([
+            "--team-id", request().team_id, "--channel-id", request().channel_id,
+            "--tenant-id", request().tenant_id, "--output", "history.json",
+            "--save-to-cosmos",
+        ])
+        with TemporaryDirectory() as directory, \
+                patch.object(script.app_config, "init", new=AsyncMock()) as init, \
+                patch.object(script.app_config, "get", return_value=LOGIC_APP_URL), \
+                patch.object(script, "collect_channel_history", new=AsyncMock(
+                    side_effect=RuntimeError("collection failed"),
+                )) as collect, \
+                patch.object(script, "close_cosmos_client", new=AsyncMock()) as close_cosmos, \
+                patch.object(script, "close_credential", new=AsyncMock()) as close_credential:
+            with self.assertRaisesRegex(RuntimeError, "collection failed"):
+                args.output = Path(directory) / "history.json"
+                await script.run(args)
+        init.assert_awaited_once()
+        self.assertTrue(collect.call_args.args[0].save_to_cosmos)
+        close_cosmos.assert_awaited_once()
+        close_credential.assert_awaited_once()
+
+    async def test_live_save_keeps_attachments_without_deriving_image_metadata(self):
+        from models.conversation import ConversationMessage
+        from services.conversation_service import ConversationService
+
+        document = build_message_document(request(), graph_message(
+            body={"content": '<img src="https://example.com/image">'},
+            attachments=[{"id": "file", "contentType": "reference"}],
+        ), "root")
+        message = ConversationMessage.model_validate(document)
+        container = AsyncMock()
+        container.upsert_item.side_effect = lambda body: body
+        with patch("services.conversation_service.get_conversation_message_container",
+                   new=AsyncMock(return_value=container)):
+            await ConversationService().save_conversation(message)
+        saved = container.upsert_item.call_args.args[0]
+        self.assertEqual(saved["content"], document["content"])
+        self.assertEqual(saved["extra_info"], document["extra_info"])
+        self.assertNotIn("images", saved["extra_info"])
+
 
 if __name__ == "__main__":
     unittest.main()

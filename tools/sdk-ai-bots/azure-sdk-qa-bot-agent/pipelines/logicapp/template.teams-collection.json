@@ -7,7 +7,8 @@
     "teamsConnectionResourceId": { "type": "string" },
     "tenantId": { "type": "string" },
     "serverIdentityResourceId": { "type": "string" },
-    "localDevPrincipalId": { "type": "string", "defaultValue": "" }
+    "localDevPrincipalId": { "type": "string", "defaultValue": "" },
+    "developerAppId": { "type": "string" }
   },
   "variables": {
     "backfillPolicy": {
@@ -17,6 +18,16 @@
           { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
           { "name": "aud", "value": "https://management.core.windows.net" },
           { "name": "oid", "value": "[reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId]" }
+        ]
+      }
+    },
+    "developerPolicy": {
+      "developers": {
+        "type": "AAD",
+        "claims": [
+          { "name": "iss", "value": "[concat('https://login.microsoftonline.com/', parameters('tenantId'), '/v2.0')]" },
+          { "name": "aud", "value": "[parameters('developerAppId')]" },
+          { "name": "roles", "value": "TeamsHistory.Invoke" }
         ]
       }
     },
@@ -44,7 +55,7 @@
           "triggers": {
             "sasAuthenticationPolicy": { "state": "Disabled" },
             "openAuthenticationPolicies": {
-              "policies": "[if(empty(parameters('localDevPrincipalId')), variables('backfillPolicy'), union(variables('backfillPolicy'), variables('localDevPolicy')))]"
+              "policies": "[union(variables('backfillPolicy'), variables('developerPolicy'), if(empty(parameters('localDevPrincipalId')), json('{}'), variables('localDevPolicy')))]"
             }
           }
         },

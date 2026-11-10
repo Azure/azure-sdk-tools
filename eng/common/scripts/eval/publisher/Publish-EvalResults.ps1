@@ -5,7 +5,8 @@ param(
     [Parameter(Mandatory)] [ValidatePattern('^[a-z0-9]{3,24}$')] [string] $StorageAccountName,
     [Parameter(Mandatory)] [string] $BundlePath,
     [string] $DashboardRefreshUrl = '',
-    [string] $DashboardResource = ''
+    [string] $DashboardResource = '',
+    [switch] $AzurePipelines
 )
 
 Set-StrictMode -Version 4
@@ -40,6 +41,8 @@ function Invoke-AzJson([string[]] $Arguments) {
 $operation = 'validate_inputs'
 $failureCode = 'invalid_bundle'
 $stored = $false
+$notificationSucceeded = $false
+$notificationValid = $false
 $uploadFailure = $null
 try {
     $BundlePath = [System.IO.Path]::GetFullPath($BundlePath)
@@ -111,7 +114,6 @@ try {
 
     $body = @{ blobName = $name; sha256 = $hash } | ConvertTo-Json -Compress
     if ([System.Text.Encoding]::UTF8.GetByteCount($body) -gt 2048) { throw 'Invalid refresh signal.' }
-    $notificationSucceeded = $false
     for ($attempt = 0; $notificationValid -and $attempt -lt 4; $attempt++) {
         $status = 0; $headers = @{}
         try {
@@ -152,5 +154,13 @@ try {
         $detail = @($(if ($uploadFailure) { "Upload: $uploadFailure." }),
             $(if ($_.Exception.Data['CliFailure']) { "Current operation: $($_.Exception.Data['CliFailure'])." })) -join ' '
         throw "Evaluation publication failed: $operation ($failureCode). $detail No raw Azure response was logged."
+    }
+} finally {
+    if ($AzurePipelines) {
+        $archiveStatus = if ($stored) { 'stored' } else { 'failed' }
+        $importStatus = if (!$stored) { 'not_attempted' } elseif ($notificationSucceeded) { 'confirmed' }
+            elseif (!$notificationValid) { 'not_configured' } else { 'failed' }
+        Write-Host "##vso[task.setvariable variable=EvalArchiveStatus]$archiveStatus"
+        Write-Host "##vso[task.setvariable variable=EvalImportStatus]$importStatus"
     }
 }

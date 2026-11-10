@@ -78,6 +78,32 @@ function runSummary(root, shards, options = {}) {
     };
 }
 
+test("selected shard attempts retain their exact evaluation task IDs, never another job or retry", () => {
+    const jobId = "11111111-1111-4111-8111-111111111111";
+    const taskId = "22222222-2222-4222-8222-222222222222";
+    const oldJobId = "33333333-3333-4333-8333-333333333333";
+    const matrix = { leg: { shardName: "area_test" } };
+    const records = [
+        { type: "Job", identifier: "Eval.RunShard.leg", id: oldJobId, attempt: 1, state: "completed", result: "failed" },
+        { type: "Job", identifier: "Eval.RunShard.leg", id: jobId, attempt: 2, state: "completed", result: "failed" },
+        { type: "Task", name: "vally eval area_test", id: oldJobId, parentId: oldJobId, attempt: 1, state: "completed" },
+        { type: "Task", name: "Collect area_test transcripts (on failure)", id: oldJobId, parentId: jobId, attempt: 2, state: "completed" },
+        { type: "Task", name: "vally eval area_test", id: taskId, parentId: jobId, attempt: 2, state: "completed" },
+    ];
+    const selected = latestShardAttempts({ records }, matrix).attempts.area_test;
+    assert.deepEqual(selected.sourceLog, { jobId, taskId });
+    assert.equal(selected.attempt, 2);
+    for (const name of ["vally eval area_test", "vally eval area_test (authenticated)"]) {
+        const tasks = records.map(record => record.id === taskId ? { ...record, name } : record);
+        assert.deepEqual(latestShardAttempts({ records: tasks }, matrix).attempts.area_test.sourceLog, { jobId, taskId });
+    }
+    for (const tasks of [records.filter(record => record.id !== taskId),
+        records.map(record => record.id === taskId ? { ...record, attempt: 1 } : record),
+        [...records, { ...records.at(-1), id: oldJobId }]]) {
+        assert.equal(latestShardAttempts({ records: tasks }, matrix).attempts.area_test.sourceLog, undefined);
+    }
+});
+
 test("expected shards come from the full Prepare matrix, not arrived artifacts or matrix keys", () => {
     const matrix = { secondJob: { shardName: "area_b", evalArgs: "-e b.eval.yaml" }, firstJob: { shardName: "area_a" } };
     assert.deepEqual(expectedShardsFromMatrix(matrix), ["area_a", "area_b"]);

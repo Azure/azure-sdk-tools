@@ -47,6 +47,29 @@ function run(script, args, env = {}, preload = []) {
     return child;
 }
 
+test("bundles attach only verified selected-attempt task identities to each trial, with legacy fallback", async (t) => {
+    const sourceLog = { jobId: "11111111-1111-4111-8111-111111111111", taskId: "22222222-2222-4222-8222-222222222222" };
+    for (const configured of [true, false]) {
+        const fixture = await constructionFixture(t);
+        const index = JSON.parse(await readFile(fixture.indexPath, "utf8"));
+        if (configured) index.attempts[0].sourceLog = sourceLog;
+        await writeFile(fixture.indexPath, JSON.stringify(index));
+        await writeFile(join(fixture.artifact, "results.jsonl"), JSON.stringify({ ...trial, sourceLog: { jobId: "untrusted", taskId: "untrusted" } }));
+        await prepareBundle(fixture);
+        const checked = validateBundle(await readFile(fixture.outputPath));
+        const record = JSON.parse(Buffer.from(checked.entries["results.jsonl"]).toString().trim());
+        assert.deepEqual(record.sourceLog, configured ? sourceLog : undefined);
+        assert.equal(record.itemId, trial.itemId);
+        assert.equal(checked.manifest.schemaVersion, 1);
+        assert.equal(checked.manifest.buildId, manifest.buildId);
+    }
+    for (const value of [{ jobId: "bad", taskId: sourceLog.taskId }, { jobId: sourceLog.jobId },
+        { jobId: [sourceLog.jobId], taskId: sourceLog.taskId }, null]) {
+        assert.throws(() => validateSelectedAttempts({ schemaVersion: 1, complete: true, expectedShards: ["a"],
+            attempts: [{ shard: "a", attempt: 2, directory: "eval-result-a-2", sourceLog: value }] }), { code: "invalid_bundle" });
+    }
+});
+
 test("shared shards -> saved timeline evidence -> token-free summary -> one schema-v1 ZIP", async (t) => {
     const f = await fixture(t), scripts = resolve(import.meta.dirname, "../..");
     const downloads = join(f.root, "downloads"); await mkdir(downloads);
@@ -66,8 +89,14 @@ test("shared shards -> saved timeline evidence -> token-free summary -> one sche
         Socket.prototype.connect = function() { throw new Error("Network disabled"); };
         globalThis.fetch = async (url, options) => {
             if (url.origin !== "https://dev.azure.com" || options.headers.authorization !== "Bearer fixture-token" || options.redirect !== "error") throw new Error("Unexpected timeline request");
-            return Response.json({ records: ["a", "b"].map(key => ({ type: "Job", identifier: "Eval.RunShard." + key,
-                attempt: 1, state: "completed", result: "failed" })) });
+            return Response.json({ records: ["a", "b"].flatMap((key, index) => {
+                const jobId = (index + 1).toString().repeat(8) + '-1111-4111-8111-111111111111';
+                const taskId = (index + 3).toString().repeat(8) + '-2222-4222-8222-222222222222';
+                return [{ type: "Job", id: jobId, identifier: "Eval.RunShard." + key,
+                    attempt: 1, state: "completed", result: "failed" },
+                    { type: "Task", id: taskId, parentId: jobId, name: "vally eval shard_" + key,
+                        attempt: 1, state: "completed" }];
+            }) });
         };`);
     const matrix = JSON.stringify({ a: { shardName: "shard_a" }, b: { shardName: "shard_b" } });
     run(join(scripts, "lib/shard-results.ts"), ["--attempts-output", attempts], {
@@ -89,6 +118,11 @@ test("shared shards -> saved timeline evidence -> token-free summary -> one sche
     assert.equal(Object.keys(checked.entries).length, 5);
     assert.doesNotMatch(Buffer.from(checked.entries["results.jsonl"]).toString("utf8"), /run-summary/);
     assert.match(Buffer.from(checked.entries["eval-summary.md"]).toString("utf8"), /FAILED/);
+    const records = Buffer.from(checked.entries["results.jsonl"]).toString("utf8").trim().split("\n").map(JSON.parse);
+    assert.deepEqual(records.map(record => [record.itemId, record.sourceLog.jobId, record.sourceLog.taskId]), [
+        ["shard_a", "11111111-1111-4111-8111-111111111111", "33333333-2222-4222-8222-222222222222"],
+        ["shard_b", "22222222-1111-4111-8111-111111111111", "44444444-2222-4222-8222-222222222222"],
+    ]);
     await assert.rejects(prepareBundle({ indexPath: join(downloads, "shard-index.json"), summaryPath: summary, outputPath: output, manifest }), { code: "EEXIST" });
 });
 

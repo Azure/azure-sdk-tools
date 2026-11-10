@@ -319,6 +319,63 @@ export function formatEvalSummaryMarkdown(shards, incompleteShards = []) {
   return lines.join("\n") + "\n";
 }
 
+export function formatDeliverySummary(summary, { skipReason = "", storageConfigured = false,
+  archiveStatus = "not_started", importStatus = "not_attempted", dashboardRefreshUrl = "",
+  organization, project, definition, build, attempt } = {}) {
+  const totals = summary?.totals;
+  const verified = summary?.schemaVersion === 1 && typeof summary.complete === "boolean" && totals
+    && [totals.scenarios, totals.failed, totals.skipped].every(value => Number.isSafeInteger(value) && value >= 0)
+    && totals.failed + totals.skipped <= totals.scenarios;
+  const complete = verified && summary.complete;
+  const evaluations = !verified ? "unavailable; summary generation did not finish."
+    : !complete ? "incomplete; check the selected shard attempts."
+    : totals.scenarios === totals.skipped ? "no scenarios ran."
+    : totals.failed ? `completed; ${totals.failed} scenario(s) failed.` : "completed; all executed scenarios passed.";
+  const reasons = { disabled: "publication was not requested", feature_branch: "feature-branch run",
+    ineligible_run: "run is not eligible for publication", incomplete: "result data is incomplete or unverified",
+    missing_configuration: "storage configuration is missing" };
+  const reason = skipReason || (!complete ? "incomplete" : !storageConfigured ? "missing_configuration" : "");
+  const stored = archiveStatus === "stored";
+  const storage = stored ? "stored; upload or matching existing archive verified."
+    : archiveStatus === "failed" ? "upload failed; check the publication task logs."
+    : reason ? `not uploaded; publication skipped: ${reasons[reason] ?? reasons.ineligible_run}.`
+    : "not confirmed; check the bundle and publication task logs.";
+  const imported = !stored ? "not attempted; no stored archive was confirmed."
+    : importStatus === "confirmed" ? "confirmed by the refresh response."
+    : importStatus === "failed" ? "not confirmed; the refresh request failed."
+    : importStatus === "not_configured" ? "not confirmed; refresh configuration is missing or invalid."
+    : "not confirmed; check the publication task logs.";
+  const lines = ["## Result Delivery", "", `- Evaluations: ${evaluations}`,
+    `- Result data: ${!verified ? "not verified" : complete ? "complete" : "incomplete"}.`,
+    `- Storage: ${storage}`, `- Dashboard import: ${imported}`, ""];
+  const validIdentity = /^[a-z0-9][a-z0-9-]{0,99}$/.test(organization ?? "") && typeof project === "string"
+    && project.length > 0 && project.length <= 200 && !/[\x00-\x1f\x7f]/.test(project) && !/^\.+$/.test(project)
+    && [definition, build, attempt].every(value => /^[1-9]\d{0,14}$/.test(String(value ?? "")));
+  if (validIdentity) {
+    const encodedProject = encodeURIComponent(project).replaceAll("(", "%28").replaceAll(")", "%29");
+    const ado = new URL(`https://dev.azure.com/${organization}/${encodedProject}/_build/results`);
+    ado.searchParams.set("buildId", build);
+    lines.push(`[ADO tests](${ado}&view=ms.vss-test-web.build-test-results-tab) | [ADO logs](${ado}&view=logs) | [Retained artifacts](${ado}&view=artifacts)`, "");
+    try {
+      const refresh = new URL(dashboardRefreshUrl);
+      if (refresh.protocol === "https:" && refresh.port === "" && !refresh.username && !refresh.password
+        && /^[a-z0-9][a-z0-9.-]*\.azurewebsites\.net$/.test(refresh.hostname)
+        && refresh.pathname === "/api/refresh" && !refresh.search && !refresh.hash && (stored || !reason)) {
+        const dashboard = new URL("/build", refresh);
+        dashboard.search = new URLSearchParams({ organization, project, definition, build, attempt }).toString();
+        lines.push(`[View dashboard results](${dashboard})`, "");
+      }
+    } catch {}
+  }
+  const next = stored ? importStatus === "confirmed" ? "View dashboard results."
+    : "Reload the dashboard to discover the stored archive. No evaluation rerun is needed just to recover delivery."
+    : !complete ? "Check the Eval Summary and affected shard logs before retrying execution."
+    : reason ? "Use the retained ADO artifacts."
+    : "Inspect the publication logs and retain the saved ZIP for delivery recovery; do not rerun evaluations solely for delivery.";
+  lines.push(`Next: ${next}`, "");
+  return lines.join("\n");
+}
+
 // ----- CLI -----
 
 function parseArgs(argv) {
@@ -343,11 +400,14 @@ function parseArgs(argv) {
       case "--attempts-file":
         options.attemptsFile = next();
         break;
+      case "--delivery":
+        options.delivery = true;
+        break;
       default:
         throw new Error(`Unknown argument: ${arg}`);
     }
   }
-  if (!options.resultsRoot) {
+  if (!options.resultsRoot && !options.delivery) {
     throw new Error("Missing required argument: --results-root");
   }
   return options;
@@ -356,6 +416,24 @@ function parseArgs(argv) {
 async function main(argv) {
   const options = parseArgs(argv);
   fs.mkdirSync(path.dirname(path.resolve(options.outputPath)), { recursive: true });
+  if (options.delivery) {
+    let summary = null;
+    try { summary = JSON.parse(fs.readFileSync(path.join(path.dirname(options.outputPath), "eval-summary.json"), "utf8")); }
+    catch {}
+    const markdown = formatDeliverySummary(summary, {
+      skipReason: process.env.EVAL_PUBLICATION_SKIP_REASON,
+      storageConfigured: process.env.EVAL_STORAGE_CONFIGURED?.toLowerCase() === "true",
+      archiveStatus: process.env.EVAL_ARCHIVE_STATUS, importStatus: process.env.EVAL_IMPORT_STATUS,
+      dashboardRefreshUrl: process.env.EVAL_DASHBOARD_REFRESH_URL,
+      organization: process.env.SYSTEM_COLLECTIONURI?.replace(/\/$/, "").split("/").at(-1),
+      project: process.env.SYSTEM_TEAMPROJECT, definition: process.env.SYSTEM_DEFINITIONID,
+      build: process.env.BUILD_BUILDID, attempt: process.env.SYSTEM_JOBATTEMPT,
+    });
+    fs.writeFileSync(options.outputPath, markdown, "utf8");
+    console.log(markdown);
+    if (process.env.TF_BUILD) console.log(`##vso[task.uploadsummary]${path.resolve(options.outputPath)}`);
+    return;
+  }
   fs.mkdirSync(options.resultsRoot, { recursive: true });
   let selection = null;
   if (options.selectedRoot) {

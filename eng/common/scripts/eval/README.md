@@ -90,6 +90,22 @@ These entrypoints run real evaluations and consume model quota; there is no synt
 pipeline mode. Completed failed evaluations publish before their existing test gate;
 missing or incomplete results fail Summary and cannot publish.
 
+### Final Delivery Summary
+
+The Summary job always renders a final `eval-delivery.md`, including after publication
+or the evaluation gate fails. It separates the scenario verdict, result completeness,
+archive storage and dashboard import confirmation. Known skips name the reason; a task
+that did not report an outcome is not shown as a successful upload. The existing shard
+attempt table and incomplete-result warnings remain in the evaluation summary.
+
+With `-AzurePipelines`, the publisher emits fixed outcome variables for this final report.
+It does not read pipeline policy or write a local receipt. The report reuses the saved
+summary JSON, needs no token or network, and is retained with the existing Summary artifact.
+An exact dashboard build/attempt link derives from the protected refresh URL's origin;
+ADO tests, logs and artifacts remain separate links. Dashboard and ADO access are unchanged.
+An unconfirmed refresh after storage calls for rediscovering the archive, not rerunning
+evaluations. The saved ZIP and its checksum are never rewritten to add delivery status.
+
 ### Archive and retry contract
 
 For this dashboard, configure account `evaltestsummary`; the container remains `vally-results`.
@@ -97,6 +113,14 @@ An archive uses `v1/<org>/<encoded-project>/<definition>/<build>/<Summary-attemp
 It contains a schema-v1 manifest, executed plain-eval JSONL trials, Markdown and JUnit,
 never debug files, MCP binaries or unrelated workspace contents. Non-executed skips
 remain in raw artifacts and JUnit/Markdown; an entirely skipped shard is incomplete.
+
+The existing current-build timeline read also records the selected shard job ID and its
+completed `vally eval` task ID when there is one unambiguous match for that attempt.
+Bundling attaches optional `sourceLog: { jobId, taskId }` provenance to each executed trial,
+overriding trial-supplied values. The IDs are validated GUID strings; missing or ambiguous
+task evidence omits the optional field without changing completeness or publishing policy.
+The schema-v1 archive layout is unchanged. The reader can construct exact ADO task links
+with `j` and `t`; older archives keep build-level links and are never rewritten to add metadata.
 
 Reader limits are **32 MiB ZIP, 128 MiB expanded, 10,000 entries and 100,000 trials**.
 Canonical identities, UTC calendar dates, safe entries and counts are validated

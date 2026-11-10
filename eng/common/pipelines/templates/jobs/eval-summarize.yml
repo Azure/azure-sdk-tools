@@ -23,6 +23,9 @@ jobs:
       clean: all
     variables:
       EvalExpectedMatrix: $[ stageDependencies.Prepare.generate_eval_matrix.outputs['detect.matrix'] ]
+      EvalArchiveStatus: not_started
+      EvalImportStatus: not_attempted
+      EvalStorageConfigured: $[ ne(variables['EvalStorageAccountName'], '') ]
     templateContext:
       outputs:
         - output: pipelineArtifact
@@ -88,3 +91,22 @@ jobs:
           failTaskOnFailedTests: ${{ parameters.failOnFailedTests }}
           failTaskOnMissingResultsFile: true
           testRunTitle: 'Vally evals'
+
+      - script: |
+          node --experimental-strip-types "$(Build.SourcesDirectory)/eng/common/scripts/eval/build-eval-summary.ts" \
+            --delivery --output-path "$(Build.ArtifactStagingDirectory)/eval-summary/eval-delivery.md"
+        displayName: 'Report final evaluation result delivery'
+        condition: always()
+        env:
+          EVAL_ARCHIVE_STATUS: $(EvalArchiveStatus)
+          EVAL_IMPORT_STATUS: $(EvalImportStatus)
+          EVAL_STORAGE_CONFIGURED: $(EvalStorageConfigured)
+          EVAL_DASHBOARD_REFRESH_URL: $(EvalDashboardRefreshUrl)
+          ${{ if not(parameters.publishDashboardResults) }}:
+            EVAL_PUBLICATION_SKIP_REASON: disabled
+          ${{ elseif ne(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+            EVAL_PUBLICATION_SKIP_REASON: feature_branch
+          ${{ elseif not(and(eq(variables['System.CollectionUri'], 'https://dev.azure.com/azure-sdk/'), eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.Repository.Name'], 'Azure/azure-sdk-tools'), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI', 'Schedule', 'Manual'))) }}:
+            EVAL_PUBLICATION_SKIP_REASON: ineligible_run
+          ${{ else }}:
+            EVAL_PUBLICATION_SKIP_REASON: ''

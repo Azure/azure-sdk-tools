@@ -2,12 +2,109 @@
 // Run from eng/common/scripts/eval:  npm test
 
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { after, before, beforeEach, describe, it } from "node:test";
 
-import { getEvalSummary, formatEvalSummaryMarkdown } from "../build-eval-summary.ts";
+import { getEvalSummary, formatEvalSummaryMarkdown, formatDeliverySummary } from "../build-eval-summary.ts";
+
+describe("result-delivery summary", () => {
+  const summary = { schemaVersion: 1, complete: true, totals: { scenarios: 5, failed: 1, skipped: 0 } };
+  const delivery = { storageConfigured: true, organization: "azure-sdk", project: "Internal (SDK) & + quality",
+    definition: "8255", build: "12345", attempt: "2", dashboardRefreshUrl: "https://synthetic.azurewebsites.net/api/refresh" };
+
+  it("keeps failed grades, completeness, stored data, and unconfirmed import separate", () => {
+    const markdown = formatDeliverySummary(summary, { ...delivery, archiveStatus: "stored", importStatus: "failed" });
+    assert.match(markdown, /Evaluations: completed; 1 scenario\(s\) failed/);
+    assert.match(markdown, /Result data: complete/);
+    assert.match(markdown, /Storage: stored/);
+    assert.match(markdown, /Dashboard import: not confirmed; the refresh request failed/);
+    assert.match(markdown, /No evaluation rerun is needed/);
+    const href = markdown.match(/\[View dashboard results\]\(([^)]+)\)/)?.[1];
+    const url = new URL(href);
+    assert.equal(url.pathname, "/build");
+    assert.deepEqual(Object.fromEntries(url.searchParams), { organization: "azure-sdk", project: delivery.project,
+      definition: "8255", build: "12345", attempt: "2" });
+    for (const label of ["ADO tests", "ADO logs", "Retained artifacts"]) assert.ok(markdown.includes(`[${label}]`));
+  });
+
+  it("reports a complete passing run and confirmed import without claiming CI success", () => {
+    const markdown = formatDeliverySummary({ ...summary, totals: { ...summary.totals, failed: 0 } },
+      { ...delivery, archiveStatus: "stored", importStatus: "confirmed" });
+    assert.match(markdown, /all executed scenarios passed/);
+    assert.match(markdown, /Dashboard import: confirmed by the refresh response/);
+    assert.doesNotMatch(markdown, /CI succeeded|No evaluation rerun/);
+  });
+
+  for (const [options, expected] of [
+    [{ skipReason: "disabled" }, "publication was not requested"],
+    [{ skipReason: "feature_branch" }, "feature-branch run"],
+    [{ skipReason: "ineligible_run" }, "not eligible for publication"],
+    [{ storageConfigured: false }, "storage configuration is missing"],
+    [{ archiveStatus: "failed" }, "upload failed"],
+    [{}, "Storage: not confirmed"],
+  ]) it(`explains publication state: ${expected}`, () => {
+    const markdown = formatDeliverySummary(summary, { ...delivery, ...options });
+    assert.ok(markdown.includes(expected));
+    assert.match(markdown, /Dashboard import: not attempted/);
+    assert.doesNotMatch(markdown, /Storage: stored|Dashboard import: confirmed/);
+  });
+
+  it("never turns incomplete or unavailable results into a complete passing run", () => {
+    for (const value of [null, { ...summary, complete: false }, { ...summary, totals: {} }]) {
+      const markdown = formatDeliverySummary(value, delivery);
+      assert.match(markdown, /incomplete|not verified/);
+      assert.match(markdown, /result data is incomplete or unverified/);
+      assert.doesNotMatch(markdown, /all executed scenarios passed|View dashboard results/);
+    }
+  });
+
+  it("does not invent a dashboard import when refresh is unconfigured or its outcome is missing", () => {
+    for (const importStatus of ["not_configured", "not_attempted", undefined]) {
+      assert.match(formatDeliverySummary(summary, { ...delivery, archiveStatus: "stored", importStatus }),
+        /Dashboard import: not confirmed/);
+    }
+  });
+
+  it("never exposes credentials or invents an exact link from invalid dashboard configuration", () => {
+    for (const dashboardRefreshUrl of ["$(EvalDashboardRefreshUrl)", "http://unsafe.test/api/refresh",
+      "https://user:SECRET@synthetic.azurewebsites.net/api/refresh", "https://synthetic.azurewebsites.net/api/refresh?sig=SECRET"]) {
+      const markdown = formatDeliverySummary(summary, { ...delivery, dashboardRefreshUrl, archiveStatus: "stored" });
+      assert.doesNotMatch(markdown, /View dashboard results\]|SECRET|unsafe\.test/);
+    }
+  });
+
+  it("runs the final-report CLI without results, a token, or publisher dependencies, even when summary generation failed", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "eval-delivery-"));
+    try {
+      const output = path.join(root, "eval-delivery.md");
+      const source = path.join(root, "eval-summary.json");
+      fs.writeFileSync(source, JSON.stringify(summary));
+      const env = { ...process.env, TF_BUILD: "True", EVAL_ARCHIVE_STATUS: "stored", EVAL_IMPORT_STATUS: "failed",
+        EVAL_STORAGE_CONFIGURED: "True", EVAL_DASHBOARD_REFRESH_URL: delivery.dashboardRefreshUrl,
+        EVAL_PUBLICATION_SKIP_REASON: "", SYSTEM_COLLECTIONURI: "https://dev.azure.com/azure-sdk/",
+        SYSTEM_TEAMPROJECT: delivery.project, SYSTEM_DEFINITIONID: delivery.definition, BUILD_BUILDID: delivery.build,
+        SYSTEM_JOBATTEMPT: delivery.attempt, SYSTEM_ACCESSTOKEN: "SYNTHETIC_TOKEN_MUST_NOT_APPEAR" };
+      delete env.NODE_TEST_CONTEXT;
+      const run = () => spawnSync(process.execPath, [path.resolve(import.meta.dirname, "../build-eval-summary.ts"),
+        "--delivery", "--output-path", output], { env, encoding: "utf8", timeout: 10_000 });
+      const result = run();
+      assert.ifError(result.error);
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, /task.uploadsummary/);
+      assert.match(fs.readFileSync(output, "utf8"), /Storage: stored/);
+      assert.doesNotMatch(result.stdout, /SYNTHETIC_TOKEN/);
+      const ado = result.stdout.match(/\[ADO tests\]\(([^)]+)\)/)?.[1];
+      assert.equal(decodeURIComponent(new URL(ado).pathname.split("/")[2]), delivery.project);
+      fs.unlinkSync(source);
+      const missing = run();
+      assert.equal(missing.status, 0, missing.stderr);
+      assert.match(fs.readFileSync(output, "utf8"), /Result data: not verified/);
+    } finally { fs.rmSync(root, { recursive: true, force: true }); }
+  });
+});
 
 // Convenience: build the summary and also write the markdown, returning both.
 function summarize(resultsRoot, outFile) {

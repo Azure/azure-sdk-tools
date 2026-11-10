@@ -11,6 +11,7 @@ export const MAX_ZIP_BYTES = 32 * 1024 * 1024;
 export const MAX_EXPANDED_BYTES = 128 * 1024 * 1024;
 const MAX_ENTRIES = 10_000;
 const MAX_TRIALS = 100_000;
+const TIMELINE_ID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 
 export class PublicationError extends Error {
     constructor(code, message) { super(message); this.code = code; }
@@ -26,6 +27,13 @@ function parseJson(text) {
 }
 
 export const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+
+function validateSourceLog(value) {
+    requireValue(value && typeof value === "object" && !Array.isArray(value) &&
+        typeof value.jobId === "string" && typeof value.taskId === "string" &&
+        TIMELINE_ID.test(value.jobId ?? "") && TIMELINE_ID.test(value.taskId ?? ""), "Invalid evaluation task identity.");
+    return { jobId: value.jobId, taskId: value.taskId };
+}
 
 export function isUtcTimestamp(value) {
     if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T.*Z$/.test(value)) return false;
@@ -84,11 +92,12 @@ export function validateSelectedAttempts(index) {
     for (const item of index.attempts) {
         requireValue(item && expected.delete(item.shard) && Number.isSafeInteger(item.attempt) && item.attempt > 0 &&
             item.directory === `eval-result-${item.shard}-${item.attempt}`, "Invalid shard directory or attempt.");
+        if (item.sourceLog !== undefined) validateSourceLog(item.sourceLog);
     }
     return [...index.attempts].sort((a, b) => a.shard.localeCompare(b.shard));
 }
 
-function trialsFrom(bytes, { onSkipped } = {}) {
+function trialsFrom(bytes, { onSkipped, sourceLog, attachSourceLog = false } = {}) {
     const trials = [];
     for (const [line] of Buffer.from(bytes).toString("utf8").matchAll(/[^\n]+/g)) {
         if (!line.trim()) continue;
@@ -101,6 +110,11 @@ function trialsFrom(bytes, { onSkipped } = {}) {
         }
         requireValue((item.type === undefined || item.type === "trial-result") && !item.experiment &&
             ["success", "error"].includes(item.status), "Only plain-eval trial records are supported.");
+        if (attachSourceLog) {
+            delete item.sourceLog;
+            if (sourceLog) item.sourceLog = validateSourceLog(sourceLog);
+        }
+        if (item.sourceLog !== undefined) validateSourceLog(item.sourceLog);
         const serialized = JSON.stringify(item);
         requireValue(Buffer.byteLength(serialized) <= 8 * 1024 * 1024, "A serialized JSONL record exceeds the size limit.");
         trials.push(serialized + "\n");
@@ -155,7 +169,9 @@ export async function prepareBundle({ indexPath, summaryPath, outputPath, manife
         // The current dashboard imports executed trials (success/error). Vally's
         // executor-incompatible skips remain in raw shard artifacts and JUnit/
         // Markdown, not fabricated as failed executions or silently lost counts.
-        const shardTrials = trialsFrom(await boundedFile(join(directory, "results.jsonl")), { onSkipped: () => { skipped++; } });
+        const shardTrials = trialsFrom(await boundedFile(join(directory, "results.jsonl")), {
+            onSkipped: () => { skipped++; }, sourceLog: item.sourceLog, attachSourceLog: true,
+        });
         requireValue(shardTrials.length === metadata.trials, "Shard trial count differs from its completion marker.");
         for (const text of shardTrials) {
             trialBytes += Buffer.byteLength(text); trials.push(text);

@@ -13,6 +13,7 @@ import { globFiles } from "./glob.ts";
 const MAX_RESULT_BYTES = 128 * 1024 * 1024;
 const MAX_METADATA_BYTES = 64 * 1024;
 const MISSING_RESULTS = "The invocation is missing trials, JUnit, or its final run-summary.";
+const TIMELINE_ID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 
 function validShard(name) {
     return typeof name === "string" && /^[A-Za-z0-9_][A-Za-z0-9_-]{0,199}$/.test(name);
@@ -42,6 +43,14 @@ export function latestShardAttempts(timeline, matrix) {
             if (!Number.isSafeInteger(record.attempt) || record.attempt < 1) throw new Error("Invalid timeline attempt.");
             const current = { attempt: record.attempt, complete: record.state === "completed" &&
                 ["succeeded", "succeededWithIssues", "failed"].includes(record.result) };
+            if (current.complete && TIMELINE_ID.test(record.id ?? "")) {
+                const tasks = timeline.records.filter(task => task?.type === "Task" && task.parentId === record.id &&
+                    task.attempt === record.attempt && task.state === "completed" &&
+                    [`vally eval ${entry.shardName}`, `vally eval ${entry.shardName} (authenticated)`].includes(task.name));
+                if (tasks.length === 1 && TIMELINE_ID.test(tasks[0].id ?? "")) {
+                    current.sourceLog = { jobId: record.id, taskId: tasks[0].id };
+                }
+            }
             const previous = attempts[entry.shardName];
             if (previous?.attempt === current.attempt && previous.complete !== current.complete) throw new Error("Ambiguous timeline attempt.");
             if (!previous || previous.attempt < current.attempt) attempts[entry.shardName] = current;
@@ -198,7 +207,9 @@ export function selectSummaryResults({ resultsRoot, selectedRoot, expectedShards
         seen.add(identity);
         // Artifact availability cannot override the authoritative timeline attempt.
         if (timeline?.[match[1]]?.attempt === attempt) {
-            selected.set(match[1], { shard: match[1], attempt, directory: entry.name });
+            const sourceLog = timeline[match[1]].sourceLog;
+            selected.set(match[1], { shard: match[1], attempt, directory: entry.name,
+                ...(TIMELINE_ID.test(sourceLog?.jobId ?? "") && TIMELINE_ID.test(sourceLog?.taskId ?? "") ? { sourceLog } : {}) });
         }
     }
     const status = [];

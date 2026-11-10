@@ -82,6 +82,22 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         Mock Start-Sleep { }
     }
 
+    It 'emits explicit pipeline outcomes for <Case> only when requested' -ForEach @(
+        @{ Case = 'confirmed import'; Archive = 'stored'; Import = 'confirmed'; UploadFails = $false; Status = 200; Configured = $true },
+        @{ Case = 'failed refresh'; Archive = 'stored'; Import = 'failed'; UploadFails = $false; Status = 403; Configured = $true },
+        @{ Case = 'missing refresh configuration'; Archive = 'stored'; Import = 'not_configured'; UploadFails = $false; Status = 200; Configured = $false },
+        @{ Case = 'failed upload'; Archive = 'failed'; Import = 'not_attempted'; UploadFails = $true; Status = 200; Configured = $true }
+    ) {
+        $f.arguments.AzurePipelines = $true
+        $f.uploadFails = $UploadFails; $f.showFails = $UploadFails; $f.status = $Status
+        if (!$Configured) { $f.arguments.DashboardRefreshUrl = '' }
+        if ($UploadFails) { { & $script:publisher @script:publishArgs } | Should -Throw '*publication_failed*' }
+        else { & $script:publisher @script:publishArgs }
+        $f.logs | Should -Contain "##vso[task.setvariable variable=EvalArchiveStatus]$Archive"
+        $f.logs | Should -Contain "##vso[task.setvariable variable=EvalImportStatus]$Import"
+        ($f.logs -join ' ') | Should -Not -Match 'PRIVATE_|SECRET_|Bearer'
+    }
+
     It 'uploads saved bytes through the logged-in CLI with create-only conditions and metadata' {
         & $script:publisher @script:publishArgs
         $upload = @($f.calls | Where-Object { $_[0] -eq 'storage' -and $_[2] -eq 'upload' })
@@ -100,6 +116,7 @@ Describe 'Azure CLI evaluation publication' -Tag 'UnitTest' {
         ($arguments | Where-Object { $_ -like 'storedat=*' }) | Should -Match 'Z$'
         $f.logs | Should -Contain "Result archive stored: $($f.name) (duplicate: False)."
         $f.logs | Should -Contain 'Dashboard refresh succeeded.'
+        ($f.logs -join ' ') | Should -Not -Match '##vso'
         Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
         (Get-FileHash $f.bundle).Hash.ToLowerInvariant() | Should -Be $f.hash
     }
@@ -483,6 +500,21 @@ setTimeout(()=>{server.closeAllConnections();server.close();},15000).unref();
 
 # These checks belong to Tools, not to the eng/common files copied into consumers.
 Describe 'Tools publisher CI integration' -Tag 'UnitTest' {
+    It 'always reports delivery after the grade gate while leaving publication policy in YAML' {
+        $summary = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../common/pipelines/templates/jobs/eval-summarize.yml') -Raw
+        $summary | Should -Match 'EvalArchiveStatus: not_started'
+        $summary | Should -Match 'EvalImportStatus: not_attempted'
+        $summary | Should -Match '(?s)PublishTestResults@2.*--delivery --output-path.*eval-delivery\.md.*Report final evaluation result delivery.*condition: always\(\)'
+        foreach ($reason in @('disabled', 'feature_branch', 'ineligible_run')) {
+            $summary | Should -Match "EVAL_PUBLICATION_SKIP_REASON: $reason"
+        }
+        $summary | Should -Match 'EVAL_DASHBOARD_REFRESH_URL: \$\(EvalDashboardRefreshUrl\)'
+        $summary | Should -Not -Match 'EVAL_.*TOKEN|azureSubscription:'
+        $publish = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../common/pipelines/templates/steps/eval-publish-results.yml') -Raw
+        $publish | Should -Match '-AzurePipelines'
+        $publish | Should -Match 'condition: and\(succeeded\(\), eq\(variables\[''EvalSummaryComplete''\], ''true''\)'
+    }
+
     It 'runs every shared Node suite and discovers the tagged publisher PowerShell suite' {
         $eng = Join-Path $PSScriptRoot '../..'
         $ci = Get-Content -LiteralPath (Join-Path $eng 'common-tests/ci.yml') -Raw

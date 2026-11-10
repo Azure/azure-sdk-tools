@@ -127,6 +127,34 @@ public class ServiceApiReadinessServiceTests
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
     }
 
+    [Test]
+    public async Task PopulatesEveryPackageInfoBeforeCheckingArmReadiness()
+    {
+        AddPackage($"{Package}-second", Metadata, Version);
+        var populatedPackages = new List<PackageInfo>();
+        var packageMetadataService = new Mock<IPackageApiMetadataService>(MockBehavior.Strict);
+        packageMetadataService.Setup(service => service.PopulateResourceTypesAsync(It.IsAny<PackageInfo>(), It.IsAny<CancellationToken>()))
+            .Returns<PackageInfo, CancellationToken>((package, cancellationToken) =>
+            {
+                Assert.That(ArmRequests(), Is.Empty, "Every package must be enriched before ARM validation starts.");
+                Assert.That(package.TypeSpecLocation?.Commit, Is.EqualTo(SpecCommit));
+                package.ResourceTypes = [new("Microsoft.Example", Version, "widgets")];
+                populatedPackages.Add(package);
+                return Task.FromResult(package);
+            });
+        var clients = new Mock<IHttpClientFactory>();
+        clients.Setup(factory => factory.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(_http);
+        var service = new ServiceApiReadinessService(_github.Object, _azure.Object, clients.Object, packageMetadataService.Object);
+
+        var response = await service.CheckAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed), response.Detail);
+        Assert.That(populatedPackages, Has.Count.EqualTo(2));
+        Assert.That(response.Packages, Is.EqualTo(populatedPackages));
+        Assert.That(response.Projects, Has.Count.EqualTo(2));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
     [TestCase(SdkLanguage.Java, "src/main/resources/META-INF", "*_metadata.json")]
     [TestCase(SdkLanguage.JavaScript, "", "metadata.json")]
     [TestCase(SdkLanguage.DotNet, "", "metadata.json")]
@@ -176,8 +204,58 @@ public class ServiceApiReadinessServiceTests
         _changedFiles.Clear();
         _changedFiles.Add($"{Package}/CHANGELOG.md");
         var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed), response.Detail);
         Assert.That(response.Projects.Single().Source.PackagePath, Is.EqualTo(Package));
+    }
+
+    [Test]
+    public async Task DiscoversAllPackageInfoObjectsBeforeReadingGenerationMetadata()
+    {
+        var secondPackage = $"{Package}-second";
+        AddPackage(secondPackage, Metadata, Version);
+        _rawFiles.Add(Key(_repository, Head, $"{secondPackage}/{Metadata}"));
+        _rawStatus = HttpStatusCode.Forbidden;
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
+        Assert.That(response.Packages.Select(package => package.DirectoryPath), Is.EquivalentTo(new[] { Package, secondPackage }));
+        Assert.That(response.Packages.Single(package => package.DirectoryPath == Package).ApiVersions.Single().Version, Is.EqualTo(Version));
+        Assert.That(response.Packages.All(package => package.TypeSpecLocation?.Commit == SpecCommit), Is.True);
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
+    public async Task KeepsGenerationMetadataAssociatedWithEachPackageDirectory()
+    {
+        var dataPackage = $"{Package}-data";
+        var invalidPackage = $"{Package}-invalid";
+        var dataProject = "specification/other/data-plane/Other";
+        var dataCommit = new string('d', 40);
+        AddPackage(dataPackage, Metadata, Version);
+        AddPackage(invalidPackage, Metadata, Version);
+        SetFile(_repository, Head, $"{dataPackage}/tsp-location.yaml", $"directory: {dataProject}\ncommit: {dataCommit}\nrepo: {SpecRepository}\n");
+        SetFile(SpecRepository, dataCommit, $"{dataProject}/tspconfig.yaml", DataConfiguration);
+        SetFile(_repository, Head, $"{invalidPackage}/tsp-location.yaml", $"directory: {Project}\ncommit: not-a-commit\nrepo: {SpecRepository}\n");
+
+        var response = await CheckAsync();
+        var management = response.Packages.Single(package => package.DirectoryPath == Package);
+        var data = response.Packages.Single(package => package.DirectoryPath == dataPackage);
+        var invalid = response.Packages.Single(package => package.DirectoryPath == invalidPackage);
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(management.SdkType, Is.EqualTo(SdkType.Management));
+        Assert.That(management.TypeSpecLocation?.Commit, Is.EqualTo(SpecCommit));
+        Assert.That(management.ApiVersions.Single().Version, Is.EqualTo(Version));
+        Assert.That(management.MetadataIssues, Is.Empty);
+        Assert.That(data.SdkType, Is.EqualTo(SdkType.Dataplane));
+        Assert.That(data.TypeSpecLocation?.Directory, Is.EqualTo(dataProject));
+        Assert.That(data.TypeSpecLocation?.Commit, Is.EqualTo(dataCommit));
+        Assert.That(data.MetadataIssues, Is.Empty);
+        Assert.That(invalid.SdkType, Is.EqualTo(SdkType.Unknown));
+        Assert.That(invalid.TypeSpecLocation, Is.Null);
+        Assert.That(invalid.MetadataIssues.Single(), Does.Contain(invalidPackage));
+        Assert.That(ArmRequests(), Is.Empty);
     }
 
     [TestCase(SdkLanguage.JavaScript, "metadata.json")]
@@ -201,6 +279,9 @@ public class ServiceApiReadinessServiceTests
 
         Assert.That(evidence, Is.SameAs(package));
         Assert.That(evidence.SdkType, Is.EqualTo(SdkType.Management));
+        Assert.That(evidence.TypeSpecLocation?.Directory, Is.EqualTo(Project));
+        Assert.That(evidence.TypeSpecLocation?.Commit, Is.EqualTo(SpecCommit));
+        Assert.That(evidence.TypeSpecLocation?.Repository, Is.EqualTo(SpecRepository));
         Assert.That(evidence.MetadataIssues, Is.Empty);
         Assert.That(evidence.GenerationSources, Has.Length.EqualTo(2));
         Assert.That(evidence.GenerationSources.Select(source => source.PackagePath), Is.All.EqualTo(Package));
@@ -239,6 +320,7 @@ public class ServiceApiReadinessServiceTests
 
         Assert.That(result, Is.SameAs(package));
         Assert.That(result.PackageName, Is.EqualTo("local-package"));
+        Assert.That(result.TypeSpecLocation?.Commit, Is.EqualTo(SpecCommit));
         Assert.That(result.ApiVersions.Length, Is.EqualTo(scalarVersion ? 1 : 2));
         Assert.That(result.ResourceTypes.Select(type => type.Namespace), Is.EquivalentTo(new[] { "Microsoft.Example", "Microsoft.Other" }));
         Assert.That(result.ResourceTypes.All(type => type.ApiVersion == Version), Is.True);

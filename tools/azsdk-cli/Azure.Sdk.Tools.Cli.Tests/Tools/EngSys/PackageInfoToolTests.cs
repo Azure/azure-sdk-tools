@@ -112,6 +112,7 @@ public class PackageInfoToolTests
         _package.SdkType = SdkType.Management;
         _package.GenerationSources = [new() { PackagePath = "sdk/example/arm-example", ApiVersion = "2025-01-01", ExpectedNamespace = "Microsoft.Compute" }];
         _package.MetadataIssues = ["A second generation source is unavailable."];
+        _package.TypeSpecLocation = new("specification/compute/Compute", new string('a', 40), "Azure/azure-rest-api-specs");
 
         var response = await Invoke("--package-path", _directory.DirectoryPath, "--output", "json");
         using var json = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Json).Format(response));
@@ -123,6 +124,9 @@ public class PackageInfoToolTests
         Assert.That(package.GetProperty("SdkType").GetString(), Is.EqualTo("mgmt"));
         Assert.That(package.GetProperty("GenerationSources")[0].GetProperty("expectedNamespace").GetString(), Is.EqualTo("Microsoft.Compute"));
         Assert.That(package.GetProperty("MetadataIssues").Deserialize<string[]>(), Is.EqualTo(_package.MetadataIssues));
+        Assert.That(package.GetProperty("TypeSpecLocation").GetProperty("Directory").GetString(), Is.EqualTo(_package.TypeSpecLocation.Directory));
+        Assert.That(package.GetProperty("TypeSpecLocation").GetProperty("Commit").GetString(), Is.EqualTo(_package.TypeSpecLocation.Commit));
+        Assert.That(package.GetProperty("TypeSpecLocation").GetProperty("Repository").GetString(), Is.EqualTo(_package.TypeSpecLocation.Repository));
     }
 
     [Test]

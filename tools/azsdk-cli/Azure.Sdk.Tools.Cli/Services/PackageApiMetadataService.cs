@@ -21,22 +21,22 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(ct);
         budget.CancelAfter(EvidenceTimeout);
         ct = budget.Token;
-        var metadata = await ReadLocalGenerationEvidenceAsync(package, ct);
-        if (metadata.SdkType == SdkType.Dataplane)
+        package = await ReadLocalGenerationEvidenceAsync(package, ct);
+        if (package.SdkType == SdkType.Dataplane)
         {
             package.ResourceTypes = [];
             return package;
         }
-        if (metadata.MetadataIssues.Length > 0 || metadata.GenerationSources.Length == 0)
+        if (package.MetadataIssues.Length > 0 || package.GenerationSources.Length == 0)
         {
-            throw new InvalidOperationException(string.Join(" ", metadata.MetadataIssues.DefaultIfEmpty("Package generation metadata is unavailable.")));
+            throw new InvalidOperationException(string.Join(" ", package.MetadataIssues.DefaultIfEmpty("Package generation metadata is unavailable.")));
         }
-        var result = await PopulateResourceTypesAsync(metadata, ct);
-        if (result.MetadataIssues.Length > 0)
+        package = await PopulateResourceTypesAsync(package, ct);
+        if (package.MetadataIssues.Length > 0)
         {
-            throw new InvalidOperationException(string.Join(" ", result.MetadataIssues));
+            throw new InvalidOperationException(string.Join(" ", package.MetadataIssues));
         }
-        return result;
+        return package;
     }
 
     public Task<PackageInfo> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)

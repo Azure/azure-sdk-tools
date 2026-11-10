@@ -104,7 +104,8 @@ azsdk eng package-info --package-path <package-root> --include-resource-types --
 ```
 
 This returns the same `PackageInfo`, with `ApiVersions` and `ResourceTypes`.
-The same package also carries `GenerationSources` and `MetadataIssues`; its
+The same package also carries the validated `TypeSpecLocation` (directory,
+repository, and commit), `GenerationSources`, and `MetadataIssues`; its
 existing `SdkType` identifies management (`mgmt`), data plane (`client`), or
 unknown. Per-package generation and enrichment operations return `PackageInfo`
 directly, not a second result model containing a package.
@@ -252,11 +253,20 @@ The evidence flow is:
 4. `ReadTenantProviderAsync` reads ARM metadata once per provider namespace.
 5. Compare each project's exact version and aggregate the four-state result.
 
-Generation discovery returns each package as `PackageInfo`, with
-`GenerationSources`, `MetadataIssues`, and the existing `SdkType` plane information.
-The private location-reading result still keeps `Location`, `Plane`, and `Issues`
-together. Only PR-wide discovery uses a batch result, because a PR can affect
-several packages and have discovery issues not attributable to a known package.
+Readiness processes packages in separate stages:
+
+1. Identify package directories and create one `PackageInfo` for each directory.
+2. Populate those objects with validated `TypeSpecLocation`, `SdkType`, API
+  versions, generation sources, and metadata issues.
+3. Enrich the same package objects with pinned specification resource types.
+4. Validate readiness from the enriched packages, after all enrichment completes.
+
+There are no parallel per-package location, plane, or issue lists, and no separate
+location/plane result model. Only PR-wide discovery uses a batch result, because
+a PR can affect several packages and have discovery issues not attributable to a
+known package. Remote PR checks read files at the captured head without checking
+out or executing PR contents. Local checks use the same package-population logic
+with local SDK file reads.
 
 `IPackageApiMetadataService` is the metadata boundary for both package inspection
 and readiness. It exposes local generation evidence, resource enrichment, and

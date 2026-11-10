@@ -50,16 +50,24 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 return result;
             }
             var language = SdkLanguageHelpers.GetLanguageForRepo(repository);
-            var metadataHelper = new SdkPackageMetadataHelper(_http, token);
+            var sdkPackageMetadataHelper = new SdkPackageMetadataHelper(_http, token);
             var snapshot = new SdkPackageMetadataHelper.SdkSnapshot(result.HeadRepository, result.HeadSha, language,
                 Text(pr["base"]?["repo"]?["full_name"]), Text(pr["base"]?["sha"]));
-            var evidence = await metadataHelper.ReadGenerationEvidenceAsync(prPath, snapshot, ct);
-            result.Packages.AddRange(evidence.Packages);
-            if (!HasValidationEvidence(evidence.Packages, evidence.Issues, result))
+            var discovery = await sdkPackageMetadataHelper.DiscoverPackagesAsync(prPath, snapshot, ct);
+            result.Packages.AddRange(discovery.Packages);
+            foreach (var package in result.Packages)
+            {
+                if (package.MetadataIssues.Length == 0)
+                {
+                    await sdkPackageMetadataHelper.PopulateGenerationMetadataAsync(package, snapshot, ct);
+                }
+            }
+            if (!HasValidationEvidence(result.Packages, discovery.Issues, result))
             {
                 return result;
             }
-            await ValidateProjectsAsync(evidence.Packages, result, ct);
+            await PopulatePackageResourceTypesAsync(result, ct);
+            await ValidatePackagesAsync(result.Packages, result, ct);
             SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -80,13 +88,14 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         ct = budget.Token;
         try
         {
-            var info = await packageMetadataService.ReadLocalGenerationEvidenceAsync(package, ct);
-            result.Packages = [info];
-            if (!HasValidationEvidence([info], [], result))
+            package = await packageMetadataService.ReadLocalGenerationEvidenceAsync(package, ct);
+            result.Packages = [package];
+            if (!HasValidationEvidence(result.Packages, [], result))
             {
                 return result;
             }
-            await ValidateProjectsAsync([info], result, ct);
+            await PopulatePackageResourceTypesAsync(result, ct);
+            await ValidatePackagesAsync(result.Packages, result, ct);
             SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -131,20 +140,18 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         return true;
     }
 
-    private async Task ValidateProjectsAsync(IReadOnlyList<PackageInfo> packages, ServiceApiReadinessResponse result, CancellationToken ct)
+    private async Task PopulatePackageResourceTypesAsync(ServiceApiReadinessResponse result, CancellationToken ct)
     {
-        // Cache failed lookup tasks too, so projects do not retry the same ARM failure.
-        var providers = new Dictionary<string, Task<JsonNode?>>(StringComparer.OrdinalIgnoreCase);
-        TokenCredential? credential = null;
-        foreach (var package in packages)
+        for (var index = 0; index < result.Packages.Count; index++)
         {
+            var package = result.Packages[index];
             ct.ThrowIfCancellationRequested();
             var sources = package.GenerationSources;
             PackageInfo populatedPackage;
             try
             {
                 populatedPackage = await packageMetadataService.PopulateResourceTypesAsync(package, ct);
-                result.Packages[result.Packages.IndexOf(package)] = populatedPackage;
+                result.Packages[index] = populatedPackage;
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
@@ -157,16 +164,33 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 }));
                 continue;
             }
-            foreach (var source in populatedPackage.GenerationSources)
+            result.Projects.AddRange(populatedPackage.GenerationSources.Select(source => new ServiceApiReadinessProject
             {
-                var project = new ServiceApiReadinessProject { Source = source, Namespace = source.ExpectedNamespace };
-                result.Projects.Add(project);
-                if (populatedPackage.MetadataIssues.Length > 0)
-                {
-                    project.Detail = $"Missing or unresolved: {string.Join(", ", populatedPackage.MetadataIssues)}.";
-                    continue;
-                }
-                var resourceTypes = populatedPackage.ResourceTypes.Where(type => type.Namespace.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == source.ApiVersion)
+                Source = source,
+                Namespace = source.ExpectedNamespace,
+                Detail = populatedPackage.MetadataIssues.Length > 0
+                    ? $"Missing or unresolved: {string.Join(", ", populatedPackage.MetadataIssues)}." : ""
+            }));
+        }
+    }
+
+    private async Task ValidatePackagesAsync(IReadOnlyList<PackageInfo> packages, ServiceApiReadinessResponse result, CancellationToken ct)
+    {
+        // Cache failed lookup tasks too, so projects do not retry the same ARM failure.
+        var providers = new Dictionary<string, Task<JsonNode?>>(StringComparer.OrdinalIgnoreCase);
+        TokenCredential? credential = null;
+        foreach (var package in packages)
+        {
+            if (package.MetadataIssues.Length > 0)
+            {
+                continue;
+            }
+            foreach (var project in result.Projects.Where(project => project.Source.PackagePath == package.DirectoryPath &&
+                project.ReadinessStatus != ServiceApiReadinessResponse.Error))
+            {
+                ct.ThrowIfCancellationRequested();
+                var source = project.Source;
+                var resourceTypes = package.ResourceTypes.Where(type => type.Namespace.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == source.ApiVersion)
                     .Select(type => type.ResourceType).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 try
                 {

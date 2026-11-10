@@ -46,6 +46,10 @@ public class PackageInfo
     [JsonPropertyName("MetadataIssues")]
     public string[] MetadataIssues { get; set; } = [];
 
+    [JsonPropertyName("TypeSpecLocation")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public TypeSpecLocation? TypeSpecLocation { get; set; }
+
     /// <summary>
     /// Directory path relative to repo root (e.g., "sdk/storage/Azure.Storage.Blobs").
     /// </summary>

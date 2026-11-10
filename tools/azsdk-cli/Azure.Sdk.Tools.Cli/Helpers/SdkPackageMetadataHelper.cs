@@ -19,9 +19,11 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
     private const string GenerationLocationFile = "tsp-location.yaml";
     private readonly Dictionary<(string Repository, string Commit, string Directory), Task<string?>> _generationLocations = [];
     internal readonly record struct SdkSnapshot(string Repository, string HeadSha, SdkLanguage Language, string BaseRepository, string BaseSha, PackageInfo? LocalPackage = null);
-    private sealed record GenerationLocation(string Directory, string CommitSha, string Repository);
-    private sealed record GenerationLocationEvidence(GenerationLocation? Location, string Plane, List<string> Issues);
-    internal sealed record PackageDiscoveryResult(IReadOnlyList<PackageInfo> Packages, IReadOnlyList<string> Issues);
+    internal sealed class PackageDiscoveryResult(IReadOnlyList<PackageInfo> packages, IReadOnlyList<string> issues)
+    {
+        public IReadOnlyList<PackageInfo> Packages { get; } = packages;
+        public IReadOnlyList<string> Issues { get; } = issues;
+    }
 
     public async Task<PackageInfo> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
     {
@@ -34,11 +36,10 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         var relativePath = string.IsNullOrEmpty(package.RepoRoot) ? Path.GetFileName(path) : Path.GetRelativePath(package.RepoRoot, path).Replace('\\', '/');
         package.DirectoryPath = relativePath;
         var sdk = new SdkSnapshot("", "", package.Language, "", "", package);
-        return await ReadPackageGenerationEvidenceAsync(relativePath, true, sdk, ct)
-            ?? throw new InvalidOperationException("The selected local SDK package is unavailable.");
+        return await PopulateGenerationMetadataAsync(package, sdk, ct);
     }
 
-    internal async Task<PackageDiscoveryResult> ReadGenerationEvidenceAsync(
+    internal async Task<PackageDiscoveryResult> DiscoverPackagesAsync(
         string prPath, SdkSnapshot sdk, CancellationToken ct)
     {
         var changedPackages = await GetChangedPackagesAsync(prPath, sdk, ct);
@@ -46,61 +47,46 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         {
             return new([], ["The changed-file listing reached GitHub's 3000-file limit; package discovery is incomplete."]);
         }
-        return await ReadGenerationSourcesAsync(changedPackages, sdk, ct);
-    }
-
-    private async Task<PackageDiscoveryResult> ReadGenerationSourcesAsync(
-        ChangedPackages changedPackages, SdkSnapshot sdk, CancellationToken ct)
-    {
         var packages = new List<PackageInfo>();
-        foreach (var package in changedPackages.Packages.Order(StringComparer.Ordinal))
+        foreach (var packagePath in changedPackages.Packages.Order(StringComparer.Ordinal))
         {
-            var evidence = await ReadPackageGenerationEvidenceAsync(package, changedPackages.KnownAtHead.Contains(package), sdk, ct);
-            if (evidence is not null)
+            // Deleted and renamed source packages still count if their directory survives at this head.
+            bool? exists = changedPackages.KnownAtHead.Contains(packagePath) ? true : await PackageExistsAtHeadAsync(packagePath, sdk, ct);
+            if (exists == false)
             {
-                packages.Add(evidence);
+                continue;
             }
+            var package = new PackageInfo { DirectoryPath = packagePath, Language = sdk.Language, SdkType = SdkType.Unknown };
+            if (exists is null)
+            {
+                package.MetadataIssues = [$"{packagePath}: SDK package directory could not be established at the checked head."];
+            }
+            packages.Add(package);
         }
         return new(packages, changedPackages.Issues);
     }
 
-    private async Task<PackageInfo?> ReadPackageGenerationEvidenceAsync(string package, bool knownAtHead, SdkSnapshot sdk, CancellationToken ct)
+    internal async Task<PackageInfo> PopulateGenerationMetadataAsync(PackageInfo package, SdkSnapshot sdk, CancellationToken ct)
     {
-        // Deleted and renamed source packages still count if their directory survives at this head.
-        bool? exists = knownAtHead ? true : await PackageExistsAtHeadAsync(package, sdk, ct);
-        if (exists == false)
+        package.GenerationSources = [];
+        package.MetadataIssues = [];
+        package.ResourceTypes = [];
+        package.ApiVersions = [];
+        package.TypeSpecLocation = null;
+        package.SpecProjectPath = null;
+        package.SdkType = SdkType.Unknown;
+        await PopulateTypeSpecLocationAsync(package, sdk, ct);
+        if (package.TypeSpecLocation is null || package.SdkType != SdkType.Management)
         {
-            return null;
+            return package;
         }
-        var info = sdk.LocalPackage ?? new PackageInfo { DirectoryPath = package, Language = sdk.Language };
-        info.GenerationSources = [];
-        info.MetadataIssues = [];
-        info.ResourceTypes = [];
-        info.SdkType = SdkType.Unknown;
-        if (exists is null)
-        {
-            info.MetadataIssues = [$"{package}: SDK package directory could not be established at the checked head."];
-            return info;
-        }
-        var evidence = await ReadGenerationLocationAsync(package, sdk, ct);
-        info.SpecProjectPath = evidence.Location?.Directory;
-        info.SdkType = evidence.Plane switch
-        {
-            ManagementPlane => SdkType.Management,
-            DataPlane => SdkType.Dataplane,
-            _ => SdkType.Unknown
-        };
-        if (evidence.Location is null || evidence.Plane != ManagementPlane)
-        {
-            info.MetadataIssues = [.. evidence.Issues];
-            return info;
-        }
-        var sources = await ReadPackageSourcesAsync(package, evidence.Location, sdk, evidence.Issues, ct);
-        info.GenerationSources = [.. sources];
-        info.MetadataIssues = [.. evidence.Issues];
-        info.ApiVersions = [.. sources.Select(source => new PackageApiVersion(source.ApiVersion, source.NamespaceIsInferred ? null : source.ExpectedNamespace))
+        var issues = package.MetadataIssues.ToList();
+        var sources = await ReadPackageSourcesAsync(package.DirectoryPath, package.TypeSpecLocation, sdk, issues, ct);
+        package.GenerationSources = [.. sources];
+        package.MetadataIssues = [.. issues];
+        package.ApiVersions = [.. sources.Select(source => new PackageApiVersion(source.ApiVersion, source.NamespaceIsInferred ? null : source.ExpectedNamespace))
             .Distinct().OrderBy(version => version.Namespace, StringComparer.Ordinal).ThenBy(version => version.Version, StringComparer.Ordinal)];
-        return info;
+        return package;
     }
 
     private async Task<bool?> PackageExistsAtHeadAsync(string package, SdkSnapshot sdk, CancellationToken ct)
@@ -110,16 +96,16 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         return listing switch { null => false, JsonArray => true, _ => null };
     }
 
-    private async Task<GenerationLocationEvidence> ReadGenerationLocationAsync(
-        string package, SdkSnapshot sdk, CancellationToken ct)
+    private async Task PopulateTypeSpecLocationAsync(PackageInfo package, SdkSnapshot sdk, CancellationToken ct)
     {
-        var path = $"{package}/{GenerationLocationFile}";
+        var path = $"{package.DirectoryPath}/{GenerationLocationFile}";
         var text = sdk.LocalPackage is null
-            ? await ReadGenerationLocationTextAsync(sdk.Repository, sdk.HeadSha, package, ct)
+            ? await ReadGenerationLocationTextAsync(sdk.Repository, sdk.HeadSha, package.DirectoryPath, ct)
             : await ReadLocalFileAsync(Path.Combine(sdk.LocalPackage.PackagePath, GenerationLocationFile), ct);
         if (text is null)
         {
-            return new(null, UnknownPlane, [$"{package}: missing SDK generation metadata ({path})."]);
+            package.MetadataIssues = [$"{package.DirectoryPath}: missing SDK generation metadata ({path})."];
+            return;
         }
         try
         {
@@ -130,16 +116,21 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             // Validate provenance before a data-plane hint can make the check not applicable.
             if (!IsSpecificationProjectDirectory(directory) || !GeneratedSdkMetadataHelper.IsCommitSha(commit) || repository is null)
             {
-                return new(null, UnknownPlane, [$"{package}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository."]);
+                package.MetadataIssues = [$"{package.DirectoryPath}: missing or invalid TypeSpec directory, pinned spec commit, or spec repository."];
+                return;
             }
-            var generationLocation = new GenerationLocation(directory, commit, repository);
-            var plane = await GetProjectPlaneAsync(generationLocation, ct);
-            return new(generationLocation, plane, plane == UnknownPlane
-                ? [$"{package}: API plane is missing or unresolved in the pinned project configuration."] : []);
+            package.TypeSpecLocation = new TypeSpecLocation(directory, commit, repository);
+            package.SpecProjectPath = directory;
+            var configuration = await ReadFileAsync(repository, commit, $"{directory}/tspconfig.yaml", ct);
+            package.SdkType = TypeSpecProject.ClassifySdkType(configuration ?? "");
+            if (package.SdkType == SdkType.Unknown)
+            {
+                package.MetadataIssues = [$"{package.DirectoryPath}: API plane is missing or unresolved in the pinned project configuration."];
+            }
         }
         catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or FormatException)
         {
-            return new(null, UnknownPlane, [$"{package}: invalid YAML generation metadata."]);
+            package.MetadataIssues = [$"{package.DirectoryPath}: invalid YAML generation metadata."];
         }
     }
 
@@ -148,17 +139,6 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         var segments = directory.Split('/');
         return segments.Length > 1 && segments[0] == "specification" &&
             segments.Skip(1).All(segment => !string.IsNullOrWhiteSpace(segment) && segment is not "." and not ".." && !segment.Contains('\\'));
-    }
-
-    private async Task<string> GetProjectPlaneAsync(GenerationLocation location, CancellationToken ct)
-    {
-        var configuration = await ReadFileAsync(location.Repository, location.CommitSha, $"{location.Directory}/tspconfig.yaml", ct);
-        return TypeSpecProject.ClassifySdkType(configuration ?? "") switch
-        {
-            SdkType.Management => ManagementPlane,
-            SdkType.Dataplane => DataPlane,
-            _ => UnknownPlane
-        };
     }
 
     private async Task<List<string>> ReadMetadataPathsAsync(string package, SdkSnapshot sdk, List<string> issues, CancellationToken ct)
@@ -216,7 +196,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
     }
 
     private async Task<List<PackageApiSource>> ReadPackageSourcesAsync(
-        string package, GenerationLocation location, SdkSnapshot sdk, List<string> issues, CancellationToken ct)
+        string package, TypeSpecLocation location, SdkSnapshot sdk, List<string> issues, CancellationToken ct)
     {
         var metadataPaths = await ReadMetadataPathsAsync(package, sdk, issues, ct);
         var sources = new List<PackageApiSource>();
@@ -238,7 +218,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
                 if (provider.Length == 0)
                 {
                     // Scalar apiVersion has no provider key; use the pinned TypeSpec namespace.
-                    inferredProvider ??= GeneratedSdkMetadataHelper.ProviderNamespace(await ReadFileAsync(location.Repository, location.CommitSha, $"{location.Directory}/main.tsp", ct) ?? "");
+                    inferredProvider ??= GeneratedSdkMetadataHelper.ProviderNamespace(await ReadFileAsync(location.Repository, location.Commit, $"{location.Directory}/main.tsp", ct) ?? "");
                     provider = inferredProvider;
                 }
                 if (!Regex.IsMatch(provider, @"\A[\w-]+(?:\.[\w-]+)+\z") ||
@@ -251,7 +231,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
                 {
                     PackagePath = package,
                     Configuration = $"{location.Directory}/tspconfig.yaml",
-                    CommitSha = location.CommitSha,
+                    CommitSha = location.Commit,
                     SpecRepository = location.Repository,
                     ExpectedNamespace = provider,
                     NamespaceIsInferred = entry.Key.Length == 0,
@@ -270,7 +250,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             .SelectMany(group => group.DistinctBy(source => source.NamespaceIsInferred)).ToList();
     }
 
-    private static Dictionary<string, string> ReadPackageApiVersions(string package, string text, GenerationLocation location, List<string> issues)
+    private static Dictionary<string, string> ReadPackageApiVersions(string package, string text, TypeSpecLocation location, List<string> issues)
     {
         try
         {
@@ -279,7 +259,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
                 issues.Add($"{package}: invalid SDK API-version metadata.");
                 return [];
             }
-            if (metadata["commit"] is not null && Text(metadata["commit"]) != location.CommitSha ||
+            if (metadata["commit"] is not null && Text(metadata["commit"]) != location.Commit ||
                 metadata["typespec_src"] is not null && Text(metadata["typespec_src"]) != location.Directory ||
                 metadata["repository_url"] is not null && NormalizeSpecRepository(Text(metadata["repository_url"])) != location.Repository)
             {

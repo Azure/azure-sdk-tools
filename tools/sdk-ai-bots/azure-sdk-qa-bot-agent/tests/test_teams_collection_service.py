@@ -134,13 +134,14 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("allowedChannels", json.dumps(template))
         triggers = template["resources"][0]["properties"]["accessControl"]["triggers"]
         self.assertEqual(triggers["sasAuthenticationPolicy"]["state"], "Disabled")
-        claims = template["variables"]["backfillPolicy"]["backfill"]["claims"]
+        policies = triggers["openAuthenticationPolicies"]["policies"]
+        self.assertNotIn("reference(", json.dumps(template["variables"]))
         developer_claims = template["variables"]["developerPolicy"]["developers"]["claims"]
         self.assertIn({"name": "roles", "value": "TeamsHistory.Invoke"}, developer_claims)
         self.assertIn({"name": "aud", "value": "[parameters('developerAppId')]"}, developer_claims)
         self.assertIn(
-            "[reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId]",
-            [claim["value"] for claim in claims],
+            "reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId",
+            policies,
         )
         for environment in ("dev", "test", "prod"):
             collection = json.loads(

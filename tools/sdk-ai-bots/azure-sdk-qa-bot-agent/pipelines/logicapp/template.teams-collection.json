@@ -11,16 +11,6 @@
     "developerAppId": { "type": "string" }
   },
   "variables": {
-    "backfillPolicy": {
-      "backfill": {
-        "type": "AAD",
-        "claims": [
-          { "name": "iss", "value": "[concat('https://sts.windows.net/', parameters('tenantId'), '/')]" },
-          { "name": "aud", "value": "https://management.core.windows.net" },
-          { "name": "oid", "value": "[reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId]" }
-        ]
-      }
-    },
     "developerPolicy": {
       "developers": {
         "type": "AAD",
@@ -55,7 +45,7 @@
           "triggers": {
             "sasAuthenticationPolicy": { "state": "Disabled" },
             "openAuthenticationPolicies": {
-              "policies": "[union(variables('backfillPolicy'), variables('developerPolicy'), if(empty(parameters('localDevPrincipalId')), json('{}'), variables('localDevPolicy')))]"
+              "policies": "[union(createObject('backfill', createObject('type', 'AAD', 'claims', createArray(createObject('name', 'iss', 'value', concat('https://sts.windows.net/', parameters('tenantId'), '/')), createObject('name', 'aud', 'value', 'https://management.core.windows.net'), createObject('name', 'oid', 'value', reference(parameters('serverIdentityResourceId'), '2018-11-30').principalId)))), variables('developerPolicy'), if(empty(parameters('localDevPrincipalId')), json('{}'), variables('localDevPolicy')))]"
             }
           }
         },

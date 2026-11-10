@@ -6,8 +6,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface IPackageApiMetadataService
 {
     Task<PackageInfo> GetPackageInfoAsync(PackageInfo package, CancellationToken ct = default);
-    Task<PackageGenerationEvidence> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default);
-    Task<PackageApiEvidence> PopulateResourceTypesAsync(PackageInfo package, IEnumerable<PackageApiSource> generationSources, CancellationToken ct = default);
+    Task<PackageInfo> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default);
+    Task<PackageInfo> PopulateResourceTypesAsync(PackageInfo package, CancellationToken ct = default);
 }
 
 public sealed class PackageApiMetadataService(IGitHubService github, IHttpClientFactory clients) : IPackageApiMetadataService
@@ -22,31 +22,31 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
         budget.CancelAfter(EvidenceTimeout);
         ct = budget.Token;
         var metadata = await ReadLocalGenerationEvidenceAsync(package, ct);
-        if (metadata.Plane == SdkPackageMetadataHelper.DataPlane)
+        if (metadata.SdkType == SdkType.Dataplane)
         {
             package.ResourceTypes = [];
             return package;
         }
-        if (metadata.Issues.Count > 0 || metadata.Sources.Count == 0)
+        if (metadata.MetadataIssues.Length > 0 || metadata.GenerationSources.Length == 0)
         {
-            throw new InvalidOperationException(string.Join(" ", metadata.Issues.DefaultIfEmpty("Package generation metadata is unavailable.")));
+            throw new InvalidOperationException(string.Join(" ", metadata.MetadataIssues.DefaultIfEmpty("Package generation metadata is unavailable.")));
         }
-        var evidence = await PopulateResourceTypesAsync(package, metadata.Sources, ct);
-        if (evidence.Issues.Count > 0)
+        var result = await PopulateResourceTypesAsync(metadata, ct);
+        if (result.MetadataIssues.Length > 0)
         {
-            throw new InvalidOperationException(string.Join(" ", evidence.Issues));
+            throw new InvalidOperationException(string.Join(" ", result.MetadataIssues));
         }
-        return evidence.Package;
+        return result;
     }
 
-    public Task<PackageGenerationEvidence> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
+    public Task<PackageInfo> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
     {
         return new SdkPackageMetadataHelper(_http, github.GetAuthToken(ct)).ReadLocalGenerationEvidenceAsync(package, ct);
     }
 
-    public async Task<PackageApiEvidence> PopulateResourceTypesAsync(PackageInfo package, IEnumerable<PackageApiSource> generationSources, CancellationToken ct = default)
+    public async Task<PackageInfo> PopulateResourceTypesAsync(PackageInfo package, CancellationToken ct = default)
     {
-        var sources = generationSources.ToArray();
+        var sources = package.GenerationSources;
         package.ApiVersions = [.. sources.Select(source => new PackageApiVersion(source.ApiVersion, source.NamespaceIsInferred ? null : source.ExpectedNamespace))
             .Distinct().OrderBy(version => version.Namespace, StringComparer.Ordinal).ThenBy(version => version.Version, StringComparer.Ordinal)];
         package.ResourceTypes = [];
@@ -96,6 +96,8 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
             .ThenBy(type => type.ApiVersion, StringComparer.Ordinal).ThenBy(type => type.ResourceType, StringComparer.Ordinal)];
         var distinctSources = resolvedSources.GroupBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase)
             .SelectMany(group => group.DistinctBy(source => source.ApiVersion)).ToList();
-        return new(package, distinctSources, [.. issues.Distinct(StringComparer.Ordinal)]);
+        package.GenerationSources = [.. distinctSources];
+        package.MetadataIssues = [.. issues.Distinct(StringComparer.Ordinal)];
+        return package;
     }
 }

@@ -21,8 +21,9 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
     internal readonly record struct SdkSnapshot(string Repository, string HeadSha, SdkLanguage Language, string BaseRepository, string BaseSha, PackageInfo? LocalPackage = null);
     private sealed record GenerationLocation(string Directory, string CommitSha, string Repository);
     private sealed record GenerationLocationEvidence(GenerationLocation? Location, string Plane, List<string> Issues);
+    internal sealed record PackageDiscoveryResult(IReadOnlyList<PackageInfo> Packages, IReadOnlyList<string> Issues);
 
-    public Task<PackageGenerationEvidence> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
+    public async Task<PackageInfo> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         var path = Path.GetFullPath(package.PackagePath);
@@ -33,50 +34,37 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         var relativePath = string.IsNullOrEmpty(package.RepoRoot) ? Path.GetFileName(path) : Path.GetRelativePath(package.RepoRoot, path).Replace('\\', '/');
         package.DirectoryPath = relativePath;
         var sdk = new SdkSnapshot("", "", package.Language, "", "", package);
-        return ReadGenerationSourcesAsync(new([relativePath], [relativePath], []), sdk, ct);
+        return await ReadPackageGenerationEvidenceAsync(relativePath, true, sdk, ct)
+            ?? throw new InvalidOperationException("The selected local SDK package is unavailable.");
     }
 
-    internal async Task<PackageGenerationEvidence> ReadGenerationEvidenceAsync(
+    internal async Task<PackageDiscoveryResult> ReadGenerationEvidenceAsync(
         string prPath, SdkSnapshot sdk, CancellationToken ct)
     {
         var changedPackages = await GetChangedPackagesAsync(prPath, sdk, ct);
         if (changedPackages is null)
         {
-            return new([], UnknownPlane, ["The changed-file listing reached GitHub's 3000-file limit; package discovery is incomplete."]);
+            return new([], ["The changed-file listing reached GitHub's 3000-file limit; package discovery is incomplete."]);
         }
         return await ReadGenerationSourcesAsync(changedPackages, sdk, ct);
     }
 
-    private async Task<PackageGenerationEvidence> ReadGenerationSourcesAsync(
+    private async Task<PackageDiscoveryResult> ReadGenerationSourcesAsync(
         ChangedPackages changedPackages, SdkSnapshot sdk, CancellationToken ct)
     {
-        var packageEvidence = new List<PackageGenerationEvidence>();
+        var packages = new List<PackageInfo>();
         foreach (var package in changedPackages.Packages.Order(StringComparer.Ordinal))
         {
             var evidence = await ReadPackageGenerationEvidenceAsync(package, changedPackages.KnownAtHead.Contains(package), sdk, ct);
             if (evidence is not null)
             {
-                packageEvidence.Add(evidence);
+                packages.Add(evidence);
             }
         }
-        var issues = changedPackages.Issues.Concat(packageEvidence.SelectMany(evidence => evidence.Issues)).ToList();
-        var planes = packageEvidence.Select(evidence => evidence.Plane).ToHashSet(StringComparer.Ordinal);
-        if (changedPackages.Issues.Count > 0)
-        {
-            planes.Add(UnknownPlane);
-        }
-        if (planes.Count > 1)
-        {
-            issues.Add("Mixed SDK API planes require separate checks.");
-        }
-        if (packageEvidence.Count == 0)
-        {
-            issues.Add("No currently changed SDK packages remain at the checked head.");
-        }
-        return new([.. packageEvidence.SelectMany(evidence => evidence.Sources)], planes.Count == 1 ? planes.Single() : UnknownPlane, issues);
+        return new(packages, changedPackages.Issues);
     }
 
-    private async Task<PackageGenerationEvidence?> ReadPackageGenerationEvidenceAsync(string package, bool knownAtHead, SdkSnapshot sdk, CancellationToken ct)
+    private async Task<PackageInfo?> ReadPackageGenerationEvidenceAsync(string package, bool knownAtHead, SdkSnapshot sdk, CancellationToken ct)
     {
         // Deleted and renamed source packages still count if their directory survives at this head.
         bool? exists = knownAtHead ? true : await PackageExistsAtHeadAsync(package, sdk, ct);
@@ -84,17 +72,35 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         {
             return null;
         }
+        var info = sdk.LocalPackage ?? new PackageInfo { DirectoryPath = package, Language = sdk.Language };
+        info.GenerationSources = [];
+        info.MetadataIssues = [];
+        info.ResourceTypes = [];
+        info.SdkType = SdkType.Unknown;
         if (exists is null)
         {
-            return new([], UnknownPlane, [$"{package}: SDK package directory could not be established at the checked head."]);
+            info.MetadataIssues = [$"{package}: SDK package directory could not be established at the checked head."];
+            return info;
         }
         var evidence = await ReadGenerationLocationAsync(package, sdk, ct);
+        info.SpecProjectPath = evidence.Location?.Directory;
+        info.SdkType = evidence.Plane switch
+        {
+            ManagementPlane => SdkType.Management,
+            DataPlane => SdkType.Dataplane,
+            _ => SdkType.Unknown
+        };
         if (evidence.Location is null || evidence.Plane != ManagementPlane)
         {
-            return new([], evidence.Plane, evidence.Issues);
+            info.MetadataIssues = [.. evidence.Issues];
+            return info;
         }
         var sources = await ReadPackageSourcesAsync(package, evidence.Location, sdk, evidence.Issues, ct);
-        return new(sources, evidence.Plane, evidence.Issues);
+        info.GenerationSources = [.. sources];
+        info.MetadataIssues = [.. evidence.Issues];
+        info.ApiVersions = [.. sources.Select(source => new PackageApiVersion(source.ApiVersion, source.NamespaceIsInferred ? null : source.ExpectedNamespace))
+            .Distinct().OrderBy(version => version.Namespace, StringComparer.Ordinal).ThenBy(version => version.Version, StringComparer.Ordinal)];
+        return info;
     }
 
     private async Task<bool?> PackageExistsAtHeadAsync(string package, SdkSnapshot sdk, CancellationToken ct)

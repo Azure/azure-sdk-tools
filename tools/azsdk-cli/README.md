@@ -104,6 +104,10 @@ azsdk eng package-info --package-path <package-root> --include-resource-types --
 ```
 
 This returns the same `PackageInfo`, with `ApiVersions` and `ResourceTypes`.
+The same package also carries `GenerationSources` and `MetadataIssues`; its
+existing `SdkType` identifies management (`mgmt`), data plane (`client`), or
+unknown. Per-package generation and enrichment operations return `PackageInfo`
+directly, not a second result model containing a package.
 Each resource-type entry has `Namespace`, `ApiVersion`, and `ResourceType`, so
 one package can represent several RPs and different versions without mixing
 their resource types. For example:
@@ -248,17 +252,18 @@ The evidence flow is:
 4. `ReadTenantProviderAsync` reads ARM metadata once per provider namespace.
 5. Compare each project's exact version and aggregate the four-state result.
 
-Generation discovery returns the shared `PackageGenerationEvidence` model containing
-`Sources`, `Plane`, and `Issues`. Its location-reading result also carries `Location`,
-`Plane`, and `Issues`, so the caller does not combine a tuple with a separate
-mutated issue list.
+Generation discovery returns each package as `PackageInfo`, with
+`GenerationSources`, `MetadataIssues`, and the existing `SdkType` plane information.
+The private location-reading result still keeps `Location`, `Plane`, and `Issues`
+together. Only PR-wide discovery uses a batch result, because a PR can affect
+several packages and have discovery issues not attributable to a known package.
 
 `IPackageApiMetadataService` is the metadata boundary for both package inspection
 and readiness. It exposes local generation evidence, resource enrichment, and
-the enriched package operation. Readiness requires the injected interface and
-does not construct a concrete fallback. Its `PackageApiEvidence` and
-`PackageGenerationEvidence` result classes live under Models rather than inside
-the implementation service/helper.
+the enriched package operation. Each per-package operation accepts and returns
+the package model itself. Readiness requires the injected interface and does
+not construct a concrete fallback. The per-package `PackageApiEvidence` and
+`PackageGenerationEvidence` wrappers are removed.
 
 `GeneratedSdkMetadataHelper.ParseTypeSpecLocation` parses location YAML text into
 the shared `TypeSpecLocation` model. Local language package metadata and pinned
@@ -310,7 +315,10 @@ resource creation, or role assignments are performed.
 The root JSON contains `contractVersion: 1`, `status`, `inputKind`, `headSha`, `headRepository`,
 `plane`, `checkedAt`, `detail`, `packages`, and `projects`. `packages` contains
 enriched `PackageInfo` objects; API versions remain associated with their RP and
-resource types remain associated with both RP and API version. PR mode uses
+resource types remain associated with both RP and API version. Generation
+provenance and metadata issues remain attached to that same package, including
+when generation evidence is incomplete and readiness returns Inconclusive.
+PR mode uses
 `inputKind: "pull-request"`; only that mode returns a captured PR head.
 Read `status`, not the CLI-wide
 `operation_status`; `response_error` may also appear.

@@ -109,6 +109,9 @@ public class PackageInfoToolTests
     {
         _package.ApiVersions = [new("2025-01-01", "Microsoft.Compute"), new("2026-01-01", "Microsoft.Network")];
         _package.ResourceTypes = [new("Microsoft.Compute", "2025-01-01", "virtualMachines"), new("Microsoft.Network", "2026-01-01", "virtualNetworks")];
+        _package.SdkType = SdkType.Management;
+        _package.GenerationSources = [new() { PackagePath = "sdk/example/arm-example", ApiVersion = "2025-01-01", ExpectedNamespace = "Microsoft.Compute" }];
+        _package.MetadataIssues = ["A second generation source is unavailable."];
 
         var response = await Invoke("--package-path", _directory.DirectoryPath, "--output", "json");
         using var json = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Json).Format(response));
@@ -117,6 +120,9 @@ public class PackageInfoToolTests
         Assert.That(response.ExitCode, Is.Zero);
         Assert.That(package.GetProperty("ApiVersions").GetArrayLength(), Is.EqualTo(2));
         Assert.That(package.GetProperty("ResourceTypes").Deserialize<PackageResourceType[]>(), Is.EqualTo(_package.ResourceTypes));
+        Assert.That(package.GetProperty("SdkType").GetString(), Is.EqualTo("mgmt"));
+        Assert.That(package.GetProperty("GenerationSources")[0].GetProperty("expectedNamespace").GetString(), Is.EqualTo("Microsoft.Compute"));
+        Assert.That(package.GetProperty("MetadataIssues").Deserialize<string[]>(), Is.EqualTo(_package.MetadataIssues));
     }
 
     [Test]

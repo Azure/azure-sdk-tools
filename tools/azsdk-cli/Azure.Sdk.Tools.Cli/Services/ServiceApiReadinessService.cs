@@ -54,11 +54,12 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             var snapshot = new SdkPackageMetadataHelper.SdkSnapshot(result.HeadRepository, result.HeadSha, language,
                 Text(pr["base"]?["repo"]?["full_name"]), Text(pr["base"]?["sha"]));
             var evidence = await metadataHelper.ReadGenerationEvidenceAsync(prPath, snapshot, ct);
-            if (!HasValidationEvidence(evidence, result))
+            result.Packages.AddRange(evidence.Packages);
+            if (!HasValidationEvidence(evidence.Packages, evidence.Issues, result))
             {
                 return result;
             }
-            await ValidateProjectsAsync(evidence.Sources, result, ct);
+            await ValidateProjectsAsync(evidence.Packages, result, ct);
             SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -79,12 +80,13 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         ct = budget.Token;
         try
         {
-            var evidence = await packageMetadataService.ReadLocalGenerationEvidenceAsync(package, ct);
-            if (!HasValidationEvidence(evidence, result))
+            var info = await packageMetadataService.ReadLocalGenerationEvidenceAsync(package, ct);
+            result.Packages = [info];
+            if (!HasValidationEvidence([info], [], result))
             {
                 return result;
             }
-            await ValidateProjectsAsync(evidence.Sources, result, ct);
+            await ValidateProjectsAsync([info], result, ct);
             SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -97,44 +99,56 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         return result;
     }
 
-    private static bool HasValidationEvidence(PackageGenerationEvidence evidence, ServiceApiReadinessResponse result)
+    private static bool HasValidationEvidence(IReadOnlyList<PackageInfo> packages, IReadOnlyList<string> discoveryIssues, ServiceApiReadinessResponse result)
     {
-        result.Plane = evidence.Plane;
-        if (evidence.Plane == SdkPackageMetadataHelper.DataPlane)
+        var issues = discoveryIssues.Concat(packages.SelectMany(package => package.MetadataIssues)).Distinct(StringComparer.Ordinal).ToList();
+        var planes = packages.Select(package => package.SdkType).ToHashSet();
+        if (discoveryIssues.Count > 0)
+        {
+            planes.Add(SdkType.Unknown);
+        }
+        if (planes.Count > 1)
+        {
+            issues.Add("Mixed SDK API planes require separate checks.");
+        }
+        result.Plane = planes.Count == 1 ? planes.Single() switch
+        {
+            SdkType.Management => SdkPackageMetadataHelper.ManagementPlane,
+            SdkType.Dataplane => SdkPackageMetadataHelper.DataPlane,
+            _ => SdkPackageMetadataHelper.UnknownPlane
+        } : SdkPackageMetadataHelper.UnknownPlane;
+        if (result.Plane == SdkPackageMetadataHelper.DataPlane && issues.Count == 0)
         {
             result.Detail = "Data-plane SDK; ARM provider metadata is not applicable.";
             return false;
         }
-        if (evidence.Issues.Count > 0 || evidence.Sources.Count == 0 || evidence.Plane == SdkPackageMetadataHelper.UnknownPlane)
+        if (issues.Count > 0 || packages.Count == 0 || packages.All(package => package.GenerationSources.Length == 0) || result.Plane == SdkPackageMetadataHelper.UnknownPlane)
         {
-            result.Detail = evidence.Issues.Count > 0 ? string.Join(" ", evidence.Issues) : "Authoritative SDK generation metadata or API plane is unavailable.";
+            result.Detail = issues.Count > 0 ? string.Join(" ", issues) : packages.Count == 0
+                ? "No currently changed SDK packages remain at the checked head." : "Authoritative SDK generation metadata or API plane is unavailable.";
             return false;
         }
         return true;
     }
 
-    private async Task ValidateProjectsAsync(IEnumerable<PackageApiSource> sources, ServiceApiReadinessResponse result, CancellationToken ct)
+    private async Task ValidateProjectsAsync(IReadOnlyList<PackageInfo> packages, ServiceApiReadinessResponse result, CancellationToken ct)
     {
         // Cache failed lookup tasks too, so projects do not retry the same ARM failure.
         var providers = new Dictionary<string, Task<JsonNode?>>(StringComparer.OrdinalIgnoreCase);
         TokenCredential? credential = null;
-        foreach (var group in sources.GroupBy(source => source.PackagePath, StringComparer.Ordinal))
+        foreach (var package in packages)
         {
             ct.ThrowIfCancellationRequested();
-            var package = result.Packages.SingleOrDefault(package => package.DirectoryPath.ToString() == group.Key);
-            if (package is null)
-            {
-                package = new PackageInfo { DirectoryPath = group.Key };
-                result.Packages.Add(package);
-            }
-            PackageApiEvidence evidence;
+            var sources = package.GenerationSources;
+            PackageInfo populatedPackage;
             try
             {
-                evidence = await packageMetadataService.PopulateResourceTypesAsync(package, group, ct);
+                populatedPackage = await packageMetadataService.PopulateResourceTypesAsync(package, ct);
+                result.Packages[result.Packages.IndexOf(package)] = populatedPackage;
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
-                result.Projects.AddRange(group.Select(source => new ServiceApiReadinessProject
+                result.Projects.AddRange(sources.Select(source => new ServiceApiReadinessProject
                 {
                     Source = source,
                     Namespace = source.ExpectedNamespace,
@@ -143,16 +157,16 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 }));
                 continue;
             }
-            foreach (var source in evidence.Sources)
+            foreach (var source in populatedPackage.GenerationSources)
             {
                 var project = new ServiceApiReadinessProject { Source = source, Namespace = source.ExpectedNamespace };
                 result.Projects.Add(project);
-                if (evidence.Issues.Count > 0)
+                if (populatedPackage.MetadataIssues.Length > 0)
                 {
-                    project.Detail = $"Missing or unresolved: {string.Join(", ", evidence.Issues)}.";
+                    project.Detail = $"Missing or unresolved: {string.Join(", ", populatedPackage.MetadataIssues)}.";
                     continue;
                 }
-                var resourceTypes = package.ResourceTypes.Where(type => type.Namespace.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == source.ApiVersion)
+                var resourceTypes = populatedPackage.ResourceTypes.Where(type => type.Namespace.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == source.ApiVersion)
                     .Select(type => type.ResourceType).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 try
                 {

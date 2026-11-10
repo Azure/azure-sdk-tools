@@ -40,6 +40,12 @@ public class PackageInfo
     [JsonPropertyName("ResourceTypes")]
     public PackageResourceType[] ResourceTypes { get; set; } = [];
 
+    [JsonPropertyName("GenerationSources")]
+    public PackageApiSource[] GenerationSources { get; set; } = [];
+
+    [JsonPropertyName("MetadataIssues")]
+    public string[] MetadataIssues { get; set; } = [];
+
     /// <summary>
     /// Directory path relative to repo root (e.g., "sdk/storage/Azure.Storage.Blobs").
     /// </summary>

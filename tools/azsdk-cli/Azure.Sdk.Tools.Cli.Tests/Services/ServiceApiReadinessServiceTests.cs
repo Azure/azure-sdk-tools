@@ -104,14 +104,16 @@ public class ServiceApiReadinessServiceTests
         var package = new PackageInfo
         {
             DirectoryPath = Package,
+            SdkType = SdkType.Management,
             ResourceTypes = [new("Microsoft.Example", Version, "widgets")]
         };
         var source = new PackageApiSource { PackagePath = Package, ApiVersion = Version, ExpectedNamespace = "Microsoft.Example" };
+        package.GenerationSources = [source];
         var metadata = new Mock<IPackageApiMetadataService>(MockBehavior.Strict);
         metadata.Setup(service => service.ReadLocalGenerationEvidenceAsync(package, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PackageGenerationEvidence([source], "management-plane", []));
-        metadata.Setup(service => service.PopulateResourceTypesAsync(package, It.IsAny<IEnumerable<PackageApiSource>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PackageApiEvidence(package, [source], []));
+            .ReturnsAsync(package);
+        metadata.Setup(service => service.PopulateResourceTypesAsync(package, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(package);
         var factory = new Mock<IHttpClientFactory>();
         factory.Setup(clients => clients.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(_http);
         var service = new ServiceApiReadinessService(_github.Object, _azure.Object, factory.Object, metadata.Object);
@@ -120,7 +122,7 @@ public class ServiceApiReadinessServiceTests
 
         Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         metadata.Verify(service => service.ReadLocalGenerationEvidenceAsync(package, It.IsAny<CancellationToken>()), Times.Once);
-        metadata.Verify(service => service.PopulateResourceTypesAsync(package, It.IsAny<IEnumerable<PackageApiSource>>(), It.IsAny<CancellationToken>()), Times.Once);
+        metadata.Verify(service => service.PopulateResourceTypesAsync(package, It.IsAny<CancellationToken>()), Times.Once);
         _github.Verify(service => service.GetAuthToken(It.IsAny<CancellationToken>()), Times.Never);
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
     }
@@ -197,10 +199,11 @@ public class ServiceApiReadinessServiceTests
 
         var evidence = await new SdkPackageMetadataHelper(_http, "github-test-token").ReadLocalGenerationEvidenceAsync(package, CancellationToken.None);
 
-        Assert.That(evidence.Plane, Is.EqualTo("management-plane"));
-        Assert.That(evidence.Issues, Is.Empty);
-        Assert.That(evidence.Sources, Has.Count.EqualTo(2));
-        Assert.That(evidence.Sources.Select(source => source.PackagePath), Is.All.EqualTo(Package));
+        Assert.That(evidence, Is.SameAs(package));
+        Assert.That(evidence.SdkType, Is.EqualTo(SdkType.Management));
+        Assert.That(evidence.MetadataIssues, Is.Empty);
+        Assert.That(evidence.GenerationSources, Has.Length.EqualTo(2));
+        Assert.That(evidence.GenerationSources.Select(source => source.PackagePath), Is.All.EqualTo(Package));
         Assert.That(_requests, Has.Count.EqualTo(1));
         Assert.That(Uri.UnescapeDataString(_requests.Single().Uri.AbsolutePath), Does.EndWith($"{Project}/tspconfig.yaml"));
         Assert.That(QueryHelpers.ParseQuery(_requests.Single().Uri.Query)["ref"].ToString(), Is.EqualTo(SpecCommit));
@@ -239,6 +242,8 @@ public class ServiceApiReadinessServiceTests
         Assert.That(result.ApiVersions.Length, Is.EqualTo(scalarVersion ? 1 : 2));
         Assert.That(result.ResourceTypes.Select(type => type.Namespace), Is.EquivalentTo(new[] { "Microsoft.Example", "Microsoft.Other" }));
         Assert.That(result.ResourceTypes.All(type => type.ApiVersion == Version), Is.True);
+        Assert.That(result.GenerationSources.Select(source => source.ExpectedNamespace), Is.EquivalentTo(new[] { "Microsoft.Example", "Microsoft.Other" }));
+        Assert.That(result.MetadataIssues, Is.Empty);
         Assert.That(ArmRequests(), Is.Empty);
         Assert.That(_pullRequestReads, Is.Zero);
     }
@@ -546,6 +551,25 @@ public class ServiceApiReadinessServiceTests
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
         Assert.That(response.Detail, Does.Contain("apiVersions"));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [TestCase("{}")]
+    [TestCase("{broken json")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\"2026-03-01\"]}}")]
+    public async Task IncompleteGenerationKeepsDiagnosticsOnPackageInfo(string metadata)
+    {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", metadata);
+
+        var response = await CheckAsync();
+        var package = response.Packages.Single();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(package.DirectoryPath.ToString(), Is.EqualTo(Package));
+        Assert.That(package.SdkType, Is.EqualTo(SdkType.Management));
+        Assert.That(package.GenerationSources, Is.Empty);
+        Assert.That(package.MetadataIssues, Is.Not.Empty);
+        Assert.That(package.MetadataIssues.All(issue => response.Detail.Contains(issue, StringComparison.Ordinal)), Is.True);
         Assert.That(ArmRequests(), Is.Empty);
     }
 

@@ -22,7 +22,7 @@ scoring:
 
 # Test cases
 stimuli:
-  - name: 004006-operation-moved-to-another-client-breaking-change-SpecInputs
+  - name: 004006-operation-moved-to-another-client-breaking-change-SpecInputs-go
     tags:
       editScope: SpecInputs
     prompt: |
@@ -30,7 +30,7 @@ stimuli:
       specification/widget/resource-manager/Microsoft.Widget/Widget against
       your current working directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
-      - customizationRequest: "resolve breaking change: in csharp, relocate was under EmployeeActions, but now under Employees."
+      - customizationRequest: "resolve Go sdk breaking change: Employees.relocate is moved from EmployeeArrangements to Employees."
       - tspProjectPath: use the exact absolute path returned by the shell
       - editScope: "SpecInputs"
 
@@ -59,4 +59,160 @@ stimuli:
       - type: file-contains
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: '@@clientLocation(Microsoft.Widget.Employees.relocate, "EmployeeActions", "csharp");'
+          value: '@@clientLocation(Microsoft.Widget.Employees.relocate, "EmployeeArrangements", "go");'
+
+  - name: 004006-operation-moved-to-another-client-breaking-change-SpecInputs-csharp
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve C# sdk breaking change: Employees.relocate is moved from EmployeeArrangements to Employees."
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@clientLocation(Microsoft.Widget.Employees.relocate, "EmployeeArrangements", "csharp");'
+
+  - name: 004006-operation-moved-to-another-client-breaking-change-SpecInputs-python
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve Python sdk breaking change: Employees.relocate is moved from EmployeeArrangements to Employees."
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@clientLocation(Microsoft.Widget.Employees.relocate, "EmployeeArrangements", "python");'
+
+  - name: 004006-operation-moved-to-another-client-breaking-change-SpecInputs-java
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve Java sdk breaking change: Employees.relocate is moved from EmployeeArrangements to Employees."
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@clientLocation(Microsoft.Widget.Employees.relocate, "EmployeeArrangements", "java");'
+
+  - name: 004006-operation-moved-to-another-client-breaking-change-SpecInputs-javascript
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve JavaScript sdk breaking change: Employees.relocate is moved from EmployeeArrangements to Employees."
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@clientLocation(Microsoft.Widget.Employees.relocate, "EmployeeArrangements", "javascript");'

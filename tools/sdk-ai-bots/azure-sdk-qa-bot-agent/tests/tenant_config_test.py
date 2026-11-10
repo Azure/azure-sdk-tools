@@ -9,12 +9,18 @@ from agent_framework import FileSkillsSource
 
 from config import tenant_config
 from config.tenant_config import (
+    SRC_AZURE_API_GUIDELINES,
+    SRC_AZURE_AVOCADO_DOCS,
     SRC_AZURE_MCP_SERVER_DOCS,
+    SRC_AZURE_OPENAPI_DIFF_DOCS,
     SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_DOCS_ENG,
     SRC_AZURE_SDK_FOR_JS_DOCS,
+    SRC_AZURE_SDK_GUIDELINES,
     SRC_STATIC_CPEX_DOCS,
+    SRC_TYPESPEC_AZURE_DOCS,
+    SRC_TYPESPEC_DOCS,
     TenantID,
     get_knowledge_source,
     get_tenant_config,
@@ -37,7 +43,7 @@ def _read_pr_review_skill() -> str:
 
 @pytest.mark.parametrize(
     "tenant_id",
-    [TenantID.API_SPEC_REVIEW_BOT],
+    [TenantID.API_STEWARDSHIP_BOARD_QA_BOT, TenantID.API_SPEC_REVIEW_BOT],
 )
 @pytest.mark.parametrize("service_type", [None, "data-plane"])
 def test_review_engineering_docs_keep_source_scope_without_title_restrictions(
@@ -109,12 +115,356 @@ def test_pr_review_preserves_required_access_links() -> None:
     ) in pr_review
 
 
+def test_pr_review_checks_lifecycle_before_diagnosing_blockers() -> None:
+    pr_review = _read_pr_review_skill()
+
+    assert (
+        "Confirm whether the PR is open, closed or merged; disclose if unknown"
+    ) in pr_review
+    assert "lead with that state rather than merge blockers" in pr_review
+    assert "continue only for unresolved needs in the user's request" in pr_review
+
+
+def test_pr_review_prioritizes_compatibility_diagnostics_and_baseline() -> None:
+    pr_review = _read_pr_review_skill()
+
+    assert (
+        "Read failed-check diagnostics (for Actions, `get_job_logs` with "
+        "`return_content=true`) before `get_files` or comments"
+    ) in pr_review
+    assert "affected field, actual compared refs/versions and supported remedy" in pr_review
+    assert "report baseline may differ from the PR target" in pr_review
+    assert "For PR review, failure troubleshooting or compatibility questions" in pr_review
+    assert "failure diagnosis, compatibility, review or merge-readiness requests" in pr_review
+    board = (
+        _AGENT_ROOT / "prompts" / "tenants" / "api_stewardship_board.md"
+    ).read_text(encoding="utf-8")
+    assert (
+        "Answer compatibility reviews with actual changed fields/constraints "
+        "and compared refs/versions from failed-check diagnostics"
+    ) in board
+
+
 def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
     config = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
     assert config is not None
     assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
         "search.ismatch('design*', 'title')"
     )
+
+
+def test_stewardship_tenant_uses_shared_agent_and_maintained_sources() -> None:
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+
+    assert config is not None
+    assert config.agent.name == "azure-sdk-chat-agent"
+    assert config.agent.name_config_key == "AI_FOUNDRY_AGENT_NAME"
+    assert config.display_name == "API Stewardship Board - General"
+    assert config.skill_name == "api-stewardship-board"
+    assert config.qa_guideline_files == ["tenants/api_stewardship_board.md"]
+    assert config.enable_routing
+    assert not config.enable_wiki_cross_document_pages
+    assert (
+        "Internal API modeling, documentation/SDK exposure, and service-side access boundaries"
+    ) in config.topics
+    assert (
+        "API deprecation, retirement, affected versions, and customer-notification requirements"
+    ) in config.topics
+    assert [source.name for source in config.sources] == [
+        SRC_AZURE_API_GUIDELINES,
+        SRC_TYPESPEC_DOCS,
+        SRC_TYPESPEC_AZURE_DOCS,
+        SRC_AZURE_SDK_GUIDELINES,
+        SRC_AZURE_SDK_DOCS_ENG,
+        SRC_AZURE_REST_API_SPECS_WIKI,
+        SRC_AZURE_REST_API_SPECS_DOCS,
+        SRC_AZURE_OPENAPI_DIFF_DOCS,
+        SRC_AZURE_AVOCADO_DOCS,
+        SRC_STATIC_CPEX_DOCS,
+    ]
+    assert SRC_AZURE_SDK_DOCS_ENG not in config.source_filter
+
+
+def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    skills = create_tenant_skills("azure-sdk-chat-agent")
+    skill = next(s for s in skills if s.frontmatter.name == "api-stewardship-board")
+
+    assert get_skill_name_for_tenant(TenantID.API_STEWARDSHIP_BOARD_QA_BOT) == (
+        "api-stewardship-board"
+    )
+    assert "[skill_tenant_id]: api_stewardship_board_qa_bot" in content
+    assert f"- {SRC_AZURE_AVOCADO_DOCS}:" in content
+    assert "[skill_guideline]" in content
+    assert skill.frontmatter.description == (
+        "Data-plane spec-to-SDK lifecycle: API modeling and REST design "
+        "(endpoints, LROs, service access boundaries); specification validation "
+        "and API Stewardship Board review "
+        "(readiness, scheduling, async reviews, Office Hours, signoff); "
+        "SDK design, clients, library/package naming and approval, "
+        "documentation and SDK exposure; preview/GA versioning, compatibility, "
+        "breaking changes, "
+        "deprecation, retirement and customer notification."
+    )
+    assert "Give evidence-backed advice, not Board decisions" in content
+    assert "Use `typespec` for detailed authoring" not in content
+    assert "`api-spec-review` for validator-specific diagnosis" not in content
+    assert "`sdk-onboarding` for release-plan lifecycle" not in content
+    assert "repair infrastructure or prescribe resource-specific permission changes" in content
+    assert "Use maintained Board guidance" in content
+    assert "async reviews, materials, lead times, Office Hours and support" in content
+
+
+def test_stewardship_specialist_routes_are_injected_from_tenant_config() -> None:
+    from services.chat_service import ChatService
+
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    assert config is not None
+    message = ChatService()._build_tenant_system_message(
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT
+    )
+    scope, skill_content = message.split(
+        "\n[skill] name=api-stewardship-board ", 1
+    )
+    assert "[tenant_scope]" in scope
+    for exclusion in (
+        "Detailed TypeSpec authoring or emitter failures — use the TypeSpec skill",
+        "Release-plan lifecycle — use the SDK Onboarding skill",
+    ):
+        assert exclusion in config.exclusions
+        assert f"- {exclusion}" in scope
+        assert exclusion not in skill_content
+
+
+def test_stewardship_does_not_direct_pr_questions_to_api_spec_review() -> None:
+    from services.chat_service import ChatService
+
+    message = ChatService()._build_tenant_system_message(
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT
+    )
+
+    assert "API Spec Review skill" not in message
+    assert "`api-spec-review`" not in message
+
+
+def test_stewardship_action_limits_are_not_routing_exclusions() -> None:
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    instruction = (
+        _AGENT_ROOT / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert not any(
+        "Performing approvals" in exclusion for exclusion in config.exclusions
+    )
+    assert "All your tools are read-only" in instruction
+    assert "merge, approve, or modify action" in instruction
+
+
+def test_stewardship_cpex_policy_is_available_without_routing() -> None:
+    from tools.knowledge_tools import _resolve_source_filters
+
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    filters = _resolve_source_filters(
+        [source.name for source in config.sources],
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT.value,
+        "data-plane",
+    )
+
+    assert filters[SRC_STATIC_CPEX_DOCS] == (
+        f"context_id eq '{SRC_STATIC_CPEX_DOCS}'"
+        " and (service_type eq 'data-plane' or service_type eq null)"
+    )
+    assert f"- {SRC_STATIC_CPEX_DOCS}:" in build_skill_content(
+        TenantID.API_STEWARDSHIP_BOARD_QA_BOT
+    )
+
+
+def test_stewardship_guideline_follows_a_request_to_answer_workflow() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    guideline = content.split("[skill_guideline]\n", 1)[1]
+    assert [line for line in guideline.splitlines() if line.startswith("## ")] == [
+        "## Scope",
+        "## 1. Understand the request",
+        "## 2. Gather evidence",
+        "## 3. Apply the relevant policy",
+        "## 4. Recommend the next action",
+    ]
+    context = guideline.split("## 1. Understand the request\n", 1)[1].split("\n## ", 1)[0]
+    evidence = guideline.split("## 2. Gather evidence\n", 1)[1].split("\n## ", 1)[0]
+    policy = guideline.split("## 3. Apply the relevant policy\n", 1)[1].split("\n## ", 1)[0]
+    answer = guideline.split("## 4. Recommend the next action\n", 1)[1]
+
+    assert "latest confirmed thread resolution" in context
+    assert "distinguish proposals from decisions and preserve withdrawals" in context
+    assert "Load `pr-review`" in evidence
+    assert "Retrieve maintained guidance for the unresolved question" in evidence
+    assert "As applicable:" in policy
+    assert (
+        "REST signoff, breaking-change exceptions, SDK/API review and package-name approval separate"
+    ) in policy
+    assert "live `.github/protected-labels.yml`" in policy
+    assert "SDK/documentation visibility from service authorization" in policy
+    assert "preview classification from policy and availability, not AFEC alone" in policy
+    assert "retirement, verify affected versions, applicable notice requirements and approval evidence" in policy
+    assert "do not generalize prior approvals" in policy
+    assert "next useful action from current evidence, rather than restart completed review work" in answer
+    assert "Use maintained Board guidance" in answer
+    assert "Do not send users back to this channel to repeat their question" in answer
+
+
+def test_stewardship_pr_guidance_delegates_shared_rules_and_preserves_board_policy() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    instruction = (
+        Path(__file__).parents[1] / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert "Load `pr-review`" in content
+    assert "verify blockers against live current-head state" in content
+    assert "omit review checklists and repeated conclusions or links" in content
+    assert "load `pr-review` before other tools" in instruction
+    assert _read_pr_review_skill().startswith("---\nname: pr-review\n")
+    assert "## Answer Style" not in content
+    assert "up to 3 short bullets" not in content
+    assert "Brevity limits the answer, not the investigation" not in content
+    assert "All your tools are read-only" in instruction
+    assert "Design findings, Board signoff and merge readiness are distinct signals" not in content
+    assert "next useful action from current evidence, rather than restart completed review work" in content
+    assert "guidance for the unresolved question identified from the PR or request" in content
+    assert "live `.github/protected-labels.yml`" in content
+    assert "approval does not transfer to another PR" in content
+    assert "published-version edits from new versions, preview from GA" in content
+    assert "REST from SDK compatibility" in content
+    assert "Do not send users back to this channel to repeat their question" in content
+    guideline = content.split("[skill_guideline]", 1)[1]
+    assert len(guideline.split()) <= 300
+
+
+def test_stewardship_check_support_uses_shared_failure_diagnosis() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+
+    assert "check diagnosis" in content
+    assert "**Check failures**" not in content
+    pr_review = _read_pr_review_skill()
+    assert "Read the failed check's logs/output" in pr_review
+    assert "then search the KB using the error and check context" in pr_review
+    assert "Propose an evidence-backed fix or concrete next step" in pr_review
+    assert "state any evidence gaps" in pr_review
+    assert "`get_comments`" in pr_review
+
+
+def test_stewardship_blocker_diagnosis_uses_shared_merge_summary_policy() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    pr_review = _read_pr_review_skill()
+
+    assert '"Next Steps to Merge"' not in content
+    assert "Load `pr-review`" in content
+    assert '"Next Steps to Merge"' in pr_review
+    assert "current-head evidence" in pr_review
+    assert "failed or missing required checks are blockers" in pr_review
+    assert "optional failures are informational" in pr_review
+    assert "unknown requirement status remain evidence gaps" in pr_review
+
+
+def test_stewardship_skill_requires_explicit_service_type_for_scoped_search() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+
+    assert 'service_type="data-plane"' in content
+    assert 'service_type="management-plane"' in content
+    assert "including the initial search" in content
+    assert "leave it unset when ambiguous or general" in content
+    assert "`wiki_search` has no service-type filter" in content
+
+
+def test_stewardship_scope_keeps_arm_referral_separate_from_search_details() -> None:
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    scope = content.split("## Scope\n", 1)[1].split("\n## ", 1)[0]
+
+    assert len(scope.split()) <= 75
+    assert "data-plane API design" in scope
+    assert "Direct ARM/management-plane reviews" in scope
+    assert "search_knowledge_base" not in scope
+
+
+def test_stewardship_routes_arm_reviews_to_arm_office_hours() -> None:
+    config = get_tenant_config(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    assert config is not None
+    content = build_skill_content(TenantID.API_STEWARDSHIP_BOARD_QA_BOT)
+    skill = next(
+        s for s in create_tenant_skills("azure-sdk-chat-agent")
+        if s.frontmatter.name == "api-stewardship-board"
+    )
+    arm_office_hours = "https://armwiki.azurewebsites.net/introduction/office_hours.html"
+
+    assert "Data-plane API design" in config.scope
+    assert any(arm_office_hours in exclusion for exclusion in config.exclusions)
+    assert f"[ARM Office Hours]({arm_office_hours})" in content
+    assert "stop this Board review workflow" in content
+    assert "ARM Office Hours" not in skill.frontmatter.description
+
+
+@pytest.mark.parametrize(
+    ("source_name", "title", "expected_url"),
+    [
+        (
+            SRC_AZURE_AVOCADO_DOCS,
+            "README.md",
+            "https://github.com/Azure/avocado/blob/main/README.md",
+        ),
+        (
+            SRC_AZURE_REST_API_SPECS_DOCS,
+            ".github#workflows#src#package-name-approval#PACKAGE-NAME-REVIEW-PROCESS.md",
+            "https://github.com/Azure/azure-rest-api-specs/blob/main/"
+            ".github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md",
+        ),
+        (
+            SRC_AZURE_REST_API_SPECS_DOCS,
+            "documentation#ci-fix.md",
+            "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/ci-fix.md",
+        ),
+        (
+            SRC_AZURE_SDK_DOCS_ENG,
+            "docs#support#support.md",
+            "https://eng.ms/docs/products/azure-developer-experience/support/support",
+        ),
+    ],
+)
+def test_stewardship_document_citations(
+    source_name: str, title: str, expected_url: str
+) -> None:
+    source = get_knowledge_source(source_name)
+
+    assert source is not None
+    assert source.get_link(title) == expected_url
+
+
+def test_stewardship_sources_have_matching_sync_configuration() -> None:
+    config_path = (
+        Path(__file__).parents[2]
+        / "azure-sdk-qa-bot-knowledge-sync"
+        / "config"
+        / "knowledge-config.json"
+    )
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    sources = config["sources"]
+    avocado = next(
+        s for s in sources if s["repository"]["url"] == "https://github.com/Azure/avocado.git"
+    )
+    assert avocado["repository"]["branch"] == "main"
+    assert avocado["paths"][0]["path"] == "/README.md"
+    assert avocado["paths"][0]["folder"] == SRC_AZURE_AVOCADO_DOCS
+    specs = next(
+        s
+        for s in sources
+        if s["repository"]["url"] == "https://github.com/Azure/azure-rest-api-specs.git"
+    )
+    assert {p["path"] for p in specs["paths"]} == {
+        "/documentation/BreakingChange-Oad-Rules-Mapping.md",
+        "/eng/tools/typespec-suppressions/README.md",
+        "/.github/arm-leases/README.md",
+        "/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md",
+        "/documentation/ci-fix.md",
+    }
+    assert all(p["folder"] == SRC_AZURE_REST_API_SPECS_DOCS for p in specs["paths"])
 
 
 @pytest.mark.parametrize(

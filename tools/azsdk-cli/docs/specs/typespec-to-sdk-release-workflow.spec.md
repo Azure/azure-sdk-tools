@@ -547,7 +547,7 @@ Manual approval gate on release pipeline cannot be removed for security (ARM app
 | `sdk-api-review-out-of-date` | ARH | API changed and review artifacts are refreshing | Informational | ✅ Managed by ARH |
 | `sdk-api-review-ready` | Workflow / human | Transient working-PR trigger; ARH removes it after accepting the request | No | ✅ Consumed by ARH |
 
-The `sdk-api-review-*` label names and descriptions are defined in [`tools/github/data/common-labels.csv`](../../../github/data/common-labels.csv) and were added by [#17486](https://github.com/Azure/azure-sdk-tools/pull/17486).
+The `sdk-api-review-*` label names and descriptions are defined in [`tools/github/data/common-labels.csv`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/github/data/common-labels.csv) and were added by [#17486](https://github.com/Azure/azure-sdk-tools/pull/17486).
 
 The spec PR label contract is implemented by [`summarize-checks/labelling.ts`](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/summarize-checks/labelling.ts), with protected approvers in [`.github/protected-labels.yml`](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/protected-labels.yml) and package name details in the [package name approval process](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md).
 

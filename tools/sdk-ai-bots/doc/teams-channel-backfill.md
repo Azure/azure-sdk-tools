@@ -5,9 +5,6 @@ preparation, including channels the bot does not monitor. Each exported thread
 contains the root post and all replies, preserving HTML and attachment metadata.
 Images and files are referenced, not downloaded.
 
-**JSON export is the default.** Cosmos DB storage is optional. This capability
-does not generate evaluation cases.
-
 ## Export to JSON
 
 Use the chatbot development Python environment with the agent dependencies
@@ -39,7 +36,7 @@ root-post pages; reaching the limit while more pages remain fails the export.
 The output directory must exist and the file must be new. A successful run prints
 the output path and thread/message counts. This command does not access Cosmos DB.
 
-## Also Save to Cosmos DB
+## Save to Cosmos DB
 
 Set `AZURE_APPCONFIG_ENDPOINT` to the target environment's App Configuration
 endpoint, then add these arguments to the export command:

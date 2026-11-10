@@ -21,4 +21,4 @@ For failure troubleshooting, naming a red check or ruling out approval is only t
 
 6. **Understand the changes.** Read the description and relevant diffs when needed for the user's request and preflight findings. Size `get_files` pages to the requested scope; reduce `perPage` on overflow. Assess changes alongside checks and feedback; state coverage gaps. Explicit fresh code/design review proceeds even on draft/red-check PRs.
 
-7. **Review approval:** When approval is next, mention up to 3 verified requested reviewers/code owners from the PR or matching `CODEOWNERS` entries as `@github-handle`. Never invent handles; otherwise point to the Reviewers panel/CODEOWNERS. Use at most one `get_file_contents` for ownership.
+7. **Review approval:** When reviewer participation is needed, address up to 3 qualified, verified reviewers/code owners from the PR or matching `CODEOWNERS` entries directly with a specific request and PR link, following the shared Next Action or Help Request and Teams User Mentions rules. Never invent handles; otherwise point to the Reviewers panel/CODEOWNERS. Use at most one `get_file_contents` for ownership.

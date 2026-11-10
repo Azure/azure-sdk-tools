@@ -81,12 +81,14 @@ def test_chat_agent_exposes_github_actions_log_retrieval() -> None:
 
 
 def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
-    """Guard hard limits; model adherence is evaluated with the Foundry scenarios."""
+    """Guard planning constraints; model adherence is evaluated with the Foundry scenarios."""
     instruction = (
         _AGENT_ROOT / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
 
-    assert "8 tool calls" in instruction
+    assert "Plan tool calls within runtime limits." in instruction
+    assert "8 tool calls" not in instruction
+    assert "8-call cap" not in instruction
     assert "3 dependent follow-up rounds" in instruction
     assert "`load_skill` ALONE" in instruction
 

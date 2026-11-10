@@ -676,7 +676,7 @@ def test_help_request_example_uses_placeholders_and_conditional_approval():
     section = text.split("## Next Action or Help Request (When Needed)\n", 1)[1].split("## Teams User Mentions\n", 1)[0]
     assert "Example (replace placeholders with verified values):" in section
     example = section.split("```text\n", 1)[1].split("```", 1)[0]
-    assert "**Actions needed**" in example
+    assert example.startswith("**Actions needed**\n\n[Verified owner mention]")
     assert "[Verified owner mention]" in example
     assert "[spec PR link]" in example
     assert "if acceptable" in example
@@ -692,7 +692,8 @@ def test_prompt_tenant_and_identity_tool_limit_mentions_to_participation():
     assert "including in PR, tenant and skill guidance" in mentions
     assert "keep contact recommendations and quoted/incidental usernames plain" in mentions
     assert "Resolve evidence-backed GitHub usernames with `resolve_github_users`" in mentions
-    assert "batching up to ten per call within the tool-call budget" in mentions
+    assert "batching up to ten per call" in mentions
+    assert "When a direct request is needed, reserve one tool call for this lookup before composing the final answer." in mentions
     assert "Copy `users[login].plain_text` for contacts and `users[login].text` for direct requests, both verbatim" in mentions
     assert "never escape or code-format `<at>` markup" in mentions
     assert "On lookup errors, keep the GitHub handle; never invent names, addresses or identities." in mentions
@@ -709,3 +710,12 @@ def test_prompt_tenant_and_identity_tool_limit_mentions_to_participation():
     assert "For plain contact references, copy users[login].plain_text verbatim." in description
     assert "Copy users[login].text verbatim only for direct participation requests." in description
     assert "Resolving an identity alone does not require mentioning it." in description
+
+
+def test_pr_review_uses_shared_direct_request_and_mention_rules():
+    skill = (ROOT / "skills" / "chat_agent" / "pr-review" / "SKILL.md").read_text(encoding="utf-8")
+    approval = skill.split("7. **Review approval:**", 1)[1]
+    assert "qualified, verified reviewers/code owners" in approval
+    assert "directly with a specific request and PR link" in approval
+    assert "following the shared Next Action or Help Request and Teams User Mentions rules" in approval
+    assert "@github-handle" not in approval

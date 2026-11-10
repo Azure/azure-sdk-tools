@@ -3396,7 +3396,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(reminder.ExitCode, Is.Zero);
             var body = captured.Single().GetProperty("Body").GetString()!;
-            Assert.That(body.Contains("eligible for automatic abandonment now"), Is.EqualTo(eligible));
+            Assert.That(body, Does.Not.Contain("eligible for automatic abandonment now"));
+            Assert.That(body.Contains("the inactivity checks also pass"), Is.EqualTo(eligible));
+            Assert.That(body, Does.Contain("Automatic abandonment also requires verified inactivity for the configured window."));
             if (eligible)
             {
                 Assert.That(preview.EligibilityReasons![600], Does.Contain(scenario == "all_closed"

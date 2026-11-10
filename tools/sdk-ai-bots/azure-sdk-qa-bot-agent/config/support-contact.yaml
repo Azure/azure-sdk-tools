@@ -14,8 +14,16 @@ support_areas:
     github_usernames: [tjprescott]
 
   - key: typespec_arm_modeling
-    description: "ARM TypeSpec API and resource modeling, long-running operations, versioning, compatibility and suppression guidance. Excludes RPaaS implementation ownership and general ARM sign-off."
+    description: "ARM TypeSpec authoring and implementation of resource models, long-running operations, versioning, compatibility and suppression guidance. Excludes ARM modeling decisions, leases, office-hours coordination, RPaaS implementation ownership and general ARM sign-off."
     github_usernames: [markcowl]
+
+  - key: arm_modeling_leases
+    description: "ARM resource-modeling questions, modeling-review routing and missing or existing ARM leases. Excludes general ARM PR sign-off and office-hours coordination; approval belongs to the designated reviewer."
+    github_usernames: [raosuhas]
+
+  - key: arm_office_hours
+    description: "ARM office-hours booking, availability, attendance and coordination questions. Excludes API design decisions, lease approvals and ARM PR sign-off."
+    github_usernames: [vikeshi26]
 
   - key: typespec_toolchain
     description: "TypeSpec compiler and shared toolchain, dependencies, repository CI and TypeSpec implementation issues."

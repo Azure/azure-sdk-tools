@@ -341,6 +341,17 @@ def test_repository_config_loads_independently_of_working_directory(monkeypatch,
     assert not (ROOT / "config" / "support-contact.example.yaml").exists()
 
 
+def test_repository_arm_contacts_separate_modeling_leases_and_office_hours():
+    catalog = parse_support_catalog(support_contact.SUPPORT_CONTACT_PATH.read_bytes())
+    areas = {area.key: area for area in catalog.support_areas}
+    assert areas["arm_modeling_leases"].github_usernames == ["raosuhas"]
+    assert areas["arm_office_hours"].github_usernames == ["vikeshi26"]
+    assert "approval belongs to the designated reviewer" in areas["arm_modeling_leases"].description
+    assert "Excludes API design decisions, lease approvals and ARM PR sign-off" in areas["arm_office_hours"].description
+    assert "Excludes ARM modeling decisions, leases, office-hours coordination" in areas["typespec_arm_modeling"].description
+    assert areas["typespec_arm_modeling"].github_usernames == ["markcowl"]
+
+
 def test_repository_dotnet_contacts_cover_management_and_data_plane():
     catalog = parse_support_catalog(support_contact.SUPPORT_CONTACT_PATH.read_bytes())
     areas = {area.key: area for area in catalog.support_areas if area.key.startswith("dotnet_")}

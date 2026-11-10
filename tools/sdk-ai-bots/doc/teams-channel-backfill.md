@@ -16,11 +16,11 @@ or permission grant.
 | `--team-id`, `--channel-id` | Requested Teams channel. It need not already be monitored by the bot, but the configured Teams connection must be able to read it. |
 | `--output` | New local JSON file in an existing directory. Existing files are never overwritten. |
 | `--logic-app-url` | Optional HTTPS collection callback URL without SAS query parameters (`sp`, `sv`, `sig`). If omitted, read `TEAMS_COLLECTION_LOGIC_APP_URL` from App Configuration. |
-| `--logic-app-scope` | Developer delegated scope from the table below. Otherwise use `TEAMS_COLLECTION_LOGIC_APP_SCOPE` from loaded configuration, falling back to the original ARM scope for existing identity policies. |
+| `--logic-app-scope` | The selected environment's invocation scope, `{application_id_uri}/.default`. Otherwise use `TEAMS_COLLECTION_LOGIC_APP_SCOPE` from loaded configuration, falling back to the original ARM scope for existing identity policies. |
 | `--start-time` | Optional ISO 8601 timestamp with timezone; inclusive lower bound on **root-post creation time**. Omit only when all available history is intended. |
 | `--max-pages` | Optional, 1-1000; default 1000. Limits only root-post pages, not message count or reply pages. Replies retain an independent safety limit of 1000 pages per thread. |
 | `--save-to-cosmos` | Add only when the developer explicitly requests database writes. The JSON file is still produced. |
-| `--tenant-id` | Required only with `--save-to-cosmos`. Bot tenant ID used by existing conversation messages, not an Entra tenant GUID. Resolve from `bot-configs/channel.yaml` or obtain the intended bot tenant from the developer for a new channel. |
+| `--tenant-id` | Required only with `--save-to-cosmos`. Bot tenant ID used by existing conversation messages, not an Entra tenant GUID. Resolve from the channel's existing configuration or obtain the intended bot tenant from the developer for a new channel. |
 
 Use the chatbot development Python environment and installed agent dependencies.
 Run `az login` in the intended Azure directory; the script uses that
@@ -29,11 +29,11 @@ Optional App Configuration and Cosmos access use the repository's credential cha
 
 Confirm these permissions before collecting:
 
-1. The developer is a direct member of `AzureSDKChatBot_Developer`
-   (`2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5`). This group is assigned the
-   `TeamsHistory.Invoke` application role in each environment's existing chatbot
-   Entra application. The collection template accepts that role with the
-   environment-specific audience and issuer while retaining backend policies.
+1. The developer is a direct member of the authorized developer group, which is
+   assigned the `TeamsHistory.Invoke` application role in the selected
+   environment's Entra application. Resolve the group and application from that
+   environment's authorization configuration. The collection template accepts
+   the role with the configured audience and issuer while retaining backend policies.
    Nested group membership does not grant application roles. Obtain a fresh token
    after a membership change and verify it contains the role. Azure resource
    access alone is insufficient; `az login` does not grant membership.
@@ -43,29 +43,23 @@ Confirm these permissions before collecting:
 3. If loading settings, the identity has App Configuration data-read access and
    `AZURE_APPCONFIG_ENDPOINT` is set in the environment or the agent's `.env`.
 4. With `--save-to-cosmos`, settings point to the intended Cosmos account and the
-   identity has data-read/create access to
-   `azure-sdk-qa-bot/conversation-messages`. The container must use partition key
-   `/conversation_partition`.
+   identity has data-read/create access to the conversation-message container
+   used by the bot. The container must use partition key `/conversation_partition`.
 
 Default export with an explicit `--logic-app-url` needs neither App Configuration
 nor Cosmos access. Enabling Cosmos writes always loads App Configuration.
 Never print credentials, authorization headers, or message bodies into logs.
 
-| Environment | `--logic-app-scope` | Expected token audience |
-|---|---|---|
-| Dev | `api://azure-sdk-qa-bot-dev/.default` | `830f1656-8b36-4e8e-9781-87ccdd038644` |
-| Test | `api://azure-sdk-qa-bot-test/.default` | `674414e1-152b-41ac-b0d2-763535edea6c` |
-| Prod | `api://azure-sdk-qa-bot/.default` | `899da762-d510-48f2-911a-db9ea0cc41fd` |
-
-These applications issue v2 tokens. The developer policy requires issuer
-`https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0`
-and role `TeamsHistory.Invoke`. Do not substitute an ARM token for developer-role
-authentication. Provisioning Entra roles alone does not deploy a collection
-workflow; verify the target Logic App exists and has the developer policy.
+Resolve the application's ID URI from its Entra configuration. The developer
+policy expects a v2 token with audience matching the deployment's
+`developerAppId`, issuer matching its `tenantId`, and role `TeamsHistory.Invoke`.
+Do not substitute an ARM token for developer-role authentication. Provisioning
+Entra roles alone does not deploy a collection workflow; verify the target Logic
+App exists and has the developer policy.
 
 If setup is missing, report the exact blocker. Do not deploy infrastructure or
 modify permissions/configuration without separate authorization. Collection
-deployment uses [logicapp-cd.yml](../azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml)
+deployment uses [logicapp-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml)
 with `workflow: teams-collection` and the selected `environment`. Collection uses
 `parameters.teams-collection.{environment}.json`; the pipeline's `team` parameter
 applies only to `chat` and is ignored for collection. Runtime Teams team/channel
@@ -84,12 +78,12 @@ python scripts\collect_teams_history.py `
   --team-id "{team_guid}" `
   --channel-id "{channel_id}" `
   --output "C:\history\threads.json" `
-  --logic-app-scope "api://azure-sdk-qa-bot-dev/.default" `
+  --logic-app-scope "{application_id_uri}/.default" `
   --start-time "2026-01-01T00:00:00Z" `
   --max-pages 500
 ```
 
-This Dev example reads the callback URL from App Configuration and **does not access
+This example reads the callback URL from App Configuration and **does not access
 Cosmos DB**. Pass `--logic-app-url "{sas_free_callback_url}"` to use an explicit
 URL without loading App Configuration. Omit optional time/page arguments only
 when consistent with the requested scope.

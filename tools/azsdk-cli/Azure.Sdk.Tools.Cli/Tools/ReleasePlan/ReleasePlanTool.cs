@@ -44,6 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     ) : MCPMultiCommandTool
     {
         private const int ScheduleRiskWarningWindowDays = 7;
+        private const int DefaultInactivityDays = 30;
         private const string TargetReleaseMonthDescription = "SDK release target month in 'Month YYYY' format (full English month name and four-digit year). Must be the current month or later (UTC).";
         private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
@@ -172,6 +173,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Description = "List eligible release plans and reasons without changing plans or sending notifications",
             Required = false,
             DefaultValueFactory = _ => false,
+        };
+
+        private readonly Option<int> inactivityDaysOpt = new("--inactivity-days")
+        {
+            Description = "Minimum days without release-plan edits, SDK PR commits, reviews, or human comments before automatic abandonment. Must be positive.",
+            DefaultValueFactory = _ => DefaultInactivityDays,
         };
 
         private readonly Option<string> azureSDKEmailerUriOpt = new("--emailer-uri")
@@ -334,7 +341,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
-            new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon inactive release plans after one full overdue calendar month") { dryRunOpt },
+            new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon inactive release plans after one full overdue calendar month") { dryRunOpt, inactivityDaysOpt },
             new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(getServiceDetailsCommandName, "Get service and product details (service tree ID, service ID, package display name) in service tree for TypeSpec project", GetServiceDetailsToolName) { typeSpecProjectOpt, },
             new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan by Release Plan ID", AbandonReleasePlanToolName) { releasePlanNumberOpt, },
@@ -402,7 +409,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return await ListOverdueReleasePlans(commandParser.GetValue(notifyOwnersOpt), commandParser.GetValue(azureSDKEmailerUriOpt), ct);
 
                 case abandonOverdueReleasePlansCommandName:
-                    return await AbandonOverdueReleasePlans(commandParser.GetValue(dryRunOpt), ct);
+                    return await AbandonOverdueReleasePlans(commandParser.GetValue(dryRunOpt), commandParser.GetValue(inactivityDaysOpt), ct);
 
                 case updateApiSpecPullRequestCommandName:
                     return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt), ct: ct);
@@ -2247,7 +2254,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        public async Task<ReleasePlanListResponse> AbandonOverdueReleasePlans(bool dryRun = false, CancellationToken ct = default)
+        public async Task<ReleasePlanListResponse> AbandonOverdueReleasePlans(bool dryRun = false, int inactivityDays = DefaultInactivityDays, CancellationToken ct = default)
         {
             var response = new ReleasePlanListResponse
             {
@@ -2260,16 +2267,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 ct.ThrowIfCancellationRequested();
+                if (inactivityDays <= 0)
+                {
+                    response.ResponseError = "Inactivity days must be a positive number.";
+                    return response;
+                }
+                var now = _timeProvider.GetUtcNow();
+                var today = now.Date;
+                var recentActivityCutoff = now.AddDays(-inactivityDays);
                 var overdueReleasePlans = await devOpsService.ListOverdueReleasePlansAsync(ct);
                 ct.ThrowIfCancellationRequested();
-                var today = _timeProvider.GetUtcNow().Date;
                 var resultPlans = new List<ReleasePlanWorkItem>();
                 var responseErrors = new List<string>();
                 var skippedPlans = dryRun ? new Dictionary<int, string>() : null;
                 var skippedByReason = new Dictionary<string, int>();
 
-                void RecordSkippedPlan(ReleasePlanWorkItem plan, string category)
+                void RecordSkippedPlan(ReleasePlanWorkItem plan, string category, string? reason = null)
                 {
+                    if (reason != null)
+                    {
+                        response.EligibilityReasons[plan.WorkItemId] = reason;
+                        logger.LogInformation("Skipped overdue release plan {WorkItemId}: {Reason}", plan.WorkItemId, reason);
+                    }
                     if (skippedPlans == null)
                     {
                         return;
@@ -2299,6 +2318,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             continue;
                         }
 
+                        if (releasePlan.ChangedDate >= recentActivityCutoff.UtcDateTime)
+                        {
+                            var activityReason = $"Release plan work item {releasePlan.WorkItemId} was updated at {releasePlan.ChangedDate:O}, within the last {inactivityDays} days.";
+                            RecordSkippedPlan(releasePlan, "recent_plan_activity", activityReason);
+                            continue;
+                        }
+
                         var assessment = await EvaluateReleasePlanWorkAsync(releasePlan, ct);
                         if (!assessment.IsInactive)
                         {
@@ -2306,9 +2332,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             continue;
                         }
 
-                        ct.ThrowIfCancellationRequested();
-                        // An actual update requires a valid snapshot revision, so previews must too.
                         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlan.Revision);
+                        if (releasePlan.ChangedDate == default)
+                        {
+                            throw new InvalidOperationException("Could not verify the release plan's last update time.");
+                        }
+
+                        var recentPullRequestActivity = await GetRecentSdkPullRequestActivityAsync(releasePlan, recentActivityCutoff, inactivityDays, ct);
+                        if (recentPullRequestActivity != null)
+                        {
+                            RecordSkippedPlan(releasePlan, "recent_sdk_pr_activity", recentPullRequestActivity);
+                            continue;
+                        }
+
+                        ct.ThrowIfCancellationRequested();
                         var reason = $"Target month {releasePlan.SDKReleaseMonth} is past the one-full-month grace period. {assessment.Reason}";
                         if (dryRun)
                         {
@@ -2451,10 +2488,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     : "No SDKs are recorded as released, and all linked SDK pull requests are closed without being merged.");
         }
 
-        /// <summary>
-        /// Validates a linked PR URL, then reads its state and (for open SDK PRs) current approval.
-        /// </summary>
-        private async Task<(PullRequest PullRequest, bool Approved)> GetValidatedPullRequestDetailsAsync(string url, bool isSpec, CancellationToken ct)
+        private async Task<string?> GetRecentSdkPullRequestActivityAsync(ReleasePlanWorkItem releasePlan, DateTimeOffset cutoff, int inactivityDays, CancellationToken ct)
+        {
+            foreach (var url in releasePlan.SDKInfo.Select(sdk => sdk.SdkPullRequestUrl)
+                .Where(url => !string.IsNullOrWhiteSpace(url)).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var (owner, repository, number) = ParseMaintenancePullRequestUrl(url, isSpec: false);
+                try
+                {
+                    var activity = await githubService.GetPullRequestLatestActivityAsync(owner, repository, number, ct).WaitAsync(ct);
+                    if (activity.Timestamp == DateTimeOffset.MinValue || string.IsNullOrWhiteSpace(activity.Source))
+                    {
+                        throw new InvalidOperationException($"Could not verify pull request activity for {url}.");
+                    }
+                    if (activity.Timestamp >= cutoff)
+                    {
+                        return $"Linked SDK pull request {url} has a {activity.Source} at {activity.Timestamp:O}, within the last {inactivityDays} days.";
+                    }
+                }
+                catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+                {
+                    throw new InvalidOperationException($"Pull request activity lookup did not complete for {url}: {ex.Message}", ex);
+                }
+            }
+            return null;
+        }
+
+        private static (string Owner, string Repository, int Number) ParseMaintenancePullRequestUrl(string url, bool isSpec)
         {
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
                 || uri.Scheme != Uri.UriSchemeHttps
@@ -2474,12 +2534,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 throw new InvalidOperationException($"Invalid release plan pull request URL: {url}");
             }
+            return (parts[0], parts[1], prNumber);
+        }
+
+        /// <summary>
+        /// Validates a linked PR URL, then reads its state and (for open SDK PRs) current approval.
+        /// </summary>
+        private async Task<(PullRequest PullRequest, bool Approved)> GetValidatedPullRequestDetailsAsync(string url, bool isSpec, CancellationToken ct)
+        {
+            var (owner, repository, number) = ParseMaintenancePullRequestUrl(url, isSpec);
             try
             {
-                var pr = await githubService.GetPullRequestAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct)
+                var pr = await githubService.GetPullRequestAsync(owner, repository, number, ct).WaitAsync(ct)
                     ?? throw new InvalidOperationException($"Could not determine pull request status for {url}");
                 var approved = !isSpec && !pr.Merged && pr.State.Value == ItemState.Open
-                    && await githubService.IsPullRequestApprovedAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct);
+                    && await githubService.IsPullRequestApprovedAsync(owner, repository, number, ct).WaitAsync(ct);
                 return (pr, approved);
             }
             catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)

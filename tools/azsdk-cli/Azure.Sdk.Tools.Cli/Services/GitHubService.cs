@@ -138,6 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string url, CancellationToken ct);
         public Task<bool> IsPullRequestApprovedAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
+        public Task<(DateTimeOffset Timestamp, string Source)> GetPullRequestLatestActivityAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName, CancellationToken ct);
         public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true, CancellationToken ct = default);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -1098,6 +1099,81 @@ query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
             {
                 logger.LogError(ex, "Error getting merged pull requests in {RepoOwner}/{RepoName}", repoOwner, repoName);
                 throw;
+            }
+        }
+
+        public async Task<(DateTimeOffset Timestamp, string Source)> GetPullRequestLatestActivityAsync(
+            string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            var commits = await gitHubClient.PullRequest.Commits(repoOwner, repoName, pullRequestNumber).WaitAsync(ct);
+            if (commits.Count == 0 || commits.Count >= 250)
+            {
+                throw new InvalidOperationException($"Could not verify complete commit activity for {repoOwner}/{repoName}#{pullRequestNumber}; GitHub caps this list at 250 commits.");
+            }
+
+            var latest = (Timestamp: DateTimeOffset.MinValue, Source: string.Empty);
+            foreach (var commit in commits)
+            {
+                RecordActivity(commit.Commit?.Committer?.Date, "commit");
+            }
+
+            var reviews = await gitHubClient.PullRequest.Review.GetAll(repoOwner, repoName, pullRequestNumber).WaitAsync(ct);
+            foreach (var review in reviews)
+            {
+                if (string.Equals(review.State.ToString(), "PENDING", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                RecordActivity(review.SubmittedAt, "review");
+            }
+
+            var comments = await gitHubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pullRequestNumber).WaitAsync(ct);
+            foreach (var comment in comments)
+            {
+                if (IsHumanComment(comment.User))
+                {
+                    RecordActivity(comment.UpdatedAt is { } updatedAt ? updatedAt : comment.CreatedAt, "comment");
+                }
+            }
+
+            var reviewComments = await gitHubClient.PullRequest.ReviewComment.GetAll(repoOwner, repoName, pullRequestNumber).WaitAsync(ct);
+            foreach (var comment in reviewComments)
+            {
+                if (IsHumanComment(comment.User))
+                {
+                    RecordActivity(comment.UpdatedAt is { } updatedAt ? updatedAt : comment.CreatedAt, "review comment");
+                }
+            }
+
+            ct.ThrowIfCancellationRequested();
+            return latest;
+
+            void RecordActivity(DateTimeOffset? timestamp, string source)
+            {
+                if (timestamp is not { } value || value == DateTimeOffset.MinValue)
+                {
+                    throw new InvalidOperationException($"Could not verify a {source} timestamp for {repoOwner}/{repoName}#{pullRequestNumber}.");
+                }
+                if (value > latest.Timestamp)
+                {
+                    latest = (value, source);
+                }
+            }
+
+            static bool IsHumanComment(User? user)
+            {
+                var accountType = user?.Type.ToString();
+                if (string.Equals(accountType, "Bot", StringComparison.OrdinalIgnoreCase)
+                    || user?.Login?.EndsWith("[bot]", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    return false;
+                }
+                if (!string.Equals(accountType, "User", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("Could not verify whether a pull request comment was written by a person.");
+                }
+                return true;
             }
         }
 

@@ -63,8 +63,25 @@ interface Employees {
   createOrUpdate is ArmResourceCreateOrReplaceAsync<Employee>;
   update is ArmResourcePatchSync<Employee, EmployeeProperties>;
   delete is ArmResourceDeleteWithoutOkAsync<Employee>;
-  listByResourceGroup is ArmResourceListByParent<Employee>;
+  listByResourceGroup is ArmResourceListByParent<Employee,
+  Parameters = {
+      /**
+       * The number of items to be included in the result.
+       */
+      @query("$top")
+      $top?: int32;
+
+      /**
+       * The filter to apply.
+       */
+      @query("$filter")
+      $filter?: string;
+    },>;
   listBySubscription is ArmListBySubscription<Employee>;
 
-  relocate is ArmResourceActionSync<Employee, EmployeeRelocateContent, Employee>;
+  relocate is ArmResourceActionSync<
+    Employee,
+    EmployeeRelocateContent,
+    Employee
+  >;
 }

@@ -22,7 +22,7 @@ scoring:
 
 # Test cases
 stimuli:
-  - name: 004004-operation-param-order-breaking-change-SpecInputs
+  - name: 004004-operation-param-order-breaking-change-SpecInputs-go
     tags:
       editScope: SpecInputs
     prompt: |
@@ -30,7 +30,7 @@ stimuli:
       specification/widget/resource-manager/Microsoft.Widget/Widget against
       your current working directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
-      - customizationRequest: "resolve breaking change: Employees.relocate parameter order changed for .net sdk. it was: [reason, city], now it's [city, reason]"
+      - customizationRequest: "resolve Go sdk breaking change: Employees.listByResourceGroup parameter(s) are changed from ($filter, $top) to ($top, $filter)"
       - tspProjectPath: use the exact absolute path returned by the shell
       - editScope: "SpecInputs"
 
@@ -59,4 +59,175 @@ stimuli:
       - type: file-contains
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: '@@override(Microsoft.Widget.Employees.relocate, reorderParameters(Microsoft.Widget.Employees.relocate, #["reason", "city"]), "csharp");'
+          value: >-
+            @@override(Microsoft.Widget.Employees.listByResourceGroup,
+            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
+            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "go");
+
+  - name: 004004-operation-param-order-breaking-change-SpecInputs-csharp
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve C# sdk breaking change: Employees.listByResourceGroup parameter(s) are changed from ($filter, $top) to ($top, $filter)"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: >-
+            @@override(Microsoft.Widget.Employees.listByResourceGroup,
+            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
+            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "csharp");
+
+  - name: 004004-operation-param-order-breaking-change-SpecInputs-python
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve Python sdk breaking change: Employees.listByResourceGroup parameter(s) are changed from ($filter, $top) to ($top, $filter)"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: >-
+            @@override(Microsoft.Widget.Employees.listByResourceGroup,
+            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
+            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "python");
+
+  - name: 004004-operation-param-order-breaking-change-SpecInputs-java
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve Java sdk breaking change: Employees.listByResourceGroup parameter(s) are changed from ($filter, $top) to ($top, $filter)"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: >-
+            @@override(Microsoft.Widget.Employees.listByResourceGroup,
+            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
+            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "java");
+
+  - name: 004004-operation-param-order-breaking-change-SpecInputs-javascript
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve JavaScript sdk breaking change: Employees.listByResourceGroup parameter(s) are changed from ($filter, $top) to ($top, $filter)"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: >-
+            @@override(Microsoft.Widget.Employees.listByResourceGroup,
+            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
+            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "javascript");

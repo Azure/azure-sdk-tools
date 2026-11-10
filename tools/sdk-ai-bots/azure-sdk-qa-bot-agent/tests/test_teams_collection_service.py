@@ -119,7 +119,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
 
     def test_backfill_template_contains_only_the_oauth_logic_app(self):
         project = Path(__file__).resolve().parents[1]
-        template = json.loads((project / "pipelines/teams-collection/template.json").read_text())
+        template = json.loads((project / "pipelines/logicapp/template.teams-collection.json").read_text())
         self.assertEqual([resource["type"] for resource in template["resources"]],
                          ["Microsoft.Logic/workflows"])
         self.assertNotIn("backfillPrincipalId", template["parameters"])
@@ -150,10 +150,10 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         }
         for environment, (workflow_name, resource_group) in expected.items():
             with self.subTest(environment=environment):
-                path = project / f"pipelines/teams-collection/parameters.azure_sdk.{environment}.json"
+                path = project / f"pipelines/logicapp/parameters.teams-collection.azure_sdk.{environment}.json"
                 parameters = json.loads(path.read_text())["parameters"]
                 existing_logicapp = json.loads(
-                    (project / f"pipelines/logicapp/parameters.azure_sdk.{environment}.json")
+                    (project / f"pipelines/logicapp/parameters.chat.azure_sdk.{environment}.json")
                     .read_text()
                 )["parameters"]
                 self.assertEqual(parameters["logicAppName"]["value"], workflow_name)
@@ -178,6 +178,30 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("- teams-collection", logicapp_pipeline)
         self.assertIn("name: templateFile", logicapp_pipeline)
         self.assertIn("name: parametersFile", logicapp_pipeline)
+        self.assertIn("format('pipelines/logicapp/template.{0}.json', parameters.workflow)",
+                      logicapp_pipeline)
+        self.assertIn(
+            "format('pipelines/logicapp/parameters.{0}.{1}.{2}.json', parameters.workflow, variables.listenerTeam, parameters.environment)",
+            logicapp_pipeline,
+        )
+        self.assertIn("Unsupported Logic App configuration:", logicapp_pipeline)
+        self.assertFalse((project / "pipelines/teams-collection").is_dir()
+                         and any((project / "pipelines/teams-collection").iterdir()))
+        for workflow, team, environment in (
+            ("chat", "azure_sdk", "dev"),
+            ("chat", "azure_sdk", "test"),
+            ("chat", "azure_sdk", "prod"),
+            ("chat", "azure_mcp_server", "prod"),
+            ("teams-collection", "azure_sdk", "dev"),
+            ("teams-collection", "azure_sdk", "test"),
+            ("teams-collection", "azure_sdk", "prod"),
+        ):
+            with self.subTest(workflow=workflow, team=team, environment=environment):
+                json.loads((project / f"pipelines/logicapp/template.{workflow}.json").read_text())
+                json.loads(
+                    (project / f"pipelines/logicapp/parameters.{workflow}.{team}.{environment}.json")
+                    .read_text()
+                )
         self.assertEqual(logicapp_pipeline.count("- task: AzureCLI@2"), 1)
         self.assertIn("az deployment group create", logicapp_pipeline)
         self.assertNotIn("listCallbackUrl", logicapp_pipeline)

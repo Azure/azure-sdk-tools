@@ -661,7 +661,7 @@ def normalized_content(message: dict) -> str:
     steps or every run would read the stored (rewritten) content as changed and
     overwrite it with the raw Graph body. Mirrors
     ``Resolve_forwarded_message_content`` and
-    ``Include_post_title_in_message_content`` in ``pipelines/logicapp/template.json``.
+    ``Include_post_title_in_message_content`` in ``pipelines/logicapp/template.chat.json``.
     """
     content = _resolve_forwarded_content(message)
     subject = message.get("subject")

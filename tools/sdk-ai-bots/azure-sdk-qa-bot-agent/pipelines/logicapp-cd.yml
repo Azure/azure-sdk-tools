@@ -45,9 +45,9 @@ variables:
   - name: listenerTeam
     value: ${{ iif(eq(parameters.environment, 'prod'), parameters.team, 'azure_sdk') }}
   - name: templateFile
-    value: ${{ iif(eq(parameters.workflow, 'teams-collection'), 'pipelines/teams-collection/template.json', 'pipelines/logicapp/template.json') }}
+    value: ${{ format('pipelines/logicapp/template.{0}.json', parameters.workflow) }}
   - name: parametersFile
-    value: ${{ iif(eq(parameters.workflow, 'teams-collection'), format('pipelines/teams-collection/parameters.azure_sdk.{0}.json', parameters.environment), format('pipelines/logicapp/parameters.{0}.{1}.json', variables.listenerTeam, parameters.environment)) }}
+    value: ${{ format('pipelines/logicapp/parameters.{0}.{1}.{2}.json', parameters.workflow, variables.listenerTeam, parameters.environment) }}
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -79,6 +79,11 @@ extends:
 
                     TEMPLATE_FILE="$(templateFile)"
                     PARAMS_FILE="$(parametersFile)"
+
+                    if [[ ! -f "$TEMPLATE_FILE" || ! -f "$PARAMS_FILE" ]]; then
+                      echo "Unsupported Logic App configuration: workflow=${{ parameters.workflow }}, team=${{ variables.listenerTeam }}, environment=${{ parameters.environment }}"
+                      exit 1
+                    fi
 
                     echo "Listener team: ${{ variables.listenerTeam }} (selected: ${{ parameters.team }})"
                     echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"

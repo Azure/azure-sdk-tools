@@ -17,5 +17,4 @@ Azure/azure-sdk-tools
 Azure/azure-sdk-actions
 Azure/autorest
 Azure/autorest.cpp
-Azure/azure-rest-api-specs
 Azure/typespec-rust

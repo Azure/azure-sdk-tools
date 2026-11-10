@@ -175,7 +175,7 @@ describe('ConfigurationLoader', () => {
     expect(specsSources[0].repository).toMatchObject({
       branch: 'main',
       authType: 'public',
-      issueTracker: { provider: 'github', repository: 'Azure/azure-rest-api-specs' }
+      issueTracker: { provider: 'github', repository: 'Azure/azure-sdk-pr' }
     });
     expect(specsSources[0].paths).toEqual(expect.arrayContaining([
       expect.objectContaining({

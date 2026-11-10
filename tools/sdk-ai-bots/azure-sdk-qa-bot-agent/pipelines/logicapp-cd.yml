@@ -1,6 +1,6 @@
 # Deployment pipeline for the Azure SDK QA Bot Logic App.
 # Deploys the Logic App ARM template with environment-specific parameters.
-# Dev/test use the shared Azure SDK listener; production uses the selected team.
+# Chat dev/test use the shared listener; collection is configured by environment only.
 
 name: Deploy Azure SDK QA Bot Logic App
 
@@ -16,7 +16,7 @@ parameters:
       - chat
       - teams-collection
   - name: team
-    displayName: 'Production Teams Team (dev/test use azure_sdk)'
+    displayName: 'Chat workflow only: production team (dev/test use azure_sdk)'
     type: string
     default: azure_sdk
     values:
@@ -46,8 +46,12 @@ variables:
     value: ${{ iif(eq(parameters.environment, 'prod'), parameters.team, 'azure_sdk') }}
   - name: templateFile
     value: ${{ format('pipelines/logicapp/template.{0}.json', parameters.workflow) }}
-  - name: parametersFile
-    value: ${{ format('pipelines/logicapp/parameters.{0}.{1}.{2}.json', parameters.workflow, variables.listenerTeam, parameters.environment) }}
+  - ${{ if eq(parameters.workflow, 'chat') }}:
+    - name: parametersFile
+      value: ${{ format('pipelines/logicapp/parameters.chat.{0}.{1}.json', variables.listenerTeam, parameters.environment) }}
+  - ${{ else }}:
+    - name: parametersFile
+      value: ${{ format('pipelines/logicapp/parameters.teams-collection.{0}.json', parameters.environment) }}
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -55,7 +59,7 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: DeployLogicApp
-        displayName: 'Deploy ${{ variables.listenerTeam }} Logic App (${{ parameters.environment }})'
+        displayName: 'Deploy ${{ parameters.workflow }} Logic App (${{ parameters.environment }})'
         jobs:
           - job: Deploy
             displayName: 'ARM Template Deployment'
@@ -81,11 +85,11 @@ extends:
                     PARAMS_FILE="$(parametersFile)"
 
                     if [[ ! -f "$TEMPLATE_FILE" || ! -f "$PARAMS_FILE" ]]; then
-                      echo "Unsupported Logic App configuration: workflow=${{ parameters.workflow }}, team=${{ variables.listenerTeam }}, environment=${{ parameters.environment }}"
+                      echo "Unsupported Logic App configuration: workflow=${{ parameters.workflow }}, environment=${{ parameters.environment }}, parameters=$PARAMS_FILE"
                       exit 1
                     fi
 
-                    echo "Listener team: ${{ variables.listenerTeam }} (selected: ${{ parameters.team }})"
+                    echo "Workflow: ${{ parameters.workflow }}"
                     echo "Deploying Logic App to resource group: $(RESOURCE_GROUP)"
                     echo "Template: $TEMPLATE_FILE"
                     echo "Parameters: $PARAMS_FILE"
@@ -94,7 +98,7 @@ extends:
                       --resource-group "$(RESOURCE_GROUP)" \
                       --template-file "$TEMPLATE_FILE" \
                       --parameters "@$PARAMS_FILE" \
-                      --name "logicapp-${{ variables.listenerTeam }}-$(Build.BuildId)" \
+                      --name "logicapp-${{ parameters.workflow }}-$(Build.BuildId)" \
                       --verbose
 
                     echo "Logic App deployment completed successfully."

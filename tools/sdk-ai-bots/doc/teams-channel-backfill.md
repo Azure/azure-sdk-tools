@@ -66,8 +66,10 @@ workflow; verify the target Logic App exists and has the developer policy.
 If setup is missing, report the exact blocker. Do not deploy infrastructure or
 modify permissions/configuration without separate authorization. Collection
 deployment uses [logicapp-cd.yml](../azure-sdk-qa-bot-agent/pipelines/logicapp-cd.yml)
-with `workflow: teams-collection` and profile `team: azure_sdk`. That profile selects
-deployment files; it does not restrict the runtime Teams team/channel.
+with `workflow: teams-collection` and the selected `environment`. Collection uses
+`parameters.teams-collection.{environment}.json`; the pipeline's `team` parameter
+applies only to `chat` and is ignored for collection. Runtime Teams team/channel
+selection comes from the script arguments.
 
 For explicitly authorized setup, obtain the callback with `listCallbackUrl`,
 remove SAS query parameters, and either pass the SAS-free URL directly or set

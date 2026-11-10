@@ -100,9 +100,14 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(pipeline.count("- task: AzureCLI@2"), 1)
         self.assertIn("format('pipelines/logicapp/template.{0}.json', parameters.workflow)", pipeline)
         self.assertIn(
-            "format('pipelines/logicapp/parameters.{0}.{1}.{2}.json', parameters.workflow, variables.listenerTeam, parameters.environment)",
+            "format('pipelines/logicapp/parameters.chat.{0}.{1}.json', variables.listenerTeam, parameters.environment)",
             pipeline,
         )
+        self.assertIn(
+            "format('pipelines/logicapp/parameters.teams-collection.{0}.json', parameters.environment)",
+            pipeline,
+        )
+        self.assertIn("Chat workflow only:", pipeline)
         self.assertIn("Unsupported Logic App configuration:", pipeline)
         self.assertIn("az deployment group create", pipeline)
         self.assertNotIn("listCallbackUrl", pipeline)
@@ -115,9 +120,6 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
             ("chat", "azure_sdk", "test"),
             ("chat", "azure_sdk", "prod"),
             ("chat", "azure_mcp_server", "prod"),
-            ("teams-collection", "azure_sdk", "dev"),
-            ("teams-collection", "azure_sdk", "test"),
-            ("teams-collection", "azure_sdk", "prod"),
         ):
             with self.subTest(workflow=workflow, team=team, environment=environment):
                 json.loads((PROJECT / f"pipelines/logicapp/template.{workflow}.json").read_text())
@@ -145,7 +147,7 @@ class TeamsCollectionTests(unittest.IsolatedAsyncioTestCase):
         )
         for environment in ("dev", "test", "prod"):
             collection = json.loads(
-                (PROJECT / f"pipelines/logicapp/parameters.teams-collection.azure_sdk.{environment}.json")
+                (PROJECT / f"pipelines/logicapp/parameters.teams-collection.{environment}.json")
                 .read_text()
             )["parameters"]
             chat = json.loads(

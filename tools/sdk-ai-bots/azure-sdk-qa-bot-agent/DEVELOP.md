@@ -53,12 +53,6 @@ and `server.log`. You can ask Copilot to analyze the failed cases, identify prom
 or tool changes, and improve the implementation. Push the changes, deploy the agent
 again, and rerun the same scenarios to compare results.
 
-Tool decoding retains every output per tool. Reference enrichment uses all
-knowledge-base and wiki search results, matching both link and title to distinguish
-sections at the same URL. Groundedness uses the same evidence when
-`with_full_context` is enabled, removing duplicates without dropping distinct
-sections. Mentions use the latest lookup outcome for each user.
-
 See the [evaluation guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/README.md) for grading
 details and result formats.
 

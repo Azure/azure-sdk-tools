@@ -654,7 +654,7 @@ class ChatService:
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
-        tool_references = [
+        retrieved_references = [
             ref
             for results in tool_results.values()
             for result in results
@@ -671,7 +671,7 @@ class ChatService:
         # Extract structured references from the agent's markdown output
         # and strip the references section from the answer text.
         answer, references = self._extract_references_from_text(
-            output_text, tool_references
+            output_text, retrieved_references
         )
 
         # Build full_context from every KB and wiki search when requested.
@@ -680,7 +680,7 @@ class ChatService:
         if req.with_full_context:
             unique_references = {
                 (ref.title, ref.source, ref.link, ref.content): ref
-                for ref in tool_references
+                for ref in retrieved_references
             }
             if unique_references:
                 full_context = json.dumps(
@@ -715,13 +715,13 @@ class ChatService:
 
     @staticmethod
     def _extract_references_from_text(
-        text: str, tool_references: list[Reference] | None = None
+        text: str, retrieved_references: list[Reference] | None = None
     ) -> tuple[str, list[Reference]]:
         """Parse the **References** section from agent output text.
 
         Returns ``(answer_without_references, extracted_references)``.
         The extracted references are enriched with ``source`` and ``content``
-        from *tool_references* when a matching link or title is found,
+        from *retrieved_references* when a matching link or title is found,
         preserving compatibility with the old backend response shape.
         """
         # Locate the **References** header
@@ -737,8 +737,8 @@ class ChatService:
         link_lookup: dict[str, Reference] = {}
         path_lookup: dict[str, Reference] = {}
         title_lookup: dict[str, Reference] = {}
-        if tool_references:
-            for ref in tool_references:
+        if retrieved_references:
+            for ref in retrieved_references:
                 if ref.link:
                     link_title_lookup[(ref.link, ref.title)] = ref
                     link_lookup[ref.link] = ref

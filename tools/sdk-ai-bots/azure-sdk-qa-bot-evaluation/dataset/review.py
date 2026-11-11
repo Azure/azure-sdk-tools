@@ -6,10 +6,9 @@ Second step of *dataset preparation*. A human edits the staged files
 ``review.py`` then **appends** only the ``reviewed=="pass"`` rows into the
 committed, curated locations:
 
-    evaluation_datasets/basic/<scenario>.jsonl     (PR-gate / online curated sets)
-    evaluation_datasets/perf/<scenario>.jsonl      (perf set; grows over time, no target size)
+    evaluation_datasets/perf/<scenario>.jsonl
 
-Appending (not overwriting) gives incremental, time-ordered growth. Cases already
+Cases are sorted by ID after promotion. Cases already
 present in the target (by stable ``dedup_key``, falling back to scenario+query hash)
 are skipped. Promoted (``pass``) rows are removed from staging, and any rows still
 left as ``"todo"`` at promote time are finalized to ``"abandoned"`` (kept in staging
@@ -17,8 +16,8 @@ as a deduped record so they are not re-curated). Already-``abandoned`` rows are 
 untouched.
 
 Usage:
-    python -m dataset.review --target basic
-    python -m dataset.review --target perf --scenario typespec
+    python -m dataset.review
+    python -m dataset.review --scenario typespec
 """
 
 from __future__ import annotations
@@ -37,6 +36,7 @@ from .schema import (
     normalize_review_status,
     resolve_dedup_key,
     validate_case,
+    validate_records,
 )
 
 
@@ -101,8 +101,12 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
             keep_in_staging.append(obj)
 
         if to_promote:
-            with target.open("a", encoding="utf-8") as fh:
-                for obj in to_promote:
+            rows = [obj for _, obj in iter_jsonl(target)] if target.exists() else []
+            rows.extend(to_promote)
+            validate_records(rows, scenario=scenario)
+            rows.sort(key=lambda row: row["testcase"])
+            with target.open("w", encoding="utf-8") as fh:
+                for obj in rows:
                     fh.write(json.dumps(obj, ensure_ascii=False) + "\n")
             promoted[scenario] = len(to_promote)
             logging.info("Promoted %d case(s) -> %s", len(to_promote), target)
@@ -127,13 +131,12 @@ def review(staging_dir: Path, target_dir: Path, scenario_filter: str | None) -> 
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(asctime)s - %(levelname)s - %(message)s")
     parser = argparse.ArgumentParser(description="Promote reviewed staging cases into curated datasets.")
-    parser.add_argument("--target", choices=["basic", "perf"], required=True, help="Curated target set.")
     parser.add_argument("--scenario", type=str, default=None, help="Only this scenario (file stem).")
     args = parser.parse_args(argv)
 
     script_dir = Path(__file__).resolve().parent.parent
     staging_dir = script_dir / "evaluation_datasets" / "_staging"
-    target_dir = script_dir / "evaluation_datasets" / args.target
+    target_dir = script_dir / "evaluation_datasets" / "perf"
 
     if not staging_dir.exists():
         logging.error("No staging folder at %s", staging_dir)

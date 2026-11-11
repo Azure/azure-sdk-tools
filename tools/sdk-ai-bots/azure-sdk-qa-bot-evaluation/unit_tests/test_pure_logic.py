@@ -22,6 +22,7 @@ import yaml
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dataset.schema import (  # noqa: E402
+    CanonicalCase,
     REVIEW_STATUS_ABANDONED,
     REVIEW_STATUS_PASS,
     REVIEW_STATUS_TODO,
@@ -29,6 +30,7 @@ from dataset.schema import (  # noqa: E402
     case_hash,
     normalize_review_status,
     resolve_dedup_key,
+    select_cases,
     validate_case,
     validate_file,
 )
@@ -49,13 +51,72 @@ from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E4
 def test_validate_case_ok():
     validate_case(
         {
-            "testcase": "t",
+            "testcase": "001001-test-valid",
             "query": "q",
             "ground_truth": "a",
             "scenario": "typespec",
             "reviewed": "pass",
         }
     )
+
+
+def test_canonical_case_round_trips_testcase_id_and_tags():
+    case = CanonicalCase(
+        testcase="001003-version-required-to-optional",
+        tags=["core"],
+        query="q",
+        ground_truth="a",
+        scenario="typespec",
+        reviewed="pass",
+    )
+    serialized = case.to_dict()
+    assert "id" not in serialized
+    assert CanonicalCase.from_dict(serialized).to_dict() == serialized
+
+
+def test_select_cases_supports_core_and_full():
+    rows = [
+        {
+            "testcase": "001001-version-core",
+            "tags": ["core"],
+            "query": "q1",
+            "ground_truth": "a1",
+            "scenario": "typespec",
+            "reviewed": "pass",
+        },
+        {
+            "testcase": "001002-version-specialized",
+            "tags": [],
+            "query": "q2",
+            "ground_truth": "a2",
+            "scenario": "typespec",
+            "reviewed": "pass",
+        },
+    ]
+    assert [row["testcase"] for row in select_cases(rows, "core", scenario="typespec")] == [
+        "001001-version-core"
+    ]
+    assert select_cases(rows, "full", scenario="typespec") == rows
+
+
+def test_select_cases_rejects_missing_tags_and_mixed_scenarios():
+    row = {
+        "testcase": "001001-version-core",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "typespec",
+        "reviewed": "pass",
+    }
+    for records, message in (
+        ([row], "tags"),
+        ([dict(row, tags=["core"], scenario="go")], "expected scenario"),
+    ):
+        try:
+            select_cases(records, "core", scenario="typespec")
+        except ValidationError as exc:
+            assert message in str(exc)
+        else:
+            raise AssertionError("expected invalid benchmark selection")
 
 
 def test_upload_eval_items_uses_file_backed_data_source():
@@ -136,9 +197,26 @@ def test_validate_case_missing_field():
         raise AssertionError("expected ValidationError")
 
 
+def test_validate_case_allows_title_until_staging_review():
+    row = {
+        "testcase": "Source question title",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "typespec",
+        "reviewed": "todo",
+    }
+    validate_case(row)
+    try:
+        validate_case(dict(row, reviewed="pass"))
+    except ValidationError as exc:
+        assert "CCCSSS-category-situation" in str(exc)
+    else:
+        raise AssertionError("expected passed cases to require a structured testcase")
+
+
 def test_validate_case_bad_reviewed_type():
     try:
-        validate_case({"testcase": "t", "query": "q", "ground_truth": "a", "scenario": "s", "reviewed": "yes"})
+        validate_case({"testcase": "001001-test-status", "query": "q", "ground_truth": "a", "scenario": "s", "reviewed": "yes"})
     except ValidationError as exc:
         assert "reviewed" in str(exc)
     else:
@@ -169,7 +247,8 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
 
     def _row(testcase: str, status: str) -> dict:
         return {
-            "testcase": testcase,
+            "testcase": f"001{dict(keep=1, leftover=2, already=3)[testcase]:03d}-test-{testcase}",
+            "tags": ["core"],
             "query": f"q-{testcase}",
             "ground_truth": "gt",
             "expected_references": [],
@@ -183,7 +262,7 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         staging = root / "_staging"
-        target = root / "basic"
+        target = root / "perf"
         staging.mkdir()
         sf = staging / "typespec.jsonl"
         with sf.open("w", encoding="utf-8") as fh:
@@ -199,25 +278,26 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
         # The pass row is promoted to the official dataset.
         assert promoted == {"typespec": 1}
         target_rows = [json.loads(l) for l in (target / "typespec.jsonl").read_text(encoding="utf-8").splitlines()]
-        assert [r["testcase"] for r in target_rows] == ["keep"]
+        assert [r["testcase"] for r in target_rows] == ["001001-test-keep"]
+        assert target_rows[0]["tags"] == ["core"]
         assert target_rows[0]["reviewed"] == REVIEW_STATUS_PASS
 
         # Staging keeps the leftover (now abandoned) and the already-abandoned row; pass row is gone.
         staging_rows = {
-            r["testcase"]: r["reviewed"]
+            r["query"][2:]: r["reviewed"]
             for r in (json.loads(l) for l in sf.read_text(encoding="utf-8").splitlines())
         }
         assert staging_rows == {"leftover": REVIEW_STATUS_ABANDONED, "already": REVIEW_STATUS_ABANDONED}
 
 
-def test_validate_file_dedups_on_query_not_testcase():
+def test_validate_file_uses_id_not_query():
     import json
     import tempfile
     from pathlib import Path
 
-    def _row(testcase: str, query: str) -> dict:
+    def _row(case_id: str, query: str) -> dict:
         return {
-            "testcase": testcase,
+            "testcase": case_id,
             "query": query,
             "ground_truth": "gt",
             "scenario": "typespec",
@@ -225,18 +305,18 @@ def test_validate_file_dedups_on_query_not_testcase():
         }
 
     with tempfile.TemporaryDirectory() as tmp:
-        # Two distinct cases sharing a placeholder title are valid (dedup key is query).
+        # Preserved source variants can share a question but have distinct IDs.
         ok = Path(tmp) / "ok.jsonl"
         ok.write_text(
-            json.dumps(_row("Untitled", "q1")) + "\n" + json.dumps(_row("Untitled", "q2")) + "\n",
+            json.dumps(_row("001001-test-first", "q")) + "\n" + json.dumps(_row("001002-test-second", "q")) + "\n",
             encoding="utf-8",
         )
         assert validate_file(ok, require_reviewed=True) == 2
 
-        # Two rows with the same (normalized) query are a real duplicate -> reject.
+        # Editing the question cannot make a duplicate ID valid.
         dup = Path(tmp) / "dup.jsonl"
         dup.write_text(
-            json.dumps(_row("A", "same query")) + "\n" + json.dumps(_row("B", "Same   Query")) + "\n",
+            json.dumps(_row("001001-test-first", "q1")) + "\n" + json.dumps(_row("001001-test-first", "q2")) + "\n",
             encoding="utf-8",
         )
         try:
@@ -244,7 +324,7 @@ def test_validate_file_dedups_on_query_not_testcase():
         except ValidationError as exc:
             assert "duplicate case" in str(exc)
         else:
-            raise AssertionError("expected ValidationError for duplicate query")
+            raise AssertionError("expected ValidationError for duplicate ID")
 
 
 def test_resolve_dedup_key_frozen_on_query_edit():
@@ -262,14 +342,14 @@ def test_resolve_dedup_key_frozen_on_query_edit():
     assert resolve_dedup_key({"query": "q"}, "python") == case_hash("python", "q")
 
 
-def test_validate_file_dedups_on_dedup_key():
+def test_validate_file_preserves_distinct_ids_with_shared_dedup_key():
     import json
     import tempfile
     from pathlib import Path
 
-    def _row(testcase: str, query: str, dedup_key: str) -> dict:
+    def _row(case_id: str, query: str, dedup_key: str) -> dict:
         return {
-            "testcase": testcase,
+            "testcase": case_id,
             "query": query,
             "ground_truth": "gt",
             "scenario": "typespec",
@@ -278,23 +358,18 @@ def test_validate_file_dedups_on_dedup_key():
         }
 
     with tempfile.TemporaryDirectory() as tmp:
-        # Same dedup_key on two rows (even with different query text) -> duplicate.
+        # Historical source copies remain independently addressable by ID.
         dup = Path(tmp) / "dup.jsonl"
         dup.write_text(
-            json.dumps(_row("A", "q1", "same-key")) + "\n" + json.dumps(_row("B", "q2 edited", "same-key")) + "\n",
+            json.dumps(_row("001001-test-first", "q1", "same-key")) + "\n" + json.dumps(_row("001002-test-second", "q2 edited", "same-key")) + "\n",
             encoding="utf-8",
         )
-        try:
-            validate_file(dup)
-        except ValidationError as exc:
-            assert "duplicate case" in str(exc)
-        else:
-            raise AssertionError("expected ValidationError for duplicate dedup_key")
+        assert validate_file(dup, require_reviewed=True) == 2
 
         # Distinct dedup_keys -> valid.
         ok = Path(tmp) / "ok.jsonl"
         ok.write_text(
-            json.dumps(_row("A", "q", "k1")) + "\n" + json.dumps(_row("B", "q", "k2")) + "\n",
+            json.dumps(_row("001001-test-first", "q", "k1")) + "\n" + json.dumps(_row("001002-test-second", "q", "k2")) + "\n",
             encoding="utf-8",
         )
         assert validate_file(ok, require_reviewed=True) == 2
@@ -558,7 +633,7 @@ def test_javascript_datasets_are_documentation_only_and_resolve_locally():
         r"|\b(?:yesterday|last week|last month)\b",
         re.IGNORECASE,
     )
-    for target, count in (("basic", 7), ("perf", 13)):
+    for target, count in (("perf", 20),):
         path = root / "evaluation_datasets" / target / "javascript.jsonl"
         assert validate_file(path, require_reviewed=True) == count
         records, scenario = resolve_records(
@@ -587,16 +662,19 @@ def test_javascript_datasets_are_documentation_only_and_resolve_locally():
             queries.add(query)
 
 
-def test_javascript_scenario_is_in_both_evaluation_pipelines():
+def test_perf_pipeline_is_manual_and_covers_all_scenarios():
     root = Path(__file__).resolve().parents[2]
-    for name in ("offline-evaluation.yml", "perf-evaluation.yml"):
-        pipeline = yaml.safe_load((root / name).read_text(encoding="utf-8"))
-        scenarios = next(
-            item["default"]
-            for item in pipeline["parameters"]
-            if item["name"] == "scenarios"
-        )
-        assert scenarios.count("javascript") == 1
+    pipeline = yaml.safe_load((root / "perf-evaluation.yml").read_text(encoding="utf-8"))
+    assert pipeline["trigger"] == "none"
+    assert pipeline["pr"] == "none"
+    assert "schedules" not in pipeline
+    parameters = {parameter["name"]: parameter for parameter in pipeline["parameters"]}
+    assert parameters["scope"]["default"] == "core"
+    assert parameters["scope"]["values"] == ["core", "full"]
+    expected = {path.stem for path in (root / "azure-sdk-qa-bot-evaluation" / "evaluation_datasets" / "perf").glob("*.jsonl")}
+    assert set(parameters["scenarios"]["default"]) == expected
+    for name in ("benchmark-evaluation.yml", "offline-evaluation.yml", "online-evaluation.yml"):
+        assert not (root / name).exists()
 
 
 def test_output_items_to_rows_completion_item_response():
@@ -698,12 +776,12 @@ def test_record_run_result_empty_rows_no_crash():
 
 def test_monitor_onboarding_case_has_no_live_issue_or_pr_dependencies():
     records, _ = resolve_records(
-        "evaluation_datasets/basic/mcpserver.jsonl",
+        "evaluation_datasets/perf/mcpserver.jsonl",
         script_dir=Path(__file__).resolve().parents[1],
     )
     case = next(
         row for row in records
-        if row["testcase"] == "How should new Azure Monitor traces tools be onboarded and reviewed?"
+        if row["testcase"] == "004009-onboarding-how-should-new-azure-monitor-traces-tools-be-onboarded-and-reviewed"
     )
     assert "http" not in case["query"]
     for field in ("query", "ground_truth"):
@@ -736,7 +814,10 @@ def test_main_passes_project_for_response_selected_agents():
             patch.dict(os.environ, environment, clear=True),
             patch.object(evals_run, "load_dotenv"),
             patch.object(evals_run, "credential_for"),
-            patch.object(evals_run, "resolve_records", return_value=([], "mcpserver")),
+            patch.object(evals_run, "resolve_records", return_value=([{
+                "testcase": "001001-test-routing", "tags": ["core"], "query": "question",
+                "ground_truth": "answer", "scenario": "mcpserver", "reviewed": "pass",
+            }], "mcpserver")),
             patch.object(evals_run, "retrieve_channel_tenant_map", return_value={}),
             patch.object(evals_run, "resolve_tenant_for_scenario", return_value=tenant_id),
             patch.object(evals_run, "FoundryEvalsRunner", return_value=runner),
@@ -745,7 +826,7 @@ def test_main_passes_project_for_response_selected_agents():
         ):
             project_type.return_value.__enter__.return_value = project
             assert evals_run.main([
-                "--dataset", "qa-bot-basic-mcpserver:latest",
+                "--dataset", "qa-bot-perf-mcpserver:latest",
                 "--baseline_check", "False", "--is_ci", "False",
             ]) == 0
         assert project.get_openai_client.call_args_list == [call()]

@@ -1,20 +1,18 @@
-schedules:
-  - cron: "0 2 * * 1"  # Runs every Monday at 02:00 UTC
-    displayName: "Weekly Perf Evaluation"
-    branches:
-      include:
-        - main
-    always: true
-
 trigger: none
 pr: none
 
-# Perf evaluation: large, incrementally-grown per-scenario datasets.
+# Perf evaluation: manually select core/full scope and one or more scenarios.
 #
 # Evaluates via completion mode (concurrent /completion collection + inline grading)
 # against a local backend started with development configuration for the
-# qa-bot-perf-<scenario> datasets. Can also be run manually.
+# qa-bot-perf-<scenario> datasets.
 parameters:
+  - name: scope
+    type: string
+    default: core
+    values:
+      - core
+      - full
   - name: scenarios
     type: object
     default:
@@ -29,6 +27,7 @@ parameters:
       - releasesupport
       - authoring
       - mcpserver
+      - sdkagent
   - name: maxConcurrency
     type: number
     default: 2
@@ -49,7 +48,7 @@ extends:
         jobs:
           - ${{ each scenario in parameters.scenarios }}:
               - job: 'perf_${{ scenario }}'
-                displayName: 'perf evaluation (${{ scenario }})'
+                displayName: 'perf evaluation (${{ scenario }}, ${{ parameters.scope }})'
                 steps:
                   - task: UsePythonVersion@0
                     displayName: "Use Python 3.12"
@@ -89,7 +88,7 @@ extends:
                     displayName: 'install requirements'
                     workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   - task: AzureCLI@2
-                    displayName: 'Run Perf Evals (${{ scenario }})'
+                    displayName: 'Run Perf Evals (${{ scenario }}, ${{ parameters.scope }})'
                     inputs:
                       azureSubscription: 'azuresdkqabot-dev'
                       scriptType: bash
@@ -98,6 +97,7 @@ extends:
                       inlineScript: |
                         python evals_run.py \
                           --dataset "qa-bot-perf-${{ scenario }}:latest" \
+                          --scope "${{ parameters.scope }}" \
                           --run_context "perf-evaluation" \
                           --max_concurrency ${{ parameters.maxConcurrency }} \
                           --baseline_check False \
@@ -115,6 +115,6 @@ extends:
                   outputs:
                     - output: pipelineArtifact
                       path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
-                      artifact: perf-evaluation-results-${{ scenario }}
-                      displayName: Publish Perf Results (${{ scenario }})
+                      artifact: perf-evaluation-results-${{ scenario }}-${{ parameters.scope }}
+                      displayName: Publish Perf Results (${{ scenario }}, ${{ parameters.scope }})
                       condition: always()

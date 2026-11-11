@@ -113,9 +113,13 @@ def test_pr_review_preserves_required_access_links() -> None:
 
 def test_pr_review_separates_review_requests_from_label_authority() -> None:
     approval = _read_pr_review_skill().split("7. **Review approval:**", 1)[1]
-    github, label = approval.split("**GitHub review approval:**", 1)[1].split(
-        "**Approval-label gate:**", 1,
+    label, github = approval.split("**Approval-label gate:**", 1)[1].split(
+        "**GitHub review approval:**", 1,
     )
+    assert "user's stated blocker and current PR merge guidance before selecting or resolving people" in approval
+    assert "If the user or PR merge guidance identifies a missing approval label" in label
+    assert "address that gate rather than turn a general PR-review request into an ordinary GitHub approval request" in label
+    assert "Use this route only when an approving GitHub review is an outstanding requirement." in github
     assert "Use requested reviewers or matching `CODEOWNERS` entries." in github
     assert "Select up to 3 qualified, verified reviewers/code owners." in github
     assert "up to 3" not in label

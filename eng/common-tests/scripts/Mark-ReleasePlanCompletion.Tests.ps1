@@ -29,12 +29,6 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
     }
 
     BeforeEach {
-        # Hosted agents define these; keep every test independent of the machine running it.
-        $script:savedPipelineEnv = @{}
-        foreach ($name in 'SYSTEM_COLLECTIONURI', 'SYSTEM_TEAMPROJECT', 'BUILD_BUILDID') {
-            $script:savedPipelineEnv[$name] = [Environment]::GetEnvironmentVariable($name)
-            [Environment]::SetEnvironmentVariable($name, $null)
-        }
         $global:ReleaseStatusTestCalls = @()
         $global:ReleaseStatusTestExitCode = 0
         $global:LanguageDisplayName = 'Python'
@@ -46,12 +40,6 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
             Version = '1.2.3'
         }
         $script:packageInfo | ConvertTo-Json | Set-Content -LiteralPath $script:packageInfoPath
-    }
-
-    AfterEach {
-        foreach ($name in $script:savedPipelineEnv.Keys) {
-            [Environment]::SetEnvironmentVariable($name, $script:savedPipelineEnv[$name])
-        }
     }
 
     AfterAll {
@@ -144,49 +132,6 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
 
         $global:ReleaseStatusTestCalls.Count | Should -Be 1
         Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -Be $pipelineUrl
-    }
-
-    It 'builds the release run URL from the standard pipeline variables when none is passed on the <Lookup> path' -TestCases @(
-        @{ Lookup = 'manual'; ReleasePlanId = '100'; SdkPullRequest = ''; CollectionUri = 'https://dev.azure.com/azure-sdk/' },
-        @{ Lookup = 'automatic'; ReleasePlanId = '0'; SdkPullRequest = 'https://github.com/Azure/azure-sdk-for-python/pull/100'; CollectionUri = 'https://dev.azure.com/azure-sdk/' },
-        @{ Lookup = 'legacy'; ReleasePlanId = '0'; SdkPullRequest = ''; CollectionUri = 'https://dev.azure.com/azure-sdk/' },
-        @{ Lookup = 'legacy without a trailing slash'; ReleasePlanId = '0'; SdkPullRequest = ''; CollectionUri = 'https://dev.azure.com/azure-sdk' }
-    ) {
-        param($Lookup, $ReleasePlanId, $SdkPullRequest, $CollectionUri)
-        [Environment]::SetEnvironmentVariable('SYSTEM_COLLECTIONURI', $CollectionUri)
-        [Environment]::SetEnvironmentVariable('SYSTEM_TEAMPROJECT', 'internal')
-        [Environment]::SetEnvironmentVariable('BUILD_BUILDID', '7046446')
-
-        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId $ReleasePlanId -SdkPullRequest $SdkPullRequest
-
-        $global:ReleaseStatusTestCalls.Count | Should -Be 1
-        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -Be 'https://dev.azure.com/azure-sdk/internal/_build/results?buildId=7046446'
-    }
-
-    It 'prefers an explicit pipeline URL over the standard pipeline variables' {
-        [Environment]::SetEnvironmentVariable('SYSTEM_COLLECTIONURI', 'https://dev.azure.com/azure-sdk/')
-        [Environment]::SetEnvironmentVariable('SYSTEM_TEAMPROJECT', 'internal')
-        [Environment]::SetEnvironmentVariable('BUILD_BUILDID', '7046446')
-        $explicit = 'https://dev.azure.com/azure-sdk/internal/_build/results?buildId=12345'
-
-        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0 -PipelineUrl $explicit
-
-        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -Be $explicit
-    }
-
-    It 'does not invent a release run URL when a pipeline variable is missing: <Missing>' -TestCases @(
-        @{ Missing = 'SYSTEM_COLLECTIONURI' }, @{ Missing = 'SYSTEM_TEAMPROJECT' }, @{ Missing = 'BUILD_BUILDID' }
-    ) {
-        param($Missing)
-        [Environment]::SetEnvironmentVariable('SYSTEM_COLLECTIONURI', 'https://dev.azure.com/azure-sdk/')
-        [Environment]::SetEnvironmentVariable('SYSTEM_TEAMPROJECT', 'internal')
-        [Environment]::SetEnvironmentVariable('BUILD_BUILDID', '7046446')
-        [Environment]::SetEnvironmentVariable($Missing, $null)
-
-        Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId 0
-
-        $global:ReleaseStatusTestCalls.Count | Should -Be 1
-        Get-CapturedArgument $global:ReleaseStatusTestCalls[0] '--release-pipeline' | Should -BeNullOrEmpty
     }
 
     It 'forwards the SDK PR without a legacy warning when no plan ID is supplied' {

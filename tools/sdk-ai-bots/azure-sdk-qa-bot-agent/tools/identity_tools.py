@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from html import escape
-from typing import Annotated
 from uuid import UUID
 
 import httpx
@@ -17,7 +16,6 @@ from models.identity import (
     TeamsUser,
     normalize_github_username,
 )
-from tools import tool
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
@@ -27,23 +25,12 @@ _LINKS_URL = "https://repos.opensource.microsoft.com/api/people/links/github"
 
 
 class IdentityTools:
-    @tool
     async def resolve_github_users(
         self,
         *,
-        usernames: Annotated[
-            list[str],
-            "One to ten GitHub usernames to map to Microsoft accounts for Teams "
-            "mentions. Batch all people in one call; do not pass organizations/teams.",
-        ],
+        usernames: list[str],
     ) -> ResolveGitHubUsersResult:
-        """Resolve verified contact details or people being directly asked to help or act.
-
-        For plain contact references, copy users[login].plain_text verbatim.
-        The UPN is a sign-in address, not a separately verified mailbox.
-        Copy users[login].text verbatim only for direct participation requests.
-        Resolving an identity alone does not require mentioning it.
-        """
+        """Resolve verified Microsoft account details for backend answer rendering."""
         if not 1 <= len(usernames) <= 10:
             raise ValueError("Provide between one and ten GitHub usernames.")
         logins = list(dict.fromkeys(normalize_github_username(name) for name in usernames))

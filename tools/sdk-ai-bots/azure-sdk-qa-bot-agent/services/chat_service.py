@@ -30,9 +30,9 @@ from models.chat import (
 )
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
-from models.identity import ResolveGitHubUsersResult, TeamsMention
 from models.support_contact import get_support_catalog_context
 from services.conversation_service import ConversationService
+from services.teams_mention_service import resolve_answer_mentions
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
     build_skill_content,
@@ -312,6 +312,9 @@ class ChatService:
             )
 
         chat_response = self._postprocess(req, response, agent_conversation_id)
+        chat_response.answer, chat_response.mentions = await resolve_answer_mentions(
+            chat_response.answer, enabled=self._teams_mentions_enabled(req),
+        )
         chat_response.agent_name = agent.name
         chat_response.trace_id = trace_id
         BackgroundTaskTracker.instance().track(
@@ -703,18 +706,12 @@ class ChatService:
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
-        teams_mentions_enabled = (
+        return resp
+
+    def _teams_mentions_enabled(self, req: ChatRequest) -> bool:
+        return req.conversation_type == ConversationType.teams_channel and (
             self._settings("ENABLE_TEAMS_MENTION", "true") or "true"
         ).lower() == "true"
-        if teams_mentions_enabled and req.conversation_type == ConversationType.teams_channel:
-            identities = tool_results.get("resolve_github_users")
-            if isinstance(identities, ResolveGitHubUsersResult):
-                resp.mentions = [
-                    TeamsMention(text=user.text, mentioned=user.mentioned)
-                    for user in identities.users.values()
-                    if user.text in answer
-                ] or None
-        return resp
 
     @staticmethod
     def _extract_references_from_text(
@@ -855,18 +852,7 @@ class ChatService:
             try:
                 json_str = self._unwrap_json(output)
                 if json_str:
-                    decoded = response_model.model_validate_json(json_str)
-                    previous = results.get(tool_name)
-                    if isinstance(previous, ResolveGitHubUsersResult) and isinstance(
-                        decoded, ResolveGitHubUsersResult
-                    ):
-                        for login in decoded.users:
-                            previous.errors.pop(login, None)
-                        for login in decoded.errors:
-                            previous.users.pop(login, None)
-                        decoded.users = previous.users | decoded.users
-                        decoded.errors = previous.errors | decoded.errors
-                    results[tool_name] = decoded
+                    results[tool_name] = response_model.model_validate_json(json_str)
             except Exception as e:
                 logger.warning("Failed to decode tool output for %s: %s", tool_name, e)
 

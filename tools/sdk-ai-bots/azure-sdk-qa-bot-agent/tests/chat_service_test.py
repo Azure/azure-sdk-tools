@@ -78,13 +78,14 @@ async def test_image_attempt_limit_keeps_failure_and_limit_notices(monkeypatch, 
     assert "additional images were not read" in items[-1]["content"]
 
 
-@pytest.mark.parametrize("conversation_type, include_tag, last_lookup_fails", [
-    ("teams_channel", True, False), ("teams_channel", False, False),
-    (None, True, False), ("teams_channel", True, True),
+@pytest.mark.parametrize("conversation_type, include_tag, lookup_outcome", [
+    ("teams_channel", True, "success"), ("teams_channel", False, "success"),
+    (None, True, "success"), ("teams_channel", True, "failure"),
+    ("teams_channel", True, "recovery"),
 ])
 @pytest.mark.parametrize("output_type", ["function_call_output", "message"])
 def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
-    conversation_type, include_tag, last_lookup_fails, output_type
+    conversation_type, include_tag, lookup_outcome, output_type
 ):
     import json
 
@@ -109,8 +110,10 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         ResolveGitHubUsersResult(errors={"unlinked": "No linked Microsoft account was found."}),
         ResolveGitHubUsersResult(errors={"service": "Not a person."}),
     ]
-    if last_lookup_fails:
+    if lookup_outcome in ("failure", "recovery"):
         lookups.append(ResolveGitHubUsersResult(errors={"linked-user": "HTTP 403"}))
+    if lookup_outcome == "recovery":
+        lookups.append(ResolveGitHubUsersResult(mentions={"linked-user": mention}))
     for index, result in enumerate(lookups):
         call_id = f"lookup-{index}"
         tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
@@ -148,11 +151,15 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         message=ChatMessage(role="user", content="Who can review?"),
     )
 
-    result = ChatService()._postprocess(request, response, None)
+    service = ChatService()
+    decoded_results = service._extract_tool_results(output)
+    assert decoded_results["resolve_github_users"] == lookups
+
+    result = service._postprocess(request, response, None)
 
     assert result.answer == answer
     assert result.mentions == (
-        [mention] if conversation_type and include_tag and not last_lookup_fails else None
+        [mention] if conversation_type and include_tag and lookup_outcome != "failure" else None
     )
     if result.mentions:
         assert result.model_dump(mode="json")["mentions"] == [{
@@ -201,7 +208,7 @@ def test_full_context_collects_all_search_calls_without_changing_references(
         "empty": [("search_knowledge_base", []), ("wiki_search", [])],
     }[searches]
     expected_context = {
-        "mixed": [earlier, repeated, wiki, later],
+        "mixed": [earlier, repeated, later, wiki],
         "wiki_only": [wiki, repeated],
         "empty": [],
     }[searches]
@@ -250,6 +257,14 @@ def test_full_context_collects_all_search_calls_without_changing_references(
         [],
     )
     service = ChatService()
+    decoded_results = service._extract_tool_results(output)
+    assert decoded_results == {
+        name: [
+            SearchKnowledgeBaseResult(results=references)
+            for tool_name, references in calls if tool_name == name
+        ]
+        for name, _ in calls
+    }
     expected_answer, expected_references = service._extract_references_from_text(
         text, last_kb_references,
     )

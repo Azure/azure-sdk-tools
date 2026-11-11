@@ -653,11 +653,9 @@ class ChatService:
         agent_conversation_id: str | None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
-        context_references: list[Reference] | None = [] if req.with_full_context else None
-        tool_results = self._extract_tool_results(
-            response.output, knowledge_references=context_references,
-        )
-        search = tool_results.get("search_knowledge_base")
+        tool_results = self._extract_tool_results(response.output)
+        searches = tool_results.get("search_knowledge_base", [])
+        search = searches[-1] if searches else None
         tool_references = (
             search.results if isinstance(search, SearchKnowledgeBaseResult) else []
         )
@@ -677,17 +675,21 @@ class ChatService:
         # Build full_context from every KB and wiki search when requested.
         # Keys use "document_" prefix for compatibility with the eval pipeline.
         full_context = None
-        if context_references:
+        if req.with_full_context:
             unique_references = {
                 (ref.title, ref.source, ref.link, ref.content): ref
-                for ref in context_references
+                for results in tool_results.values()
+                for result in results
+                if isinstance(result, SearchKnowledgeBaseResult)
+                for ref in result.results
             }
-            full_context = json.dumps(
-                [
-                    DocumentContext.from_reference(r).model_dump(mode="json")
-                    for r in unique_references.values()
-                ]
-            )
+            if unique_references:
+                full_context = json.dumps(
+                    [
+                        DocumentContext.from_reference(r).model_dump(mode="json")
+                        for r in unique_references.values()
+                    ]
+                )
 
         resp = ChatResponse(
             id=response.id,
@@ -699,11 +701,13 @@ class ChatService:
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
-        identities = tool_results.get("resolve_github_users")
-        if (
-            req.conversation_type == ConversationType.teams_channel
-            and isinstance(identities, ResolveGitHubUsersResult)
-        ):
+        if req.conversation_type == ConversationType.teams_channel:
+            identities = ResolveGitHubUsersResult()
+            for result in tool_results.get("resolve_github_users", []):
+                if isinstance(result, ResolveGitHubUsersResult):
+                    for login in result.errors:
+                        identities.mentions.pop(login, None)
+                    identities.mentions.update(result.mentions)
             resp.mentions = [
                 mention for mention in identities.mentions.values()
                 if mention.text in answer
@@ -811,14 +815,9 @@ class ChatService:
     def _extract_tool_results(
         self,
         items: list[ResponseOutputItem],
-        *,
-        knowledge_references: list[Reference] | None = None,
-    ) -> dict[str, object]:
-        """Decode tool outputs using TOOL_REGISTRY models.
-
-        Returns the latest model per tool, optionally collecting all knowledge references.
-        """
-        results: dict[str, object] = {}
+    ) -> dict[str, list[object]]:
+        """Decode all tool outputs, preserving output order within each tool."""
+        results: dict[str, list[object]] = {}
 
         if not items:
             return results
@@ -853,22 +852,7 @@ class ChatService:
                 json_str = self._unwrap_json(output)
                 if json_str:
                     decoded = response_model.model_validate_json(json_str)
-                    if (
-                        knowledge_references is not None
-                        and isinstance(decoded, SearchKnowledgeBaseResult)
-                    ):
-                        knowledge_references.extend(decoded.results)
-                    previous = results.get(tool_name)
-                    if isinstance(previous, ResolveGitHubUsersResult) and isinstance(
-                        decoded, ResolveGitHubUsersResult
-                    ):
-                        for login in decoded.mentions:
-                            previous.errors.pop(login, None)
-                        for login in decoded.errors:
-                            previous.mentions.pop(login, None)
-                        decoded.mentions = previous.mentions | decoded.mentions
-                        decoded.errors = previous.errors | decoded.errors
-                    results[tool_name] = decoded
+                    results.setdefault(tool_name, []).append(decoded)
             except Exception as e:
                 logger.warning("Failed to decode tool output for %s: %s", tool_name, e)
 

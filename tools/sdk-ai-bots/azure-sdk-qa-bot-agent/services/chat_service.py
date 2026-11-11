@@ -654,11 +654,13 @@ class ChatService:
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
-        searches = tool_results.get("search_knowledge_base", [])
-        search = searches[-1] if searches else None
-        tool_references = (
-            search.results if isinstance(search, SearchKnowledgeBaseResult) else []
-        )
+        tool_references = [
+            ref
+            for results in tool_results.values()
+            for result in results
+            if isinstance(result, SearchKnowledgeBaseResult)
+            for ref in result.results
+        ]
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
@@ -678,10 +680,7 @@ class ChatService:
         if req.with_full_context:
             unique_references = {
                 (ref.title, ref.source, ref.link, ref.content): ref
-                for results in tool_results.values()
-                for result in results
-                if isinstance(result, SearchKnowledgeBaseResult)
-                for ref in result.results
+                for ref in tool_references
             }
             if unique_references:
                 full_context = json.dumps(
@@ -734,12 +733,14 @@ class ChatService:
         refs_block = text[header_match.end() :]
 
         # Build lookups from the tool results for enrichment
+        link_title_lookup: dict[tuple[str, str], Reference] = {}
         link_lookup: dict[str, Reference] = {}
         path_lookup: dict[str, Reference] = {}
         title_lookup: dict[str, Reference] = {}
         if tool_references:
             for ref in tool_references:
                 if ref.link:
+                    link_title_lookup[(ref.link, ref.title)] = ref
                     link_lookup[ref.link] = ref
                     path = urlparse(ref.link).path.rstrip("/")
                     if path:
@@ -748,8 +749,8 @@ class ChatService:
                     title_lookup[ref.title] = ref
 
         def _match_reference(link: str, title: str) -> Reference | None:
-            """Try exact link, URL path, then title matching."""
-            matched = link_lookup.get(link)
+            """Prefer matching sections, then fall back to link, title, or path."""
+            matched = link_title_lookup.get((link, title)) or link_lookup.get(link)
             if matched:
                 return matched
             matched = title_lookup.get(title)

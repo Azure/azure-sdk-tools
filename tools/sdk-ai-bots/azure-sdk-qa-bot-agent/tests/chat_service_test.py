@@ -170,8 +170,8 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
 
 @pytest.mark.parametrize("output_type", ["function_call_output", "message"])
 @pytest.mark.parametrize("with_full_context", [True, False])
-@pytest.mark.parametrize("searches", ["mixed", "wiki_only", "empty"])
-def test_full_context_collects_all_search_calls_without_changing_references(
+@pytest.mark.parametrize("searches", ["mixed", "wiki_only", "last_empty", "empty"])
+def test_references_and_full_context_use_all_search_calls(
     output_type, with_full_context, searches
 ):
     import json
@@ -205,11 +205,17 @@ def test_full_context_collects_all_search_calls_without_changing_references(
             ("search_knowledge_base", [later, repeated]),
         ],
         "wiki_only": [("wiki_search", [wiki, repeated])],
+        "last_empty": [
+            ("search_knowledge_base", [earlier, repeated]),
+            ("search_knowledge_base", []),
+            ("wiki_search", []),
+        ],
         "empty": [("search_knowledge_base", []), ("wiki_search", [])],
     }[searches]
     expected_context = {
         "mixed": [earlier, repeated, later, wiki],
         "wiki_only": [wiki, repeated],
+        "last_empty": [earlier, repeated],
         "empty": [],
     }[searches]
     output = []
@@ -238,7 +244,9 @@ def test_full_context_collects_all_search_calls_without_changing_references(
         "Answer using retrieved evidence.\n\n**References**\n"
         "- [Earlier section](https://example.test/shared)\n"
         "- [Wiki guidance](https://example.test/wiki)\n"
-        "- [Repeated document](https://example.test/repeated)"
+        "- [Repeated document](https://example.test/repeated)\n"
+        "- [Later section](https://example.test/shared)\n"
+        "- [Unmatched document](https://example.test/unmatched)"
     )
     output.append(ResponseOutputMessage.model_construct(
         type="message", id="answer", role="assistant", status="completed",
@@ -252,10 +260,6 @@ def test_full_context_collects_all_search_calls_without_changing_references(
         message=ChatMessage(role="user", content="Review this question"),
         with_full_context=with_full_context,
     )
-    last_kb_references = next(
-        (references for name, references in reversed(calls) if name == "search_knowledge_base"),
-        [],
-    )
     service = ChatService()
     decoded_results = service._extract_tool_results(output)
     assert decoded_results == {
@@ -265,13 +269,21 @@ def test_full_context_collects_all_search_calls_without_changing_references(
         ]
         for name, _ in calls
     }
-    expected_answer, expected_references = service._extract_references_from_text(
-        text, last_kb_references,
-    )
+    cited = [
+        earlier, wiki, repeated, later,
+        Reference(title="Unmatched document", source="", link="https://example.test/unmatched"),
+    ]
+    expected_references = [
+        ref if ref in expected_context else Reference(title=ref.title, source="", link=ref.link)
+        for ref in cited
+    ]
+    if searches == "last_empty":
+        # Keep link-only fallback when the cited section was not retrieved.
+        expected_references[3] = earlier
 
     result = service._postprocess(request, response, "conversation")
 
-    assert result.answer == expected_answer
+    assert result.answer == "Answer using retrieved evidence."
     assert result.references == expected_references
     assert result.agent_conversation_id == "conversation"
     if with_full_context and expected_context:

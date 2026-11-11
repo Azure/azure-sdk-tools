@@ -22,7 +22,7 @@ scoring:
 
 # Test cases
 stimuli:
-  - name: 004007-property-type-breaking-change-SpecInputs-go
+  - name: 004007-property-type-change-breaking-change-SpecInputs-go
     tags:
       editScope: SpecInputs
     prompt: |
@@ -61,7 +61,7 @@ stimuli:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
           value: '@@alternateType(Microsoft.Widget.EmployeeProperties.profileUri, url, "go");'
 
-  - name: 004007-property-type-breaking-change-SpecInputs-csharp
+  - name: 004007-property-type-change-breaking-change-SpecInputs-csharp
     tags:
       editScope: SpecInputs
     prompt: |
@@ -100,7 +100,7 @@ stimuli:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
           value: '@@alternateType(Microsoft.Widget.EmployeeProperties.profileUri, url, "csharp");'
 
-  - name: 004007-property-type-breaking-change-SpecInputs-python
+  - name: 004007-property-type-change-breaking-change-SpecInputs-python
     tags:
       editScope: SpecInputs
     prompt: |

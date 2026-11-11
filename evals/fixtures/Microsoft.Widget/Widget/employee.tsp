@@ -26,9 +26,25 @@ model EmployeeProperties {
   /** The absolute URL of the employee's profile page. */
   profileUri?: string;
 
+  /** The size of the virtual machine. */
+  vmSize?: VirtualMachineSizeTypes;
+
   /** The status of the last operation. */
   @visibility(Lifecycle.Read)
   provisioningState?: ProvisioningState;
+}
+
+/**
+ * The size of the virtual machine.
+ */
+union VirtualMachineSizeTypes {
+  string,
+  #suppress "@azure-tools/typespec-azure-core/documentation-required" "For backward compatibility"
+  Standard_A1_v2: "Standard_A1_v2",
+  #suppress "@azure-tools/typespec-azure-core/documentation-required" "For backward compatibility"
+  Standard_A2_v2: "Standard_A2_v2",
+  #suppress "@azure-tools/typespec-azure-core/documentation-required" "For backward compatibility"
+  Standard_A2m_v2: "Standard_A2m_v2",
 }
 
 /** Details for relocating an employee to another city. */

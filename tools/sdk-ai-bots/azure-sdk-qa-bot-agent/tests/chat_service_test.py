@@ -6,7 +6,7 @@ import asyncio
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, call
 
 import pytest
 from azure.ai.projects.models import AgentVersionDetails
@@ -79,156 +79,133 @@ async def test_image_attempt_limit_keeps_failure_and_limit_notices(monkeypatch, 
     assert "additional images were not read" in items[-1]["content"]
 
 
-@pytest.fixture
-def placeholder_chat(monkeypatch):
-    from models.identity import ResolvedGitHubUser, ResolveGitHubUsersResult, TeamsUser
-    from services.teams_mention_service import IdentityTools
-
-    user = ResolvedGitHubUser(
-        text="<at>reviewer@example.test</at>",
-        mentioned=TeamsUser(id="11111111-2222-3333-4444-555555555555", name="Reviewer"),
-        plain_text="Reviewer (reviewer@example.test)",
-    )
-    lookup = AsyncMock(return_value=ResolveGitHubUsersResult(users={"reviewer-a": user}))
-    monkeypatch.setattr(IdentityTools, "resolve_github_users", lookup)
-    service = ChatService(
-        settings=lambda key, default=None: default,
-        project_client=MagicMock(), openai_client=MagicMock(),
-    )
-    service._get_agent = AsyncMock(
-        return_value=SimpleNamespace(name="chat-agent", version="1"),
-    )
-    service._resolve_agent_configuration = MagicMock(return_value=("chat-agent", "1"))
-    service._resolve_conversation = AsyncMock(return_value=("hosted-conversation", True))
-    service._save_bot_answer_to_conversation = AsyncMock()
-    invoke = AsyncMock(return_value=("trace-id", SimpleNamespace(
-        id="response-1", status="completed", output=[],
-        output_text=(
-            "{{mention:reviewer-a}}, please help. Contact: {{contact:reviewer-a}}."
-            "\n\n**References**\n- [Guide](https://example.test/guide)"
-        ),
-    )))
-    monkeypatch.setattr(chat_service, "HostedAgentClient", lambda _: SimpleNamespace(invoke=invoke))
-    tasks = []
-    monkeypatch.setattr(
-        chat_service.BackgroundTaskTracker, "instance",
-        lambda: SimpleNamespace(track=tasks.append),
-    )
-    return SimpleNamespace(
-        service=service, lookup=lookup, user=user, invoke=invoke, tasks=tasks,
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("endpoint", ["/completion", "/agent/chat"])
-@pytest.mark.parametrize("conversation_type", ["teams_channel", None])
-@pytest.mark.parametrize("flag_value", [None, "true", "TRUE", "false", "FALSE", " TRUE ", "", "yes"])
-async def test_backend_resolves_before_returning_and_saving_the_answer(
-    monkeypatch, placeholder_chat, endpoint, conversation_type, flag_value,
+@pytest.mark.parametrize("conversation_type, include_tag, last_lookup_fails", [
+    ("teams_channel", True, False), ("teams_channel", False, False),
+    (None, True, False), ("teams_channel", True, True),
+])
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+@pytest.mark.parametrize("legacy_output", [False, True])
+@pytest.mark.parametrize("flag_value", [None, "true", "false", "TRUE", "FALSE", " TRUE ", " FALSE ", "", "yes"])
+def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
+    conversation_type, include_tag, last_lookup_fails, output_type, legacy_output, flag_value, caplog
 ):
-    import httpx
-    import server
+    import json
 
-    state = placeholder_chat
+    from openai.types.responses import (
+        Response, ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage, ResponseOutputText,
+    )
+
+    from models.identity import ResolvedGitHubUser, ResolveGitHubUsersResult, TeamsMention, TeamsUser
+
+    mention = TeamsMention(
+        text="<at>linked.person@microsoft.com</at>",
+        mentioned=TeamsUser(
+            name="Linked Person",
+            id="11111111-2222-3333-4444-555555555555",
+        ),
+    )
+    output = []
+    # Separate tool calls must not discard the previously resolved reviewer.
+    lookups = [
+        ResolveGitHubUsersResult(users={"linked-user": ResolvedGitHubUser(
+            text=mention.text, mentioned=mention.mentioned,
+            plain_text="Linked Person (linked.person@microsoft.com)",
+        )}),
+        ResolveGitHubUsersResult(errors={"unlinked": "No linked Microsoft account was found."}),
+        ResolveGitHubUsersResult(errors={"service": "Not a person."}),
+    ]
+    if last_lookup_fails:
+        lookups.append(ResolveGitHubUsersResult(errors={"linked-user": "HTTP 403"}))
+    for index, result in enumerate(lookups):
+        call_id = f"lookup-{index}"
+        payload = result.model_dump(mode="json")
+        if legacy_output:
+            payload["mentions"] = {
+                login: {"text": user["text"], "mentioned": user["mentioned"]}
+                for login, user in payload.pop("users").items()
+            }
+        serialized = json.dumps(payload)
+        tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
+        if output_type == "function_call_output":
+            tool_output = ResponseFunctionToolCallOutputItem.model_construct(
+                type=output_type, id=call_id, call_id=call_id,
+                output=serialized, status="completed",
+            )
+        else:
+            tool_output = ResponseOutputMessage.model_construct(
+                type="message", id=call_id, role="assistant", status="completed", content=[],
+                call_id=call_id,
+                output=json.dumps([serialized]),
+            )
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call",
+                name="resolve_github_users",
+                call_id=call_id,
+                arguments=json.dumps({"usernames": [*result.users, *result.errors]}),
+            ),
+            tool_output,
+        ])
+    answer = f"Ping {mention.text if include_tag else '@linked-user'} or <at>unverified@microsoft.com</at>."
+    output.append(ResponseOutputMessage.model_construct(
+        type="message", id="answer", role="assistant", status="completed",
+        content=[ResponseOutputText.model_construct(
+            type="output_text", text=answer, annotations=[],
+        )],
+    ))
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id="azure_sdk_qa_bot",
+        conversation_type=conversation_type,
+        message=ChatMessage(role="user", content="Who can review?"),
+    )
+
     settings = AppConfigSnapshot(
         endpoint="https://test.azconfig.io",
         settings={} if flag_value is None else {"ENABLE_TEAMS_MENTION": flag_value},
     )
-    state.service._settings = settings.get
-    monkeypatch.setattr(server, "_chat_service", state.service)
-    request = ChatRequest(
-        tenant_id="typespec_channel_qa_bot", conversation_id="thread",
-        conversation_type=conversation_type,
-        message=ChatMessage(role="user", content="Who can help?"),
-    )
-    async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=server.app), base_url="http://test",
-    ) as client:
-        response = await client.post(endpoint, json=request.model_dump(mode="json"))
-    assert response.status_code == 200
-    result = response.json()
-    enabled = conversation_type == "teams_channel" and (flag_value or "true").lower() == "true"
-    expected = (
-        f"{state.user.text if enabled else state.user.plain_text}, please help. "
-        f"Contact: {state.user.plain_text}."
-    )
-    assert result["answer"] == expected
-    assert result["mentions"] == (
-        [{"text": state.user.text, "mentioned": state.user.mentioned.model_dump()}]
-        if enabled else None
-    )
-    assert result["references"][0]["link"] == "https://example.test/guide"
-    assert result["trace_id"] == "trace-id"
-    assert result["agent_name"] == "chat-agent"
-    assert result["has_result"]
-    state.lookup.assert_awaited_once_with(usernames=["reviewer-a"])
-    state.invoke.assert_awaited_once()
-    await asyncio.gather(*state.tasks)
-    state.service._save_bot_answer_to_conversation.assert_awaited_once_with(
-        request, "response-1", expected, "trace-id",
-    )
+    service = ChatService(settings=settings.get)
+    result = service._postprocess(request, response, None)
 
-
-@pytest.mark.asyncio
-async def test_failed_backend_lookup_saves_plain_handles(placeholder_chat):
-    from models.identity import ResolveGitHubUsersResult
-
-    state = placeholder_chat
-    state.lookup.return_value = ResolveGitHubUsersResult(
-        errors={"reviewer-a": "Unable to authenticate to the Microsoft Open Source portal."},
-    )
-    result = await state.service.chat(ChatRequest(
-        tenant_id="azure_sdk_qa_bot", conversation_id="thread",
-        conversation_type="teams_channel",
-        message=ChatMessage(role="user", content="Who can help?"),
-    ))
-    await asyncio.gather(*state.tasks)
-    assert result.answer == "@reviewer-a, please help. Contact: @reviewer-a."
-    assert result.mentions is None
-    assert state.service._save_bot_answer_to_conversation.await_args.args[2] == result.answer
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("with_placeholder", [False, True])
-async def test_backend_mentions_come_only_from_placeholders_not_identity_tool_output(
-    placeholder_chat, with_placeholder,
-):
-    import json
-
-    from openai.types.responses import ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem
-    from models.identity import ResolveGitHubUsersResult, TeamsMention
-
-    state = placeholder_chat
-    user = state.user
-    answer = f"{user.text}, please help."
-    if with_placeholder:
-        answer += " {{mention:reviewer-a}}, please confirm."
-    output = [
-        ResponseFunctionToolCall.model_construct(
-            type="function_call", name="resolve_github_users", call_id="identity-1",
-            arguments=json.dumps({"usernames": ["reviewer-a"]}),
-        ),
-        ResponseFunctionToolCallOutputItem.model_construct(
-            type="function_call_output", id="identity-1", call_id="identity-1",
-            status="completed",
-            output=ResolveGitHubUsersResult(users={"reviewer-a": user}).model_dump_json(),
-        ),
-    ]
-    state.invoke.return_value = ("trace-id", SimpleNamespace(
-        id="response-1", status="completed", output=output, output_text=answer,
-    ))
-    result = await state.service.chat(ChatRequest(
-        tenant_id="azure_sdk_qa_bot", conversation_id="thread",
-        conversation_type="teams_channel",
-        message=ChatMessage(role="user", content="Who can help?"),
-    ))
-    await asyncio.gather(*state.tasks)
+    assert result.answer == answer
+    teams_mentions_enabled = (flag_value or "true").lower() == "true"
     assert result.mentions == (
-        [TeamsMention(text=user.text, mentioned=user.mentioned)] if with_placeholder else None
+        [mention] if teams_mentions_enabled and conversation_type and include_tag and not last_lookup_fails and not legacy_output else None
     )
-    assert state.service._extract_tool_results(output) == {}
-    assert result.answer == answer.replace("{{mention:reviewer-a}}", user.text)
-    assert state.lookup.await_count == int(with_placeholder)
+    if not teams_mentions_enabled:
+        assert "mentions" not in result.model_dump(exclude_none=True)
+    if legacy_output:
+        assert "Failed to decode tool output for resolve_github_users" in caplog.text
+    if result.mentions:
+        assert result.model_dump(mode="json")["mentions"] == [{
+            "text": mention.text,
+            "mentioned": {"id": mention.mentioned.id, "name": "Linked Person"},
+        }]
+
+
+def test_disabled_teams_mentions_skip_identity_result_lookup(monkeypatch):
+    settings = AppConfigSnapshot(
+        endpoint="https://test.azconfig.io",
+        settings={"ENABLE_TEAMS_MENTION": "false"},
+    )
+    service = ChatService(settings=settings.get)
+    tool_results = MagicMock(wraps={})
+    monkeypatch.setattr(service, "_extract_tool_results", lambda items: tool_results)
+    answer = "Please help <at>linked.person@microsoft.com</at>."
+    request = ChatRequest(
+        tenant_id="azure_sdk_qa_bot",
+        conversation_type="teams_channel",
+        message=ChatMessage(role="user", content="Who can help?"),
+    )
+
+    result = service._postprocess(
+        request, SimpleNamespace(id="reply", output=[], output_text=answer), None,
+    )
+
+    assert call("resolve_github_users") not in tool_results.get.call_args_list
+    assert result.answer == answer
+    assert result.mentions is None
 
 
 # -- Memory scope handling ------------

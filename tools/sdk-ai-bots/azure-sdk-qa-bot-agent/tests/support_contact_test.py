@@ -11,13 +11,17 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 import yaml
+from openai.types.responses import (
+    ResponseFunctionToolCall,
+    ResponseFunctionToolCallOutputItem,
+    ResponseOutputMessage,
+)
 
 from models import support_contact
 from models.chat import ChatRequest, ChatResponse
 from models.identity import ResolvedGitHubUser, ResolveGitHubUsersResult, TeamsMention, TeamsUser
 from models.support_contact import get_support_catalog_context, parse_support_catalog
 from services.chat_service import ChatService
-from services.teams_mention_service import resolve_answer_mentions
 from tools.identity_tools import IdentityTools
 from utils.azure_ai_foundry_agent import ConversationBrokenError
 
@@ -68,6 +72,29 @@ def response(answer):
     return SimpleNamespace(
         id="response-1", status="completed", output=[], output_text=answer,
     )
+
+
+def identity_response(answer, lookups, output_type):
+    result = response(answer)
+    for index, lookup in enumerate(lookups):
+        call_id = f"identity-{index}"
+        result.output.append(ResponseFunctionToolCall.model_construct(
+            type="function_call", name="resolve_github_users", call_id=call_id,
+            arguments=json.dumps({
+                "usernames": sorted(lookup.users.keys() | lookup.errors.keys()),
+            }),
+        ))
+        if output_type == "function_call_output":
+            result.output.append(ResponseFunctionToolCallOutputItem.model_construct(
+                type=output_type, id=call_id, call_id=call_id, status="completed",
+                output=lookup.model_dump_json(),
+            ))
+        else:
+            result.output.append(ResponseOutputMessage.model_construct(
+                type="message", id=call_id, role="assistant", status="completed", content=[],
+                call_id=call_id, output=json.dumps([lookup.model_dump_json()]),
+            ))
+    return result
 
 
 def test_catalog_projection_includes_only_areas_and_github_usernames():
@@ -128,16 +155,73 @@ def test_normal_answers_are_not_wrapped_classified_or_duplicated(answer):
     "Please share the breaking-change report so I can identify the issue.",
     "Thanks for confirming; no further action is needed.",
 ])
-def test_informational_replies_do_not_attach_mentions(answer):
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+def test_informational_replies_do_not_attach_unused_verified_identities(answer, output_type):
+    mention = TeamsMention(
+        text="<at>reviewer@example.test</at>",
+        mentioned=TeamsUser(id="verified-a", name="Reviewer"),
+    )
     result = ChatService()._postprocess(
-        request(conversation_type="teams_channel"), response(answer), None,
+        request(conversation_type="teams_channel"),
+        identity_response(
+            answer, [ResolveGitHubUsersResult(
+                users={"reviewer-a": ResolvedGitHubUser(
+                    text=mention.text, mentioned=mention.mentioned,
+                    plain_text="Reviewer (reviewer@example.test)",
+                )},
+            )], output_type,
+        ),
+        None,
     )
     assert result.answer == answer
     assert result.mentions is None
 
 
-@pytest.mark.asyncio
-async def test_direct_help_request_keeps_natural_prose_and_verified_mention(monkeypatch):
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+def test_contact_details_merge_across_lookups_and_invalidate_stale_results(output_type):
+    user = ResolvedGitHubUser(
+        text="<at>first@example.test</at>",
+        mentioned=TeamsUser(id="verified-a", name="First reviewer"),
+        plain_text="First reviewer (first@example.test)",
+    )
+    other = ResolvedGitHubUser(
+        text="<at>second@example.test</at>",
+        mentioned=TeamsUser(id="verified-b", name="Second reviewer"),
+        plain_text="Second reviewer (second@example.test)",
+    )
+    lookups = [
+        ResolveGitHubUsersResult(errors={"reviewer-a": "HTTP 403"}),
+        ResolveGitHubUsersResult(users={"reviewer-a": user}),
+        ResolveGitHubUsersResult(users={"reviewer-b": other}),
+    ]
+    service = ChatService()
+    initial = service._extract_tool_results(identity_response("", lookups, output_type).output)["resolve_github_users"]
+    assert isinstance(initial, ResolveGitHubUsersResult)
+    assert initial.users == {"reviewer-a": user, "reviewer-b": other}
+    assert initial.errors == {}
+
+    updated = ResolvedGitHubUser(
+        text="<at>updated@example.test</at>",
+        mentioned=TeamsUser(id="updated-a", name="Updated reviewer"),
+        plain_text="Updated reviewer (updated@example.test)",
+    )
+    lookups.extend([
+        ResolveGitHubUsersResult(errors={"reviewer-b": "HTTP 403"}),
+        ResolveGitHubUsersResult(users={"reviewer-a": updated}),
+    ])
+    final = service._extract_tool_results(identity_response("", lookups, output_type).output)["resolve_github_users"]
+    assert isinstance(final, ResolveGitHubUsersResult)
+    assert final.users == {"reviewer-a": updated}
+    assert final.errors == {"reviewer-b": "HTTP 403"}
+    stale_answer = service._postprocess(
+        request(conversation_type="teams_channel"),
+        identity_response(f"Please help, {user.text}.", lookups, output_type), None,
+    )
+    assert stale_answer.mentions is None
+
+
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+def test_direct_help_request_keeps_natural_prose_and_verified_mention(output_type):
     mention = TeamsMention(
         text="<at>reviewer@example.test</at>",
         mentioned=TeamsUser(id="verified-a", name="Reviewer"),
@@ -147,24 +231,24 @@ async def test_direct_help_request_keeps_natural_prose_and_verified_mention(monk
         "could you help assess the Python change and clarify the evidence needed "
         "for Java in https://example.test/pr/123? This is not a request for final approval."
     )
-    lookup = AsyncMock(return_value=ResolveGitHubUsersResult(
-        users={"reviewer-a": ResolvedGitHubUser(
-            text=mention.text, mentioned=mention.mentioned,
-            plain_text="Reviewer (reviewer@example.test)",
-        )},
-    ))
-    monkeypatch.setattr(IdentityTools, "resolve_github_users", lookup)
-    rendered, mentions = await resolve_answer_mentions(
-        answer.replace(mention.text, "{{mention:reviewer-a}}"), enabled=True,
+    result = ChatService()._postprocess(
+        request(conversation_type="teams_channel"),
+        identity_response(
+            answer, [ResolveGitHubUsersResult(users={"reviewer-a": ResolvedGitHubUser(
+                text=mention.text, mentioned=mention.mentioned,
+                plain_text="Reviewer (reviewer@example.test)",
+            )})], output_type,
+        ),
+        None,
     )
-    assert rendered == answer
-    assert mentions == [mention]
-    assert rendered.count(mention.text) == 1
-    assert rendered.count("https://example.test/pr/123") == 1
+    assert result.answer == answer
+    assert result.mentions == [mention]
+    assert result.answer.count(mention.text) == 1
+    assert result.answer.count("https://example.test/pr/123") == 1
 
 
-@pytest.mark.asyncio
-async def test_same_area_contacts_support_batched_mentions(monkeypatch):
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+def test_same_area_contacts_support_batched_mentions(output_type):
     area = parse_support_catalog(CONFIG).support_areas[-1]
     users = {
         login: ResolvedGitHubUser(
@@ -175,25 +259,23 @@ async def test_same_area_contacts_support_batched_mentions(monkeypatch):
         for login in area.github_usernames
     }
     answer = ", ".join(user.text for user in users.values()) + ", could you help review this .NET PR?"
-    lookup = AsyncMock(return_value=ResolveGitHubUsersResult(users=users))
-    monkeypatch.setattr(IdentityTools, "resolve_github_users", lookup)
-    placeholders = ", ".join("{{mention:" + login + "}}" for login in users)
-    rendered, mentions = await resolve_answer_mentions(
-        placeholders + ", could you help review this .NET PR?", enabled=True,
+    result = ChatService()._postprocess(
+        request(conversation_type="teams_channel"),
+        identity_response(answer, [ResolveGitHubUsersResult(users=users)], output_type),
+        None,
     )
-    lookup.assert_awaited_once_with(usernames=area.github_usernames)
-    assert rendered == answer
-    assert mentions == [
+    assert result.answer == answer
+    assert result.mentions == [
         TeamsMention(text=user.text, mentioned=user.mentioned) for user in users.values()
     ]
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("enabled", [True, False])
+@pytest.mark.parametrize("conversation_type", ["teams_channel", None])
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
 @pytest.mark.parametrize("resolution", [
-    "both", "partial", "failed", "forged", "unused",
+    "both", "partial", "failed", "forged", "later_failure", "unused",
 ])
-async def test_grouped_requests_reuse_verified_mentions(monkeypatch, enabled, resolution):
+def test_grouped_requests_reuse_verified_mentions(conversation_type, output_type, resolution):
     first = TeamsMention(
         text="<at>python-java@example.test</at>",
         mentioned=TeamsUser(id="verified-a", name="First reviewer"),
@@ -209,39 +291,37 @@ async def test_grouped_requests_reuse_verified_mentions(monkeypatch, enabled, re
         )
         for login, mention in all_mentions.items()
     }
-    identities = ResolveGitHubUsersResult(users=all_users)
+    lookups = [ResolveGitHubUsersResult(users=all_users)]
     expected = [first, second]
-    raw = ANSWER.replace("@reviewer-a", "{{mention:reviewer-a}}").replace(
-        "@reviewer-b", "{{mention:reviewer-b}}",
-    )
-    if resolution == "partial":
-        identities = ResolveGitHubUsersResult(
+    answer = ANSWER.replace("@reviewer-a", first.text).replace("@reviewer-b", second.text)
+    if resolution in {"partial", "forged"}:
+        lookups = [ResolveGitHubUsersResult(
             users={"reviewer-a": all_users["reviewer-a"]},
             errors={"reviewer-b": "Microsoft account lookup failed (HTTP 403)."},
-        )
+        )]
         expected = [first]
+        if resolution == "partial":
+            answer = ANSWER.replace("@reviewer-a", first.text)
     elif resolution == "failed":
-        identities = ResolveGitHubUsersResult(errors={
+        lookups = [ResolveGitHubUsersResult(errors={
             login: "No linked Microsoft account was found." for login in all_mentions
-        })
+        })]
         expected = []
-    elif resolution == "forged":
-        raw = raw.replace("{{mention:reviewer-b}}", second.text)
+        answer = ANSWER
+    elif resolution == "later_failure":
+        lookups.append(ResolveGitHubUsersResult(errors={"reviewer-b": "HTTP 403"}))
         expected = [first]
     elif resolution == "unused":
-        raw = ANSWER
+        answer = ANSWER
         expected = []
-    lookup = AsyncMock(return_value=identities)
-    monkeypatch.setattr(IdentityTools, "resolve_github_users", lookup)
-    rendered, mentions = await resolve_answer_mentions(raw, enabled=enabled)
-    assert mentions == ((expected or None) if enabled else None)
-    for login, mention in all_mentions.items():
-        replacement = all_users[login].plain_text if not enabled else mention.text
-        if login not in identities.users:
-            replacement = f"@{login}"
-        raw = raw.replace("{{mention:" + login + "}}", replacement)
-    assert rendered == raw
-    assert rendered.count("https://example.test/pr/123") == 1
+    result = ChatService()._postprocess(
+        request(conversation_type=conversation_type),
+        identity_response(answer, lookups, output_type), None,
+    )
+    assert result.answer == answer
+    assert result.mentions == ((expected or None) if conversation_type else None)
+    assert result.answer.count("https://example.test/pr/123") == 1
+    assert "next_step" not in result.model_dump()
 
 
 def test_normal_answer_keeps_reference_processing():
@@ -534,13 +614,13 @@ async def test_both_endpoints_keep_existing_answer_response(monkeypatch, endpoin
 async def test_startup_keeps_plain_output_and_existing_tools(monkeypatch):
     from agents.chat_agent import init as entrypoint
 
-    assert not hasattr(entrypoint, "IdentityTools")
+    assert entrypoint.IdentityTools is IdentityTools
     monkeypatch.setattr(entrypoint.app_config, "init", AsyncMock())
     monkeypatch.setattr(entrypoint, "cfg", lambda key, default=None: "medium")
     client, project = MagicMock(), MagicMock()
     monkeypatch.setattr(entrypoint, "get_agent_client", lambda: client)
     monkeypatch.setattr(entrypoint, "get_project_client", lambda: project)
-    for name in ("KnowledgeTools", "WebTools"):
+    for name in ("KnowledgeTools", "IdentityTools", "WebTools"):
         monkeypatch.setattr(entrypoint, name, MagicMock())
     for name in ("create_ado_mcp_tool", "create_azsdk_mcp_tool", "create_github_mcp_tool"):
         monkeypatch.setattr(entrypoint, name, AsyncMock(return_value=None))
@@ -559,7 +639,7 @@ async def test_startup_keeps_plain_output_and_existing_tools(monkeypatch):
     assert options["instructions"] == (prompt / "instruction.md").read_text(encoding="utf-8").strip()
     assert not (prompt / "next_step.md").exists()
     assert "response_format" not in options["default_options"]
-    assert len(options["tools"]) == 4
+    assert entrypoint.IdentityTools.return_value.resolve_github_users in options["tools"]
     assert client.get_web_search_tool.return_value in options["tools"]
     server.run_async.assert_awaited_once()
 
@@ -568,7 +648,7 @@ def test_prompt_keeps_guidance_optional_without_a_new_output_format():
     text = (ROOT / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
     heading = "## Next Action or Help Request (When Needed)"
     assert text.count(heading) == 1
-    section = text.split(heading + "\n", 1)[1].split("## Contact Placeholders\n", 1)[0]
+    section = text.split(heading + "\n", 1)[1].split("## Teams User Mentions\n", 1)[0]
     assert "Add a next step only when needed to resolve the request; routine instructions do not require an extra request." in section
     assert "ask for missing user facts only when they determine the next action" in section
     assert "If no owner is established, explain the limitation and provide any known support route." in section
@@ -584,7 +664,7 @@ def test_prompt_keeps_guidance_optional_without_a_new_output_format():
     assert "Optional pattern" not in section
     assert "[What is needed]" not in section
     assert "A simple clarification can be a single question without a heading." in section
-    assert "Follow Contact Placeholders below" not in section
+    assert "Follow Teams User Mentions below" not in section
     assert "Distinguish help resolving a blocker from final approval, and respect the prerequisites in authoritative guidance." in section
     assert "Bullet points over paragraphs. One idea per bullet." in text
     assert "**ALWAYS retrieve before composing your answer**" in text
@@ -593,39 +673,43 @@ def test_prompt_keeps_guidance_optional_without_a_new_output_format():
 
 def test_help_request_example_uses_placeholders_and_conditional_approval():
     text = (ROOT / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
-    section = text.split("## Next Action or Help Request (When Needed)\n", 1)[1].split("## Contact Placeholders\n", 1)[0]
-    assert "Example (replace the GitHub login and PR link with evidence-backed values):" in section
+    section = text.split("## Next Action or Help Request (When Needed)\n", 1)[1].split("## Teams User Mentions\n", 1)[0]
+    assert "Example (replace placeholders with verified values):" in section
     example = section.split("```text\n", 1)[1].split("```", 1)[0]
-    assert example.startswith("**Actions needed**\n\n{{mention:owner-login}}")
+    assert example.startswith("**Actions needed**\n\n[Verified owner mention]")
+    assert "[Verified owner mention]" in example
     assert "[spec PR link]" in example
     assert "if acceptable" in example
     assert "@" not in example
     assert "<at>" not in example
 
 
-def test_prompt_uses_backend_placeholders_for_direct_mentions_and_plain_contacts():
+def test_prompt_tenant_and_identity_tool_limit_mentions_to_participation():
     text = (ROOT / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
-    mentions = text.split("## Contact Placeholders\n", 1)[1].split("\n## ", 1)[0]
-    assert "Teams User Mentions" not in text
-    assert sum(line.startswith("- ") for line in mentions.splitlines()) == 3
+    mentions = text.split("## Teams User Mentions\n", 1)[1].split("\n## ", 1)[0]
+    assert sum(line.startswith("- ") for line in mentions.splitlines()) == 5
     assert "Tag only direct requests for help, judgment or action" in mentions
     assert "including in PR, tenant and skill guidance" in mentions
     assert "keep contact recommendations and quoted/incidental usernames plain" in mentions
-    assert "`{{mention:github-login}}` for direct requests" in mentions
-    assert "`{{contact:github-login}}` for plain contact recommendations" in mentions
-    assert "using evidence-backed individual GitHub usernames" in mentions
-    assert "The backend resolves these placeholders" not in mentions
-    assert "Unresolved people remain plain GitHub handles" not in mentions
-    assert "resolve_github_users" not in text
-    assert "reserve one tool call" not in text
+    assert "Resolve evidence-backed GitHub usernames with `resolve_github_users`" in mentions
+    assert "batching up to ten per call" in mentions
+    assert "When a direct request is needed, reserve one tool call for this lookup before composing the final answer." in mentions
+    assert "Copy `users[login].plain_text` for contacts and `users[login].text` for direct requests, both verbatim" in mentions
+    assert "never escape or code-format `<at>` markup" in mentions
+    assert "On lookup errors, keep the GitHub handle; never invent names, addresses or identities." in mentions
+    assert "Authentication/network failures do not mean the account is unlinked." in mentions
     assert "Identity resolution does not imply approval or completed work." in mentions
     assert "@github-handle" not in mentions
     tenant = (ROOT / "prompts" / "tenants" / "api_spec_review.md").read_text(encoding="utf-8")
-    assert "Use contact placeholders for recommendations" in tenant
-    assert "mention placeholders only when directly requesting participation" in tenant
-    assert "**Contact Placeholders**" in tenant
-    assert "Teams mentions" not in tenant
+    assert "Keep contact recommendations in plain text" in tenant
+    assert "use verified Teams mentions only when directly requesting their participation" in tenant
     assert "(as `@github-handle` mentions)" not in tenant
+    description = IdentityTools.resolve_github_users.__doc__ or ""
+    assert "not a separately verified mailbox" in description
+    assert "directly asked to help or act" in description
+    assert "For plain contact references, copy users[login].plain_text verbatim." in description
+    assert "Copy users[login].text verbatim only for direct participation requests." in description
+    assert "Resolving an identity alone does not require mentioning it." in description
 
 
 def test_pr_review_uses_shared_direct_request_and_mention_rules():
@@ -633,5 +717,5 @@ def test_pr_review_uses_shared_direct_request_and_mention_rules():
     approval = skill.split("7. **Review approval:**", 1)[1]
     assert "qualified, verified reviewers/code owners" in approval
     assert "directly with a specific request and PR link" in approval
-    assert "following the shared Next Action or Help Request and Contact Placeholders rules" in approval
+    assert "following the shared Next Action or Help Request and Teams User Mentions rules" in approval
     assert "@github-handle" not in approval

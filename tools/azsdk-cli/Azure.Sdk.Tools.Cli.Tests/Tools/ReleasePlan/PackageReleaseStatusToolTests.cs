@@ -818,6 +818,146 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(command.Parse("--package-name azure-test --language Python --api-version 2026-07-01").Errors, Is.Not.Empty);
         }
 
+        private const string ReleaseRunUrl = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=7046446";
+
+        [TestCase(".NET", "Azure.Test")]
+        [TestCase("Java", "azure-test")]
+        [TestCase("JavaScript", "@azure/test")]
+        [TestCase("Python", "azure-test")]
+        [TestCase("Go", "sdk/test/aztest")]
+        public async Task ReleaseRun_OneRecordedPlan_UpdatesOnlyThatPlanAndLanguage(string language, string packageName)
+        {
+            _plan.SDKInfo.Single(s => s.Language == language).ReleasePipelineUrl = ReleaseRunUrl;
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync(packageName, language, ReleaseRunUrl, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan]);
+
+            var result = await UpdateAsync(releasePlanId: 0, language: language, packageName: packageName, version: "1.2.3", pipeline: ReleaseRunUrl);
+
+            var fieldId = DevOpsService.MapLanguageToId(language);
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanId, Is.EqualTo(100));
+            var write = _writes.Single();
+            Assert.That(write.Id, Is.EqualTo(12345));
+            Assert.That(write.Revision, Is.EqualTo(7), "The write must be guarded by the revision read with the matched plan.");
+            Assert.That(write.Fields, Is.EquivalentTo(new Dictionary<string, string>
+            {
+                [$"Custom.ReleaseStatusFor{fieldId}"] = "Released",
+                [$"Custom.ReleasedVersionFor{fieldId}"] = "1.2.3",
+                [$"Custom.ReleasePipelineFor{fieldId}"] = ReleaseRunUrl
+            }));
+            _devOps.Verify(s => s.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+            _devOps.Verify(s => s.GetReleasePlansBySdkPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ReleaseRun_NoRecordedPlan_UsesLegacyLookup()
+        {
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", ReleaseRunUrl, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+            var result = await UpdateAsync(releasePlanId: 0, pipeline: ReleaseRunUrl);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
+            Assert.That(_devOps.Invocations.Select(i => i.Method.Name), Is.EqualTo(new[]
+            {
+                nameof(IDevOpsService.GetReleasePlansByReleasePipelineAsync),
+                nameof(IDevOpsService.GetReleasePlansForPackageAsync)
+            }));
+            AssertNoWrites();
+        }
+
+        [Test]
+        public async Task ReleaseRun_TwoRecordedPlans_RejectsWithoutLegacyFallbackOrWrite()
+        {
+            var other = CreatePlan();
+            other.WorkItemId = 22222;
+            other.ReleasePlanId = 200;
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", ReleaseRunUrl, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan, other]);
+
+            var result = await UpdateAsync(releasePlanId: 0, pipeline: ReleaseRunUrl);
+
+            Assert.That(result.ResponseError, Does.Contain("at most one").And.Contain("12345").And.Contain("22222"));
+            _devOps.Verify(s => s.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+            AssertNoWrites();
+        }
+
+        [Test]
+        public async Task ReleaseRun_RecordedRunChangedAfterQuery_DoesNotWrite()
+        {
+            _plan.SDKInfo.Single(s => s.Language == "Python").ReleasePipelineUrl = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=900000001";
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", ReleaseRunUrl, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan]);
+
+            var result = await UpdateAsync(releasePlanId: 0, pipeline: ReleaseRunUrl);
+
+            Assert.That(result.ResponseError, Does.Contain("no longer recorded"));
+            AssertNoWrites();
+        }
+
+        [Test]
+        public async Task ReleaseRun_PackageNotOnMatchedPlan_DoesNotWrite()
+        {
+            var python = _plan.SDKInfo.Single(s => s.Language == "Python");
+            python.ReleasePipelineUrl = ReleaseRunUrl;
+            python.PackageName = "another-package";
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", ReleaseRunUrl, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan]);
+
+            var result = await UpdateAsync(releasePlanId: 0, pipeline: ReleaseRunUrl);
+
+            Assert.That(result.ResponseError, Does.Contain("exact package name"));
+            AssertNoWrites();
+        }
+
+        [TestCase("https://example.test/build/1")]
+        [TestCase("http://dev.azure.com/azure-sdk/internal/_build/results?buildId=1")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build?buildId=123")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=0")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=123&view=logs")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1' OR '1'='1")]
+        public async Task ReleaseRun_NotAnAzureDevOpsRunUrl_UsesLegacyLookupWithoutQuerying(string pipeline)
+        {
+            _devOps.Setup(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+
+            var result = await UpdateAsync(releasePlanId: 0, pipeline: pipeline);
+
+            Assert.That(result.ResponseError, Is.Null);
+            _devOps.Verify(s => s.GetReleasePlansByReleasePipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+            _devOps.Verify(s => s.GetReleasePlansForPackageAsync("azure-test", "Python", It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task ReleaseRun_ExplicitPlanIdOrSdkPr_TakesPriorityOverReleaseRun()
+        {
+            _plan.SDKInfo.Single(s => s.Language == "Python").SdkPullRequestUrl = PythonSdkPr;
+
+            var byId = await UpdateAsync(pipeline: ReleaseRunUrl);
+            var byPr = await UpdateAsync(releasePlanId: 0, sdkPr: PythonSdkPr, pipeline: ReleaseRunUrl);
+
+            Assert.That(byId.ResponseError, Is.Null);
+            Assert.That(byPr.ResponseError, Is.Null);
+            _devOps.Verify(s => s.GetReleasePlansByReleasePipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task Cli_ReleasePipelineOnly_UsesTheRecordedReleaseRun()
+        {
+            _plan.SDKInfo.Single(s => s.Language == "Python").ReleasePipelineUrl = ReleaseRunUrl;
+            _devOps.Setup(s => s.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", ReleaseRunUrl, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan]);
+            var command = _tool.GetCommandInstances().First();
+            var parse = command.Parse($"--package-name azure-test --language Python --package-version 2.0.0 --release-pipeline {ReleaseRunUrl}");
+
+            var result = (ReleaseStatusUpdateResponse)await _tool.HandleCommand(parse, CancellationToken.None);
+
+            Assert.That(parse.Errors, Is.Empty);
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanId, Is.EqualTo(100));
+            Assert.That(_writes.Single().Fields["Custom.ReleasedVersionForPython"], Is.EqualTo("2.0.0"));
+        }
+
         private Task<ReleaseStatusUpdateResponse> UpdateAsync(int releasePlanId = 100,
             string language = "Python", string packageName = "azure-test", string status = "Released", string? version = null,
             string? pipeline = null, string? sdkReleaseType = null, string? sdkPr = null, CancellationToken ct = default)

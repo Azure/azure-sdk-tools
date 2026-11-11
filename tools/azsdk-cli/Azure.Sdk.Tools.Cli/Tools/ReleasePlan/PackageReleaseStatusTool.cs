@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<int> releasePlanIdOpt = new("--release-plan-id")
         {
-            Description = "Release plan ID supplied for a manual release (not the Azure DevOps work item ID). Takes priority over --sdk-pull-request. When neither is supplied, the transitional package-name lookup is used.",
+            Description = "Release plan ID supplied for a manual release (not the Azure DevOps work item ID). Takes priority over --sdk-pull-request. When neither is supplied, the plan that recorded --release-pipeline for this package is used; if none did, the transitional package-name lookup is used.",
             Required = false,
         };
 
@@ -64,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string?> releasePipelineOpt = new("--release-pipeline")
         {
-            Description = "Release pipeline URL.",
+            Description = "Release pipeline URL, recorded on the plan. When no plan ID or SDK PR is supplied, exactly one in-progress plan that already recorded this URL for the package is updated; several matches stop the update, and no match uses the transitional package-name lookup.",
             Required = false,
         };
 
@@ -170,10 +170,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return Reject("Release status cannot be empty.");
                 }
 
-                // Only callers that supply neither correlation input use the transitional lookup.
+                bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
+
+                // Without a plan ID or SDK PR, prefer the plan that recorded this exact release run for this package.
+                // Several matches are ambiguous and stop here; no match keeps the transitional package lookup.
+                ReleasePlanWorkItem? releasePlanForRun = null;
+                string normalizedReleasePipeline = string.Empty;
                 if (releasePlanId == 0 && string.IsNullOrWhiteSpace(sdkPullRequest))
                 {
-                    return await UpdateByLegacyPackageLookupAsync(response, packageName, language, releaseStatus, packageVersion, releasePipelineUrl, ct);
+                    if (DevOpsService.TryNormalizeReleasePipelineUrl(releasePipelineUrl, out normalizedReleasePipeline))
+                    {
+                        var plansForRun = await devOpsService.GetReleasePlansByReleasePipelineAsync(packageName, response.Language.ToWorkItemString(), normalizedReleasePipeline, isAgentTesting, ct);
+                        if (plansForRun.Count > 1)
+                        {
+                            return Reject($"Expected at most one release plan recorded for release run '{normalizedReleasePipeline}'; found {plansForRun.Count}. Candidate work item IDs: {string.Join(", ", plansForRun.Select(p => p.WorkItemId))}.");
+                        }
+                        releasePlanForRun = plansForRun.SingleOrDefault();
+                    }
+                    if (releasePlanForRun is null)
+                    {
+                        return await UpdateByLegacyPackageLookupAsync(response, packageName, language, releaseStatus, packageVersion, releasePipelineUrl, ct);
+                    }
+                    logger.LogInformation("Selected release plan work item {workItemId} using release run {releasePipelineUrl} for package {packageName}.", releasePlanForRun.WorkItemId, normalizedReleasePipeline, packageName);
                 }
                 if (!string.IsNullOrWhiteSpace(sdkPullRequest))
                 {
@@ -181,10 +199,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.SdkPullRequest = sdkPullRequest;
                 }
 
-                bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
                 var lookupBySdkPr = releasePlanId == 0;
                 ReleasePlanWorkItem releasePlan;
-                if (lookupBySdkPr)
+                if (releasePlanForRun is not null)
+                {
+                    releasePlan = releasePlanForRun;
+                }
+                else if (lookupBySdkPr)
                 {
                     var releasePlans = await devOpsService.GetReleasePlansBySdkPullRequestAsync(sdkPullRequest!, response.Language.ToWorkItemString(), isAgentTesting, ct);
                     if (releasePlans.Count != 1)
@@ -214,6 +235,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (!string.IsNullOrWhiteSpace(sdkPullRequest) && !string.Equals(sdkInfo.SdkPullRequestUrl, sdkPullRequest, StringComparison.OrdinalIgnoreCase))
                 {
                     return Reject("The SDK pull request does not match this language/package entry.");
+                }
+                // The query and the fetch are separate reads; confirm the run is still recorded on the fetched entry.
+                if (releasePlanForRun is not null && !string.Equals(sdkInfo.ReleasePipelineUrl, normalizedReleasePipeline, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Reject("The release run is no longer recorded on this language/package entry.");
                 }
                 var isInProgress = string.Equals(releasePlan.Status, "In Progress", StringComparison.OrdinalIgnoreCase);
 

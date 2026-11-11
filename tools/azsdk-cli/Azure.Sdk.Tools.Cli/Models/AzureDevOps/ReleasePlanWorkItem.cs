@@ -150,6 +150,10 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [JsonIgnore]
         public string ReleasedVersion { get; set; } = string.Empty;
 
+        // The release run recorded for this language; used internally to verify a release-run plan match.
+        [JsonIgnore]
+        public string ReleasePipelineUrl { get; set; } = string.Empty;
+
         // Retain the stored ADO value for internal release-plan selection, but do not expose
         // it as current PR status. GitHub and the release plan dashboard provide that information.
         [JsonIgnore]

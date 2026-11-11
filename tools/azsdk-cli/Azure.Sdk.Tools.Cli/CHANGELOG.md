@@ -1,5 +1,11 @@
 # Release History
 
+## 0.6.59 (Unreleased)
+
+### Bugs Fixed
+
+- `release-plan update-release-status` now resolves the plan from the release run when no `--release-plan-id` or `--sdk-pull-request` is supplied. If exactly one in-progress plan already recorded the supplied `--release-pipeline` URL for the package and language, that plan is updated through the existing checks (exact package, in-progress state, revision guard). Several matching plans stop the update with an error. If no plan recorded the run, or the URL is not an Azure DevOps build results URL, the transitional package-name lookup is used as before. This lets an auto-released package be marked Released when it has more than one active release plan, without each language pipeline forwarding the SDK PR.
+
 ## 0.6.58 (2026-11-10)
 
 ### Features Added

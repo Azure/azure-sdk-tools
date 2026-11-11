@@ -171,6 +171,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(new List<ReleasePlanWorkItem>());
         }
 
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansByReleasePipelineAsync(string packageName, string language, string releasePipelineUrl, bool isTestReleasePlan, CancellationToken ct)
+        {
+            return Task.FromResult(new List<ReleasePlanWorkItem>());
+        }
+
         Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string productLifecycle, bool isTestReleasePlan, CancellationToken ct)
         {
             return Task.FromResult(new List<ReleasePlanWorkItem>());

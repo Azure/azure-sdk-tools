@@ -1339,6 +1339,99 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.CatchAsync<OperationCanceledException>(() => _devOpsService.GetReleasePlansBySdkPullRequestAsync("https://github.com/Azure/azure-sdk-for-python/pull/123", "Python"));
         }
 
+        private const string ReleaseRunUrl = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=7046446";
+
+        [TestCase(".NET", "Dotnet", "Azure.Test")]
+        [TestCase("Java", "Java", "azure-test")]
+        [TestCase("JavaScript", "JavaScript", "@azure/test")]
+        [TestCase("Python", "Python", "azure-test")]
+        [TestCase("Go", "Go", "sdk/test/aztest")]
+        public async Task GetReleasePlansByReleasePipelineAsync_QueriesExactPackageLanguageRunAndInProgressPlans(string language, string fieldId, string packageName)
+        {
+            var plan = CreateReleasePlanWorkItemWithReleasePlanId(35000, 100, "In Progress");
+            plan.Fields[$"Custom.{fieldId}PackageName"] = packageName;
+            plan.Fields[$"Custom.ReleasePipelineFor{fieldId}"] = ReleaseRunUrl;
+            _connection.AddWorkItemToQuery(plan);
+
+            var plans = await _devOpsService.GetReleasePlansByReleasePipelineAsync(packageName, language, ReleaseRunUrl);
+
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[Custom.{fieldId}PackageName] = '{packageName}'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[Custom.ReleasePipelineFor{fieldId}] = '{ReleaseRunUrl}'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.State] = 'In Progress'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.WorkItemType] = 'Release Plan'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.Tags] NOT CONTAINS 'Release Planner App Test'"));
+            Assert.That(plans.Single().WorkItemId, Is.EqualTo(35000));
+            Assert.That(plans.Single().SDKInfo.Single(s => s.Language == language).ReleasePipelineUrl, Is.EqualTo(ReleaseRunUrl));
+        }
+
+        [Test]
+        public async Task GetReleasePlansByReleasePipelineAsync_ReturnsAllCandidatesInTestScopeAndEscapesPackageName()
+        {
+            _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(11111, 100, "In Progress"));
+            _connection.AddWorkItemToQuery(CreateReleasePlanWorkItemWithReleasePlanId(22222, 200, "In Progress"));
+
+            var plans = await _devOpsService.GetReleasePlansByReleasePipelineAsync("o'brien", "Python", ReleaseRunUrl, true);
+
+            Assert.That(plans.Select(p => p.WorkItemId), Is.EquivalentTo(new[] { 11111, 22222 }));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[System.Tags] CONTAINS 'Release Planner App Test'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain("[Custom.PythonPackageName] = 'o''brien'"));
+        }
+
+        [Test]
+        public async Task GetReleasePlansByReleasePipelineAsync_NoMatchesReturnsEmpty()
+        {
+            var plans = await _devOpsService.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", ReleaseRunUrl);
+            Assert.That(plans, Is.Empty);
+        }
+
+        [TestCase("http://dev.azure.com/azure-sdk/internal/_build/results?buildId=1")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1' OR '1'='1")]
+        [TestCase("https://example.test/azure-sdk/internal/_build/results?buildId=1")]
+        public void GetReleasePlansByReleasePipelineAsync_InvalidRunDoesNotQuery(string pipeline)
+        {
+            Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", pipeline));
+            Assert.That(_connection.LastCapturedQuery, Is.Null);
+        }
+
+        [Test]
+        public void GetReleasePlansByReleasePipelineAsync_EmptyPackageDoesNotQuery()
+        {
+            Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.GetReleasePlansByReleasePipelineAsync(" ", "Python", ReleaseRunUrl));
+            Assert.That(_connection.LastCapturedQuery, Is.Null);
+        }
+
+        [Test]
+        public void GetReleasePlansByReleasePipelineAsync_QueryCancellationPropagates()
+        {
+            _connection.CancelQuery();
+            Assert.CatchAsync<OperationCanceledException>(() => _devOpsService.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", ReleaseRunUrl));
+        }
+
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=7046446", "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=7046446")]
+        [TestCase("  HTTPS://DEV.AZURE.COM/azure-sdk/internal/_build/results?buildId=7046446  ", "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=7046446")]
+        public async Task GetReleasePlansByReleasePipelineAsync_AcceptsOnlyTheRecordedRunShape(string url, string expectedInQuery)
+        {
+            await _devOpsService.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", url);
+
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[Custom.ReleasePipelineForPython] = '{expectedInQuery}'"));
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build?buildId=1")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=0")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=01")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=12345678901")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1&view=logs")]
+        [TestCase("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1' OR '1'='1")]
+        [TestCase("https://dev.azure.com/azure sdk/internal/_build/results?buildId=1")]
+        [TestCase("https://dev.azure.com@example.test/azure-sdk/internal/_build/results?buildId=1")]
+        public void GetReleasePlansByReleasePipelineAsync_RejectsAnyOtherRunUrlWithoutQuerying(string? url)
+        {
+            Assert.ThrowsAsync<ArgumentException>(() => _devOpsService.GetReleasePlansByReleasePipelineAsync("azure-test", "Python", url!));
+            Assert.That(_connection.LastCapturedQuery, Is.Null);
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public async Task GetReleasePlanAsync_UsesDisplayIdAndMapsSnapshotAndEnvironment(bool isTest)

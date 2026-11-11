@@ -151,6 +151,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
+        /// <summary>
+        /// Finds in-progress plans whose recorded release run for the language matches the exact package and release pipeline URL.
+        /// </summary>
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansByReleasePipelineAsync(string packageName, string language, string releasePipelineUrl, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", string? specCommitSha = null, CancellationToken ct = default);
@@ -434,6 +438,48 @@ namespace Azure.Sdk.Tools.Cli.Services
             return plans;
         }
 
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansByReleasePipelineAsync(string packageName, string language, string releasePipelineUrl, bool isTestReleasePlan = false, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(packageName))
+            {
+                throw new ArgumentException("Package name cannot be empty.", nameof(packageName));
+            }
+            if (!TryNormalizeReleasePipelineUrl(releasePipelineUrl, out var normalizedUrl))
+            {
+                throw new ArgumentException("Release pipeline must be an Azure DevOps build results URL such as https://dev.azure.com/{organization}/{project}/_build/results?buildId={id}.", nameof(releasePipelineUrl));
+            }
+
+            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan' AND [System.State] = 'In Progress'";
+            query += $" AND [Custom.{languageId}PackageName] = '{packageName.Replace("'", "''")}'";
+            query += $" AND [Custom.ReleasePipelineFor{languageId}] = '{normalizedUrl}'";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            var workItems = await FetchWorkItemsAsync(query, ct);
+            var plans = new List<ReleasePlanWorkItem>();
+            foreach (var workItem in workItems)
+            {
+                plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
+            }
+            return plans;
+        }
+
+        // Accepts only the exact shape the release pipelines record, so the value is safe to compare in a work item query.
+        internal static bool TryNormalizeReleasePipelineUrl(string? releasePipelineUrl, out string normalizedUrl)
+        {
+            normalizedUrl = string.Empty;
+            var match = ReleasePipelineUrlRegex().Match(releasePipelineUrl?.Trim() ?? string.Empty);
+            if (!match.Success)
+            {
+                return false;
+            }
+            normalizedUrl = $"https://dev.azure.com/{match.Groups[1].Value}/{match.Groups[2].Value}/_build/results?buildId={match.Groups[3].Value}";
+            return true;
+        }
+
+        [GeneratedRegex(@"^https://dev\.azure\.com/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)/_build/results\?buildId=([1-9][0-9]{0,9})$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+        private static partial Regex ReleasePipelineUrlRegex();
+
         internal static string NormalizeSdkPullRequestUrl(string sdkPullRequest, string language)
         {
             var repo = SdkLanguageHelpers.GetRepoName(SdkLanguageHelpers.GetSdkLanguage(language));
@@ -508,6 +554,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         GenerationStatus = generationStatus,
                         ReleaseStatus = releaseStatus,
                         ReleasedVersion = workItem.Fields.TryGetValue($"Custom.ReleasedVersionFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                        ReleasePipelineUrl = workItem.Fields.TryGetValue($"Custom.ReleasePipelineFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                         PullRequestStatus = pullRequestStatus,
                         PackageName = packageName,
                         ReleaseExclusionStatus = exclusionStatus

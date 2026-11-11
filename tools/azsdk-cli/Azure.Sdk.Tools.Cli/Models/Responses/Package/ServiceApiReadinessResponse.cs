@@ -49,7 +49,7 @@ public class ServiceApiReadinessResponse : CommandResponse
         lines.Add(Detail);
         foreach (var project in Projects)
         {
-            lines.Add($"{project.Source.PackagePath}: {project.ReadinessStatus}. {project.Detail}");
+            lines.Add($"{project.Package.DirectoryPath}: {project.ReadinessStatus}. {project.Detail}");
         }
         return string.Join(Environment.NewLine, lines);
     }

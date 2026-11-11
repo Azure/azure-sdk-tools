@@ -27,7 +27,7 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
             package.ResourceTypes = [];
             return package;
         }
-        if (package.MetadataIssues.Length > 0 || package.GenerationSources.Length == 0)
+        if (package.MetadataIssues.Length > 0 || package.ApiVersions.Length == 0)
         {
             throw new InvalidOperationException(string.Join(" ", package.MetadataIssues.DefaultIfEmpty("Package generation metadata is unavailable.")));
         }
@@ -46,57 +46,43 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
 
     public async Task<PackageInfo> PopulateResourceTypesAsync(PackageInfo package, CancellationToken ct = default)
     {
-        var sources = package.GenerationSources;
-        package.ApiVersions = [.. sources.Select(source => new PackageApiVersion(source.ApiVersion, source.NamespaceIsInferred ? null : source.ExpectedNamespace))
-            .Distinct().OrderBy(version => version.Namespace, StringComparer.Ordinal).ThenBy(version => version.Version, StringComparer.Ordinal)];
+        var location = package.TypeSpecLocation ?? throw new InvalidOperationException("Package generation metadata is unavailable.");
         package.ResourceTypes = [];
-        var resolvedSources = new List<PackageApiSource>();
+        var resolvedVersions = new List<PackageApiVersion>();
         var issues = new List<string>();
         var resources = new HashSet<PackageResourceType>();
         var resourceTypeHelper = new ProjectResourceTypeHelper(_http, github.GetAuthToken(ct));
-        foreach (var group in sources.GroupBy(source => (source.SpecRepository, source.CommitSha, source.Configuration, source.ApiVersion)))
+        foreach (var group in package.ApiVersions.GroupBy(version => version.Version, StringComparer.Ordinal))
         {
-            var sourceProject = group.Key;
-            var resourceEvidence = await resourceTypeHelper.ReadPinnedSwaggerResourceTypesAsync(sourceProject.SpecRepository, sourceProject.CommitSha,
-                sourceProject.Configuration, sourceProject.ApiVersion, ct);
+            var resourceEvidence = await resourceTypeHelper.ReadPinnedSwaggerResourceTypesAsync(location.Repository, location.Commit,
+                $"{location.Directory}/tspconfig.yaml", group.Key, ct);
             if (resourceEvidence.MissingEvidence.Count > 0)
             {
                 issues.AddRange(resourceEvidence.MissingEvidence);
-                resolvedSources.AddRange(group);
+                resolvedVersions.AddRange(package.ResolvedApiVersions.Where(version => version.Version == group.Key));
                 continue;
             }
-            foreach (var source in group)
+            foreach (var version in group)
             {
-                var namespaces = source.NamespaceIsInferred
+                var namespaces = version.Namespace is null
                     ? resourceEvidence.ProviderNamespaces
-                    : [source.ExpectedNamespace];
+                    : [version.Namespace];
                 foreach (var providerNamespace in namespaces)
                 {
-                    var matching = resourceEvidence.ResourceTypes.Where(type => type.Namespace.Equals(providerNamespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == source.ApiVersion).ToArray();
+                    var matching = resourceEvidence.ResourceTypes.Where(type => type.Namespace.Equals(providerNamespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == version.Version).ToArray();
                     if (matching.Length == 0)
                     {
                         issues.Add($"SDK metadata namespace {providerNamespace} has no resource-type mapping in the pinned project.");
                     }
                     resources.UnionWith(matching);
-                    resolvedSources.Add(new PackageApiSource
-                    {
-                        PackagePath = source.PackagePath,
-                        Configuration = source.Configuration,
-                        CommitSha = source.CommitSha,
-                        SpecRepository = source.SpecRepository,
-                        ApiVersion = source.ApiVersion,
-                        ExpectedNamespace = providerNamespace,
-                        NamespaceIsInferred = source.NamespaceIsInferred,
-                        MetadataFiles = [.. source.MetadataFiles]
-                    });
+                    resolvedVersions.Add(new PackageApiVersion(version.Version, providerNamespace));
                 }
             }
         }
         package.ResourceTypes = [.. resources.OrderBy(type => type.Namespace, StringComparer.Ordinal)
             .ThenBy(type => type.ApiVersion, StringComparer.Ordinal).ThenBy(type => type.ResourceType, StringComparer.Ordinal)];
-        var distinctSources = resolvedSources.GroupBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase)
-            .SelectMany(group => group.DistinctBy(source => source.ApiVersion)).ToList();
-        package.GenerationSources = [.. distinctSources];
+        package.ResolvedApiVersions = [.. resolvedVersions.GroupBy(version => version.Namespace, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(group => group.DistinctBy(version => version.Version))];
         package.MetadataIssues = [.. issues.Distinct(StringComparer.Ordinal)];
         return package;
     }

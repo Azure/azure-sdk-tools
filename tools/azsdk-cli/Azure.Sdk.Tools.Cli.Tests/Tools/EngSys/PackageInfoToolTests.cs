@@ -110,7 +110,7 @@ public class PackageInfoToolTests
         _package.ApiVersions = [new("2025-01-01", "Microsoft.Compute"), new("2026-01-01", "Microsoft.Network")];
         _package.ResourceTypes = [new("Microsoft.Compute", "2025-01-01", "virtualMachines"), new("Microsoft.Network", "2026-01-01", "virtualNetworks")];
         _package.SdkType = SdkType.Management;
-        _package.GenerationSources = [new() { PackagePath = "sdk/example/arm-example", ApiVersion = "2025-01-01", ExpectedNamespace = "Microsoft.Compute" }];
+        _package.MetadataFiles = ["sdk/example/arm-example/tsp-location.yaml", "sdk/example/arm-example/metadata.json"];
         _package.MetadataIssues = ["A second generation source is unavailable."];
         _package.TypeSpecLocation = new("specification/compute/Compute", new string('a', 40), "Azure/azure-rest-api-specs");
 
@@ -122,7 +122,8 @@ public class PackageInfoToolTests
         Assert.That(package.GetProperty("ApiVersions").GetArrayLength(), Is.EqualTo(2));
         Assert.That(package.GetProperty("ResourceTypes").Deserialize<PackageResourceType[]>(), Is.EqualTo(_package.ResourceTypes));
         Assert.That(package.GetProperty("SdkType").GetString(), Is.EqualTo("mgmt"));
-        Assert.That(package.GetProperty("GenerationSources")[0].GetProperty("expectedNamespace").GetString(), Is.EqualTo("Microsoft.Compute"));
+        Assert.That(package.GetProperty("MetadataFiles").Deserialize<string[]>(), Is.EqualTo(_package.MetadataFiles));
+        Assert.That(package.TryGetProperty("GenerationSources", out _), Is.False);
         Assert.That(package.GetProperty("MetadataIssues").Deserialize<string[]>(), Is.EqualTo(_package.MetadataIssues));
         Assert.That(package.GetProperty("TypeSpecLocation").GetProperty("Directory").GetString(), Is.EqualTo(_package.TypeSpecLocation.Directory));
         Assert.That(package.GetProperty("TypeSpecLocation").GetProperty("Commit").GetString(), Is.EqualTo(_package.TypeSpecLocation.Commit));

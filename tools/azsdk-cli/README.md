@@ -105,7 +105,7 @@ azsdk eng package-info --package-path <package-root> --include-resource-types --
 
 This returns the same `PackageInfo`, with `ApiVersions` and `ResourceTypes`.
 The same package also carries the validated `TypeSpecLocation` (directory,
-repository, and commit), `GenerationSources`, and `MetadataIssues`; its
+repository, and commit), `MetadataFiles`, and `MetadataIssues`; its
 existing `SdkType` identifies management (`mgmt`), data plane (`client`), or
 unknown. Per-package generation and enrichment operations return `PackageInfo`
 directly, not a second result model containing a package.
@@ -158,6 +158,14 @@ Missing metadata or metadata without API versions leaves `ApiVersions` empty. Ma
 azsdk pkg check-api-version --pull-request-url https://github.com/Azure/azure-sdk-for-java/pull/123 --output json
 azsdk pkg check-api-version --package-path <package-root> --output json
 ```
+
+For a current-head metadata inspection without ARM requests, use
+`azsdk pkg check-api-version --pull-request-url <sdk-pr-url> --metadata-only --output json`.
+This CLI-only option resolves package provenance and pinned resource requirements
+without Azure credentials. It returns metadata with an Inconclusive readiness
+status, not a passing service observation. Automation can compare that evidence
+with release-plan state before deciding whether a full ARM check is needed.
+Metadata-only mode requires PR input and retains the captured-head contract.
 
 Supply exactly one of `--pull-request-url` or `--package-path`. The MCP tool
 `azsdk_check_service_api_version` accepts the same alternatives:
@@ -257,7 +265,7 @@ Readiness processes packages in separate stages:
 
 1. Identify package directories and create one `PackageInfo` for each directory.
 2. Populate those objects with validated `TypeSpecLocation`, `SdkType`, API
-  versions, generation sources, and metadata issues.
+  versions, metadata-file paths, and metadata issues.
 3. Enrich the same package objects with pinned specification resource types.
 4. Validate readiness from the enriched packages, after all enrichment completes.
 
@@ -274,6 +282,14 @@ the enriched package operation. Each per-package operation accepts and returns
 the package model itself. Readiness requires the injected interface and does
 not construct a concrete fallback. The per-package `PackageApiEvidence` and
 `PackageGenerationEvidence` wrappers are removed.
+
+Package processing does not use a `PackageApiSource` model or a `GenerationSources`
+collection. `PackageInfo` owns the generation pin and metadata-file paths; the
+existing `PackageApiVersion` type represents both recorded and resolved
+provider/version pairs. Resolved pairs stay on the package for readiness checks
+without changing the original scalar or explicit-provider metadata. Each readiness
+project references that same package. Its legacy JSON `source` object is projected
+from the package and selected version when the response is serialized.
 
 `GeneratedSdkMetadataHelper.ParseTypeSpecLocation` parses location YAML text into
 the shared `TypeSpecLocation` model. Local language package metadata and pinned

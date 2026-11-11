@@ -68,10 +68,10 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
 
     internal async Task<PackageInfo> PopulateGenerationMetadataAsync(PackageInfo package, SdkSnapshot sdk, CancellationToken ct)
     {
-        package.GenerationSources = [];
+        package.MetadataFiles = [];
+        package.ResolvedApiVersions = [];
         package.MetadataIssues = [];
         package.ResourceTypes = [];
-        package.ApiVersions = [];
         package.TypeSpecLocation = null;
         package.SpecProjectPath = null;
         package.SdkType = SdkType.Unknown;
@@ -80,12 +80,8 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         {
             return package;
         }
-        var issues = package.MetadataIssues.ToList();
-        var sources = await ReadPackageSourcesAsync(package.DirectoryPath, package.TypeSpecLocation, sdk, issues, ct);
-        package.GenerationSources = [.. sources];
-        package.MetadataIssues = [.. issues];
-        package.ApiVersions = [.. sources.Select(source => new PackageApiVersion(source.ApiVersion, source.NamespaceIsInferred ? null : source.ExpectedNamespace))
-            .Distinct().OrderBy(version => version.Namespace, StringComparer.Ordinal).ThenBy(version => version.Version, StringComparer.Ordinal)];
+        package.ApiVersions = [];
+        await PopulatePackageApiVersionsAsync(package, sdk, ct);
         return package;
     }
 
@@ -195,24 +191,28 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         return paths;
     }
 
-    private async Task<List<PackageApiSource>> ReadPackageSourcesAsync(
-        string package, TypeSpecLocation location, SdkSnapshot sdk, List<string> issues, CancellationToken ct)
+    private async Task PopulatePackageApiVersionsAsync(PackageInfo package, SdkSnapshot sdk, CancellationToken ct)
     {
-        var metadataPaths = await ReadMetadataPathsAsync(package, sdk, issues, ct);
-        var sources = new List<PackageApiSource>();
+        var location = package.TypeSpecLocation!;
+        var packagePath = package.DirectoryPath.ToString();
+        var issues = package.MetadataIssues.ToList();
+        var metadataPaths = await ReadMetadataPathsAsync(packagePath, sdk, issues, ct);
+        package.MetadataFiles = [$"{packagePath}/{GenerationLocationFile}", .. metadataPaths];
+        var versions = new List<PackageApiVersion>();
+        var resolvedVersions = new List<PackageApiVersion>();
         string? inferredProvider = null;
         foreach (var metadataPath in metadataPaths)
         {
             var text = sdk.LocalPackage is null
                 ? await ReadFileAsync(sdk.Repository, sdk.HeadSha, metadataPath, ct)
-                : await ReadLocalFileAsync(Path.Combine(sdk.LocalPackage.PackagePath, metadataPath[(package.Length + 1)..]), ct);
+                : await ReadLocalFileAsync(Path.Combine(sdk.LocalPackage.PackagePath, metadataPath[(packagePath.Length + 1)..]), ct);
             if (text is null)
             {
-                issues.Add($"{package}: missing SDK generation metadata ({metadataPath}).");
+                issues.Add($"{packagePath}: missing SDK generation metadata ({metadataPath}).");
                 continue;
             }
-            var versions = ReadPackageApiVersions(package, text, location, issues);
-            foreach (var entry in versions)
+            var metadataVersions = ReadPackageApiVersions(packagePath, text, location, issues);
+            foreach (var entry in metadataVersions)
             {
                 var provider = entry.Key;
                 if (provider.Length == 0)
@@ -224,30 +224,26 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
                 if (!Regex.IsMatch(provider, @"\A[\w-]+(?:\.[\w-]+)+\z") ||
                     !Regex.IsMatch(entry.Value, @"\A\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?\z", RegexOptions.IgnoreCase))
                 {
-                    issues.Add($"{package}: invalid namespace/API-version entry.");
+                    issues.Add($"{packagePath}: invalid namespace/API-version entry.");
                     continue;
                 }
-                sources.Add(new PackageApiSource
-                {
-                    PackagePath = package,
-                    Configuration = $"{location.Directory}/tspconfig.yaml",
-                    CommitSha = location.Commit,
-                    SpecRepository = location.Repository,
-                    ExpectedNamespace = provider,
-                    NamespaceIsInferred = entry.Key.Length == 0,
-                    ApiVersion = entry.Value,
-                    MetadataFiles = [$"{package}/{GenerationLocationFile}", .. metadataPaths]
-                });
+                versions.Add(new PackageApiVersion(entry.Value, entry.Key.Length == 0 ? null : provider));
+                resolvedVersions.Add(new PackageApiVersion(entry.Value, provider));
             }
         }
-        if (sources.GroupBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase)
-            .Any(group => group.Select(source => source.ApiVersion).Distinct(StringComparer.Ordinal).Count() > 1))
+        if (resolvedVersions.GroupBy(version => version.Namespace, StringComparer.OrdinalIgnoreCase)
+            .Any(group => group.Select(version => version.Version).Distinct(StringComparer.Ordinal).Count() > 1))
         {
-            issues.Add($"{package}: conflicting API versions across SDK metadata files; no latest-version selection.");
-            return [];
+            issues.Add($"{packagePath}: conflicting API versions across SDK metadata files; no latest-version selection.");
+            versions.Clear();
+            resolvedVersions.Clear();
         }
-        return sources.GroupBy(source => source.ExpectedNamespace, StringComparer.OrdinalIgnoreCase)
-            .SelectMany(group => group.DistinctBy(source => source.NamespaceIsInferred)).ToList();
+        package.ApiVersions = [.. versions.GroupBy(version => version.Namespace, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(group => group.DistinctBy(version => version.Version))
+            .OrderBy(version => version.Namespace, StringComparer.Ordinal).ThenBy(version => version.Version, StringComparer.Ordinal)];
+        package.ResolvedApiVersions = [.. resolvedVersions.GroupBy(version => version.Namespace, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(group => group.DistinctBy(version => version.Version))];
+        package.MetadataIssues = [.. issues];
     }
 
     private static Dictionary<string, string> ReadPackageApiVersions(string package, string text, TypeSpecLocation location, List<string> issues)

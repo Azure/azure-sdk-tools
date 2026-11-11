@@ -10,6 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface IServiceApiReadinessService
 {
     Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct);
+    Task<ServiceApiReadinessResponse> GetPackageMetadataAsync(string owner, string repository, int pullRequest, CancellationToken ct);
     Task<ServiceApiReadinessResponse> CheckPackageAsync(PackageInfo package, CancellationToken ct);
 }
 
@@ -21,7 +22,13 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
     public const string ArmMetadataApiVersion = "2021-04-01";
     private readonly HttpClient _http = clients.CreateClient(HttpClientName);
 
-    public async Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct)
+    public Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct) =>
+        CheckPullRequestAsync(owner, repository, pullRequest, false, ct);
+
+    public Task<ServiceApiReadinessResponse> GetPackageMetadataAsync(string owner, string repository, int pullRequest, CancellationToken ct) =>
+        CheckPullRequestAsync(owner, repository, pullRequest, true, ct);
+
+    private async Task<ServiceApiReadinessResponse> CheckPullRequestAsync(string owner, string repository, int pullRequest, bool metadataOnly, CancellationToken ct)
     {
         var result = new ServiceApiReadinessResponse();
         // Authentication and all evidence reads share one deadline.
@@ -67,6 +74,11 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 return result;
             }
             await PopulatePackageResourceTypesAsync(result, ct);
+            if (metadataOnly)
+            {
+                result.Detail = "Pinned package metadata and resource requirements only; no ARM readiness check was performed.";
+                return result;
+            }
             await ValidatePackagesAsync(result.Packages, result, ct);
             SetOverallResult(result);
         }
@@ -131,7 +143,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             result.Detail = "Data-plane SDK; ARM provider metadata is not applicable.";
             return false;
         }
-        if (issues.Count > 0 || packages.Count == 0 || packages.All(package => package.GenerationSources.Length == 0) || result.Plane == SdkPackageMetadataHelper.UnknownPlane)
+        if (issues.Count > 0 || packages.Count == 0 || packages.All(package => package.ApiVersions.Length == 0) || result.Plane == SdkPackageMetadataHelper.UnknownPlane)
         {
             result.Detail = issues.Count > 0 ? string.Join(" ", issues) : packages.Count == 0
                 ? "No currently changed SDK packages remain at the checked head." : "Authoritative SDK generation metadata or API plane is unavailable.";
@@ -146,7 +158,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         {
             var package = result.Packages[index];
             ct.ThrowIfCancellationRequested();
-            var sources = package.GenerationSources;
+            var versions = package.ResolvedApiVersions;
             PackageInfo populatedPackage;
             try
             {
@@ -155,19 +167,21 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
-                result.Projects.AddRange(sources.Select(source => new ServiceApiReadinessProject
+                result.Projects.AddRange(versions.Select(version => new ServiceApiReadinessProject
                 {
-                    Source = source,
-                    Namespace = source.ExpectedNamespace,
+                    Package = package,
+                    ApiVersion = version,
+                    Namespace = version.Namespace ?? "",
                     ReadinessStatus = ServiceApiReadinessResponse.Error,
                     Detail = SafeError(exception)
                 }));
                 continue;
             }
-            result.Projects.AddRange(populatedPackage.GenerationSources.Select(source => new ServiceApiReadinessProject
+            result.Projects.AddRange(populatedPackage.ResolvedApiVersions.Select(version => new ServiceApiReadinessProject
             {
-                Source = source,
-                Namespace = source.ExpectedNamespace,
+                Package = populatedPackage,
+                ApiVersion = version,
+                Namespace = version.Namespace ?? "",
                 Detail = populatedPackage.MetadataIssues.Length > 0
                     ? $"Missing or unresolved: {string.Join(", ", populatedPackage.MetadataIssues)}." : ""
             }));
@@ -185,12 +199,11 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             {
                 continue;
             }
-            foreach (var project in result.Projects.Where(project => project.Source.PackagePath == package.DirectoryPath &&
+            foreach (var project in result.Projects.Where(project => ReferenceEquals(project.Package, package) &&
                 project.ReadinessStatus != ServiceApiReadinessResponse.Error))
             {
                 ct.ThrowIfCancellationRequested();
-                var source = project.Source;
-                var resourceTypes = package.ResourceTypes.Where(type => type.Namespace.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == source.ApiVersion)
+                var resourceTypes = package.ResourceTypes.Where(type => type.Namespace.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == project.ApiVersion.Version)
                     .Select(type => type.ResourceType).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 try
                 {
@@ -232,7 +245,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         }
         foreach (var resource in applicable)
         {
-            if (resource?["apiVersions"] is not JsonArray advertised || !advertised.Select(Text).Contains(project.Source.ApiVersion, StringComparer.Ordinal))
+            if (resource?["apiVersions"] is not JsonArray advertised || !advertised.Select(Text).Contains(project.ApiVersion.Version, StringComparer.Ordinal))
             {
                 continue;
             }
@@ -274,7 +287,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         if (result.ReadinessStatus == ServiceApiReadinessResponse.Error)
         {
             var failures = result.Projects.Where(project => project.ReadinessStatus == ServiceApiReadinessResponse.Error)
-                .Select(project => $"{project.Source.PackagePath}: {project.Detail}");
+                .Select(project => $"{project.Package.DirectoryPath}: {project.Detail}");
             var context = result.InputKind == "package" ? "Local SDK package check:" : $"Checked SDK head: {result.HeadRepository}@{result.HeadSha}";
             result.ResponseError = $"{context}{Environment.NewLine}" +
                 string.Join(Environment.NewLine, failures);

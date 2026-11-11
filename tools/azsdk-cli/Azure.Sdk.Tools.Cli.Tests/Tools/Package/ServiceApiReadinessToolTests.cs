@@ -101,6 +101,23 @@ public class ServiceApiReadinessToolTests
         Assert.That(parsed.Errors, Is.Not.Empty);
     }
 
+    [Test]
+    public async Task MetadataOnlyDispatchDoesNotInvokeTheArmReadinessCheck()
+    {
+        var service = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
+        service.Setup(value => value.GetPackageMetadataAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceApiReadinessResponse { HeadSha = new string('a', 40) });
+        var tool = CreateTool(service.Object);
+        var parsed = tool.GetCommandInstances().Single().Parse(["--pull-request-url", "https://github.com/Azure/azure-sdk-for-java/pull/12", "--metadata-only"]);
+
+        var response = (ServiceApiReadinessResponse)await tool.HandleCommand(parsed, CancellationToken.None);
+
+        Assert.That(parsed.Errors, Is.Empty);
+        Assert.That(response.HeadSha, Is.EqualTo(new string('a', 40)));
+        service.Verify(value => value.GetPackageMetadataAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()), Times.Once);
+        service.VerifyNoOtherCalls();
+    }
+
     [TestCase("https://example.org/Azure/azure-sdk-for-java/pull/12")]
     [TestCase("https://github.com/Azure/azure-sdk-for-java/issues/12")]
     [TestCase("https://github.com/Azure/azure-sdk-for-java/pull/0")]

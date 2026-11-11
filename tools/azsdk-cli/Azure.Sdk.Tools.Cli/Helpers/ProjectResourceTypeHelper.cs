@@ -46,6 +46,10 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
             {
                 AddSwaggerResourceTypes(text, file, source.ApiVersion, types, providers, mapping.MissingEvidence);
             }
+            else
+            {
+                mapping.MissingEvidence.Add($"Missing checked-in Swagger: {file}");
+            }
         }
         if (types.Count == 0)
         {
@@ -163,6 +167,11 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
         if (document["info"] is not JsonObject info || Text(info["version"]) != apiVersion)
         {
             missing.Add($"Swagger API version does not match SDK generation metadata: {file}");
+            return;
+        }
+        if (document["paths"] is not JsonObject || document["x-ms-paths"] is { } extendedPaths && extendedPaths is not JsonObject)
+        {
+            missing.Add($"Invalid checked-in Swagger paths: {file}");
             return;
         }
         foreach (var paths in new[] { document["paths"], document["x-ms-paths"] }.OfType<JsonObject>())

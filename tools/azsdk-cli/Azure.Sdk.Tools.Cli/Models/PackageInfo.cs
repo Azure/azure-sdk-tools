@@ -40,8 +40,11 @@ public class PackageInfo
     [JsonPropertyName("ResourceTypes")]
     public PackageResourceType[] ResourceTypes { get; set; } = [];
 
-    [JsonPropertyName("GenerationSources")]
-    public PackageApiSource[] GenerationSources { get; set; } = [];
+    [JsonPropertyName("MetadataFiles")]
+    public string[] MetadataFiles { get; set; } = [];
+
+    [JsonIgnore]
+    public PackageApiVersion[] ResolvedApiVersions { get; set; } = [];
 
     [JsonPropertyName("MetadataIssues")]
     public string[] MetadataIssues { get; set; } = [];

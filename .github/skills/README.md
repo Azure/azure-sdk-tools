@@ -25,7 +25,6 @@ customization remains owned by `azsdk-common-generate-sdk-locally` and its
 
 | Skill                                                                                         | Triggers                                                                      | Description                                                   |
 | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [azsdk-common-generate-dotnet-provisioning](azsdk-common-generate-dotnet-provisioning/SKILL.md) | "generate a .NET provisioning library", "add provisioning support" | Prepare configuration in a spec PR and queue provisioning generation |
 | [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md)               | "generate SDK locally", "build SDK", "run SDK tests"                          | Generate, build, and test Azure SDKs locally from TypeSpec    |
 | [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md)               | "create release plan", "link SDK PR to plan"                                  | Create and manage release plan work items                     |
 | [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback"                             | Retrieve and resolve APIView review feedback                  |

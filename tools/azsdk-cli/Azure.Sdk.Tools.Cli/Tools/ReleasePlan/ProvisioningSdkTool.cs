@@ -55,7 +55,7 @@ public class ProvisioningSdkTool(
             _ => new DefaultCommandResponse { ResponseError = "Unknown provisioning command." },
         };
 
-    [McpServerTool(Name = PrepareToolName), Description("Inspect a local TypeSpec project's tspconfig.yaml and add missing .NET provisioning options using its existing .NET management namespace and output layout. Preserves existing configuration and comments; makes no change when provisioning is already configured. Does not commit, create a spec PR, or generate code. Use the azsdk-common-generate-dotnet-provisioning skill to reuse/create a spec PR and then run generation.")]
+    [McpServerTool(Name = PrepareToolName), Description("Inspect a local TypeSpec project's tspconfig.yaml and add missing .NET provisioning options from its .NET management namespace/output layout. Preserves existing configuration and comments; makes no change when already configured. Does not commit, create a PR, or generate code. Follow the provisioning branch of azsdk-common-generate-sdk-pipeline to reuse/create a spec PR and run generation.")]
     public async Task<DefaultCommandResponse> PrepareConfigAsync(string typespecProjectPath, CancellationToken ct = default)
     {
         try
@@ -117,7 +117,7 @@ public class ProvisioningSdkTool(
         }
     }
 
-    [McpServerTool(Name = GenerateToolName), Description("Run pipeline 8473 (SDK Generation - .NET Provisioning Libraries) for a public azure-rest-api-specs TypeSpec project. Checks provisioning options at the selected spec ref before queueing. Pass an open spec PR number immediately after adding configuration; merging is NOT required. If configuration already exists on main, omit the PR and do not create a no-op PR. Does not require or modify a release plan. Missing configuration must be prepared and committed to a spec PR first, using azsdk-common-generate-dotnet-provisioning. Do not use ordinary .NET generation or the provisioning generator-PR regeneration pipeline.")]
+    [McpServerTool(Name = GenerateToolName), Description("Run pipeline 8473 (SDK Generation - .NET Provisioning Libraries) for a public azure-rest-api-specs TypeSpec project. Validates provisioning options at the selected ref before queueing. Pass an open spec PR number after adding configuration; merging is NOT required. Omit the PR for already configured main; do not create a no-op PR. No release plan is required or modified. For missing configuration, follow the provisioning branch of azsdk-common-generate-sdk-pipeline. Do not substitute ordinary .NET generation or generator-PR regeneration.")]
     public async Task<DefaultCommandResponse> GenerateAsync(string typespecProjectPath, string sdkReleaseType, int pullRequestNumber = 0, CancellationToken ct = default)
     {
         try

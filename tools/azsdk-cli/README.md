@@ -118,7 +118,7 @@ Missing metadata or metadata without API versions leaves `ApiVersions` empty. Ma
 
 ### .NET provisioning library generation
 
-Use the shared `azsdk-common-generate-dotnet-provisioning` skill to inspect a
+Use the .NET provisioning branch of `azsdk-common-generate-sdk-pipeline` to inspect a
 TypeSpec project, reuse or create a spec PR when configuration is missing, and
 queue .NET provisioning generation. No release plan is required.
 

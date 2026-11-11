@@ -63,7 +63,6 @@ SRC_ALLOY_FRAMEWORK_SAMPLES = "alloy_framework_samples"
 # -- Azure Guidelines & Standards --
 SRC_AZURE_API_GUIDELINES = "azure_api_guidelines"
 SRC_AZURE_RESOURCE_MANAGER_RPC = "azure_resource_manager_rpc"
-SRC_AZURE_REST_API_SPECS_WIKI = "azure_rest_api_specs_wiki"
 SRC_AZURE_REST_API_SPECS_DOCS = "azure_rest_api_specs_docs"
 SRC_AZURE_OPENAPI_DIFF_DOCS = "azure_openapi_diff_docs"
 SRC_STATIC_CPEX_DOCS = "static_cpex_docs"
@@ -197,14 +196,8 @@ _register(
         base_url="https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/",
     ),
     KnowledgeSource(
-        name=SRC_AZURE_REST_API_SPECS_WIKI,
-        description="Guidelines for Azure REST API specifications using Swagger or TypeSpec, including PR review process.",
-        base_url="https://github.com/Azure/azure-rest-api-specs/wiki/",
-        trim_format=True,
-    ),
-    KnowledgeSource(
         name=SRC_AZURE_REST_API_SPECS_DOCS,
-        description="Azure REST API specification documentation covering spec structure and conventions.",
+        description="Azure REST API specification documentation covering contributor workflows, spec structure and conventions, PR review, validation checks, SDK breaking changes, and CI troubleshooting.",
         base_url="https://github.com/Azure/azure-rest-api-specs/blob/main/",
     ),
     KnowledgeSource(
@@ -398,7 +391,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
-    SRC_AZURE_REST_API_SPECS_WIKI,
+    SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_STATIC_TYPESPEC_MIGRATION_DOCS,
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
@@ -415,7 +408,7 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
-    SRC_AZURE_REST_API_SPECS_WIKI,
+    SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_STATIC_TYPESPEC_MIGRATION_DOCS,
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
@@ -427,7 +420,6 @@ _SDK_SOURCES = _sources(
     SRC_AZURE_SDK_DOCS_ENG,
     SRC_AZURE_SDK_INTERNAL_WIKI,
     SRC_TYPESPEC_AZURE_DOCS,
-    SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_REST_API_SPECS_DOCS,
 )
 
@@ -452,7 +444,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('python', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-python', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=[
             "tenants/language_channel.md",
@@ -475,7 +466,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('dotnet', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-csharp', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=[
             "tenants/language_channel.md",
@@ -498,7 +488,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('golang', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-go', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=["tenants/language_channel.md"],
     ),
@@ -522,7 +511,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('java', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-java', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=["tenants/language_channel.md"],
     ),
@@ -542,7 +530,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-ts', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=["tenants/language_channel.md"],
     ),
@@ -638,7 +625,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         sources=_sources(
             SRC_STATIC_AZURE_DOCS,
             SRC_STATIC_API_SPEC_VIEW_QA,
-            SRC_AZURE_REST_API_SPECS_WIKI,
             SRC_AZURE_REST_API_SPECS_DOCS,
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,

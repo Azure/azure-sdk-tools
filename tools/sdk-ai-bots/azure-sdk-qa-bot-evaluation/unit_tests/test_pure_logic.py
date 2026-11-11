@@ -61,17 +61,19 @@ def test_validate_case_ok():
 
 
 def test_canonical_case_round_trips_testcase_id_and_tags():
-    case = CanonicalCase(
-        testcase="001003-version-required-to-optional",
-        tags=["core"],
-        query="q",
-        ground_truth="a",
-        scenario="typespec",
-        reviewed="pass",
-    )
-    serialized = case.to_dict()
-    assert "id" not in serialized
-    assert CanonicalCase.from_dict(serialized).to_dict() == serialized
+    for tags in (["core"], []):
+        case = CanonicalCase(
+            testcase="001003-version-required-to-optional",
+            tags=tags,
+            query="q",
+            ground_truth="a",
+            scenario="typespec",
+            reviewed="pass",
+        )
+        serialized = case.to_dict()
+        assert "id" not in serialized
+        assert serialized["tags"] == tags
+        assert CanonicalCase.from_dict(serialized).to_dict() == serialized
 
 
 def test_select_cases_supports_core_and_full():
@@ -212,6 +214,42 @@ def test_validate_case_allows_title_until_staging_review():
         assert "CCCSSS-category-situation" in str(exc)
     else:
         raise AssertionError("expected passed cases to require a structured testcase")
+
+
+def test_validate_file_allows_staging_titles_and_uses_dedup_identity():
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        staging = Path(tmp) / "_staging"
+        staging.mkdir()
+        path = staging / "typespec.jsonl"
+        rows = [
+            {
+                "testcase": "Source question title",
+                "query": "q1",
+                "ground_truth": "a",
+                "scenario": "typespec",
+                "reviewed": REVIEW_STATUS_TODO,
+            },
+            {
+                "testcase": "Source question title",
+                "query": "q2",
+                "ground_truth": "a",
+                "scenario": "typespec",
+                "reviewed": REVIEW_STATUS_ABANDONED,
+            },
+        ]
+        path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+        assert validate_file(path) == 2
+
+        rows[1]["query"] = "q1"
+        path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+        try:
+            validate_file(path)
+        except ValidationError as exc:
+            assert "duplicate case identity" in str(exc)
+        else:
+            raise AssertionError("expected duplicate staging query to fail")
 
 
 def test_validate_case_bad_reviewed_type():

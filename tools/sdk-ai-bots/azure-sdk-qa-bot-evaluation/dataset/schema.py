@@ -152,9 +152,8 @@ class CanonicalCase:
             "source": self.source,
             "reviewed": self.reviewed,
             "dedup_key": self.dedup_key or case_hash(self.scenario, self.query),
+            "tags": list(self.tags),
         }
-        if self.tags:
-            result["tags"] = list(self.tags)
         return result
 
     @classmethod
@@ -274,15 +273,15 @@ def _validate_rows(
             raise ValidationError(f"{where}: case is not passed (reviewed != 'pass')")
         if scenario is not None and obj["scenario"] != scenario:
             raise ValidationError(f"{where}: expected scenario {scenario!r}, got {obj['scenario']!r}")
-        # IDs distinguish preserved source cases, including different expectations
-        # for the same question. Query dedup still applies when curating new cases.
-        key = obj.get("testcase") or resolve_dedup_key(obj)
+        testcase = obj.get("testcase")
+        match = _CASE_ID_RE.fullmatch(testcase) if isinstance(testcase, str) else None
+        # Structured IDs distinguish preserved benchmark cases. Staging titles
+        # continue to use their stable query-based dedup identity.
+        key = testcase if match else resolve_dedup_key(obj)
         if key in seen_keys:
             raise ValidationError(f"{where}: duplicate case identity within file: {key}")
         seen_keys.add(key)
-        if obj.get("testcase"):
-            match = _CASE_ID_RE.fullmatch(obj["testcase"])
-            assert match is not None
+        if match:
             category_number, situation_number, category, _ = match.groups()
             number = category_number + situation_number
             if number in seen_numbers:

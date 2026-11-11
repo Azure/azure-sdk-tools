@@ -111,6 +111,22 @@ def test_pr_review_preserves_required_access_links() -> None:
     ) in pr_review
 
 
+def test_pr_review_separates_review_requests_from_label_authority() -> None:
+    approval = _read_pr_review_skill().split("7. **Review approval:**", 1)[1]
+    github, label = approval.split("**GitHub review approval:**", 1)[1].split(
+        "**Approval-label gate:**", 1,
+    )
+    assert "Use requested reviewers or matching `CODEOWNERS` entries." in github
+    assert "Select up to 3 qualified, verified reviewers/code owners." in github
+    assert "up to 3" not in label
+    assert "follow the SDK-language contact and re-approval priorities" in github
+    assert "only after establishing their authority for that specific label" in label
+    assert "current policy or explicit approval ownership in `[support_catalog]`" in label
+    assert "requested-reviewer/`CODEOWNERS` status alone does not establish label authority" in label
+    assert "give the current documented PR/repository review route directly, not as a later escalation" in label
+    assert "For individuals established by the applicable route" in approval
+
+
 def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
     config = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
     assert config is not None

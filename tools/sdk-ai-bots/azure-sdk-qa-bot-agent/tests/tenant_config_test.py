@@ -347,6 +347,25 @@ def test_dotnet_skill_composes_common_and_specific_guidelines_once() -> None:
     assert "mgmt-review-comment-resolution/SKILL.md" in content
 
 
+@pytest.mark.parametrize("tenant_id", [
+    TenantID.PYTHON_CHANNEL_QA_BOT,
+    TenantID.DOTNET_CHANNEL_QA_BOT,
+    TenantID.JAVA_CHANNEL_QA_BOT,
+    TenantID.JAVASCRIPT_CHANNEL_QA_BOT,
+    TenantID.GOLANG_CHANNEL_QA_BOT,
+])
+def test_sdk_pr_guidance_prefers_prior_approvers_then_catalog_contacts(tenant_id) -> None:
+    content = build_skill_content(tenant_id)
+    review = content.split("#### 4. SDK PR Review\n", 1)[1].split("\n#### ", 1)[0]
+    assert "When re-approval is required for an SDK PR, tag the previous approving reviewer" in review
+    assert "rather than other requested reviewers or catalog contacts" in review
+    assert "even if they are no longer in the requested-reviewer list" in review
+    assert "Otherwise, when human participation is needed for an SDK PR" in review
+    assert "prefer contacts in the matching `[support_catalog]` area over requested reviewers or `CODEOWNERS`" in review
+    assert "matching SDK language, management/data plane, and blocker" in review
+    assert "Follow the shared Next Action or Help Request and Contact Placeholders rules." in review
+
+
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:
     source = get_knowledge_source(SRC_AZURE_MCP_SERVER_DOCS)
 

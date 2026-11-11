@@ -20,6 +20,7 @@ DO NOT USE FOR: generating a single SDK locally from a local clone (use `azsdk-c
 
 ## Rules
 
+- For **.NET provisioning libraries**, use `azsdk-common-generate-dotnet-provisioning` instead. It prepares missing provisioning configuration in a spec PR and selects the dedicated provisioning pipeline, without requiring the PR to merge or a release plan.
 - **Always call `azure-sdk-mcp:azsdk_run_generate_sdk`** to generate. Do **not** use `azure-sdk-mcp:azsdk_release_sdk` (that publishes an already-generated package, it does not generate) or `azure-sdk-mcp:azsdk_get_sdk_pull_request_link` / `azure-sdk-mcp:azsdk_get_pull_request` (those only retrieve links) to generate an SDK.
 - `azure-sdk-mcp:azsdk_run_generate_sdk` generates **one language per call**. To generate for **all languages**, call it **once per language** the release plan targets.
 - A **release plan work item ID (or release plan ID)** is required. `azsdk_run_generate_sdk` **also** requires the **TypeSpec project path** and the **SDK release type** (`beta` or `stable`) as explicit inputs, and it validates them — it does **not** read them from the release plan. First call `azure-sdk-mcp:azsdk_get_release_plan` to obtain the TypeSpec project path, SDK release type, and target languages, then pass those into each generation call along with the work item ID.

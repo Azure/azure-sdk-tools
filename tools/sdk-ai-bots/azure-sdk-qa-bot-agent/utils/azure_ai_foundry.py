@@ -12,14 +12,11 @@ from typing import Any, cast
 
 from agent_framework import (
     Agent,
-    AgentModeProvider,
     ContextProvider,
     FileSystemAgentFileStore,  # pyright: ignore[reportAttributeAccessIssue]
     MiddlewareTypes,
     SkillsProvider,
-    ToolResultCompactionStrategy,
     ToolTypes,
-    TruncationStrategy,
     create_harness_agent,
 )
 from agent_framework.foundry import FoundryChatClient
@@ -29,14 +26,17 @@ from azure.core.exceptions import ResourceNotFoundError
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
 from config.app_config import Settings, get as cfg
-from middleware.tool_output_storage import ToolOutputStorageMiddleware
+from middleware.tool_output_storage import (
+    ToolOutputStorageMiddleware,
+    ToolOutputStorageProvider,
+)
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
-# -- Compaction constants (token counts) -----------------------------------
-COMPACTION_TRIGGER_TOKENS = 100000
-COMPACTION_TARGET_TOKENS = 80000
+# GPT-5.4 limits: https://developers.openai.com/api/docs/models/gpt-5.4
+MODEL_CONTEXT_WINDOW_TOKENS = 1_050_000
+MODEL_MAX_OUTPUT_TOKENS = 128_000
 
 _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
@@ -77,10 +77,6 @@ def get_agent_client() -> FoundryChatClient:
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
             model=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
             credential=get_credential(),
-            compaction_strategy=TruncationStrategy(
-                max_n=COMPACTION_TRIGGER_TOKENS,
-                compact_to=COMPACTION_TARGET_TOKENS,
-            ),
         )
     return _agent_client
 
@@ -101,10 +97,9 @@ def create_hosted_chat_agent(
     default_options: Mapping[str, Any],
 ) -> Agent[OpenAIChatOptions]:
     """Create the hosted chat agent with the Agent Framework harness."""
-    before_compaction = ToolResultCompactionStrategy(keep_last_tool_call_groups=2)
-    after_compaction = ToolResultCompactionStrategy(keep_last_tool_call_groups=1)
     resolved_options = cast(OpenAIChatOptions, dict(default_options))
     memory_store = FileSystemAgentFileStore(Path.cwd() / "agent-file-memory")
+    web_search_tool = client.get_web_search_tool(search_context_size="medium")
 
     return create_harness_agent(  # pyright: ignore[reportCallIssue]
         client,
@@ -112,13 +107,19 @@ def create_hosted_chat_agent(
         id=agent_id,
         harness_instructions=harness_instructions,
         agent_instructions=instructions,
-        tools=tools,
-        before_compaction_strategy=before_compaction,
-        after_compaction_strategy=after_compaction,
-        mode_provider=AgentModeProvider(default_mode="execute"),
-        file_memory_store=memory_store,
+        tools=[web_search_tool, *tools] if isinstance(tools, Sequence) else [web_search_tool, tools],
+        max_context_window_tokens=MODEL_CONTEXT_WINDOW_TOKENS,
+        max_output_tokens=MODEL_MAX_OUTPUT_TOKENS,
+        disable_todo=True,
+        disable_mode=True,
+        disable_file_memory=True,
+        disable_web_search=True,
+        disable_tool_auto_approval=True,
         skills_provider=skills_provider,
-        context_providers=[memory_provider],
+        context_providers=[
+            memory_provider,
+            ToolOutputStorageProvider(memory_store),
+        ],
         middleware=[*middleware, ToolOutputStorageMiddleware(memory_store)],
         default_options=resolved_options,
     )

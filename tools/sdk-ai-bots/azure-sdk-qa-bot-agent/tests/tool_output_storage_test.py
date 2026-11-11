@@ -5,14 +5,22 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from agent_framework import AgentSession, Content, InMemoryAgentFileStore
+from agent_framework import (
+    AgentSession,
+    Content,
+    InMemoryAgentFileStore,
+    SessionContext,
+)
 
 from tools import TOOL_REGISTRY
 from middleware.tool_output_security import (
     ToolOutputSecurityMiddleware,
     _SPOTLIGHT_OPEN,
 )
-from middleware.tool_output_storage import ToolOutputStorageMiddleware
+from middleware.tool_output_storage import (
+    ToolOutputStorageMiddleware,
+    ToolOutputStorageProvider,
+)
 
 
 def _make_context(tool_name: str, result, session: AgentSession | None = None):
@@ -41,7 +49,7 @@ async def test_content_result_is_normalized_to_text():
 async def test_large_result_is_saved_and_replaced():
     store = InMemoryAgentFileStore()
     middleware = ToolOutputStorageMiddleware(store)
-    content = "external data\n" * 2_000
+    content = "external data\n" * 10_000
     context = _make_context(
         "github-pull_request_read",
         [Content.from_text(content)],
@@ -53,9 +61,26 @@ async def test_large_result_is_saved_and_replaced():
     saved_files = await store.list_children("test-session")
     assert len(saved_files) == 1
     assert await store.read(f"test-session/{saved_files[0].name}") == content
-    assert "Large tool result stored in session memory as `tool-result-" in context.result
+    assert "Large tool result stored as `tool-result-" in context.result
     assert f"({len(content):,} characters)" in context.result
     assert content not in context.result
+
+
+@pytest.mark.asyncio
+async def test_manageable_result_stays_in_context():
+    store = InMemoryAgentFileStore()
+    middleware = ToolOutputStorageMiddleware(store)
+    content = "external data\n" * 4_000
+    context = _make_context(
+        "github-pull_request_read",
+        [Content.from_text(content)],
+        AgentSession(session_id="test-session"),
+    )
+
+    await middleware.process(context, _noop_next)
+
+    assert context.result == content
+    assert await store.list_children("test-session") == []
 
 
 @pytest.mark.asyncio
@@ -78,7 +103,7 @@ async def test_offloaded_result_is_spotlighted():
     offload = ToolOutputStorageMiddleware(InMemoryAgentFileStore())
     context = _make_context(
         "github-pull_request_read",
-        [Content.from_text("external data\n" * 2_000)],
+        [Content.from_text("external data\n" * 10_000)],
         AgentSession(session_id="test-session"),
     )
 
@@ -88,14 +113,14 @@ async def test_offloaded_result_is_spotlighted():
     )
 
     assert context.result.startswith(_SPOTLIGHT_OPEN)
-    assert "Large tool result stored in session memory" in context.result
+    assert "Large tool result stored as" in context.result
 
 
 @pytest.mark.asyncio
 async def test_large_results_are_isolated_by_session():
     store = InMemoryAgentFileStore()
     middleware = ToolOutputStorageMiddleware(store)
-    content = "external data\n" * 2_000
+    content = "external data\n" * 10_000
 
     first = _make_context(
         "github-issue_read",
@@ -113,3 +138,36 @@ async def test_large_results_are_isolated_by_session():
 
     assert len(await store.list_children("first-session")) == 1
     assert len(await store.list_children("second-session")) == 1
+
+
+@pytest.mark.asyncio
+async def test_provider_exposes_bounded_read_and_grep_tools():
+    store = InMemoryAgentFileStore()
+    provider = ToolOutputStorageProvider(store)
+    session = AgentSession(session_id="test-session")
+    context = SessionContext(session_id="test-session", input_messages=[])
+    file_name = "tool-result-github-issue_read-test.txt"
+    await store.write(
+        f"test-session/{file_name}",
+        "first line\nmatching error\nlast line\n",
+    )
+
+    await provider.before_run(
+        agent=None,
+        session=session,
+        context=context,
+        state={},
+    )
+
+    tools = {tool.name: tool for tool in context.tools}
+    assert set(tools) == {"tool_result_grep", "tool_result_read"}
+    assert await tools["tool_result_read"].func(
+        file_name=file_name,
+        start_line=2,
+        end_line=2,
+    ) == "matching error\n"
+    matches = await tools["tool_result_grep"].func(
+        file_name=file_name,
+        regex_pattern="error",
+    )
+    assert matches[0]["file_name"] == file_name

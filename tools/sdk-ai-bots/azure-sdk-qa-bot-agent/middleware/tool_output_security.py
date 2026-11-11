@@ -18,18 +18,8 @@ from tools import TOOL_REGISTRY
 _SPOTLIGHT_OPEN = "<untrusted_tool_output>"
 _SPOTLIGHT_CLOSE = "</untrusted_tool_output>"
 _TRUSTED_HARNESS_TOOLS = {
-    "file_memory_delete",
-    "file_memory_ls",
-    "file_memory_replace",
-    "file_memory_replace_lines",
-    "file_memory_write",
-    "mode_get",
-    "mode_set",
-    "todos_add",
-    "todos_complete",
-    "todos_get_all",
-    "todos_get_remaining",
-    "todos_remove",
+    "load_skill",
+    "read_skill_resource",
 }
 
 
@@ -65,6 +55,14 @@ class ToolOutputSecurityMiddleware(FunctionMiddleware):
                     protected_item = copy(item)
                     protected_item.text = spotlight(item.text)
                     protected_result.append(protected_item)
-                else:
+                elif isinstance(item, Content):
                     protected_result.append(item)
+                else:
+                    protected_result.append(
+                        spotlight(json.dumps(item, ensure_ascii=False, default=str))
+                    )
             context.result = protected_result
+        elif isinstance(result, dict):
+            context.result = spotlight(
+                json.dumps(result, ensure_ascii=False, default=str)
+            )

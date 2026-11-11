@@ -72,9 +72,8 @@ async def test_native_tool_result_is_not_spotlighted():
 @pytest.mark.parametrize(
     "tool_name",
     [
-        "file_memory_ls",
-        "mode_get",
-        "todos_get_all",
+        "load_skill",
+        "read_skill_resource",
     ],
 )
 async def test_harness_tool_result_is_not_spotlighted(tool_name: str):
@@ -87,8 +86,8 @@ async def test_harness_tool_result_is_not_spotlighted(tool_name: str):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("tool_name", ["file_memory_read", "file_memory_grep"])
-async def test_file_memory_content_is_spotlighted(tool_name: str):
+@pytest.mark.parametrize("tool_name", ["tool_result_read", "tool_result_grep"])
+async def test_tool_result_content_is_spotlighted(tool_name: str):
     middleware = ToolOutputSecurityMiddleware()
     context = _make_context(tool_name, "external data")
 
@@ -96,6 +95,20 @@ async def test_file_memory_content_is_spotlighted(tool_name: str):
 
     assert context.result.startswith(_SPOTLIGHT_OPEN)
     assert context.result.endswith(_SPOTLIGHT_CLOSE)
+
+
+@pytest.mark.asyncio
+async def test_structured_tool_result_is_spotlighted():
+    middleware = ToolOutputSecurityMiddleware()
+    context = _make_context(
+        "tool_result_grep",
+        [{"file_name": "result.txt", "content": "external data"}],
+    )
+
+    await middleware.process(context, _noop_next)
+
+    assert context.result[0].startswith(_SPOTLIGHT_OPEN)
+    assert context.result[0].endswith(_SPOTLIGHT_CLOSE)
 
 
 @pytest.mark.asyncio

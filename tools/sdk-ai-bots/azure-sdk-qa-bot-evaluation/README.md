@@ -130,10 +130,6 @@ but are not scored by an evaluator.
 |---|---|
 | `perf-evaluation.yml` | Manual core/full evaluation for selected scenarios. |
 
-Use `core` across scenarios for broad agent updates. For scenario-specific changes,
-run `full` only for the affected scenarios; do not run full evaluation across every
-scenario by default.
-
 The perf pipeline uses the running pipeline's branch name via `EVAL_AGENT_BRANCH`.
 Branch deployments must already exist: targeting a branch does not build/deploy it.
 Each request prepends `[branch:<running-branch>]` to the message, using the same

@@ -37,16 +37,20 @@ branch before running evaluations.
 ## Run an evaluation pipeline
 
 Open [Azure SDK Pipelines](https://dev.azure.com/azure-sdk/internal/_build) and
-find the pipeline for your goal:
-
-| Pipeline | Use it to |
-|---|---|
-| **tools - azure-sdk-ai-bot-evaluate-ci** | Check bot regressions against the basic scenarios. |
-| **tools - azure-sdk-ai-bot-perf-ci** | Check bot improvements against the performance scenarios. |
+find **tools - azure-sdk-ai-bot-perf-ci**.
 
 Select **Run pipeline**, choose the **same branch you deployed**, and select the
-`scenarios` you want to run. Both pipelines start a backend using dev configuration
-and test your branch's deployed agent automatically. They do not deploy the agent.
+evaluation `scope` and `scenarios`. The pipeline starts a backend using dev
+configuration and tests your branch's deployed agent automatically. It does not
+deploy the agent.
+
+Recommended practice:
+
+- **Agent-wide changes:** run **core across all scenarios**.
+- **Scenario-specific changes:** run **core across all scenarios**, then run
+  **full only for the affected scenarios**.
+- **High-risk cross-cutting changes or major production releases:** run
+  **full across all scenarios**.
 
 After the run, inspect the published per-scenario results, including failed cases
 and `server.log`. You can ask Copilot to analyze the failed cases, identify prompt

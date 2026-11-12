@@ -4,8 +4,31 @@ Measure whether the customization tool produces correct, durable SDK customizati
 The benchmark evaluates invocation correctness, repair correctness, edit-scope compliance, and actionable handling of requests that cannot be completed within the permitted scope.
 Non-goals are deployment, package publishing, opening pull requests, arbitrary service implementation changes, and architectural redesign. Tool changes stay uncommitted inside disposable workspaces.
 
-## Requirements and contract reconciliation
+## Scope
 
+The target coverage matrix spans three dimensions:
+
+|Dimension|Coverage|
+|---------|--------|
+|Entry point|Customization request, feedback, build failure, and breaking changes|
+|`editScope`|`SpecInputs`, `CustomCode`, and `All`|
+|SDK language|Go, C#/.NET, Python, Java, and JavaScript/TypeScript|
+
+The four entry points represent how a customization task starts: a direct request,
+review feedback, build diagnostics, or a compatibility requirement. Each scenario
+is evaluated across applicable edit scopes and target languages to verify both
+the requested outcome and compliance with the permitted change boundary.
+
+The full matrix has 60 entry-point/scope/language combinations (4 x 3 x 5), with
+multiple scenarios possible within each combination. This is the target scope,
+not a claim that every combination is implemented. The scenario tables below
+track current coverage; language-specific stimuli capture differences in SDK
+naming, types, signatures, and customization mechanisms.
+
+
+## Eval Specs
+
+### Eval naming convention
 
 Evals for customization tool will cover four entry points:
 
@@ -16,27 +39,34 @@ Evals for customization tool will cover four entry points:
 |Build failure|	003	|buildFailure|	Reproducible compiler, lint, or typing diagnostics|
 |Breaking changes|004|breakingChange|Old/new public API evidence and compatibility requirement|
 
-Each logical scenario has one [entry-point-code][scenario-id].eval.yaml file and three stimuli, one per editScope: SpecInputs, CustomCode, and All.
+Each logical scenario has one [entry-point-code][scenario-id].eval.yaml file, with
+separate stimuli for each covered `editScope` and target language. Full coverage
+for one scenario can include up to 15 stimuli (3 edit scopes x 5 languages);
+scenarios with limited applicability cover only the relevant combinations.
 
-## Scope and outcome model
+For example: **001001.eval.yaml**
 
-`editScope` is an authorization boundary, not just an editing preference.
+- 001 represents the entry-point code.
+- 001 represents the scenario ID within that entry point.
 
+### tags
 
-|Scope |	Permitted authored changes|	Forbidden authored changes|
-|----------|--------------------------------------|---------------------------------|	
-|SpecInputs|	Scenario-approved client.tsp, tspconfig.yaml, and pinned-spec reference changes|	Handwritten SDK customizations and unrelated service specification files|	
-|CustomCode|	Supported non-generated customization files	|Spec inputs and changes to the pinned spec commit|	
-|All|	Both approved source categories|	Unrelated files, service/wire-contract changes, direct generated-source edits|
+Each eval spec has two-level tags:
 
-## Grader
+- eval-spec-level tag: **input**, it refer to the customization input, it can be `customizationRequest`, `feedback`, `buildFailure`, `breakingChange`
+- simulate-level tag: **editScope**, it refer to the edit scope of the customization, it can be `SpecInputs`, `CustomCode`, `All`
+
+### Grader
 
 
 verify the typespec code and the API specification, and source code
 
-- typespec code match: validate typespec customization code
-- compile typespec and regen SDK and verify the SDK codefor editscope contains customCode
-- The request is resolved. e.g. for build failure inputs, the SDK can build successfully
+- file-contains: 
+    - typespec code match: validate typespec customization code
+    - source code match: validate customized SDK source code
+- typespec-compile:
+    - compile typespec and regen SDK and verify the SDK codefor editscope contains customCode
+- rubric: The request is resolved. e.g. for build failure inputs, the SDK can build successfully
 
 ## Scenarios
 
@@ -81,3 +111,11 @@ TBD
 || CustomCode| verify customization code snippet|➖|
 || All| add @@clientName customization code in client.tsp|➖|
 
+
+## CI execution
+
+All `*.eval.yaml` files in this directory and its subdirectories run in the
+[nightly live eval pipeline](../../../eng/common/pipelines/live-eval.yml) against
+`azsdk-mcp-live`. They are also included in the `scenarios-live` suite in
+[the Vally configuration](../../.vally.yaml), not the hermetic mock pipeline.
+The live pipeline runs daily at 09:00 UTC on `main` and can be queued manually.

@@ -13,6 +13,7 @@ from agent_framework import (
     AgentFileStore,
     Content,
     ContextProvider,
+    FileStoreEntry,
     FunctionInvocationContext,
     FunctionMiddleware,
     SessionContext,
@@ -29,6 +30,8 @@ _OPAQUE_RESULT_OFFLOAD_CHARS = 20_000
 _LARGE_RESULT_PREVIEW_CHARS = 2_000
 _MAX_READ_CHARS = 20_000
 _MAX_GREP_MATCHES = 50
+_MAX_GREP_OUTPUT_CHARS = 20_000
+_MAX_GREP_LINE_CHARS = 2_000
 _SKIP_TOOL_PREFIXES = ("tool_result_",)
 _SKIP_TOOLS = {"load_skill", "read_skill_resource", "run_skill_script"}
 _ENCODED_SCOPE_PREFIX = "~scope-"
@@ -81,11 +84,12 @@ class ToolOutputStorageProvider(ContextProvider):
         context: SessionContext,
         state: dict[str, Any],
     ) -> None:
-        del agent, state
+        del agent
         session_id = context.session_id or session.session_id
         if not session_id:
             raise ValueError("ToolOutputStorageProvider requires a session id.")
         session_scope = _session_scope(session_id)
+        state["session_scope"] = session_scope
 
         @tool(name="tool_result_read", approval_mode="never_require")
         async def tool_result_read(
@@ -144,7 +148,32 @@ class ToolOutputStorageProvider(ContextProvider):
                 )
             except ValueError as exc:
                 return f"Could not search tool-result file: {exc}"
-            matches = [result.to_dict() for result in results[:max_matches]]
+            matches: list[dict[str, Any]] = []
+            remaining_matches = max_matches
+            remaining_chars = _MAX_GREP_OUTPUT_CHARS
+            for result in results:
+                matching_lines = []
+                for match in result.matching_lines:
+                    if remaining_matches == 0 or remaining_chars == 0:
+                        break
+                    line = match.line[: min(_MAX_GREP_LINE_CHARS, remaining_chars)]
+                    matching_lines.append(
+                        {"line_number": match.line_number, "line": line}
+                    )
+                    remaining_matches -= 1
+                    remaining_chars -= len(line)
+                if matching_lines:
+                    snippet = result.snippet[: min(_MAX_GREP_LINE_CHARS, remaining_chars)]
+                    remaining_chars -= len(snippet)
+                    matches.append(
+                        {
+                            "file_name": result.file_name,
+                            "snippet": snippet,
+                            "matching_lines": matching_lines,
+                        }
+                    )
+                if remaining_matches == 0 or remaining_chars == 0:
+                    break
             logger.info(
                 "Searched offloaded tool result: file=%s matches=%d",
                 file_name,
@@ -157,6 +186,23 @@ class ToolOutputStorageProvider(ContextProvider):
             self.source_id,
             [tool_result_read, tool_result_grep],
         )
+
+    async def after_run(
+        self,
+        *,
+        agent: Any,
+        session: AgentSession,
+        context: SessionContext,
+        state: dict[str, Any],
+    ) -> None:
+        del agent, session, context
+        session_scope = state.get("session_scope")
+        if not isinstance(session_scope, str):
+            return
+        for entry in await self.store.list_children(session_scope):
+            if entry.type == FileStoreEntry.FILE and _validate_file_name(entry.name):
+                await self.store.delete(f"{session_scope}/{entry.name}")
+        await self.store.delete_directory(session_scope)
 
 
 class ToolOutputStorageMiddleware(FunctionMiddleware):

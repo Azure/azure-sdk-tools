@@ -6,37 +6,16 @@ the process.
 
 import logging
 import re
-from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
-from typing import Any, cast
 
-from agent_framework import (
-    Agent,
-    ContextProvider,
-    FileSystemAgentFileStore,  # pyright: ignore[reportAttributeAccessIssue]
-    MiddlewareTypes,
-    SkillsProvider,
-    ToolTypes,
-    create_harness_agent,
-)
 from agent_framework.foundry import FoundryChatClient
-from agent_framework.openai import OpenAIChatOptions
 from azure.ai.projects.aio import AIProjectClient
 from azure.core.exceptions import ResourceNotFoundError
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
 from config.app_config import Settings, get as cfg
-from middleware.tool_output_storage import (
-    ToolOutputStorageMiddleware,
-    ToolOutputStorageProvider,
-)
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
-
-# Conservative operating budgets independent of the configured model's maximums.
-HARNESS_CONTEXT_WINDOW_TOKENS = 256_000
-HARNESS_MAX_OUTPUT_TOKENS = 16_384
 
 _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
@@ -70,7 +49,7 @@ def create_openai_client(
 
 
 def get_agent_client() -> FoundryChatClient:
-    """Return the shared FoundryChatClient (created once on first call)."""
+    """Return the shared harness-managed FoundryChatClient."""
     global _agent_client
     if _agent_client is None:
         _agent_client = FoundryChatClient(
@@ -79,50 +58,6 @@ def get_agent_client() -> FoundryChatClient:
             credential=get_credential(),
         )
     return _agent_client
-
-
-def create_hosted_chat_agent(
-    client: FoundryChatClient,
-    *,
-    name: str,
-    agent_id: str,
-    harness_instructions: str,
-    instructions: str,
-    tools: ToolTypes
-    | Callable[..., Any]
-    | Sequence[ToolTypes | Callable[..., Any]],
-    skills_provider: SkillsProvider,
-    memory_provider: ContextProvider,
-    middleware: Sequence[MiddlewareTypes],
-    default_options: Mapping[str, Any],
-) -> Agent[OpenAIChatOptions]:
-    """Create the hosted chat agent with the Agent Framework harness."""
-    resolved_options = cast(OpenAIChatOptions, dict(default_options))
-    memory_store = FileSystemAgentFileStore(Path.cwd() / "agent-file-memory")
-    web_search_tool = client.get_web_search_tool(search_context_size="medium")
-
-    return create_harness_agent(  # pyright: ignore[reportCallIssue]
-        client,
-        name=name,
-        id=agent_id,
-        harness_instructions=harness_instructions,
-        agent_instructions=instructions,
-        tools=[web_search_tool, *tools] if isinstance(tools, Sequence) else [web_search_tool, tools],
-        max_context_window_tokens=HARNESS_CONTEXT_WINDOW_TOKENS,
-        max_output_tokens=HARNESS_MAX_OUTPUT_TOKENS,
-        disable_todo=True,
-        disable_mode=True,
-        disable_file_memory=True,
-        disable_web_search=True,
-        disable_tool_auto_approval=True,
-        skills_provider=skills_provider,
-        context_providers=[
-            memory_provider,
-            ToolOutputStorageProvider(memory_store),
-        ],
-        middleware=[*middleware, ToolOutputStorageMiddleware(memory_store)],
-        default_options=resolved_options,
-    )
 
 
 def get_project_client() -> AIProjectClient:
@@ -243,8 +178,31 @@ async def close_clients() -> None:
     for client in _openai_clients.values():
         await client.close()
     _openai_clients.clear()
+    _stateless_session_ids.clear()
     if _agent_client is not None:
         _agent_client = None
     if _project_client is not None:
         await _project_client.close()
         _project_client = None
+
+
+# -- Stateless warm-session cache ------------------------------------------
+# Stateless requests (no customer conversation_id) share one warm sandbox per
+# agent version via an agent_session_id captured from a stateless response.
+# Logical harness state must remain isolated between requests.
+_stateless_session_ids: dict[tuple[str, str], str] = {}
+
+
+def get_stateless_session_id(agent_name: str, agent_version: str) -> str | None:
+    """Return the cached warm sandbox id for stateless requests, if any."""
+    return _stateless_session_ids.get((agent_name, agent_version))
+
+
+def set_stateless_session_id(
+    agent_name: str, agent_version: str, session_id: str | None
+) -> None:
+    """Cache (or clear) the warm sandbox id reused by stateless requests."""
+    if session_id is None:
+        _stateless_session_ids.pop((agent_name, agent_version), None)
+    else:
+        _stateless_session_ids[(agent_name, agent_version)] = session_id

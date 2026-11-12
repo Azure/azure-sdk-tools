@@ -28,9 +28,6 @@ if _project_root not in sys.path:
 load_dotenv(override=False)
 os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
-from agent_framework import Agent
-from agent_framework import CompactionProvider
-from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
@@ -43,6 +40,7 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
 from services.chat_service import ChatService
+from utils.agent_harness import create_hosted_agent
 from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
     create_project_client,
@@ -87,6 +85,11 @@ async def main() -> None:
     )
 
     agent_dir = Path(__file__).parent
+    harness_instructions = _load_instructions(
+        Path(app_config.__file__).resolve().parent.parent
+        / "prompts"
+        / "harness_instruction.md"
+    )
     instructions = _load_instructions(agent_dir / "instruction.md")
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
         agent_config = yaml.safe_load(f)
@@ -151,20 +154,14 @@ async def main() -> None:
             "create_evolution_ado_mcp_tool failed to initialize, skipped"
         )
 
-    # Compaction provider — compact history before and after each turn.
-    compaction_provider = CompactionProvider(
-        before_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=2),
-        after_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=1),
-    )
-
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
-    agent = Agent(
+    agent = create_hosted_agent(
         agent_client,
         name=agent_name,
-        id=agent_id,
+        agent_id=agent_id,
+        harness_instructions=harness_instructions,
         instructions=instructions,
         tools=tools,
-        context_providers=[compaction_provider],
         middleware=[
             ToolOutputSecurityMiddleware(),
         ],
@@ -174,7 +171,7 @@ async def main() -> None:
         },
     )
 
-    server = ResponsesHostServer(agent)
+    server = ResponsesHostServer(agent, history_source="agent")
 
     await server.run_async()
 

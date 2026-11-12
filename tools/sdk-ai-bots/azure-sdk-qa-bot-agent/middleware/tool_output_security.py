@@ -15,7 +15,7 @@ from agent_framework import Content, FunctionInvocationContext, FunctionMiddlewa
 
 from tools import TOOL_REGISTRY
 from tools.github_mcp_tools import (
-    _BODY_REDACTION_NOTICE,
+    _BODY_REDACTION_NOTICE,  # noqa: F401
     _is_github_mcp_tool,
     _redact_untrusted_authors,
     _scrub_untrusted_authors,

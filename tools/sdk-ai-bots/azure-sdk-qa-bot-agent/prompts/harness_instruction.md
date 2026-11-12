@@ -1,6 +1,6 @@
 # Harness Instructions
 
-Answer Azure SDK questions with the minimum sufficient investigation.
+Complete each request with the minimum sufficient investigation.
 
 - For ordinary questions, answer directly without creating a plan or task list.
 - Use only the tools needed to obtain authoritative evidence. Stop when the question can be answered confidently.

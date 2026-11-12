@@ -426,6 +426,22 @@ async def test_rebuild_replays_safe_messages_in_chronological_order() -> None:
     assert openai_client.conversations.items.list.call_count == 0
 
 
+def test_stateless_session_ids_are_isolated_by_agent() -> None:
+    """Warm stateless sessions are reused only by their agent and version."""
+    service = ChatService(openai_client=MagicMock())
+
+    service._set_stateless_session_id("azure-sdk-agent", "1", "sdk-session")
+    service._set_stateless_session_id("azure-sdk-agent", "2", "sdk-session-v2")
+    service._set_stateless_session_id("azure-mcp-agent", "1", "mcp-session")
+
+    assert service._get_stateless_session_id("azure-sdk-agent", "1") == "sdk-session"
+    assert service._get_stateless_session_id("azure-sdk-agent", "2") == "sdk-session-v2"
+    assert service._get_stateless_session_id("azure-mcp-agent", "1") == "mcp-session"
+    service._set_stateless_session_id("azure-sdk-agent", "1", None)
+    assert service._get_stateless_session_id("azure-sdk-agent", "1") is None
+    assert service._get_stateless_session_id("azure-sdk-agent", "2") == "sdk-session-v2"
+
+
 def _version(version, branch="feature/foo", status="active"):
     return AgentVersionDetails({
         "version": version, "metadata": {"branchname": branch}, "status": status,
@@ -802,7 +818,6 @@ async def test_chat_returns_the_invoked_agent_name(monkeypatch, tenant_id):
     assert result.agent_name == "actual-deployment"
     assert result.model_dump(mode="json")["agent_name"] == "actual-deployment"
     assert hosted.invoke.call_args.kwargs["agent_ref"]["name"] == result.agent_name
-    assert hosted.invoke.call_args.kwargs["agent_session_id"] is None
 
 
 @pytest.mark.asyncio

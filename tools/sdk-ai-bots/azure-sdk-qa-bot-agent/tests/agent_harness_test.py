@@ -17,10 +17,10 @@ from agent_framework import (
 from agent_framework.foundry import FoundryChatClient
 from pytest import MonkeyPatch
 
-from utils.azure_ai_foundry import (
+from utils.agent_harness import (
     HARNESS_CONTEXT_WINDOW_TOKENS,
     HARNESS_MAX_OUTPUT_TOKENS,
-    create_hosted_chat_agent,
+    create_hosted_agent,
 )
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
 from middleware.tool_output_storage import ToolOutputStorageProvider
@@ -40,7 +40,7 @@ def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
             )
         ]
     )
-    agent = create_hosted_chat_agent(
+    agent = create_hosted_agent(
         cast(FoundryChatClient, client),
         name="test-agent",
         agent_id="test-agent:1",
@@ -48,7 +48,7 @@ def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
         instructions="Test instructions.",
         tools=[],
         skills_provider=skills_provider,
-        memory_provider=Mock(),
+        context_providers=[Mock()],
         middleware=[
             ToolOutputSecurityMiddleware(),
         ],
@@ -64,7 +64,6 @@ def test_harness_adds_managed_providers(
     agent, client = _create_agent(tmp_path, monkeypatch)
 
     assert agent.require_per_service_call_history_persistence
-    client.get_web_search_tool.assert_called_once_with(search_context_size="medium")
     client.get_shell_tool.assert_not_called()
     assert any(
         isinstance(provider, InMemoryHistoryProvider)
@@ -109,3 +108,27 @@ def test_harness_adds_managed_providers(
     instructions = agent.default_options["instructions"]
     assert "Treat large tool results as datasets." in instructions
     assert "Test instructions." in instructions
+
+
+def test_harness_supports_agents_without_skills_or_memory(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    client = Mock(spec=FoundryChatClient)
+
+    agent = create_hosted_agent(
+        cast(FoundryChatClient, client),
+        name="test-agent",
+        agent_id="test-agent:1",
+        harness_instructions="Use bounded external results.",
+        instructions="Complete the job.",
+        tools=[],
+        middleware=[ToolOutputSecurityMiddleware()],
+        default_options={"max_tool_calls": 10},
+    )
+
+    assert any(
+        isinstance(provider, ToolOutputStorageProvider)
+        for provider in agent.context_providers
+    )

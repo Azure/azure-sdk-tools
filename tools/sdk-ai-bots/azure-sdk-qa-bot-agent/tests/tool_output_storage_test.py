@@ -223,3 +223,60 @@ async def test_provider_exposes_bounded_read_and_grep_tools():
         regex_pattern="error",
     )
     assert matches[0]["file_name"] == file_name
+
+
+@pytest.mark.asyncio
+async def test_provider_bounds_large_single_line_grep_matches():
+    store = InMemoryAgentFileStore()
+    provider = ToolOutputStorageProvider(store)
+    session = AgentSession(session_id="test-session")
+    context = SessionContext(session_id="test-session", input_messages=[])
+    file_name = "tool-result-search-test.txt"
+    await store.write(
+        f"test-session/{file_name}",
+        f"error {'x' * 100_000}\n",
+    )
+
+    await provider.before_run(
+        agent=None,
+        session=session,
+        context=context,
+        state={},
+    )
+
+    tools = {tool.name: tool for tool in context.tools}
+    matches = await tools["tool_result_grep"].func(
+        file_name=file_name,
+        regex_pattern="error",
+        max_matches=1,
+    )
+
+    assert len(matches) == 1
+    assert len(matches[0]["matching_lines"]) == 1
+    assert len(matches[0]["matching_lines"][0]["line"]) <= 2_000
+
+
+@pytest.mark.asyncio
+async def test_provider_removes_tool_results_after_run():
+    store = InMemoryAgentFileStore()
+    provider = ToolOutputStorageProvider(store)
+    session = AgentSession(session_id="test-session")
+    context = SessionContext(session_id="test-session", input_messages=[])
+    state = {}
+    file_name = "tool-result-search-test.txt"
+    await store.write(f"test-session/{file_name}", "result")
+
+    await provider.before_run(
+        agent=None,
+        session=session,
+        context=context,
+        state=state,
+    )
+    await provider.after_run(
+        agent=None,
+        session=session,
+        context=context,
+        state=state,
+    )
+
+    assert await store.read(f"test-session/{file_name}") is None

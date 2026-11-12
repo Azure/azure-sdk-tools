@@ -41,14 +41,11 @@ from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
-from utils.azure_ai_foundry import (
-    create_hosted_chat_agent,
-    get_agent_client,
-    get_project_client,
-)
+from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import (
     ensure_user_memory_store,
 )
+from utils.agent_harness import create_hosted_agent
 from utils.memory_context_provider import MemoryContextProvider
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
 
@@ -107,12 +104,14 @@ async def main() -> None:
     knowledge_tools = KnowledgeTools()
     identity_tools = IdentityTools()
     web_tools = WebTools()
+    web_search_tool = agent_client.get_web_search_tool(search_context_size="medium")
 
     tools = [
         knowledge_tools.search_knowledge_base,
         knowledge_tools.wiki_search,
         identity_tools.resolve_github_users,
         web_tools.web_fetch,
+        web_search_tool,
     ]
 
     # Parallelise slow async startup tasks to reduce cold-start latency.
@@ -166,7 +165,7 @@ async def main() -> None:
     )
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
-    agent = create_hosted_chat_agent(
+    agent = create_hosted_agent(
         agent_client,
         name=agent_name,
         agent_id=agent_id,
@@ -174,7 +173,7 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         skills_provider=skills_provider,
-        memory_provider=memory_provider,
+        context_providers=[memory_provider],
         middleware=[
             ToolOutputSecurityMiddleware(),
         ],

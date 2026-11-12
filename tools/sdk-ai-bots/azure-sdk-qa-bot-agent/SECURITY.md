@@ -119,7 +119,7 @@ The [tool-output middleware](https://github.com/Azure/azure-sdk-tools/blob/main/
 </untrusted_tool_output>
 ```
 
-Text blocks in mixed-content results and session-memory read/search results receive the same wrapper. Bookkeeping operations remain unchanged. Large external results are stored in session-scoped file memory; the harness does not expose shared file access or local shell execution.
+Text blocks in mixed-content results and offloaded-result read/search responses receive the same wrapper. Bookkeeping operations remain unchanged. Large external results are stored in session-scoped file memory; the harness does not expose shared file access or local shell execution.
 
 This [spotlighting technique](https://arxiv.org/abs/2403.14720) cues the model to treat the content as reference data, not instructions. It does not guarantee resistance to injection. Native registered tools bypass the wrapper to preserve server-side decoding; their transcript, KB, trace, and web text remains untrusted.
 

@@ -2,20 +2,25 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from collections.abc import Awaitable, Callable
+from copy import copy
 from typing import Any
 from uuid import uuid4
 
 from agent_framework import (
     AgentSession,
     AgentFileStore,
+    ChatContext,
+    ChatMiddleware,
     Content,
     ContextProvider,
     FileStoreEntry,
     FunctionInvocationContext,
     FunctionMiddleware,
+    Message,
     SessionContext,
     tool,
 )
@@ -56,6 +61,13 @@ def _get_text(result: object) -> str | None:
     ):
         return "\n".join(item.text or "" for item in result)
     return None
+
+
+def _format_stored_result(result: str) -> str:
+    try:
+        return json.dumps(json.loads(result), ensure_ascii=False, indent=2)
+    except (json.JSONDecodeError, TypeError):
+        return result
 
 
 def _session_scope(session_id: str) -> str:
@@ -252,3 +264,88 @@ class ToolOutputStorageMiddleware(FunctionMiddleware):
             "and `tool_result_read` to read a relevant line range.\n\n"
             f"Preview:\n{result[:_LARGE_RESULT_PREVIEW_CHARS]}"
         )
+
+
+class ToolOutputContextMiddleware(ChatMiddleware):
+    """Bound large tool results only in model-facing chat requests."""
+
+    def __init__(self, memory_store: AgentFileStore) -> None:
+        self.memory_store = memory_store
+
+    async def process(
+        self,
+        context: ChatContext,
+        call_next: Callable[[], Awaitable[None]],
+    ) -> None:
+        if context.session is None:
+            await call_next()
+            return
+
+        tool_names: dict[str, str] = {}
+        for message in context.messages:
+            for content in message.contents:
+                if (
+                    content.type == "function_call"
+                    and content.call_id
+                    and content.name
+                ):
+                    tool_names[content.call_id] = content.name
+
+        replaced_messages: list[Message] = []
+        session_scope = _session_scope(context.session.session_id)
+        for message in context.messages:
+            replacement_contents: list[Content] = []
+            changed = False
+            for content in message.contents:
+                result = (
+                    _get_text(content.result)
+                    if content.type == "function_result"
+                    else None
+                )
+                tool_name = tool_names.get(content.call_id or "", "")
+                if (
+                    not result
+                    or len(result) <= _OPAQUE_RESULT_OFFLOAD_CHARS
+                    or tool_name in _SKIP_TOOLS
+                    or tool_name.startswith(_SKIP_TOOL_PREFIXES)
+                ):
+                    replacement_contents.append(content)
+                    continue
+
+                file_name = (
+                    f"tool-result-{_safe_name(tool_name)}-"
+                    f"{_safe_name(content.call_id or uuid4().hex)}.txt"
+                )
+                await self.memory_store.write(
+                    f"{session_scope}/{file_name}",
+                    _format_stored_result(result),
+                )
+                replacement = copy(content)
+                replacement.result = (
+                    f"Large tool result stored as `{file_name}` "
+                    f"({len(result):,} characters). Use `tool_result_grep` to search it "
+                    "and `tool_result_read` to read a relevant line range.\n\n"
+                    f"Preview:\n{result[:_LARGE_RESULT_PREVIEW_CHARS]}"
+                )
+                replacement_contents.append(replacement)
+                changed = True
+                logger.info(
+                    "Offloaded model-context tool result: tool=%s file=%s chars=%d "
+                    "preview_chars=%d",
+                    tool_name,
+                    file_name,
+                    len(result),
+                    _LARGE_RESULT_PREVIEW_CHARS,
+                )
+
+            if changed:
+                replacement_message = copy(message)
+                replacement_message.contents = replacement_contents
+                replaced_messages.append(
+                    context.record_message_replacement(replacement_message, message)
+                )
+            else:
+                replaced_messages.append(message)
+
+        context.messages = replaced_messages
+        await call_next()

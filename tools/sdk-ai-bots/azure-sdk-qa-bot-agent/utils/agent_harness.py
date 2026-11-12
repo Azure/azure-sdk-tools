@@ -17,6 +17,7 @@ from agent_framework.foundry import FoundryChatClient
 from agent_framework.openai import OpenAIChatOptions
 
 from middleware.tool_output_storage import (
+    ToolOutputContextMiddleware,
     ToolOutputStorageMiddleware,
     ToolOutputStorageProvider,
 )
@@ -64,6 +65,10 @@ def create_hosted_agent(
             *context_providers,
             ToolOutputStorageProvider(memory_store),
         ],
-        middleware=[*middleware, ToolOutputStorageMiddleware(memory_store)],
+        middleware=[
+            *middleware,
+            ToolOutputStorageMiddleware(memory_store),
+            ToolOutputContextMiddleware(memory_store),
+        ],
         default_options=resolved_options,
     )

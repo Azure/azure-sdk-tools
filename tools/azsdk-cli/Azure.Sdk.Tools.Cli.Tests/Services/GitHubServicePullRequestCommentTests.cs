@@ -45,6 +45,135 @@ public class GitHubServicePullRequestCommentTests
         Content = new StringContent(json, Encoding.UTF8, "application/json")
     };
 
+    [TestCase("commit")]
+    [TestCase("review")]
+    [TestCase("comment")]
+    [TestCase("review comment")]
+    [TestCase("none")]
+    public async Task LatestActivity_UsesQualifyingTimestampsInsteadOfPullRequestUpdatedAt(string source)
+    {
+        const string oldTime = "2026-08-25T00:00:00Z";
+        const string recentTime = "2026-10-26T12:00:00Z";
+        var requests = new List<string>();
+        _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Returns<HttpRequestMessage, CancellationToken>((request, _) =>
+            {
+                Assert.That(request.Method, Is.EqualTo(HttpMethod.Get));
+                var path = request.RequestUri!.AbsolutePath;
+                requests.Add(path);
+                var timestamp = path.EndsWith("/commits") && source == "commit"
+                    || path.EndsWith("/reviews") && source == "review"
+                    || path.Contains("/issues/") && source == "comment"
+                    || path.Contains("/pulls/") && path.EndsWith("/comments") && source == "review comment"
+                        ? recentTime : oldTime;
+                var json = path.EndsWith("/commits")
+                    ? JsonSerializer.Serialize(new[] { new { sha = "commit", commit = new { committer = new { name = "Author", email = "author@example.com", date = timestamp } } } })
+                    : path.EndsWith("/reviews")
+                        ? JsonSerializer.Serialize(new[] { new { id = 1, state = "CHANGES_REQUESTED", submitted_at = timestamp } })
+                        : JsonSerializer.Serialize(new object[]
+                        {
+                            new { id = 1, user = new { login = "reviewer", type = "User" }, created_at = oldTime, updated_at = timestamp },
+                            new { id = 2, user = new { login = "checks[bot]", type = "Bot" }, created_at = "2026-11-09T00:00:00Z", updated_at = "2026-11-09T00:00:00Z" }
+                        });
+                return Task.FromResult(Response(json));
+            });
+
+        var activity = await _service.GetPullRequestLatestActivityAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None);
+
+        Assert.That(activity.Timestamp, Is.EqualTo(DateTimeOffset.Parse(source == "none" ? oldTime : recentTime)));
+        Assert.That(activity.Source, Is.EqualTo(source == "none" ? "commit" : source));
+        Assert.That(requests, Has.Count.EqualTo(4));
+        Assert.That(requests, Has.None.Matches<string>(path => path.EndsWith("/checks") || path.EndsWith("/statuses")));
+    }
+
+    [Test]
+    public async Task LatestActivity_FollowsCommentPaginationAndIgnoresPendingReviews()
+    {
+        _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Returns<HttpRequestMessage, CancellationToken>((request, _) =>
+            {
+                var path = request.RequestUri!.AbsolutePath;
+                if (path.EndsWith("/commits"))
+                {
+                    return Task.FromResult(Response("""[{"commit":{"committer":{"date":"2026-08-25T00:00:00Z"}}}]"""));
+                }
+                if (path.EndsWith("/reviews"))
+                {
+                    return Task.FromResult(Response("""[{"id":1,"state":"PENDING"}]"""));
+                }
+                if (path.Contains("/issues/"))
+                {
+                    var secondPage = request.RequestUri.Query.Contains("page=2");
+                    var response = Response(secondPage
+                        ? """[{"id":2,"user":{"login":"reviewer","type":"User"},"created_at":"2026-10-26T00:00:00Z","updated_at":"2026-10-26T00:00:00Z"}]"""
+                        : """[{"id":1,"user":{"login":"checks[bot]","type":"Bot"},"created_at":"2026-11-09T00:00:00Z","updated_at":"2026-11-09T00:00:00Z"}]""");
+                    if (!secondPage)
+                    {
+                        response.Headers.Add("Link", "<https://api.github.com/repos/Azure/azure-sdk-for-python/issues/1/comments?page=2>; rel=\"next\"");
+                    }
+                    return Task.FromResult(response);
+                }
+                return Task.FromResult(Response("[]"));
+            });
+
+        var activity = await _service.GetPullRequestLatestActivityAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None);
+
+        Assert.That(activity.Timestamp, Is.EqualTo(DateTimeOffset.Parse("2026-10-26T00:00:00Z")));
+        Assert.That(activity.Source, Is.EqualTo("comment"));
+        VerifyCalls(5);
+    }
+
+    [Test]
+    public void LatestActivity_MissingCommitTimestampDoesNotAuthorizeCleanup()
+    {
+        _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => Response("""[{"commit":{}}]"""));
+
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _service.GetPullRequestLatestActivityAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None));
+
+        VerifyCalls(1);
+    }
+
+    [Test]
+    public void LatestActivity_PreCanceledDoesNotReadHistory()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.CatchAsync<OperationCanceledException>(async () =>
+            await _service.GetPullRequestLatestActivityAsync("Azure", "azure-sdk-for-python", 1, cancellation.Token));
+
+        VerifyCalls(0);
+    }
+
+    [TestCase(HttpStatusCode.Forbidden)]
+    [TestCase(HttpStatusCode.InternalServerError)]
+    public void LatestActivity_FailedHistoryReadDoesNotReturnInactivity(HttpStatusCode status)
+    {
+        _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => Response("{\"message\":\"offline failure\"}", status));
+
+        Assert.CatchAsync<ApiException>(async () =>
+            await _service.GetPullRequestLatestActivityAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None));
+
+        VerifyCalls(1);
+    }
+
+    [TestCase(0)]
+    [TestCase(250)]
+    public void LatestActivity_EmptyOrCappedCommitHistoryDoesNotAuthorizeCleanup(int count)
+    {
+        var json = JsonSerializer.Serialize(Enumerable.Repeat(new { commit = new { committer = new { date = "2026-08-25T00:00:00Z" } } }, count));
+        _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => Response(json));
+
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _service.GetPullRequestLatestActivityAsync("Azure", "azure-sdk-for-python", 1, CancellationToken.None));
+
+        VerifyCalls(1);
+    }
+
     [Test]
     public async Task CloseWithComment_StateOnlyPatchThenExactAuthenticatedPost()
     {

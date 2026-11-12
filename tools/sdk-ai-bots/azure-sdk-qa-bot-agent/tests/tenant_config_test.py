@@ -11,7 +11,6 @@ from config import tenant_config
 from config.tenant_config import (
     SRC_AZURE_MCP_SERVER_DOCS,
     SRC_AZURE_REST_API_SPECS_DOCS,
-    SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_DOCS_ENG,
     SRC_AZURE_SDK_FOR_JS_DOCS,
     SRC_STATIC_CPEX_DOCS,
@@ -197,7 +196,6 @@ def test_language_tenants_include_shared_sources_and_preserve_filters(
         SRC_AZURE_SDK_DOCS_ENG,
         tenant_config.SRC_AZURE_SDK_INTERNAL_WIKI,
         tenant_config.SRC_TYPESPEC_AZURE_DOCS,
-        SRC_AZURE_REST_API_SPECS_WIKI,
         SRC_AZURE_REST_API_SPECS_DOCS,
     ]
     assert [source.name for source in tenant_config._SDK_SOURCES] == common_sources
@@ -213,7 +211,6 @@ def test_language_tenants_include_shared_sources_and_preserve_filters(
             f"search.ismatch('typespec-{emitter_language}', 'title') "
             "or search.ismatch('generate*', 'title')"
         ),
-        SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
     }
 
 
@@ -263,10 +260,11 @@ def test_go_tenant_includes_sdk_breaking_change_guides() -> None:
     config = get_tenant_config(TenantID.GOLANG_CHANNEL_QA_BOT)
     assert config is not None
     sources = {source.name: source for source in config.sources}
-    assert sources[SRC_AZURE_REST_API_SPECS_WIKI].get_link("SDK-Breaking-Changes.md") == (
-        "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+    assert sources[SRC_AZURE_REST_API_SPECS_DOCS].get_link(
+        "documentation#validation#sdk-breaking-changes.md"
+    ) == (
+        "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/validation/sdk-breaking-changes.md"
     )
-    assert config.source_filter[SRC_AZURE_REST_API_SPECS_WIKI] == "search.ismatch('SDK', 'title')"
     assert sources[SRC_AZURE_REST_API_SPECS_DOCS].get_link("documentation/ci-fix.md") == (
         "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/ci-fix.md"
     )
@@ -281,10 +279,52 @@ def test_go_tenant_includes_sdk_breaking_change_guides() -> None:
         source for source in sync_config["sources"]
         if source["repository"]["url"] == "https://github.com/Azure/azure-rest-api-specs.git"
     )
-    guide = next(item for item in specs["paths"] if item["path"] == "/documentation/ci-fix.md")
+    guide = next(item for item in specs["paths"] if item["path"] == "/documentation")
     assert guide["folder"] == SRC_AZURE_REST_API_SPECS_DOCS
     assert guide["relativeByRepoPath"] is True
     assert guide["metadata"]["scope"] == "branded"
+
+
+@pytest.mark.parametrize(
+    "tenant_id",
+    [
+        TenantID.TYPESPEC_CHANNEL_QA_BOT,
+        TenantID.AZURE_TYPESPEC_AUTHORING,
+        TenantID.API_SPEC_REVIEW_BOT,
+        TenantID.PYTHON_CHANNEL_QA_BOT,
+        TenantID.DOTNET_CHANNEL_QA_BOT,
+        TenantID.GOLANG_CHANNEL_QA_BOT,
+        TenantID.JAVA_CHANNEL_QA_BOT,
+        TenantID.JAVASCRIPT_CHANNEL_QA_BOT,
+    ],
+)
+def test_specs_tenants_use_repository_docs_instead_of_wiki(tenant_id: TenantID) -> None:
+    config = get_tenant_config(tenant_id)
+    assert config is not None
+    names = [source.name for source in config.sources]
+    assert SRC_AZURE_REST_API_SPECS_DOCS in names
+    assert len(names) == len(set(names))
+    assert "azure_rest_api_specs_wiki" not in names
+    assert "azure_rest_api_specs_wiki" not in config.source_filter
+    assert get_knowledge_source("azure_rest_api_specs_wiki") is None
+    assert SRC_AZURE_REST_API_SPECS_DOCS not in config.source_filter
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "documentation#contributing#api-spec-review-faq.md",
+        "documentation#specification-guidelines#azure-service-versioning-guide.md",
+        "documentation#validation#typespec-validation.md",
+    ],
+)
+def test_migrated_specs_guides_resolve_to_repository_links(title: str) -> None:
+    source = get_knowledge_source(SRC_AZURE_REST_API_SPECS_DOCS)
+    assert source is not None
+    assert source.get_link(title) == (
+        "https://github.com/Azure/azure-rest-api-specs/blob/main/"
+        + title.replace("#", "/")
+    )
 
 
 def test_tenant_skills_are_partitioned_by_agent() -> None:

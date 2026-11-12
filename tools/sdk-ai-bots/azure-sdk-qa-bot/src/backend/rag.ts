@@ -13,7 +13,7 @@ export interface RAGOptions {
 export type Source =
   | 'typespec_docs'
   | 'typespec_azure_docs'
-  | 'azure_rest_api_specs_wiki'
+  | 'azure_rest_api_specs_docs'
   | 'azure_sdk_for_python_docs'
   | 'azure_sdk_for_python_wiki'
   | 'static_typespec_qa'

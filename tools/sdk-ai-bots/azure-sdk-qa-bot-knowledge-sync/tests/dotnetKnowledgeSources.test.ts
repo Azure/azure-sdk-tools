@@ -1,9 +1,17 @@
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { ConfigurationLoader } from '../src/services/ConfigurationLoader';
-import { processMarkdownFile } from '../src/DailySyncKnowledge';
+import { processMarkdownFile, processSourceDirectory } from '../src/DailySyncKnowledge';
+import { BlobService } from '../src/services/StorageService';
+
+vi.mock('../src/services/StorageService', () => ({
+    BlobService: class {
+        hasContentChanged() { return true; }
+        hasMetadataChanged() { return false; }
+    }
+}));
 
 const configPath = path.join(__dirname, '../config/knowledge-config.json');
 const originalPath = ConfigurationLoader.getConfigPath();
@@ -43,7 +51,9 @@ describe('.NET knowledge configuration', () => {
 
         const sources = ConfigurationLoader.getDocumentationSources()
             .filter(source => source.folder === 'azure_sdk_for_net_docs');
-        expect(sources.every(source => source.path === 'docs/azure-sdk-for-net')).toBe(true);
+        expect(sources.map(source => source.path)).toEqual(
+            expectedPaths.map(entry => `docs/azure-sdk-for-net${entry}`));
+        expect(sources.every(source => source.citationRoot === 'docs/azure-sdk-for-net')).toBe(true);
         expect(sources.map(source => source.metadata)).toEqual(
             expectedPaths.map(() => ({ scope: 'branded' })));
         const repo = ConfigurationLoader.getRepositoryConfigs()
@@ -51,7 +61,7 @@ describe('.NET knowledge configuration', () => {
         expect(repo?.sparseCheckout).toEqual(expectedPaths);
     });
 
-    it('applies identical metadata to .NET documents across all shared-root entries', () => {
+    it('keeps configured metadata for repository-relative .NET documents', () => {
         ConfigurationLoader.setConfigPath(configPath);
         const sources = ConfigurationLoader.getDocumentationSources()
             .filter(source => source.folder === 'azure_sdk_for_net_docs');
@@ -93,6 +103,40 @@ describe('.NET knowledge configuration', () => {
             const result = processMarkdownFile(file, source, root);
             expect(result.blobPath).toBe(
                 `azure_sdk_for_net_docs/eng#packages#${emitter}#README.md`);
+        }
+    });
+
+    it('includes selected .NET skill references while keeping ignored paths scan-relative', async () => {
+        ConfigurationLoader.setConfigPath(configPath);
+        const sources = ConfigurationLoader.getDocumentationSources()
+            .filter(source => source.folder === 'azure_sdk_for_net_docs'
+                && source.path.includes('/.github/skills/'));
+        expect(sources).toHaveLength(2);
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dotnet-references-'));
+        tempDirs.push(root);
+        const target = fs.mkdtempSync(path.join(os.tmpdir(), 'dotnet-target-'));
+        tempDirs.push(target);
+        for (const source of sources) {
+            const relativePath = path.relative('docs/azure-sdk-for-net', source.path);
+            const sourceDir = path.join(root, relativePath);
+            for (const name of ['SKILL.md', 'references/guide.md', 'references/ignored.md', 'release-2026-11-09.md']) {
+                const file = path.join(sourceDir, name);
+                fs.mkdirSync(path.dirname(file), { recursive: true });
+                fs.writeFileSync(file, '# .NET skill guidance');
+            }
+            const result = await processSourceDirectory(
+                sourceDir, { ...source, ignoredPaths: ['references/ignored.md'] },
+                target, new Map(), new BlobService(), root
+            );
+            expect(result.totalProcessed).toBe(2);
+            expect(result.changedFiles.map(file => file.blobPath).sort()).toEqual(
+                ['SKILL.md', 'references/guide.md'].map(name =>
+                    `azure_sdk_for_net_docs/${path.join(relativePath, name).replace(/[\\/]/g, '#')}`
+                ).sort()
+            );
+            expect(result.changedFiles.map(file => file.metadata)).toEqual([
+                { scope: 'branded' }, { scope: 'branded' }
+            ]);
         }
     });
 

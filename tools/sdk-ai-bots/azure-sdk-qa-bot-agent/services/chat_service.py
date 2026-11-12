@@ -668,10 +668,13 @@ class ChatService:
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
-        search = tool_results.get("search_knowledge_base")
-        tool_references = (
-            search.results if isinstance(search, SearchKnowledgeBaseResult) else []
-        )
+        retrieved_references = [
+            ref
+            for results in tool_results.values()
+            for result in results
+            if isinstance(result, SearchKnowledgeBaseResult)
+            for ref in result.results
+        ]
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
@@ -682,19 +685,24 @@ class ChatService:
         # Extract structured references from the agent's markdown output
         # and strip the references section from the answer text.
         answer, references = self._extract_references_from_text(
-            output_text, tool_references
+            output_text, retrieved_references
         )
 
-        # Build full_context from search tool results when requested.
+        # Build full_context from every KB and wiki search when requested.
         # Keys use "document_" prefix for compatibility with the eval pipeline.
         full_context = None
-        if req.with_full_context and tool_references:
-            full_context = json.dumps(
-                [
-                    DocumentContext.from_reference(r).model_dump(mode="json")
-                    for r in tool_references
-                ]
-            )
+        if req.with_full_context:
+            unique_references = {
+                (ref.title, ref.source, ref.link, ref.content): ref
+                for ref in retrieved_references
+            }
+            if unique_references:
+                full_context = json.dumps(
+                    [
+                        DocumentContext.from_reference(r).model_dump(mode="json")
+                        for r in unique_references.values()
+                    ]
+                )
 
         resp = ChatResponse(
             id=response.id,
@@ -715,13 +723,13 @@ class ChatService:
 
     @staticmethod
     def _extract_references_from_text(
-        text: str, tool_references: list[Reference] | None = None
+        text: str, retrieved_references: list[Reference] | None = None
     ) -> tuple[str, list[Reference]]:
         """Parse the **References** section from agent output text.
 
         Returns ``(answer_without_references, extracted_references)``.
         The extracted references are enriched with ``source`` and ``content``
-        from *tool_references* when a matching link or title is found,
+        from *retrieved_references* when a matching link or title is found,
         preserving compatibility with the old backend response shape.
         """
         # Locate the **References** header
@@ -733,12 +741,14 @@ class ChatService:
         refs_block = text[header_match.end() :]
 
         # Build lookups from the tool results for enrichment
+        link_title_lookup: dict[tuple[str, str], Reference] = {}
         link_lookup: dict[str, Reference] = {}
         path_lookup: dict[str, Reference] = {}
         title_lookup: dict[str, Reference] = {}
-        if tool_references:
-            for ref in tool_references:
+        if retrieved_references:
+            for ref in retrieved_references:
                 if ref.link:
+                    link_title_lookup[(ref.link, ref.title)] = ref
                     link_lookup[ref.link] = ref
                     path = urlparse(ref.link).path.rstrip("/")
                     if path:
@@ -747,8 +757,8 @@ class ChatService:
                     title_lookup[ref.title] = ref
 
         def _match_reference(link: str, title: str) -> Reference | None:
-            """Try exact link, URL path, then title matching."""
-            matched = link_lookup.get(link)
+            """Prefer matching sections, then fall back to link, title, or path."""
+            matched = link_title_lookup.get((link, title)) or link_lookup.get(link)
             if matched:
                 return matched
             matched = title_lookup.get(title)
@@ -812,13 +822,11 @@ class ChatService:
         return None
 
     def _extract_tool_results(
-        self, items: list[ResponseOutputItem]
-    ) -> dict[str, object]:
-        """Decode tool outputs using TOOL_REGISTRY models.
-
-        Returns a dict mapping tool name to its decoded Pydantic model instance.
-        """
-        results: dict[str, object] = {}
+        self,
+        items: list[ResponseOutputItem],
+    ) -> dict[str, list[object]]:
+        """Decode all tool outputs, preserving output order within each tool."""
+        results: dict[str, list[object]] = {}
 
         if not items:
             return results
@@ -852,7 +860,8 @@ class ChatService:
             try:
                 json_str = self._unwrap_json(output)
                 if json_str:
-                    results[tool_name] = response_model.model_validate_json(json_str)
+                    decoded = response_model.model_validate_json(json_str)
+                    results.setdefault(tool_name, []).append(decoded)
             except Exception as e:
                 logger.warning("Failed to decode tool output for %s: %s", tool_name, e)
 

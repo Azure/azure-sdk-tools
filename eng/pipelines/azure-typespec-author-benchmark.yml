@@ -1,85 +1,46 @@
-# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
-# Manual benchmark: select one mode per build and use the shared Prepare/Eval/Summary flow.
-# SkillBranch overlays skill definitions and references, not benchmark inputs.
 trigger: none
 pr: none
 
-parameters:
-- name: Mode
-  displayName: Benchmark mode
-  type: string
-  default: forced
-  values:
-    - forced
-    - trigger
-- name: SkillBranch
-  displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Defaults to the full source branch ref.
-  type: string
-  default: $(Build.SourceBranch)
-- name: McpKind
-  displayName: MCP implementation
-  type: string
-  default: live
-  values:
-    - live
-    - mock
-- name: Runs
-  displayName: Vally trials per stimulus
-  type: number
-  default: 1
-
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
-- name: SkillBranch
-  value: ${{ parameters.SkillBranch }}
-- name: TypeSpecAuthorEvalMode
-  value: ${{ parameters.Mode }}
-- name: AZSDK_EVAL_MCP_KIND
-  value: ${{ parameters.McpKind }}
 
 extends:
-  template: /eng/common/pipelines/templates/stages/archetype-eval.yml
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    vallyRoot: .github/skills/azure-typespec-author/evaluate
-    ${{ if eq(parameters.Mode, 'trigger') }}:
-      evalGlobs:
-        - 'evals/001*.eval.yaml'
-        - 'evals/002*.eval.yaml'
-        - 'evals/003*.eval.yaml'
-        - 'evals/004*.eval.yaml'
-        - 'evals/005*.eval.yaml'
-        - 'evals/006*.eval.yaml'
-        - 'evals/007*.eval.yaml'
-    ${{ else }}:
-      evalGlobs:
-        # Routing-only files have no forced stimuli.
-        - 'evals/001*.eval.yaml'
-        - 'evals/002*.eval.yaml'
-        - 'evals/003*.eval.yaml'
-        - 'evals/004*.eval.yaml'
-        - 'evals/005*.eval.yaml'
-        - 'evals/006*.eval.yaml'
-        - 'evals/007001.eval.yaml'
-        - 'evals/007002.eval.yaml'
-        - 'evals/007003.eval.yaml'
-        - 'evals/007004.eval.yaml'
-        - 'evals/007005.eval.yaml'
-        - 'evals/007006.eval.yaml'
-        - 'evals/007007.eval.yaml'
-        - 'evals/007008.eval.yaml'
-    mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
-    TestType: ${{ parameters.McpKind }}
-    vallyArguments:
-      - --tag
-      - ${{ format('mode={0}', parameters.Mode) }}
-      - --runs
-      - ${{ format('{0}', parameters.Runs) }}
-    UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
-    azureSubscription: azuresdkqabot-dev
-    preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
-    failOnFailedTests: false
-    # Keep each shard below the installation token's one-hour lifetime.
-    ${{ if eq(parameters.Runs, 1) }}:
-      shardTimeoutInMinutes: 50
-    ${{ if ne(parameters.Runs, 1) }}:
-      shardTimeoutInMinutes: 55
+    stages:
+    - stage: RetrievalSmoke
+      jobs:
+      - job: PreviewRetrieval
+        timeoutInMinutes: 15
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        steps:
+        - checkout: self
+          fetchDepth: 1
+        - task: DownloadPipelineArtifact@2
+          displayName: Download exact MCP binary from benchmark 7068274
+          inputs:
+            buildType: specific
+            project: internal
+            definition: '8178'
+            buildVersionToDownload: specific
+            pipelineId: '7068274'
+            allowPartiallySucceededBuilds: true
+            artifactName: mcp-servers
+            targetPath: $(Pipeline.Workspace)/retrieval-mcp
+        - task: AzureCLI@2
+          displayName: Verify preview MISE v2 and invoke knowledge retrieval
+          inputs:
+            azureSubscription: azuresdkqabot-dev
+            scriptType: bash
+            scriptLocation: scriptPath
+            scriptPath: eng/scripts/preview-retrieval-smoke.sh
+            arguments: '"$(Pipeline.Workspace)/retrieval-mcp/cli/azsdk.dll"'
+          env:
+            AZSDKTOOLS_AGENT_TESTING: 'false'
+            AZSDKTOOLS_COLLECT_TELEMETRY: 'false'
+            AZURE_SDK_KB_ENDPOINT: https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net
+            AZURE_SDK_KB_CLIENT_ID: 674414e1-152b-41ac-b0d2-763535edea6c
+            AZURE_SDK_KB_SCOPE: api://azure-sdk-qa-bot-test/user_impersonation

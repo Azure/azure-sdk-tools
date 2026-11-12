@@ -47,6 +47,7 @@ stages:
               parameters:
                 Paths:
                   - ${{ parameters.DirectoryToSync }}
+                  - eng/scripts
                   - ${{ each path in parameters.AdditionalCheckoutPaths }}:
                     - ${{ path }}
 
@@ -57,28 +58,19 @@ stages:
                 TokenOwners: ${{ parameters.RepoOwners }}
                 AlwaysUseOwnerSuffix: true
 
-            - pwsh: |
-                Set-PsDebug -Trace 1
-                $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
-                $patchFiles = @()
-
-                $filePatterns = '${{ convertToJson(parameters.FilePatterns) }}' | ConvertFrom-Json
-                if (!$filePatterns) { $filePatterns = @("*")}
-
-                foreach ($filePattern in $filePatterns) {
-                  Write-Host "Creating patch files for pattern: $filePattern"
-                  $patchFiles += git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}/$filePattern"
-                }
-                if ($patchFiles -and ($LASTEXITCODE -eq 0)) {
-                  echo "##vso[task.setvariable variable=PatchFilesLocation]$patchDir"
-                  echo "Setting PatchFilesLocation"
-                }
-                else {
-                  Write-Host "Failed to Create PatchFiles from Pull Request [https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)]"
-                  exit 1
-                }
+            - task: PowerShell@2
               displayName: Create Patch Files from Changes in PR
-              workingDirectory: $(System.DefaultWorkingDirectory)
+              inputs:
+                pwsh: true
+                targetType: filePath
+                filePath: $(Build.SourcesDirectory)/eng/scripts/Create-SyncPatch.ps1
+                workingDirectory: $(System.DefaultWorkingDirectory)
+                arguments: >
+                  -DirectoryToSync '${{ parameters.DirectoryToSync }}'
+                  -FilePatternsJson '${{ convertToJson(parameters.FilePatterns) }}'
+                  -TargetBranch 'origin/$(system.pullRequest.targetBranch)'
+                  -OutputDirectory '$(Build.ArtifactStagingDirectory)/patchfiles'
+                  -CommitMessage 'Sync ${{ parameters.DirectoryToSync }} for Tools PR $(System.PullRequest.PullRequestNumber)'
 
             - task: PublishPipelineArtifact@1
               condition: and(succeeded(), ne(variables['PatchFilesLocation'],''))

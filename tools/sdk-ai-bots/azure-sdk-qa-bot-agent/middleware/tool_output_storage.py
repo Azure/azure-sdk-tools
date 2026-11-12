@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -21,8 +22,10 @@ from agent_framework._filesystem import _storage_key_segment  # pyright: ignore[
 
 from tools import TOOL_REGISTRY
 
-_LARGE_RESULT_CHARS = 100_000
-_LARGE_RESULT_PREVIEW_CHARS = 4_000
+logger = logging.getLogger(__name__)
+
+_OPAQUE_RESULT_OFFLOAD_CHARS = 20_000
+_LARGE_RESULT_PREVIEW_CHARS = 2_000
 _MAX_READ_CHARS = 20_000
 _MAX_GREP_MATCHES = 50
 _SKIP_TOOL_PREFIXES = ("tool_result_",)
@@ -31,8 +34,9 @@ _ENCODED_SCOPE_PREFIX = "~scope-"
 _RESULT_FILE_PATTERN = re.compile(r"tool-result-[A-Za-z0-9._-]+\.txt")
 _PROVIDER_INSTRUCTIONS = (
     "Large external tool results may be stored outside the conversation. "
-    "Only when a tool response gives a `tool-result-*.txt` file name, use "
-    "`tool_result_grep` or `tool_result_read` to inspect the relevant data."
+    "Only when a tool response gives a `tool-result-*.txt` file name, start with "
+    "`tool_result_grep` using specific identifiers or error text, then use "
+    "`tool_result_read` only for the relevant line range. Do not read the entire file."
 )
 
 
@@ -101,6 +105,13 @@ class ToolOutputStorageProvider(ContextProvider):
 
             lines = content.splitlines(keepends=True)
             selected = "".join(lines[start_line - 1 : end_line])
+            logger.info(
+                "Reading offloaded tool result: file=%s lines=%d-%s selected_chars=%d",
+                file_name,
+                start_line,
+                end_line or "end",
+                len(selected),
+            )
             if len(selected) <= _MAX_READ_CHARS:
                 return selected
             return (
@@ -132,7 +143,13 @@ class ToolOutputStorageProvider(ContextProvider):
                 )
             except ValueError as exc:
                 return f"Could not search tool-result file: {exc}"
-            return [result.to_dict() for result in results[:max_matches]]
+            matches = [result.to_dict() for result in results[:max_matches]]
+            logger.info(
+                "Searched offloaded tool result: file=%s matches=%d",
+                file_name,
+                len(matches),
+            )
+            return matches
 
         context.extend_instructions(self.source_id, [_PROVIDER_INSTRUCTIONS])
         context.extend_tools(
@@ -167,12 +184,19 @@ class ToolOutputStorageMiddleware(FunctionMiddleware):
             return
 
         context.result = result
-        if len(result) <= _LARGE_RESULT_CHARS or context.session is None:
+        if len(result) <= _OPAQUE_RESULT_OFFLOAD_CHARS or context.session is None:
             return
 
         file_name = f"tool-result-{_safe_name(name)}-{uuid4().hex}.txt"
         session_scope = _session_scope(context.session.session_id)
         await self.memory_store.write(f"{session_scope}/{file_name}", result)
+        logger.info(
+            "Offloaded opaque tool result: tool=%s file=%s chars=%d preview_chars=%d",
+            name,
+            file_name,
+            len(result),
+            _LARGE_RESULT_PREVIEW_CHARS,
+        )
         context.result = (
             f"Large tool result stored as `{file_name}` "
             f"({len(result):,} characters). Use `tool_result_grep` to search it "

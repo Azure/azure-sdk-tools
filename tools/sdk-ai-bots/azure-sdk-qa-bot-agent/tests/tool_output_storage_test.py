@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from agent_framework import (
@@ -23,7 +24,11 @@ from middleware.tool_output_storage import (
 )
 
 
-def _make_context(tool_name: str, result, session: AgentSession | None = None):
+def _make_context(
+    tool_name: str,
+    result: Any,
+    session: AgentSession | None = None,
+) -> Any:
     return SimpleNamespace(
         function=SimpleNamespace(name=tool_name),
         result=result,
@@ -70,7 +75,7 @@ async def test_large_result_is_saved_and_replaced():
 async def test_manageable_result_stays_in_context():
     store = InMemoryAgentFileStore()
     middleware = ToolOutputStorageMiddleware(store)
-    content = "external data\n" * 4_000
+    content = "external data\n" * 1_000
     context = _make_context(
         "github-pull_request_read",
         [Content.from_text(content)],
@@ -81,6 +86,23 @@ async def test_manageable_result_stays_in_context():
 
     assert context.result == content
     assert await store.list_children("test-session") == []
+
+
+@pytest.mark.asyncio
+async def test_production_sized_external_result_is_offloaded():
+    store = InMemoryAgentFileStore()
+    middleware = ToolOutputStorageMiddleware(store)
+    content = "external data\n" * 2_000
+    context = _make_context(
+        "github-pull_request_read",
+        [Content.from_text(content)],
+        AgentSession(session_id="test-session"),
+    )
+
+    await middleware.process(context, _noop_next)
+
+    assert "Large tool result stored as `tool-result-" in context.result
+    assert len(await store.list_children("test-session")) == 1
 
 
 @pytest.mark.asyncio

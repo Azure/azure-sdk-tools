@@ -296,6 +296,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlanId);
             var excludedStates = includeAbandoned ? "'Closed','Duplicate'" : "'Closed','Duplicate','Abandoned'";
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ({excludedStates})";
+            if (IsAgentTesting)
+            {
+                query += $" AND [System.Tags] CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
+            }
             var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
             if (releasePlanWorkItems.Count == 0)
             {

@@ -39,6 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ProductOnboardingTool),
             typeof(PackageReleaseStatusTool),
             typeof(SpecWorkflowTool),
+            typeof(ProvisioningSdkTool),
             typeof(SdkBuildTool),
             typeof(PackTool),
             typeof(PackageApprovalStatusTool),

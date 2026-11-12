@@ -13,6 +13,7 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
       * [Build](#build)
       * [Run](#run)
       * [Package information](#package-information)
+      * [.NET provisioning library generation](#net-provisioning-library-generation)
       * [Package release approval](#package-release-approval)
       * [Test](#test)
       * [Test with GitHub Coding Agent](#test-with-github-coding-agent)
@@ -114,6 +115,36 @@ Discovery reads only these metadata locations, not nested packages or SDK source
 For example, map metadata produces `"ApiVersions": [{"Version": "2026-04-01", "Namespace": "Compute"}]`; singular metadata produces `"ApiVersions": [{"Version": "2023-01-01"}]`.
 
 Missing metadata or metadata without API versions leaves `ApiVersions` empty. Malformed JSON, invalid field types, blank version strings, or unreadable files leave it empty and log a warning with the file path and failure reason. No partial versions are returned if a matching file is invalid. Metadata errors are logged only; they are not stored in `PackageInfo` and do not fail package discovery or hide the package from bulk export. Invalid command options, nonexistent package directories, or failed package lookups return exit code `1`.
+
+### .NET provisioning library generation
+
+Use the .NET provisioning branch of `azsdk-common-generate-sdk-pipeline` to inspect a
+TypeSpec project, reuse or create a spec PR when configuration is missing, and
+queue .NET provisioning generation. No release plan is required.
+
+```sh
+azsdk spec-workflow prepare-dotnet-provisioning --typespec-project <local-project-directory>
+azsdk spec-workflow generate-dotnet-provisioning --typespec-project specification/<service>/<project> --release-type beta --pr <spec-pr-number>
+```
+
+Preparation modifies only missing
+`options["@azure-typespec/http-client-csharp-provisioning"]`, deriving its
+namespace and output layout from the .NET management emitter. Existing
+provisioning settings (including API version), other emitters, and comments are
+preserved. Disabled/incomplete settings or ambiguous layouts require explicit
+review instead of being overwritten. Commit/push the change and reuse an open
+spec PR or create a draft via `azsdk_create_pull_request`.
+
+Generation uses internal pipeline
+[8473, SDK Generation - .NET Provisioning Libraries](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8473).
+It validates the remote configuration and queues an open PR's
+`refs/pull/<number>/merge` immediately; **merging is not a prerequisite**.
+Merged PRs use their base branch. If configuration already exists on `main`,
+omit `--pr` and do not create a no-op spec PR. Closed unmerged/conflicting PRs,
+unreadable configuration, and queue errors fail explicitly without falling back
+to another ref or pipeline. Successful queueing returns the pipeline URL, not a
+claim that generation finished. The workflow does not modify release plans or
+use the ordinary .NET generation pipeline.
 
 ### Package release approval
 

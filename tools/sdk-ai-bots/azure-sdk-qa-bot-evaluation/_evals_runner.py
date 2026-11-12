@@ -19,6 +19,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 from contextlib import ExitStack
@@ -56,6 +57,13 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
 # Composite weights
 BOT_EVALS_WEIGHTS = {"similarity": 0.6, "response_completeness": 0.4}
 _JSON_OUTPUT_TOOLS = {"search_knowledge_base", "wiki_search"}
+_NON_GROUNDING_TOOLS = _JSON_OUTPUT_TOOLS | {
+    "load_skill",
+    "read_skill_resource",
+    "run_skill_script",
+}
+_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\([^)]+\)")
+_HTML_IMAGE_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
 
 # Item schema for the inline eval data: the answer/context are collected from
 # /completion and carried in the item (read via {{item.response}} / {{item.context}}).
@@ -416,6 +424,51 @@ def _extract_tool_calls(output_items: list[dict[str, Any]]) -> list[dict[str, An
     return tool_calls
 
 
+def _build_grounding_context(
+    retrieved_context: str,
+    tool_calls: list[dict[str, Any]],
+) -> str:
+    """Combine retrieved documents with non-KB tool evidence for groundedness."""
+    evidence = [
+        {
+            "tool_name": call.get("tool_name", ""),
+            "arguments": call.get("arguments"),
+            "output": call.get("output"),
+        }
+        for call in tool_calls
+        if call.get("tool_name") not in _NON_GROUNDING_TOOLS
+        and call.get("output") is not None
+    ]
+
+    sections = []
+    if retrieved_context:
+        sections.append(f"Retrieved documentation:\n{retrieved_context}")
+    if evidence:
+        sections.append(
+            "Additional tool evidence:\n"
+            + json.dumps(evidence, ensure_ascii=False, default=str)
+        )
+
+    context = "\n\n".join(sections)
+    context = _MARKDOWN_IMAGE_RE.sub(
+        lambda match: f"[Image: {match.group(1)}]" if match.group(1) else "[Image]",
+        context,
+    )
+    return _HTML_IMAGE_RE.sub("[Image]", context)
+
+
+def _add_grounding_context(
+    items: list[dict[str, Any]],
+    tool_calls_by_response_id: dict[str, list[dict[str, Any]]],
+) -> None:
+    for item in items:
+        response_id = item.get("response_id", "") or ""
+        item["context"] = _build_grounding_context(
+            item.get("context", "") or "",
+            tool_calls_by_response_id.get(response_id, []),
+        )
+
+
 def output_items_to_rows(
     output_items: list[Any],
     evaluators: list[str],
@@ -685,9 +738,11 @@ class FoundryEvalsRunner:
             raw = {"rows": failed_rows}
             return {f"{scenario}_no-responses": self._evals_result.record_run_result(raw)}
 
-        # 3) Retrieve the exact stored Agent responses. Tool history remains local
-        # and is joined back into cached results after Foundry grading.
+        # 3) Retrieve the exact stored Agent responses. Non-KB tool outputs extend
+        # groundedness context and the full history is retained in cached results.
         tool_calls_by_response_id = self._retrieve_tool_calls(project_client, items)
+        if "groundedness" in self._evaluators:
+            _add_grounding_context(items, tool_calls_by_response_id)
 
         data_source_config = DataSourceConfigCustom(
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False

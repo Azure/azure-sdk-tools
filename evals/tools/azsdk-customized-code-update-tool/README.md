@@ -70,17 +70,42 @@ verify the typespec code and the API specification, and source code
 
 ## Scenarios
 
+The scenario tables use the following columns:
+
+|Column|Purpose|
+|------|-------|
+|Scenarios|Scenario ID and description of the customization being evaluated. A blank cell continues the preceding scenario with another edit scope.|
+|editScope|Permitted change boundary for the stimulus: `SpecInputs`, `CustomCode`, or `All`.|
+|Grader|Expected customization or outcome that the eval checks to determine whether the request is satisfied.|
+|Status|Coverage marker: ✅ indicates implemented eval coverage; ➖ indicates N/A for the listed scope. This is not a recorded eval pass/fail result.|
+
 ### Customization Request
 
-TBD
+|Scenarios| editScope| Grader| Status|
+|--------------|----------------|--------------------------------------------|-------|
+|001001-rename-model-customization-request| SpecInputs| add @@clientName customization code in client.tsp|✅|
+|| CustomCode| verify customization code snippet|➖|
+|| All| add @@clientName customization code in client.tsp|➖|
 
 ### Feedback
 
-TBD
+|Scenarios| editScope| Grader| Status|
+|--------------|----------------|--------------------------------------------|-------|
+|002001-naming-convention-feedback, e.g. Model name doesn't follow .NET casing conventions ("Id" vs "ID").| SpecInputs| add @@clientName customization code in client.tsp|➖|
+|| CustomCode| verify customization code snippet|➖|
+|| All| add @@clientName customization code in client.tsp|➖|
+
 
 ### Build failure
 
-TBD
+|Scenarios| editScope| Grader| Status|
+|--------------|----------------|--------------------------------------------|-------|
+|003001-AZC0030-build-failure, e.g. MAZC0030: Model name ends with 'Parameters'.| SpecInputs| add @@clientName customization code in client.tsp|➖|
+|| CustomCode| verify customization code snippet|➖|
+|| All| add @@clientName customization code in client.tsp|➖|
+|003002-AZC0012-build-failure, e.g. Type name 'Tasks' too generic.| SpecInputs| add @@clientName customization code in client.tsp|➖|
+|| CustomCode| verify customization code snippet|➖|
+|| All| add @@clientName customization code in client.tsp|➖|
 
 ### Breaking Changes
 
@@ -108,6 +133,9 @@ TBD
 || CustomCode| verify customization code snippet|➖|
 || All| add @@clientName customization code in client.tsp|➖|
 |004008-enum-value-renamed-breaking-change|SpecInputs| add @@clientName customization code in client.tsp|✅|
+|| CustomCode| verify customization code snippet|➖|
+|| All| add @@clientName customization code in client.tsp|➖|
+|004009-property-optionality-breaking-change|SpecInputs| cannot resolve by typespec customization, CustomCodeChangeRequired|✅|
 || CustomCode| verify customization code snippet|➖|
 || All| add @@clientName customization code in client.tsp|➖|
 

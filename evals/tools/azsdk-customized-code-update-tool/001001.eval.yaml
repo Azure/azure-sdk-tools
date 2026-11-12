@@ -22,7 +22,7 @@ scoring:
 
 # Test cases
 stimuli:
-  - name: 001001-rename-model-SpecInputs
+  - name: 001001-rename-model-customization-request-SpecInputs
     tags:
       editScope: SpecInputs
     prompt: |
@@ -62,7 +62,7 @@ stimuli:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
           value: '@@clientName(Microsoft.Widget.Employee, "Staff", "go")'
   
-  - name: 001001-rename-model-CodeCustom-js
+  - name: 001001-rename-model-customization-request-CodeCustom-js
     tags:
       editScope: CustomCode
     prompt: |
@@ -107,7 +107,7 @@ stimuli:
           required:
             - azsdk_customized_code_update
   
-  - name: 001001-rename-model-CodeCustom-java
+  - name: 001001-rename-model-customization-request-CodeCustom-java
     tags:
       editScope: CustomCode
     prompt: |
@@ -155,7 +155,7 @@ stimuli:
           required:
             - azsdk_customized_code_update
 
-  - name: 001001-rename-model-ALL
+  - name: 001001-rename-model-customization-request-ALL
     tags:
       editScope: CustomCode
     prompt: |

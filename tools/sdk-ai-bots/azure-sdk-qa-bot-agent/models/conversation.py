@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 class Role(str, Enum):
     """Message roles in the conversation."""
@@ -49,9 +49,28 @@ class ConversationMessage(BaseModel):
     )
 
 
+class ConversationMessageAttachment(BaseModel):
+    """A Teams message attachment, in the shape the Teams connector returns it.
+
+    Field names follow the connector (Graph ``chatMessageAttachment``) instead of
+    this module's snake_case, so a stored attachment reads like connector output.
+    """
+
+    id: str | None = None
+    contentType: str | None = None
+    contentUrl: str | None = None
+    content: Any = None
+    name: str | None = None
+    thumbnailUrl: str | None = None
+    teamsAppId: str | None = None
+
+
 class ConversationMessageExtraInfo(BaseModel):
     channel_id: str | None = None
     message_link: str | None = None
+    attachments: list[ConversationMessageAttachment] | None = (
+        None  # Files, cards, forwarded messages, etc. as the Teams connector returns them
+    )
 
 
 class ConversationMappingItem(BaseModel):

@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
     public class SdkBreakingChangeClassificationTemplate : BasePromptTemplate
     {
         public override string TemplateId => "sdk-breaking-change-classification";
-        public override string Version => "1.4.1";
+        public override string Version => "1.4.2";
         public override string Description => "Classify SDK Breaking Changes";
 
         private readonly string _sdkBreakingPatternContent;
@@ -84,6 +84,15 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             Do not omit related breakings, and do not split a single root cause into multiple classified breaking changes.
             Keep each classified SDK breaking change atomic: one classified breaking change must represent exactly one root cause.
 
+            **TypeSpec source evidence:**
+            - For each classified breaking change, inspect the available TypeSpec source and populate typespecCode when the declaration or decorator responsible for the breaking change can be verified.
+            - Return the smallest relevant existing TypeSpec declaration, property, operation signature, enum/union member, or decorator that explains the root cause. Include its enclosing declaration or decorated target when needed to disambiguate it.
+            - Follow SDK-to-TypeSpec name mappings and language-scoped customizations; an SDK name match alone is not proof that a declaration caused the change.
+            - typespecCode is source evidence, NOT a proposed fix. Do not copy a mitigation from resolution or a pattern-catalog example, invent code, or return generated SDK code.
+            - For merged breaking changes, return the TypeSpec code for their shared root cause, not a separate snippet for every cascading SDK symptom.
+            - If the cause is a removed TypeSpec element, quote its original code only when that code is available in supplied source or diff evidence. Do not reconstruct deleted declarations from SDK diagnostics.
+            - If source is unavailable, the causal code cannot be verified, or the cause is solely an emitter change with no causal TypeSpec construct, omit typespecCode or set it to null. A related declaration alone does not establish a TypeSpec cause.
+
             **SDK Breaking Change Pattern Document:**
             ```
             {_sdkBreakingPatternContent}
@@ -134,6 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - breakingChanges is an array of classified SDK breaking changes; use an empty array when none exist.
             - category explains why the change occurred: "emitter change", "conversion-by design", "conversion-need resolve", "spec change", or "unknown". The sample value is not a default category.
             - resolution is an optional one-line actionable mitigation instruction for this SDK breaking change, generated from the matched pattern catalog. Describe the customization to apply; classification does not execute it.
+            - typespecCode contains verified existing TypeSpec code responsible for the breaking change when available, not mitigation code. Return it as a single-line JSON string, escaping quotes and normalizing line breaks without changing code semantics; omit it or use null when no causal source code can be verified.
             - mitigationStrategy is separate from category: for .NET, use "generator", "client customization", or "manual" based on the catalog and available evidence. Other languages may omit it.
 
             Return exactly one valid JSON object following this exact format:
@@ -145,6 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                         "breakingChange": "<one-line sdk breaking change>",
                         "category": "unknown",{{mitigationProperty}}
                         "resolution": "<one-line actionable resolution for this sdk breaking change, optional>",
+                        "typespecCode": "<verified causal TypeSpec source code as a single-line string; omit or use null if unavailable>",
                         "originBreaks": [
                             "<exact original breaking change #1 from sdk changes ### Breaking Changes>",
                             "<exact original breaking change #2 from sdk changes ### Breaking Changes>"

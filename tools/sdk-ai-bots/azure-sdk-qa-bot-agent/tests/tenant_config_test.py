@@ -383,7 +383,7 @@ def test_sdk_pr_guidance_prefers_prior_approvers_then_catalog_contacts(tenant_id
     assert "Otherwise, when human participation is needed for an SDK PR" in review
     assert "prefer contacts in the matching `[support_catalog]` area over requested reviewers or `CODEOWNERS`" in review
     assert "matching SDK language, management/data plane, and blocker" in review
-    assert "Follow the shared Next Action or Help Request and Teams User Mentions rules." in review
+    assert "Follow the shared Next Action or Help Request and Contact Placeholders rules." in review
 
 
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:

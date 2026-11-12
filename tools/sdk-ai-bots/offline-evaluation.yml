@@ -23,6 +23,9 @@ parameters:
       - authoring
       - mcpserver
       - sdkagent
+  - name: evaluators
+    type: string
+    default: similarity,response_completeness,groundedness,relevance,coherence,fluency,bot_evals
 
 #
 # Starts the agent server.py locally, then evaluates via completion mode:
@@ -93,6 +96,7 @@ extends:
                       inlineScript: |
                         python evals_run.py \
                           --dataset "qa-bot-basic-${{ scenario }}:latest" \
+                          --evaluators "${{ parameters.evaluators }}" \
                           --run_context "offline-evaluation" \
                           --max_concurrency 2 \
                           --baseline_check True \

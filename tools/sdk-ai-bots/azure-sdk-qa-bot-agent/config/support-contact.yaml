@@ -17,6 +17,10 @@ support_areas:
     description: "ARM TypeSpec authoring and implementation of resource models, long-running operations, versioning, compatibility and suppression guidance. Excludes ARM modeling decisions, leases, office-hours coordination, RPaaS implementation ownership and general ARM sign-off."
     github_usernames: [markcowl]
 
+  - key: approved_avocado
+    description: "Approved-Avocado approval-label review and approval on Azure/azure-rest-api-specs PRs. Excludes ARM sign-off and data-plane-review-signoff approval."
+    github_usernames: [markcowl]
+
   - key: arm_modeling_leases
     description: "ARM resource-modeling questions, modeling-review routing and missing or existing ARM leases. Excludes general ARM PR sign-off and office-hours coordination; approval belongs to the designated reviewer."
     github_usernames: [raosuhas]

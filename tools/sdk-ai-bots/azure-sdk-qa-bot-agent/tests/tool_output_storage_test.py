@@ -9,10 +9,8 @@ from typing import Any
 import pytest
 from agent_framework import (
     AgentSession,
-    ChatContext,
     Content,
     InMemoryAgentFileStore,
-    Message,
     SessionContext,
 )
 
@@ -23,7 +21,6 @@ from middleware.tool_output_security import (
     _SPOTLIGHT_OPEN,
 )
 from middleware.tool_output_storage import (
-    ToolOutputContextMiddleware,
     ToolOutputStorageMiddleware,
     ToolOutputStorageProvider,
 )
@@ -150,74 +147,6 @@ async def test_native_tool_result_is_unchanged():
         assert context.result is result
     finally:
         TOOL_REGISTRY.pop(tool_name, None)
-
-
-@pytest.mark.asyncio
-async def test_large_native_result_is_offloaded_only_from_model_context():
-    store = InMemoryAgentFileStore()
-    middleware = ToolOutputContextMiddleware(store)
-    call = Content.from_function_call(
-        call_id="call-1",
-        name="search_knowledge_base",
-        arguments={},
-    )
-    result_text = json.dumps(
-        {"results": [{"title": "Result", "content": "external data\n" * 2_000}]}
-    )
-    result = Content.from_function_result(call_id="call-1", result=result_text)
-    original_messages = [
-        Message(role="assistant", contents=[call]),
-        Message(role="tool", contents=[result]),
-    ]
-    context = ChatContext(
-        client=object(),  # type: ignore[arg-type]
-        messages=original_messages,
-        options={},
-        session=AgentSession(session_id="test-session"),
-    )
-    downstream_messages: list[Message] = []
-
-    async def capture_messages() -> None:
-        downstream_messages.extend(context.messages)
-
-    await middleware.process(context, capture_messages)
-
-    replacement = downstream_messages[1].contents[0].result
-    assert isinstance(replacement, str)
-    assert "Large tool result stored as `tool-result-search_knowledge_base-call-1.txt`" in replacement
-    assert original_messages[1].contents[0].result == result_text
-    stored = await store.read(
-        "test-session/tool-result-search_knowledge_base-call-1.txt"
-    )
-    assert stored is not None
-    assert json.loads(stored) == json.loads(result_text)
-
-
-@pytest.mark.asyncio
-async def test_manageable_native_result_stays_in_model_context():
-    store = InMemoryAgentFileStore()
-    middleware = ToolOutputContextMiddleware(store)
-    call = Content.from_function_call(
-        call_id="call-1",
-        name="search_knowledge_base",
-        arguments={},
-    )
-    result = Content.from_function_result(call_id="call-1", result="result")
-    messages = [
-        Message(role="assistant", contents=[call]),
-        Message(role="tool", contents=[result]),
-    ]
-    context = ChatContext(
-        client=object(),  # type: ignore[arg-type]
-        messages=messages,
-        options={},
-        session=AgentSession(session_id="test-session"),
-    )
-
-    await middleware.process(context, _noop_next)
-
-    assert context.messages == messages
-    assert await store.list_children("test-session") == []
 
 
 @pytest.mark.asyncio

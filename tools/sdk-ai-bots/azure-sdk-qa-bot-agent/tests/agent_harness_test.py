@@ -23,10 +23,7 @@ from utils.agent_harness import (
     create_hosted_agent,
 )
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
-from middleware.tool_output_storage import (
-    ToolOutputContextMiddleware,
-    ToolOutputStorageProvider,
-)
+from middleware.tool_output_storage import ToolOutputStorageProvider
 
 
 def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
@@ -95,10 +92,6 @@ def test_harness_adds_managed_providers(
     )
     assert any(
         type(middleware).__name__ == "ToolOutputStorageMiddleware"
-        for middleware in agent.middleware or []
-    )
-    assert any(
-        isinstance(middleware, ToolOutputContextMiddleware)
         for middleware in agent.middleware or []
     )
     assert not any(

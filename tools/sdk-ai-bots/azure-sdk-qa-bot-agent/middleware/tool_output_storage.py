@@ -21,6 +21,7 @@ from agent_framework import (
 from agent_framework._filesystem import _storage_key_segment  # pyright: ignore[reportPrivateUsage]
 
 from tools import TOOL_REGISTRY
+from tools.github_mcp_tools import _is_github_mcp_tool, _redact_untrusted_authors
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +184,8 @@ class ToolOutputStorageMiddleware(FunctionMiddleware):
         if not result:
             return
 
+        if _is_github_mcp_tool(name):
+            result = _redact_untrusted_authors(result)
         context.result = result
         if len(result) <= _OPAQUE_RESULT_OFFLOAD_CHARS or context.session is None:
             return

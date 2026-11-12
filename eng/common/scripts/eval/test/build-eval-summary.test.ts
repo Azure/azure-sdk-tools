@@ -38,18 +38,28 @@ describe("result-delivery summary", () => {
     assert.doesNotMatch(markdown, /CI succeeded|No evaluation rerun/);
   });
 
-  for (const [options, expected] of [
+  for (const [options, expected, notAttempted = true] of [
     [{ skipReason: "disabled" }, "publication was not requested"],
     [{ skipReason: "feature_branch" }, "feature-branch run"],
     [{ skipReason: "ineligible_run" }, "not eligible for publication"],
     [{ storageConfigured: false }, "storage configuration is missing"],
     [{ archiveStatus: "failed" }, "upload failed"],
-    [{}, "Storage: not confirmed"],
+    [{}, "Storage: not confirmed", false],
   ]) it(`explains publication state: ${expected}`, () => {
     const markdown = formatDeliverySummary(summary, { ...delivery, ...options });
     assert.ok(markdown.includes(expected));
-    assert.match(markdown, /Dashboard import: not attempted/);
+    assert.match(markdown, notAttempted ? /Dashboard import: not attempted/ : /Dashboard import: not confirmed/);
     assert.doesNotMatch(markdown, /Storage: stored|Dashboard import: confirmed/);
+  });
+
+  it("does not claim an import was never attempted when publisher status output is missing", () => {
+    const markdown = formatDeliverySummary(summary, { ...delivery, archiveStatus: "not_started", importStatus: "not_attempted" });
+    assert.match(markdown, /Storage: not confirmed/);
+    assert.match(markdown, /Dashboard import: not confirmed/);
+    assert.doesNotMatch(markdown, /Dashboard import: not attempted/);
+    const confirmed = formatDeliverySummary(summary, { ...delivery, archiveStatus: "not_started", importStatus: "confirmed" });
+    assert.match(confirmed, /Storage: not confirmed/);
+    assert.match(confirmed, /Dashboard import: confirmed by the refresh response/);
   });
 
   it("never turns incomplete or unavailable results into a complete passing run", () => {

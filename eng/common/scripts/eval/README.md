@@ -97,6 +97,8 @@ or the evaluation gate fails. It separates the scenario verdict, result complete
 archive storage and dashboard import confirmation. Known skips name the reason; a task
 that did not report an outcome is not shown as a successful upload. The existing shard
 attempt table and incomplete-result warnings remain in the evaluation summary.
+Missing publisher output also leaves dashboard import **not confirmed**, not **not attempted**.
+Only a known publication skip or an explicit upload failure establishes that no import was attempted.
 
 With `-AzurePipelines`, the publisher emits fixed outcome variables for this final report.
 It does not read pipeline policy or write a local receipt. The report reuses the saved

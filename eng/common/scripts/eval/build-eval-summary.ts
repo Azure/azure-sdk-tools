@@ -340,11 +340,11 @@ export function formatDeliverySummary(summary, { skipReason = "", storageConfigu
     : archiveStatus === "failed" ? "upload failed; check the publication task logs."
     : reason ? `not uploaded; publication skipped: ${reasons[reason] ?? reasons.ineligible_run}.`
     : "not confirmed; check the bundle and publication task logs.";
-  const imported = !stored ? "not attempted; no stored archive was confirmed."
-    : importStatus === "confirmed" ? "confirmed by the refresh response."
+  const imported = importStatus === "confirmed" ? "confirmed by the refresh response."
     : importStatus === "failed" ? "not confirmed; the refresh request failed."
     : importStatus === "not_configured" ? "not confirmed; refresh configuration is missing or invalid."
-    : "not confirmed; check the publication task logs.";
+    : !stored && (archiveStatus === "failed" || reason) ? "not attempted; publication was skipped or upload failed."
+    : "not confirmed; the publisher did not report an import outcome. Check the publication task logs.";
   const lines = ["## Result Delivery", "", `- Evaluations: ${evaluations}`,
     `- Result data: ${!verified ? "not verified" : complete ? "complete" : "incomplete"}.`,
     `- Storage: ${storage}`, `- Dashboard import: ${imported}`, ""];

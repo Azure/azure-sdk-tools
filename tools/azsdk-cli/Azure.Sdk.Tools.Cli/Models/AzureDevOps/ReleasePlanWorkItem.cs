@@ -141,6 +141,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
     public class SDKInfo
     {
         public string Language { get; set; } = string.Empty;
+        public bool IsProvisioning { get; set; }
         public string GenerationPipelineUrl { get; set; } = string.Empty;
         public string SdkPullRequestUrl { get; set; } = string.Empty;
         public string PackageName { get; set; } = string.Empty;

@@ -113,6 +113,18 @@ The shared completion-script and template changes are a separate rollout. They w
 
 For automatic releases, the existing resolver already passes the selected SDK PR to progress updates. Forwarding that PR through release-stage completion is part of the separate shared-pipeline and language-template rollout. This CLI change does not change release eligibility.
 
+## Provisioning SDKs in management-plane release plans
+
+Release plans can track an optional provisioning package alongside the normal .NET and JavaScript packages. Metadata parsing identifies provisioning packages by `@azure-typespec/http-client-csharp-provisioning` and `@azure-tools/typespec-ts-provisioning`; API-version discovery uses normal SDK metadata and does not require provisioning emitters. SDK entries expose `IsProvisioning`, while their `Language` remains `.NET` or `JavaScript`.
+
+Use `--is-provisioning` with `spec-workflow generate-sdk`, `spec-workflow get-sdk-pr`, `release-plan link-sdk-pr`, and `release-plan update-release-status` to select the provisioning package. The generation and PR MCP tools accept the corresponding optional `isProvisioning` argument. Omitting it selects the normal SDK. Provisioning is supported only for .NET and JavaScript management-plane release plans; generation uses dedicated pipeline definitions 8473 and 8472 respectively.
+
+Build-based PR retrieval verifies that the pipeline definition matches the selected language and SDK kind. SDK generation and PR linking reject Finished plans; reading existing PR links remains supported.
+
+Provisioning package names, generation links/status, SDK PRs, and release status/version/pipeline links use the ADO language suffix `Provisioning`, such as `Custom.DotnetProvisioningPackageName` and `Custom.ReleaseStatusForDotnetProvisioning`. Provisioning metadata does not satisfy a missing normal-language emitter requirement. A provisioning package blocks release-plan completion only after its SDK PR is linked, and then requires `Released`; a package name alone does not block completion.
+
+This is CLI-only support. Publishing pipelines and shared release callbacks are unchanged and must explicitly forward the provisioning selector in a separate rollout; `azsdk package release` does not forward it.
+
 **Rollout:** publish the backward-compatible CLI first, then deploy the shared completion adapters through the `eng/common` sync process. Wire the manual `ReleasePlanId` and automatic SDK PR through language-specific release templates, starting with one template package as tracked in [#17130](https://github.com/Azure/azure-sdk-tools/issues/17130). Until callers supply correlation, this command retains the original package-name lookup. Remove the fallback in a follow-up only after every pipeline forwards an input. API-version extraction in #16868 is not a dependency.
 
 This uses existing ADO metadata, not a new tracking system or immutable generation snapshot. Historical incorrect dashboard data is not repaired automatically.

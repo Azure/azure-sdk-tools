@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     _writes.Add((id, new Dictionary<string, string>(fields), revision));
                     foreach (var sdk in _plan.SDKInfo)
                     {
-                        var languageId = DevOpsService.MapLanguageToId(sdk.Language);
+                        var languageId = DevOpsService.GetSdkFieldId(sdk.Language, sdk.IsProvisioning);
                         if (fields.TryGetValue($"Custom.ReleaseStatusFor{languageId}", out var status))
                         {
                             sdk.ReleaseStatus = status;
@@ -63,6 +63,138 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             notificationService.Setup(s => s.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(NotificationResult.Sent);
             _tool = new PackageReleaseStatusTool(_devOps.Object, new TestLogger<PackageReleaseStatusTool>(), notificationService.Object);
+        }
+
+        [TestCase(".NET", "Azure.Test", "Azure.Provisioning.Test", "Dotnet", false)]
+        [TestCase(".NET", "Azure.Test", "Azure.Provisioning.Test", "Dotnet", true)]
+        [TestCase("JavaScript", "@azure/test", "@azure/provisioning-test", "JavaScript", false)]
+        [TestCase("JavaScript", "@azure/test", "@azure/provisioning-test", "JavaScript", true)]
+        public async Task SameLanguageWithTwoSdkKinds_UpdatesOnlySelectedEntry(string language, string normalPackage, string provisioningPackage, string fieldId, bool isProvisioning)
+        {
+            var provisioning = new SDKInfo
+            {
+                Language = language,
+                IsProvisioning = true,
+                PackageName = provisioningPackage,
+                ReleaseStatus = "Pending"
+            };
+            _plan.SDKInfo.Insert(0, provisioning);
+
+            var result = await _tool.UpdatePackageReleaseStatus(isProvisioning ? provisioningPackage : normalPackage,
+                language, "Released", "1.0.0", releasePlanId: 100, isProvisioning: isProvisioning);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(_writes, Has.Count.EqualTo(1));
+            var selectedFieldId = isProvisioning ? $"{fieldId}Provisioning" : fieldId;
+            Assert.That(_writes[0].Fields, Is.EquivalentTo(new Dictionary<string, string>
+            {
+                [$"Custom.ReleaseStatusFor{selectedFieldId}"] = "Released",
+                [$"Custom.ReleasedVersionFor{selectedFieldId}"] = "1.0.0"
+            }));
+            Assert.That(provisioning.ReleaseStatus, Is.EqualTo(isProvisioning ? "Released" : "Pending"));
+            Assert.That(_plan.SDKInfo.Single(sdk => sdk.Language == language && !sdk.IsProvisioning).ReleaseStatus,
+                Is.EqualTo(isProvisioning ? "Pending" : "Released"));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task ProvisioningStatus_RequiresMatchingFlagAndManagementPlane(bool managementPlane)
+        {
+            _plan.IsManagementPlane = managementPlane;
+            _plan.SDKInfo.Add(new SDKInfo { Language = ".NET", IsProvisioning = true, PackageName = "Azure.Provisioning.Test" });
+
+            var result = await _tool.UpdatePackageReleaseStatus(managementPlane ? "Azure.Test" : "Azure.Provisioning.Test",
+                ".NET", "Released", null, releasePlanId: 100, isProvisioning: true);
+
+            Assert.That(result.ResponseError, Is.Not.Null);
+            AssertNoWrites();
+        }
+
+        [Test]
+        public async Task ProvisioningSdkPrLookup_SelectsProvisioningEntry()
+        {
+            const string sdkPr = "https://github.com/Azure/azure-sdk-for-net/pull/200";
+            _plan.SDKInfo.Add(new SDKInfo { Language = ".NET", IsProvisioning = true, PackageName = "Azure.Provisioning.Test", SdkPullRequestUrl = sdkPr });
+            _devOps.Setup(s => s.GetReleasePlansBySdkPullRequestAsync(sdkPr, ".NET", false, true, It.IsAny<CancellationToken>()))
+                .ReturnsAsync([_plan]);
+
+            var result = await _tool.UpdatePackageReleaseStatus("Azure.Provisioning.Test", ".NET", "Released", null,
+                sdkPullRequest: sdkPr, isProvisioning: true);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(_writes.Single().Fields, Contains.Key("Custom.ReleaseStatusForDotnetProvisioning"));
+            _devOps.Verify(s => s.GetReleasePlansBySdkPullRequestAsync(sdkPr, ".NET", false, true, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task Cli_ProvisioningSelectorIsForwardedToStatusUpdate()
+        {
+            _plan.SDKInfo.Add(new SDKInfo { Language = ".NET", IsProvisioning = true, PackageName = "Azure.Provisioning.Test" });
+            var command = _tool.GetCommandInstances().Single();
+            var parse = command.Parse("--package-name Azure.Provisioning.Test --language .NET --release-plan-id 100 --is-provisioning");
+            Assert.That(parse.Errors, Is.Empty);
+
+            var result = await _tool.HandleCommand(parse, CancellationToken.None);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(_writes.Single().Fields, Contains.Key("Custom.ReleaseStatusForDotnetProvisioning"));
+        }
+
+        [TestCase("", "Pending", true)]
+        [TestCase("   ", "Pending", true)]
+        [TestCase("provisioning-pr", "Pending", false)]
+        [TestCase("provisioning-pr", "Released", true)]
+        public async Task Completion_OnlyRequiresProvisioningReleaseWhenPrIsLinked(string sdkPr, string status, bool expectedComplete)
+        {
+            foreach (var sdk in _plan.SDKInfo) sdk.ReleaseStatus = "Released";
+            _plan.SDKInfo.Add(new SDKInfo
+            {
+                Language = ".NET",
+                IsProvisioning = true,
+                PackageName = "Azure.Provisioning.Test",
+                SdkPullRequestUrl = sdkPr,
+                ReleaseStatus = status
+            });
+            _plan.SDKInfo.Add(new SDKInfo
+            {
+                Language = "JavaScript",
+                IsProvisioning = true,
+                PackageName = "@azure/provisioning-test",
+                SdkPullRequestUrl = "another-pr",
+                ReleaseStatus = "Released"
+            });
+
+            var result = await UpdateAsync();
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanFinished, Is.EqualTo(expectedComplete));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task LastNormalSdk_DoesNotFinishUntilLinkedProvisioningSdkReleased(bool finishProvisioning)
+        {
+            foreach (var sdk in _plan.SDKInfo.Where(sdk => sdk.Language != "Python")) sdk.ReleaseStatus = "Released";
+            _plan.SDKInfo.Add(new SDKInfo
+            {
+                Language = ".NET",
+                IsProvisioning = true,
+                PackageName = "Azure.Provisioning.Test",
+                SdkPullRequestUrl = "provisioning-pr",
+                ReleaseStatus = "Pending"
+            });
+
+            var result = await UpdateAsync();
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanFinished, Is.False);
+            Assert.That(_plan.Status, Is.EqualTo("In Progress"));
+            if (finishProvisioning)
+            {
+                result = await _tool.UpdatePackageReleaseStatus("Azure.Provisioning.Test", ".NET", "Released", "1.0.0",
+                    releasePlanId: 100, isProvisioning: true);
+                Assert.That(result.ResponseError, Is.Null);
+                Assert.That(result.ReleasePlanFinished, Is.True);
+                Assert.That(_plan.Status, Is.EqualTo("Finished"));
+            }
         }
 
         [TearDown]
@@ -473,6 +605,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [TestCase("package")]
         [TestCase("plane")]
         [TestCase("project")]
+        [TestCase("provisioning-flag")]
+        [TestCase("provisioning-pr")]
         public async Task ChangedTargetAfterStatusUpdate_DoesNotFinish(string change)
         {
             var changedPlan = CreatePlan();
@@ -481,6 +615,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 case "package": changedPlan.SDKInfo.Single(s => s.Language == "Python").PackageName = "azure-other"; break;
                 case "plane": changedPlan.IsManagementPlane = false; changedPlan.IsDataPlane = true; break;
                 case "project": changedPlan.APISpecProjectPath = "specification/other/project"; break;
+                case "provisioning-flag": changedPlan.SDKInfo.Single(s => s.Language == ".NET").IsProvisioning = true; break;
+                case "provisioning-pr":
+                    _plan.SDKInfo.Add(new SDKInfo { Language = ".NET", IsProvisioning = true, PackageName = "Azure.Provisioning.Test" });
+                    changedPlan.SDKInfo.Add(new SDKInfo { Language = ".NET", IsProvisioning = true, PackageName = "Azure.Provisioning.Test", SdkPullRequestUrl = "new-pr" });
+                    break;
             }
             foreach (var sdk in changedPlan.SDKInfo) sdk.ReleaseStatus = "Released";
             _devOps.Setup(s => s.GetReleasePlanForWorkItemAsync(12345, It.IsAny<CancellationToken>())).ReturnsAsync(changedPlan);

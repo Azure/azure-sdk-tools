@@ -150,13 +150,18 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default);
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan, bool isProvisioning, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan, bool isProvisioning, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", string? specCommitSha = null, CancellationToken ct = default);
+        public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, string? specCommitSha, bool isProvisioning, CancellationToken ct);
         public Task<Build> GetPipelineRunAsync(int buildId, CancellationToken ct);
         public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct);
+        public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, bool isProvisioning, CancellationToken ct);
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default);
+        public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus, bool isProvisioning, CancellationToken ct);
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages, CancellationToken ct);
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status, CancellationToken ct);
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest, CancellationToken ct);
@@ -382,11 +387,14 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         // Transitional legacy lookup, used only when a release provides neither a plan ID nor an SDK PR.
-        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default) =>
+            GetReleasePlansForPackageAsync(packageName, language, isTestReleasePlan, false, ct);
+
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan, bool isProvisioning, CancellationToken ct)
         {
             try
             {
-                var languageId = MapLanguageToId(language);
+                var languageId = GetSdkFieldId(language, isProvisioning);
                 var escapedPackageName = packageName?.Replace("'", "''");
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
                 query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
@@ -417,10 +425,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default) =>
+            GetReleasePlansBySdkPullRequestAsync(sdkPullRequest, language, isTestReleasePlan, false, ct);
+
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan, bool isProvisioning, CancellationToken ct)
         {
             var normalizedUrl = NormalizeSdkPullRequestUrl(sdkPullRequest, language);
-            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
+            var languageId = GetSdkFieldId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString(), isProvisioning);
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
             query += " AND [System.WorkItemType] = 'Release Plan' AND [System.State] = 'In Progress'";
             query += $" AND [Custom.SDKPullRequestFor{languageId}] = '{normalizedUrl}'";
@@ -489,8 +500,14 @@ namespace Azure.Sdk.Tools.Cli.Services
                 IsTestReleasePlan = workItem.Fields.TryGetValue("System.Tags", out value) && value is String tags && tags.Contains(RELEASE_PLANNER_APP_TEST)
             };
 
-            foreach (var lang in SUPPORTED_SDK_LANGUAGES)
+            var sdkSlots = SUPPORTED_SDK_LANGUAGES.Select(language => (Language: language, IsProvisioning: false));
+            if (releasePlan.IsManagementPlane)
             {
+                sdkSlots = sdkSlots.Concat([("Dotnet", true), ("JavaScript", true)]);
+            }
+            foreach (var slot in sdkSlots)
+            {
+                var lang = GetSdkFieldId(slot.Language, slot.IsProvisioning);
                 var sdkGenPipelineUrl = workItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var sdkPullRequestUrl = workItem.Fields.TryGetValue($"Custom.SDKPullRequestFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var packageName = workItem.Fields.TryGetValue($"Custom.{lang}PackageName", out value) ? value?.ToString() ?? string.Empty : string.Empty;
@@ -499,10 +516,17 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var pullRequestStatus = workItem.Fields.TryGetValue($"Custom.SDKPullRequestStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var exclusionStatus = workItem.Fields.TryGetValue($"Custom.ReleaseExclusionStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
 
+                if (slot.IsProvisioning && string.IsNullOrWhiteSpace(packageName)
+                    && string.IsNullOrWhiteSpace(sdkGenPipelineUrl) && string.IsNullOrWhiteSpace(sdkPullRequestUrl))
+                {
+                    continue;
+                }
+
                 releasePlan.SDKInfo.Add(
                     new SDKInfo()
                     {
-                        Language = MapLanguageIdToName(lang),
+                        Language = MapLanguageIdToName(slot.Language),
+                        IsProvisioning = slot.IsProvisioning,
                         GenerationPipelineUrl = sdkGenPipelineUrl,
                         SdkPullRequestUrl = sdkPullRequestUrl,
                         GenerationStatus = generationStatus,
@@ -926,7 +950,30 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default)
+        public static string GetSdkFieldId(string language, bool isProvisioning = false)
+        {
+            var sdkLanguage = SdkLanguageHelpers.GetSdkLanguage(language.Trim());
+            var languageId = MapLanguageToId(sdkLanguage == SdkLanguage.Unknown ? language : sdkLanguage.ToWorkItemString());
+            if (isProvisioning && languageId is not ("Dotnet" or "JavaScript"))
+            {
+                throw new ArgumentException("Provisioning SDKs are supported only for .NET and JavaScript.", nameof(language));
+            }
+            return isProvisioning ? $"{languageId}Provisioning" : languageId;
+        }
+
+        public static void ValidateProvisioningSdk(string language, bool isProvisioning, bool isManagementPlane)
+        {
+            _ = GetSdkFieldId(language, isProvisioning);
+            if (isProvisioning && !isManagementPlane)
+            {
+                throw new ArgumentException("Provisioning SDKs are supported only for management-plane release plans.");
+            }
+        }
+
+        public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "", CancellationToken ct = default) =>
+            AddSdkInfoInReleasePlanAsync(workItemId, language, sdkGenerationPipelineUrl, sdkPullRequestUrl, generationStatus, false, ct);
+
+        public async Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus, bool isProvisioning, CancellationToken ct)
         {
             // Adds SDK generation and pull request link in release plan work item.
             try
@@ -943,6 +990,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                     throw new Exception($"Work item {workItemId} not found.");
                 }
 
+                ValidateProvisioningSdk(language, isProvisioning,
+                    workItem.Fields.TryGetValue("Custom.MgmtScope", out var managementScope) && managementScope?.ToString() == "Yes");
+                var languageId = GetSdkFieldId(language, isProvisioning);
                 var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
                 // Add work item as child of release plan work item
                 if (!string.IsNullOrEmpty(sdkGenerationPipelineUrl))
@@ -951,7 +1001,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = $"/fields/Custom.SDKGenerationPipelineFor{MapLanguageToId(language)}",
+                            Path = $"/fields/Custom.SDKGenerationPipelineFor{languageId}",
                             Value = sdkGenerationPipelineUrl
                         });
                 }
@@ -961,7 +1011,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = $"/fields/Custom.GenerationStatusFor{MapLanguageToId(language)}",
+                            Path = $"/fields/Custom.GenerationStatusFor{languageId}",
                             Value = generationStatus
                         });
                 }
@@ -971,7 +1021,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = $"/fields/Custom.SDKPullRequestFor{MapLanguageToId(language)}",
+                            Path = $"/fields/Custom.SDKPullRequestFor{languageId}",
                             Value = sdkPullRequestUrl
                         });
                 }
@@ -983,7 +1033,14 @@ namespace Azure.Sdk.Tools.Cli.Services
                     {
                         // DevOps SDK internally caches the revision number of the work item and throws conflict error if it is outdated.
                         // Work around is to fetch the work item again before updating it.
-                        await connection.GetWorkItemClient(ct).GetWorkItemAsync(workItemId, cancellationToken: ct);
+                        workItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(workItemId, cancellationToken: ct);
+                        if (workItem.Fields.TryGetValue("System.State", out var state)
+                            && string.Equals(state?.ToString(), "Finished", StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.LogError("SDK generation runs and pull requests cannot be linked to Finished release plan {workItemId}.", workItemId);
+                            return false;
+                        }
+
                         await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(jsonLinkDocument, workItemId, cancellationToken: ct);
                         return true;
                     }
@@ -1086,8 +1143,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private static int GetPipelineDefinitionId(string language)
+        public static int GetSdkGenerationPipelineDefinitionId(string language, bool isProvisioning = false)
         {
+            if (isProvisioning)
+            {
+                return GetSdkFieldId(language, true) switch
+                {
+                    "DotnetProvisioning" => 8473,
+                    "JavaScriptProvisioning" => 8472,
+                    _ => 0
+                };
+            }
             language = MapLanguageToId(language);
             return language.ToLower() switch
             {
@@ -1114,9 +1180,21 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", string? specCommitSha = null, CancellationToken ct = default)
+        public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", string? specCommitSha = null, CancellationToken ct = default) =>
+            RunSDKGenerationPipelineAsync(apiSpecBranchRef, typespecProjectRoot, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch, specCommitSha, false, ct);
+
+        public async Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, string? specCommitSha, bool isProvisioning, CancellationToken ct)
         {
-            int pipelineDefinitionId = GetPipelineDefinitionId(language);
+            if (workItemId != 0 || isProvisioning)
+            {
+                var releasePlan = await GetReleasePlanForWorkItemAsync(workItemId, ct);
+                ValidateProvisioningSdk(language, isProvisioning, releasePlan.IsManagementPlane);
+                if (string.Equals(releasePlan.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("SDK generation is not supported for a Finished release plan.");
+                }
+            }
+            int pipelineDefinitionId = GetSdkGenerationPipelineDefinitionId(language, isProvisioning);
             if (pipelineDefinitionId == 0)
             {
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
@@ -1132,7 +1210,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             if (workItemId != 0)
             {
                 logger.LogInformation("Adding SDK generation pipeline link to release plan");
-                await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), pipelineRunUrl, "", "In progress", ct: ct);
+                if (!await AddSdkInfoInReleasePlanAsync(workItemId, language, pipelineRunUrl, "", "In progress", isProvisioning, ct))
+                {
+                    throw new InvalidOperationException($"SDK generation pipeline {pipelineRunUrl} was started, but its release-plan link could not be saved.");
+                }
             }
 
             return build;
@@ -1299,7 +1380,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             return string.IsNullOrEmpty(content) ? [] : content.Replace("\r\n", "\n").TrimEnd('\n').Split('\n').ToList();
         }
 
-        public async Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct)
+        public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, CancellationToken ct) =>
+            GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId, false, ct);
+
+        public async Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, bool isProvisioning, CancellationToken ct)
         {
             var buildClient = connection.GetBuildClient(ct);
             var timeLine = await buildClient.GetBuildTimelineAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId, cancellationToken: ct);
@@ -1320,7 +1404,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     if (workItemId != 0)
                     {
                         logger.LogInformation("Adding SDK pull request to release plan");
-                        await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl.FullUrl, "Completed", ct: ct);
+                        if (!await AddSdkInfoInReleasePlanAsync(workItemId, language, GetPipelineUrl(buildId), pullRequestUrl.FullUrl, "Completed", isProvisioning, ct))
+                        {
+                            throw new InvalidOperationException($"SDK pull request {pullRequestUrl.FullUrl} was generated, but its release-plan link could not be saved.");
+                        }
                     }
                     return pullRequestUrl.FullUrl;
                 }
@@ -1380,6 +1467,14 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 HashSet<string> languageNames = [.. sdkLanguages.Select(s => s.Language)];
                 var releasePlan = await GetReleasePlanForWorkItemAsync(workItemId, ct);
+                foreach (var sdk in sdkLanguages)
+                {
+                    ValidateProvisioningSdk(sdk.Language, sdk.IsProvisioning, releasePlan.IsManagementPlane);
+                }
+                if (sdkLanguages.GroupBy(sdk => GetSdkFieldId(sdk.Language, sdk.IsProvisioning)).Any(group => group.Count() > 1))
+                {
+                    throw new ArgumentException("Only one package per language and provisioning flag is supported.");
+                }
                 if (releasePlan?.SDKInfo != null)
                 {
                     languageNames.UnionWith(releasePlan.SDKInfo.Select(s => s.Language));
@@ -1406,7 +1501,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                             new JsonPatchOperation
                             {
                                 Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                                Path = $"/fields/Custom.{MapLanguageToId(sdk.Language)}PackageName",
+                                Path = $"/fields/Custom.{GetSdkFieldId(sdk.Language, sdk.IsProvisioning)}PackageName",
                                 Value = sdk.PackageName
                             }
                         );
@@ -1416,9 +1511,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                         // language marked as missing emitter config when the TypeSpec parser did not detect a
                         // package name in an earlier run, while preserving intentional exclusions
                         // (e.g. Requested/Approved).
-                        var normalizedLanguage = MapLanguageIdToName(MapLanguageToId(sdk.Language));
+                        var normalizedLanguage = MapLanguageIdToName(GetSdkFieldId(sdk.Language));
                         var currentExclusionStatus = releasePlan?.SDKInfo?
-                            .FirstOrDefault(s => string.Equals(s.Language, normalizedLanguage, StringComparison.OrdinalIgnoreCase))?
+                            .SingleOrDefault(s => s.IsProvisioning == sdk.IsProvisioning && string.Equals(s.Language, normalizedLanguage, StringComparison.OrdinalIgnoreCase))?
                             .ReleaseExclusionStatus;
                         if (string.Equals(currentExclusionStatus, MISSING_EMITTER_CONFIG, StringComparison.OrdinalIgnoreCase))
                         {
@@ -1427,7 +1522,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                                 new JsonPatchOperation
                                 {
                                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                                    Path = $"/fields/Custom.ReleaseExclusionStatusFor{MapLanguageToId(sdk.Language)}",
+                                    Path = $"/fields/Custom.ReleaseExclusionStatusFor{GetSdkFieldId(sdk.Language, sdk.IsProvisioning)}",
                                     Value = NOT_APPLICABLE
                                 }
                             );

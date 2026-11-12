@@ -12,6 +12,9 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// </summary>
 public class PackageInfo
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IsProvisioning { get; set; }
+
     /// <summary>
     /// The package name as defined in the manifest file.
     /// </summary>

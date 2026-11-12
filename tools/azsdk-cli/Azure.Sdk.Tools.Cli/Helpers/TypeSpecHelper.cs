@@ -233,13 +233,25 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     foreach (var lang in languages)
                     {
                         var languageName = lang.Key?.ToString() ?? string.Empty;
-                        var packageName = string.Empty;
-                        var groupName = string.Empty;
-                        var apiVersion = string.Empty;
-                        var sdkType = string.Empty;
-
-                        if (lang.Value is Dictionary<object, object> langDict)
+                        languageName = languageName.Contains("csharp") ? ".NET" : languageName;
+                        var language = SdkLanguageHelpers.GetSdkLanguage(languageName);
+                        if (language == SdkLanguage.Unknown)
                         {
+                            continue;
+                        }
+
+                        var entries = lang.Value is Dictionary<object, object> singleEntry
+                            ? new[] { singleEntry }
+                            : (lang.Value as ICollection<object>)?.OfType<Dictionary<object, object>>() ?? [];
+                        foreach (var langDict in entries)
+                        {
+                            var packageName = string.Empty;
+                            var groupName = string.Empty;
+                            var apiVersion = string.Empty;
+                            var sdkType = string.Empty;
+                            var emitterName = langDict.TryGetValue("emitterName", out var emitter) ? emitter?.ToString() : null;
+                            var isProvisioning = emitterName is "@azure-typespec/http-client-csharp-provisioning"
+                                or "@azure-tools/typespec-ts-provisioning";
                             if (langDict.TryGetValue("packageName", out var pkgName))
                             {
                                 packageName = pkgName?.ToString() ?? string.Empty;
@@ -252,46 +264,25 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                             {
                                 sdkType = sdkT?.ToString() ?? string.Empty;
                             }
-                        }
-                        else if (lang.Value is ICollection<object> langList && langList.FirstOrDefault() is Dictionary<object, object> langDictTemp)
-                        {
-                            if (langDictTemp.TryGetValue("packageName", out var pkgName))
+                            if (!string.IsNullOrEmpty(packageName))
                             {
-                                packageName = pkgName?.ToString() ?? string.Empty;
-                            }
-                            if (langDictTemp.TryGetValue("apiVersion", out var apiVer))
-                            {
-                                apiVersion = apiVer?.ToString() ?? string.Empty;
-                            }
-                            if (langDictTemp.TryGetValue("sdkType", out var sdkT))
-                            {
-                                sdkType = sdkT?.ToString() ?? string.Empty;
-                            }
-                        }
+                                if (language == SdkLanguage.Java && packageName.Contains(':'))
+                                {
+                                    var parts = packageName.Split(':');
+                                    groupName = parts[0];
+                                    packageName = parts[1];
+                                }
 
-                        languageName = languageName.Contains("csharp") ? ".NET" : languageName;
-                        var language = SdkLanguageHelpers.GetSdkLanguage(languageName);
-                        if (language == SdkLanguage.Unknown)
-                        {
-                            continue;
-                        }
-                        if (!string.IsNullOrEmpty(packageName))
-                        {
-                            if (language == SdkLanguage.Java && packageName.Contains(':'))
-                            {
-                                var parts = packageName.Split(':');
-                                groupName = parts[0];
-                                packageName = parts[1];
+                                packages.Add(new PackageInfo
+                                {
+                                    Language = language,
+                                    IsProvisioning = isProvisioning,
+                                    PackageName = packageName,
+                                    Group = groupName,
+                                    ApiVersion = string.IsNullOrEmpty(apiVersion) ? null : apiVersion,
+                                    TypeSpecSdkType = string.IsNullOrEmpty(sdkType) ? null : sdkType
+                                });
                             }
-
-                            packages.Add(new PackageInfo
-                            {
-                                Language = language,
-                                PackageName = packageName,
-                                Group = groupName,
-                                ApiVersion = string.IsNullOrEmpty(apiVersion) ? null : apiVersion,
-                                TypeSpecSdkType = string.IsNullOrEmpty(sdkType) ? null : sdkType
-                            });
                         }
                     }
                 }

@@ -1,3 +1,4 @@
+using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
@@ -45,6 +46,158 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 logger,
                 inputSanitizer
             );
+        }
+
+        [TestCase(nameof(SpecWorkflowTool.RunGenerateSdkAsync), "generate-sdk", "--typespec-project test --release-type stable --language .NET --workitem-id 456")]
+        [TestCase(nameof(SpecWorkflowTool.GetSDKPullRequestDetails), "get-sdk-pr", "--language .NET --workitem-id 456 --pipeline-run 100")]
+        public void ProvisioningSelector_IsOptionalInCliAndMcp(string methodName, string commandName, string arguments)
+        {
+            var command = specWorkflowTool.GetCommandInstances().Single(c => c.Name == commandName);
+            var option = command.Options.OfType<Option<bool>>().Single(o => o.Name == "--is-provisioning");
+            var normal = command.Parse(arguments);
+            var provisioning = command.Parse(arguments + " --is-provisioning");
+            Assert.That(normal.Errors, Is.Empty);
+            Assert.That(provisioning.Errors, Is.Empty);
+            Assert.That(normal.GetValue(option), Is.False);
+            Assert.That(provisioning.GetValue(option), Is.True);
+
+            var method = typeof(SpecWorkflowTool).GetMethod(methodName)!;
+            var schema = ModelContextProtocol.Server.McpServerTool.Create(method, _ => specWorkflowTool).ProtocolTool.InputSchema;
+            Assert.That(schema.GetProperty("properties").GetProperty("isProvisioning").GetProperty("type").GetString(), Is.EqualTo("boolean"));
+            Assert.That(schema.GetProperty("required").EnumerateArray().Any(property => property.GetString() == "isProvisioning"), Is.False);
+        }
+
+        [TestCase(".NET")]
+        [TestCase("JavaScript")]
+        public async Task ProvisioningGeneration_DoesNotUseNormalReleaseOrConflictState(string language)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                IsManagementPlane = true,
+                SDKInfo =
+                [
+                    new SDKInfo { Language = language, PackageName = "normal-package", ReleaseStatus = "Released", SdkPullRequestUrl = "normal-pr" },
+                    new SDKInfo { Language = language, IsProvisioning = true, PackageName = "provisioning-package" }
+                ]
+            };
+            var service = SetupSdkGenerationTool(plan);
+            service.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), language, 456, It.IsAny<string>(), It.IsAny<string?>(), true, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Build { Id = 100, Status = BuildStatus.InProgress });
+            service.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new ReleasePlanWorkItem
+                {
+                    WorkItemId = 999,
+                    SDKInfo = [new SDKInfo { Language = language, SdkPullRequestUrl = "other-normal-pr", ReleaseStatus = "Pending" }]
+                }]);
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                @"TypeSpecTestData\specification\testcontoso\Contoso.Management", "stable", language,
+                workItemId: 456, isProvisioning: true);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            service.Verify(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), language, 456, "", null, true, It.IsAny<CancellationToken>()), Times.Once);
+            mockGitHubService.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase(".NET", false)]
+        [TestCase("Python", true)]
+        public async Task ProvisioningGeneration_RejectsDataPlaneAndUnsupportedLanguage(string language, bool managementPlane)
+        {
+            var service = SetupSdkGenerationTool(new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                IsManagementPlane = managementPlane,
+                SDKInfo = [new SDKInfo { Language = language, IsProvisioning = true, PackageName = "provisioning-package" }]
+            });
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                @"TypeSpecTestData\specification\testcontoso\Contoso.Management", "stable", language,
+                workItemId: 456, isProvisioning: true);
+
+            Assert.That(result.ResponseError, Is.Not.Null);
+            Assert.That(service.Invocations.Any(i => i.Method.Name == nameof(IDevOpsService.RunSDKGenerationPipelineAsync)), Is.False);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GetSdkPr_SelectsNormalOrProvisioningEntry(bool isProvisioning)
+        {
+            SetupSdkGenerationTool(new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                Status = "Finished",
+                IsManagementPlane = true,
+                SDKInfo =
+                [
+                    new SDKInfo { Language = ".NET", IsProvisioning = true, SdkPullRequestUrl = "provisioning-pr" },
+                    new SDKInfo { Language = ".NET", SdkPullRequestUrl = "normal-pr" }
+                ]
+            });
+
+            var result = await specWorkflowTool.GetSDKPullRequestDetails(".NET", 456, isProvisioning: isProvisioning);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.Details, Has.Some.Contains(isProvisioning ? "provisioning-pr" : "normal-pr"));
+        }
+
+        [TestCase(".NET", false, 7412, true)]
+        [TestCase("JavaScript", false, 7422, true)]
+        [TestCase("Python", false, 7423, true)]
+        [TestCase("Java", false, 7421, true)]
+        [TestCase("Go", false, 7426, true)]
+        [TestCase(".NET", true, 8473, true)]
+        [TestCase("JavaScript", true, 8472, true)]
+        [TestCase(".NET", false, 8473, false)]
+        [TestCase("JavaScript", false, 8472, false)]
+        [TestCase(".NET", true, 7412, false)]
+        [TestCase(".NET", false, 7422, false)]
+        [TestCase(".NET", true, 8472, false)]
+        [TestCase(".NET", false, 0, false)]
+        public async Task GetSdkPr_VerifiesPipelineLanguageAndKindBeforeLinking(string language, bool isProvisioning, int pipelineId, bool expectedSuccess)
+        {
+            var service = SetupSdkGenerationTool(new ReleasePlanWorkItem { WorkItemId = 456, IsManagementPlane = true });
+            service.Setup(x => x.GetPipelineRunAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Build { Id = 100, Definition = pipelineId == 0 ? null : new DefinitionReference { Id = pipelineId }, Status = BuildStatus.Completed, Result = BuildResult.Succeeded });
+            service.Setup(x => x.GetSDKPullRequestFromPipelineRunAsync(100, language, 456, It.IsAny<CancellationToken>()))
+                .ReturnsAsync("normal-pr");
+            service.Setup(x => x.GetSDKPullRequestFromPipelineRunAsync(100, language, 456, true, It.IsAny<CancellationToken>()))
+                .ReturnsAsync("provisioning-pr");
+
+            var result = await specWorkflowTool.GetSDKPullRequestDetails(language, 456, 100, isProvisioning: isProvisioning);
+
+            Assert.That(result.ResponseError == null, Is.EqualTo(expectedSuccess));
+            Assert.That(service.Invocations.Count(i => i.Method.Name == nameof(IDevOpsService.GetSDKPullRequestFromPipelineRunAsync)),
+                Is.EqualTo(expectedSuccess ? 1 : 0));
+            if (expectedSuccess)
+            {
+                Assert.That(result.Details, Has.Some.Contains(isProvisioning ? "provisioning-pr" : "normal-pr"));
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task GenerateSdk_RejectsFinishedPlanBeforeQueueing(bool isProvisioning)
+        {
+            var service = SetupSdkGenerationTool(new ReleasePlanWorkItem
+            {
+                WorkItemId = 456,
+                Status = "finished",
+                IsManagementPlane = true,
+                SDKInfo = [new SDKInfo { Language = ".NET", IsProvisioning = isProvisioning, PackageName = "package", ReleaseStatus = "Released" }]
+            });
+
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                @"TypeSpecTestData\specification\testcontoso\Contoso.Management", "stable", ".NET",
+                workItemId: 456, isProvisioning: isProvisioning);
+
+            Assert.That(result.Status, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseErrors, Has.Some.Contains("Finished"));
+            Assert.That(service.Invocations.Any(i => i.Method.Name == nameof(IDevOpsService.RunSDKGenerationPipelineAsync)), Is.False);
         }
 
         [Test]
@@ -1146,6 +1299,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var build = new Build
             {
                 Id = 456,
+                Definition = new DefinitionReference { Id = 7423 },
                 Status = BuildStatus.InProgress
             };
 
@@ -1165,6 +1319,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var build = new Build
             {
                 Id = 456,
+                Definition = new DefinitionReference { Id = 7423 },
                 Status = BuildStatus.Completed,
                 Result = BuildResult.Failed
             };
@@ -1185,6 +1340,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var build = new Build
             {
                 Id = 456,
+                Definition = new DefinitionReference { Id = 7423 },
                 Status = BuildStatus.Completed,
                 Result = BuildResult.Succeeded
             };

@@ -42,6 +42,54 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task LegacyProvisioningLookup_UpdatesProvisioningFieldsAndCompletionOnly()
+        {
+            var provisioning = new SDKInfo
+            {
+                Language = ".NET",
+                IsProvisioning = true,
+                PackageName = "Azure.Provisioning.Test",
+                ReleaseStatus = "Pending",
+                SdkPullRequestUrl = "provisioning-pr"
+            };
+            var normal = new SDKInfo { Language = ".NET", PackageName = "Azure.Test", ReleaseStatus = "Released" };
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 100,
+                ReleasePlanId = 100,
+                IsManagementPlane = true,
+                SDKInfo =
+                [
+                    provisioning, normal,
+                    new SDKInfo { Language = "JavaScript", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Python", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Java", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Go", ReleaseStatus = "Released" }
+                ]
+            };
+            mockDevOpsService.Setup(x => x.GetReleasePlansForPackageAsync("Azure.Provisioning.Test", ".NET", It.IsAny<bool>(), true, It.IsAny<CancellationToken>()))
+                .ReturnsAsync([plan]);
+            List<Dictionary<string, string>> writes = [];
+            mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(100, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) => writes.Add(fields))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 100 });
+
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("Azure.Provisioning.Test", ".NET",
+                "Released", "1.0.0", isProvisioning: true);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanFinished, Is.True);
+            Assert.That(writes[0], Is.EquivalentTo(new Dictionary<string, string>
+            {
+                ["Custom.ReleaseStatusForDotnetProvisioning"] = "Released",
+                ["Custom.ReleasedVersionForDotnetProvisioning"] = "1.0.0"
+            }));
+            Assert.That(writes[1]["System.State"], Is.EqualTo("Finished"));
+            Assert.That(provisioning.ReleaseStatus, Is.EqualTo("Released"));
+            Assert.That(normal.ReleasedVersion, Is.Empty);
+        }
+
+        [Test]
         public async Task UpdatePackageReleaseStatus_WithNullPackageName_ReturnsError()
         {
             // Act

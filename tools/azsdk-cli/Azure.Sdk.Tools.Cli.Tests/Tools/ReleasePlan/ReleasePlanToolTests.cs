@@ -183,6 +183,136 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(patch.Single(p => p.Path == "/fields/Custom.SpecCommitSHA").Value, Is.EqualTo(sha));
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task CreateReleasePlan_ApiVersionComesFromNormalMetadata(bool includeProvisioning)
+        {
+            var project = CreateDummyTypeSpecProject();
+            if (includeProvisioning)
+            {
+                project.Packages.Insert(0, new PackageInfo
+                {
+                    Language = SdkLanguage.DotNet,
+                    IsProvisioning = true,
+                    PackageName = "Azure.Provisioning.WidgetService",
+                    ApiVersion = "all"
+                });
+            }
+            Mock.Get(typeSpecHelper).Setup(x => x.ParseTypeSpecProjectAsync(It.IsAny<string>(), It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(project);
+
+            var response = await releasePlanTool.CreateReleasePlan(null,
+                @"TypeSpecTestData\specification\testcontoso\Contoso.Management", "July 2025", "Public Preview",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                isTestReleasePlan: true);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails!.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
+        }
+
+        [Test]
+        public async Task UpdateSdkDetails_ProvisioningDoesNotSatisfyMissingNormalEmitter()
+        {
+            var path = @"TypeSpecTestData\specification\testcontoso\Contoso.Management";
+            var project = TypeSpecProject.ParseTypeSpecConfig(path);
+            project.Packages =
+            [
+                new PackageInfo { Language = SdkLanguage.DotNet, IsProvisioning = true, PackageName = "Azure.Provisioning.Contoso" },
+                new PackageInfo { Language = SdkLanguage.JavaScript, PackageName = "@azure/arm-contoso" }
+            ];
+            var service = new Mock<IDevOpsService>();
+            service.Setup(x => x.ResolveReleasePlanByIdAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ReleasePlanWorkItem { WorkItemId = 100, IsManagementPlane = true });
+            List<SDKInfo>? sdkInfos = null;
+            service.Setup(x => x.UpdateReleasePlanSDKDetailsAsync(100, It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, List<SDKInfo>, CancellationToken>((_, infos, _) => sdkInfos = infos)
+                .ReturnsAsync(true);
+            Dictionary<string, string>? fields = null;
+            service.Setup(x => x.UpdateWorkItemAsync(100, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, values, _) => fields = values)
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 100 });
+            var metadata = new Mock<ITypeSpecHelper>();
+            metadata.Setup(x => x.IsValidTypeSpecProjectPath(path)).Returns(true);
+            metadata.Setup(x => x.ParseTypeSpecProjectAsync(path, It.IsAny<INpxHelper>(), It.IsAny<ILogger>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(project);
+            var tool = new ReleasePlanTool(service.Object, gitHelper, metadata.Object, logger, userHelper, gitHubService,
+                environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.UpdateSDKDetailsInReleasePlan(100, path, CancellationToken.None);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(sdkInfos!.Single(sdk => sdk.Language == ".NET").IsProvisioning, Is.True);
+            Assert.That(fields!["Custom.ReleaseExclusionStatusForDotnet"], Is.EqualTo("MissingEmitterConfig"));
+            Assert.That(fields.Keys.Any(key => key.Contains("Provisioning")), Is.False);
+        }
+
+        [TestCase(".NET", "net")]
+        [TestCase("JavaScript", "js")]
+        public async Task LinkProvisioningSdkPr_ForwardsFlagWithoutSelectingNormalEntry(string language, string repo)
+        {
+            var service = new Mock<IDevOpsService>();
+            service.Setup(x => x.GetReleasePlanForWorkItemAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ReleasePlanWorkItem
+                {
+                    WorkItemId = 100,
+                    ReleasePlanId = 100,
+                    IsManagementPlane = true,
+                    SDKInfo =
+                    [
+                        new SDKInfo { Language = language, PackageName = "normal-package" },
+                        new SDKInfo { Language = language, IsProvisioning = true, PackageName = "provisioning-package" }
+                    ]
+                });
+            var pr = $"https://github.com/Azure/azure-sdk-for-{repo}/pull/12345";
+            service.Setup(x => x.AddSdkInfoInReleasePlanAsync(100, language, "", pr, "Completed", true, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService,
+                environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.LinkSdkPullRequestToReleasePlan(language, pr, workItemId: 100, isProvisioning: true);
+
+            Assert.That(response.ResponseError, Is.Null);
+            service.Verify(x => x.AddSdkInfoInReleasePlanAsync(100, language, "", pr, "Completed", true, It.IsAny<CancellationToken>()), Times.Once);
+            service.Verify(x => x.AddSdkInfoInReleasePlanAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task LinkSdkPr_RejectsFinishedPlanWithoutUpdatingAdoOrGitHub(bool isProvisioning)
+        {
+            var service = new Mock<IDevOpsService>();
+            service.Setup(x => x.GetReleasePlanForWorkItemAsync(100, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ReleasePlanWorkItem
+                {
+                    WorkItemId = 100,
+                    Status = "finished",
+                    IsManagementPlane = true,
+                    SDKInfo = [new SDKInfo { Language = ".NET", IsProvisioning = isProvisioning, PackageName = "package" }]
+                });
+            var github = new Mock<IGitHubService>();
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper, github.Object,
+                environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.LinkSdkPullRequestToReleasePlan(".NET",
+                "https://github.com/Azure/azure-sdk-for-net/pull/12345", workItemId: 100, isProvisioning: isProvisioning);
+
+            Assert.That(response.ResponseError, Does.Contain("Finished"));
+            Assert.That(service.Invocations.Any(i => i.Method.Name == nameof(IDevOpsService.AddSdkInfoInReleasePlanAsync)), Is.False);
+            Assert.That(github.Invocations, Is.Empty);
+        }
+
+        [Test]
+        public void LinkSdkPr_ProvisioningSelectorIsOptionalInCliAndMcp()
+        {
+            var command = releasePlanTool.GetCommandInstances().Single(c => c.Name == "link-sdk-pr");
+            Assert.That(command.Parse("--language .NET --pull-request https://github.com/Azure/azure-sdk-for-net/pull/100 --work-item-id 100 --is-provisioning").Errors, Is.Empty);
+            var method = typeof(ReleasePlanTool).GetMethod(nameof(ReleasePlanTool.LinkSdkPullRequestToReleasePlan))!;
+            var schema = ModelContextProtocol.Server.McpServerTool.Create(method, _ => releasePlanTool).ProtocolTool.InputSchema;
+            Assert.That(schema.GetProperty("properties").GetProperty("isProvisioning").GetProperty("type").GetString(), Is.EqualTo("boolean"));
+            Assert.That(schema.GetProperty("required").EnumerateArray().Any(property => property.GetString() == "isProvisioning"), Is.False);
+        }
+
         [TestCase("0123456789abcdef0123456789abcdef01234567")]
         [TestCase("")]
         public async Task UpdateReleasePlan_WritesSpecCommitOnlyWhenProvided(string sha)

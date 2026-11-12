@@ -40,6 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
                 {_content.OverviewAndDetails}
                 <p><strong>Why you are receiving this reminder:</strong> {ReleaseWorkSummary}</p>
                 {AbandonmentNotice}
+                <p>Automatic abandonment also requires verified inactivity for the configured window. Recent release-plan edits, SDK PR commits, submitted reviews, or human comments can postpone automatic abandonment. Missing or unreadable activity history prevents automatic abandonment.</p>
                 <p><strong>What to do next</strong></p>
                 <ol>
                     {_content.UpdateTargetAction}
@@ -77,15 +78,15 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
                 }
 
                 var deadline = cleanupDate <= _content.SentOnUtc
-                    ? "This Release Plan is eligible for automatic abandonment now. Please take action now."
+                    ? "The calendar-month grace period has ended. Please take action now."
                     : $"Please take action before {cleanupDate.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)}.";
                 var condition = _content.IsPrivatePreview
                     ? "its specification pull request is still missing or unmerged"
                     : "no SDK is recorded as released, no linked SDK pull request is merged, and no open SDK pull request is approved";
                 var privateGuidance = _content.IsPrivatePreview
-                    ? "<p>For a Private Preview release, opening a specification pull request is not sufficient to prevent abandonment; it must be merged, or the target release month must be updated.</p>"
+                    ? "<p>For a Private Preview release, merge the specification pull request or update the target release month to keep the release plan on track.</p>"
                     : string.Empty;
-                return $"<p><strong>What happens if you take no action: {deadline}</strong> {_content.GraceMonth} is the grace month for the {_content.TargetMonth} target. Starting with the {cleanupDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture)} monthly cleanup, this Release Plan will be marked <strong>Abandoned</strong> if it is still overdue and {condition}. Setting a future target release month moves the cleanup eligibility date; editing other details alone does not.</p>{privateGuidance}";
+                return $"<p><strong>What happens if you take no action: {deadline}</strong> {_content.GraceMonth} is the grace month for the {_content.TargetMonth} target. Starting with the {cleanupDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture)} monthly cleanup, this Release Plan may be marked <strong>Abandoned</strong> only if it is still overdue, {condition}, and the inactivity checks also pass. Setting a future target release month moves the calendar-based cleanup eligibility date.</p>{privateGuidance}";
             }
         }
     }

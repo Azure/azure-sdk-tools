@@ -63,6 +63,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
+        public Task<(DateTimeOffset Timestamp, string Source)> GetPullRequestLatestActivityAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.FromResult((new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero), "commit"));
+        }
+
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName, CancellationToken ct)
         {
             return Task.FromResult($"https://github.com/{owner}/{repoName}");

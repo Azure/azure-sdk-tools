@@ -427,8 +427,10 @@ def _extract_tool_calls(output_items: list[dict[str, Any]]) -> list[dict[str, An
 def _build_grounding_context(
     retrieved_context: str,
     tool_calls: list[dict[str, Any]],
+    *,
+    query: str = "",
 ) -> str:
-    """Combine retrieved documents with non-KB tool evidence for groundedness."""
+    """Combine the request, retrieved documents, and tool evidence."""
     evidence = [
         {
             "tool_name": call.get("tool_name", ""),
@@ -441,6 +443,8 @@ def _build_grounding_context(
     ]
 
     sections = []
+    if query:
+        sections.append(f"User request:\n{query}")
     if retrieved_context:
         sections.append(f"Retrieved documentation:\n{retrieved_context}")
     if evidence:
@@ -466,6 +470,7 @@ def _add_grounding_context(
         item["context"] = _build_grounding_context(
             item.get("context", "") or "",
             tool_calls_by_response_id.get(response_id, []),
+            query=item.get("query", "") or "",
         )
 
 

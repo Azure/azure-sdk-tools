@@ -400,8 +400,14 @@ def test_build_grounding_context_adds_tool_evidence_and_removes_images():
         },
     ]
 
-    context = _build_grounding_context(retrieved_context, tool_calls)
+    context = _build_grounding_context(
+        retrieved_context,
+        tool_calls,
+        query="Add exportEmployeeData to Employee.",
+    )
 
+    assert "User request:" in context
+    assert "exportEmployeeData" in context
     assert "Retrieved documentation:" in context
     assert "[Image: screenshot]" in context
     assert "https://example.test/image.png" not in context

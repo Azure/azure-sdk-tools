@@ -90,6 +90,69 @@ def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
     assert "`load_skill` ALONE" in instruction
 
 
+def test_typespec_pr_review_preserves_design_intent() -> None:
+    instruction = (
+        _AGENT_ROOT / "agents" / "chat_agent" / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert "non-TypeSpec code review" in instruction
+    assert "requests for review/comments on a TypeSpec PR as design review" in instruction
+    assert "unless the user explicitly asks about merge blockers or failing checks" in instruction
+    assert "Keep the `typespec` skill and its `tenant_id`" in instruction
+    assert "Do not infer merge-blocker intent from a PR link, draft state, or red check" in instruction
+    assert "For mixed requests, address design and process/check diagnosis separately" in instruction
+
+
+def test_typespec_pr_design_review_is_advertised_in_matching_tenant() -> None:
+    skills = {
+        skill.frontmatter.name: skill
+        for skill in create_tenant_skills("azure-sdk-chat-agent")
+    }
+    typespec = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
+    api_review = get_tenant_config(TenantID.API_SPEC_REVIEW_BOT)
+
+    assert typespec is not None
+    assert api_review is not None
+    assert typespec.enable_routing
+    assert "TypeSpec PR design review" in typespec.scope
+    assert "review/comments" in " ".join(typespec.topics)
+    assert "TypeSpec PR design review" in skills["typespec"].frontmatter.description
+    assert "Use typespec instead for API design and TypeSpec PR design review" in (
+        skills["api-spec-review"].frontmatter.description
+    )
+    assert "Prefer this skill whenever a specification PR" not in (
+        skills["api-spec-review"].frontmatter.description
+    )
+    assert any(
+        "TypeSpec PR design review" in exclusion
+        and "typespec_channel_qa_bot" in exclusion
+        for exclusion in api_review.exclusions
+    )
+    api_guideline = tenant_config.load_tenant_qa_guideline(TenantID.API_SPEC_REVIEW_BOT)
+    assert "use `typespec` for TypeSpec PR design review" in api_guideline
+
+
+def test_typespec_pr_review_skill_contains_grounded_arm_design_guidance() -> None:
+    content = build_skill_content(TenantID.TYPESPEC_CHANNEL_QA_BOT)
+
+    assert "[skill_tenant_id]: typespec_channel_qa_bot" in content
+    assert "- typespec_azure_docs:" in content
+    for guidance in (
+        "read the relevant TypeSpec diffs",
+        "models, operations, and aliases",
+        "unnecessary model/operation complexity",
+        "aliases when no new model shape is needed",
+        "retrieved TypeSpec/Azure design guidance",
+        "rather than merge status or reviewer-ping advice",
+        "`typespec_azure_docs` resource-type and resource-operations guidance",
+        "extension resources from normal child resources",
+        "standard extension-resource operations with `scope` or `ExternalResource`",
+        "standard child/proxy-resource operations",
+        "Do not customize standard ResourceGroup parameters",
+    ):
+        assert guidance in content
+
+
 def test_pr_review_preserves_status_and_log_tool_contracts() -> None:
     pr_review = _read_pr_review_skill()
 

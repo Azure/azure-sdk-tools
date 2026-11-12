@@ -19,8 +19,9 @@ the following month, provided the plan also meets the eligibility rules below:
 | September 2026 | October 2026              | November 1, 2026      |
 | December 2026  | January 2027              | February 1, 2027      |
 
-The grace period is based on the recorded target month, not creation date, last
-modification, or the first reminder. Creation age and SDK generation status are
+The grace period is based on the recorded target month, not creation date or
+the first reminder. Recent activity is a separate protection described below.
+Creation age and SDK generation status are
 not additional eligibility checks. Review incorrect dates before cleanup; the
 scan does not infer or repair them. A previously delivered warning is not a
 prerequisite: an already-eligible plan can be abandoned on its first scan. The
@@ -29,7 +30,7 @@ emails do not promise a grace month after receipt.
 ## Eligibility and reminder policy
 
 The following rules apply after the scope and date checks above. Reminders are
-attempted while overdue; abandonment is allowed only after the grace period.
+attempted while overdue; abandonment also requires the recent-activity checks below.
 
 | Release type and recorded work | Reminder action | Eligible for abandonment |
 | --- | --- | --- |
@@ -55,6 +56,27 @@ attempted while overdue; abandonment is allowed only after the grace period.
 - Private Preview uses the spec PR's merge state, not API approval.
 - Both `GA` and the legacy Azure DevOps value `APEX GA` are read as GA. New
   release-type writes continue to use `GA`.
+
+## Recent activity protection
+
+Automatic cleanup also requires inactivity for more than 30 days by default.
+Use the positive `--inactivity-days` option to set a different window. An activity
+timestamp exactly at the cutoff still protects the plan. Both preview and actual
+cleanup use the same checks:
+
+- A recent Azure DevOps release-plan update protects the plan.
+- Recent activity on any linked SDK PR protects the plan, even when approval
+  is pending or changes have been requested. Activity includes commit timestamps,
+  submitted reviews, and human comments, including inline review comments and edits.
+- Routine bot comments, pending reviews, and CI checks do not reset the clock.
+- Missing plan timestamps, unreadable PR history, or GitHub's 250-commit listing
+  limit prevent abandonment and report an evaluation error.
+
+Reasons identify the plan update or PR activity and its timestamp. The JSON
+`eligibility_reasons` map includes these protected plans, keyed by work-item ID.
+Preview counts them under `recent_plan_activity` or `recent_sdk_pr_activity`.
+Reminders continue, and manual `release-plan abandon` behavior is unchanged.
+These are point-in-time checks; they do not lock GitHub PRs against later activity.
 
 ## Commands and output
 
@@ -149,6 +171,14 @@ is configured to run on `main` on the first day of each month at 00:00 UTC:
 - Authorize the pipeline's service connections and configure its existing
   emailer secret. The pipeline installs the latest released CLI, not the checked-out
   source, so publish a version containing these commands before enabling the schedule.
+- The pipeline uses the shared 1ES template and explicitly passes
+  `--inactivity-days 30`. Older CLI versions reject that option before cleanup,
+  rather than silently abandoning plans without the activity check. Publish the
+  updated CLI before expecting successful scheduled cleanup; reminders can still
+  be attempted when the cleanup command fails.
+- Azure DevOps UI schedules override YAML schedules. Remove any temporary UI
+  schedule override to restore the monthly YAML schedule; this is a separate
+  pipeline setting, not a source-code change.
 
 To continue a release after abandonment, create a new release plan with an
 updated SDK target release month. The CLI cannot reopen an abandoned plan.

@@ -64,7 +64,7 @@ const testMessageWithContactCard: ConversationMessage = {
 // Mock Azure Table Storage client and related classes
 vi.mock('@azure/data-tables', () => {
   return {
-    TableClient: vi.fn().mockImplementation(() => {
+    TableClient: vi.fn().mockImplementation(function () {
       return {
         createEntity: vi.fn().mockResolvedValue({
           partitionKey: 'test-conversation',
@@ -108,7 +108,7 @@ vi.mock('@azure/data-tables', () => {
         }),
       };
     }),
-    TableServiceClient: vi.fn().mockImplementation(() => {
+    TableServiceClient: vi.fn().mockImplementation(function () {
       return {
         createTable: vi.fn().mockResolvedValue({}),
       };
@@ -122,8 +122,8 @@ vi.mock('@azure/data-tables', () => {
 // Mock Azure Identity
 vi.mock('@azure/identity', () => {
   return {
-    DefaultAzureCredential: vi.fn().mockImplementation(() => ({})),
-    ManagedIdentityCredential: vi.fn().mockImplementation(() => ({})),
+    DefaultAzureCredential: vi.fn().mockImplementation(function () { return {}; }),
+    ManagedIdentityCredential: vi.fn().mockImplementation(function () { return {}; }),
   };
 });
 
@@ -171,6 +171,20 @@ describe('ConversationHandler', () => {
     expect(result.prompt).toEqual(JSON.stringify(testPrompt));
     expect(result.reply).toEqual(JSON.stringify(testReply));
     expect(result.contactCard).toBeUndefined();
+  });
+
+  it('should not persist inline image bytes in the Azure Table prompt property', async () => {
+    await handler.initialize();
+    const dataUri = `data:image/png;base64,${'A'.repeat(100000)}`;
+    const message = {
+      ...testMessage,
+      prompt: { ...testPrompt, images: [dataUri, ...testPrompt.images] },
+    };
+    const result = await handler.saveMessage(message, {});
+
+    expect(JSON.parse(result.prompt).images).toEqual(testPrompt.images);
+    expect(result.prompt).not.toContain(dataUri);
+    expect(message.prompt.images[0]).toBe(dataUri);
   });
 
   it('should save a message with contact card', async () => {

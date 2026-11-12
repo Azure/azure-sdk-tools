@@ -12,17 +12,80 @@ import pytest
 from azure.ai.projects.models import AgentVersionDetails
 from azure.core.async_paging import AsyncItemPaged
 
-from models.chat import ChatRequest, Message as ChatMessage
+from models.chat import AdditionalInfo, ChatRequest, Message as ChatMessage
+from services import chat_service
 from services.chat_service import ChatService
 
 
-@pytest.mark.parametrize("conversation_type, include_tag, last_lookup_fails", [
-    ("teams_channel", True, False), ("teams_channel", False, False),
-    (None, True, False), ("teams_channel", True, True),
+@pytest.mark.asyncio
+async def test_additional_info_passes_image_pixels_to_model(monkeypatch):
+    download = AsyncMock(return_value="data:image/png;base64,aW1hZ2U=")
+    monkeypatch.setattr(chat_service, "get_image_data_uri", download)
+    items = await ChatService()._build_additional_info_items([
+        AdditionalInfo(type="image", content="", link="https://example.test/image"),
+    ])
+    download.assert_awaited_once_with("https://example.test/image")
+    assert items[0]["role"] == "user"
+    assert items[0]["content"][1] == {
+        "type": "input_image",
+        "image_url": "data:image/png;base64,aW1hZ2U=",
+        "detail": "auto",
+    }
+    assert "untrusted content" in items[0]["content"][0]["text"]
+
+
+@pytest.mark.asyncio
+async def test_image_failures_preserve_other_context_and_are_disclosed(monkeypatch, caplog):
+    import httpx
+
+    request = httpx.Request("GET", "https://graph.microsoft.com/image")
+    response = httpx.Response(403, request=request)
+    download = AsyncMock(side_effect=[
+        httpx.HTTPStatusError("Forbidden", request=request, response=response),
+        "data:image/png;base64,aW1hZ2U=",
+    ])
+    monkeypatch.setattr(chat_service, "get_image_data_uri", download)
+    items = await ChatService()._build_additional_info_items([
+        AdditionalInfo(type="text", content="project context"),
+        AdditionalInfo(type="image", content="", link="https://example.test/first"),
+        AdditionalInfo(type="image", content="", link="https://example.test/second"),
+    ])
+    assert items[0]["content"] == "project context"
+    assert items[1]["content"][1]["type"] == "input_image"
+    assert items[2]["role"] == "system"
+    assert "could not be downloaded or read" in items[2]["content"]
+    assert "Explicitly disclose" in items[2]["content"]
+    assert "Failed to fetch Teams image 1" in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("image_limit", [2, 4])
+async def test_image_attempt_limit_keeps_failure_and_limit_notices(monkeypatch, image_limit):
+    monkeypatch.setattr(chat_service, "MAX_IMAGES_PER_REQUEST", image_limit)
+    download = AsyncMock(side_effect=[
+        ValueError("invalid image"),
+        *["data:image/png;base64,aW1hZ2U="] * (image_limit - 1),
+    ])
+    monkeypatch.setattr(chat_service, "get_image_data_uri", download)
+    items = await ChatService()._build_additional_info_items([
+        AdditionalInfo(type="image", content="", link=f"https://example.test/{index}")
+        for index in range(6)
+    ])
+    assert download.await_count == image_limit
+    assert len(items) == image_limit
+    assert "could not be downloaded or read" in items[-1]["content"]
+    assert f"Only the first {image_limit} attached images were considered" in items[-1]["content"]
+    assert "additional images were not read" in items[-1]["content"]
+
+
+@pytest.mark.parametrize("conversation_type, include_tag, lookup_outcome", [
+    ("teams_channel", True, "success"), ("teams_channel", False, "success"),
+    (None, True, "success"), ("teams_channel", True, "failure"),
+    ("teams_channel", True, "recovery"),
 ])
 @pytest.mark.parametrize("output_type", ["function_call_output", "message"])
 def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
-    conversation_type, include_tag, last_lookup_fails, output_type
+    conversation_type, include_tag, lookup_outcome, output_type
 ):
     import json
 
@@ -47,8 +110,10 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         ResolveGitHubUsersResult(errors={"unlinked": "No linked Microsoft account was found."}),
         ResolveGitHubUsersResult(errors={"service": "Not a person."}),
     ]
-    if last_lookup_fails:
+    if lookup_outcome in ("failure", "recovery"):
         lookups.append(ResolveGitHubUsersResult(errors={"linked-user": "HTTP 403"}))
+    if lookup_outcome == "recovery":
+        lookups.append(ResolveGitHubUsersResult(mentions={"linked-user": mention}))
     for index, result in enumerate(lookups):
         call_id = f"lookup-{index}"
         tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
@@ -86,17 +151,148 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         message=ChatMessage(role="user", content="Who can review?"),
     )
 
-    result = ChatService()._postprocess(request, response, None)
+    service = ChatService()
+    decoded_results = service._extract_tool_results(output)
+    assert decoded_results["resolve_github_users"] == lookups
+
+    result = service._postprocess(request, response, None)
 
     assert result.answer == answer
     assert result.mentions == (
-        [mention] if conversation_type and include_tag and not last_lookup_fails else None
+        [mention] if conversation_type and include_tag and lookup_outcome != "failure" else None
     )
     if result.mentions:
         assert result.model_dump(mode="json")["mentions"] == [{
             "text": mention.text,
             "mentioned": {"id": mention.mentioned.id, "name": "Linked Person"},
         }]
+
+
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+@pytest.mark.parametrize("with_full_context", [True, False])
+@pytest.mark.parametrize("searches", ["mixed", "wiki_only", "last_empty", "empty"])
+def test_references_and_full_context_use_all_search_calls(
+    output_type, with_full_context, searches
+):
+    import json
+
+    from openai.types.responses import (
+        Response, ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage, ResponseOutputText,
+    )
+
+    from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
+
+    earlier = Reference(
+        title="Earlier section", source="azure-sdk-docs-eng",
+        link="https://example.test/shared", content="Earlier evidence",
+    )
+    later = earlier.model_copy(update={
+        "title": "Later section", "content": "Additional evidence from the same document",
+    })
+    repeated = Reference(
+        title="Repeated document", source="azure-sdk-docs-eng",
+        link="https://example.test/repeated", content="Repeated evidence",
+    )
+    wiki = Reference(
+        title="Wiki guidance", source="azure-sdk-docs-eng",
+        link="https://example.test/wiki", content="Wiki evidence",
+    )
+    calls = {
+        "mixed": [
+            ("search_knowledge_base", [earlier, repeated]),
+            ("wiki_search", [wiki, repeated]),
+            ("search_knowledge_base", [later, repeated]),
+        ],
+        "wiki_only": [("wiki_search", [wiki, repeated])],
+        "last_empty": [
+            ("search_knowledge_base", [earlier, repeated]),
+            ("search_knowledge_base", []),
+            ("wiki_search", []),
+        ],
+        "empty": [("search_knowledge_base", []), ("wiki_search", [])],
+    }[searches]
+    expected_context = {
+        "mixed": [earlier, repeated, later, wiki],
+        "wiki_only": [wiki, repeated],
+        "last_empty": [earlier, repeated],
+        "empty": [],
+    }[searches]
+    output = []
+    for index, (name, references) in enumerate(calls):
+        call_id = f"search-{index}"
+        result = SearchKnowledgeBaseResult(results=references)
+        wrapped_output = json.dumps([result.model_dump_json()])
+        tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
+        if output_type == "function_call_output":
+            tool_output = ResponseFunctionToolCallOutputItem.model_construct(
+                type=output_type, id=call_id, call_id=call_id,
+                output=wrapped_output, status="completed",
+            )
+        else:
+            tool_output = ResponseOutputMessage.model_construct(
+                type="message", id=call_id, role="assistant", status="completed", content=[],
+                call_id=call_id, output=wrapped_output,
+            )
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call", name=name, call_id=call_id, arguments="{}",
+            ),
+            tool_output,
+        ])
+    text = (
+        "Answer using retrieved evidence.\n\n**References**\n"
+        "- [Earlier section](https://example.test/shared)\n"
+        "- [Wiki guidance](https://example.test/wiki)\n"
+        "- [Repeated document](https://example.test/repeated)\n"
+        "- [Later section](https://example.test/shared)\n"
+        "- [Unmatched document](https://example.test/unmatched)"
+    )
+    output.append(ResponseOutputMessage.model_construct(
+        type="message", id="answer", role="assistant", status="completed",
+        content=[ResponseOutputText.model_construct(
+            type="output_text", text=text, annotations=[],
+        )],
+    ))
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id="azure_sdk_qa_bot",
+        message=ChatMessage(role="user", content="Review this question"),
+        with_full_context=with_full_context,
+    )
+    service = ChatService()
+    decoded_results = service._extract_tool_results(output)
+    assert decoded_results == {
+        name: [
+            SearchKnowledgeBaseResult(results=references)
+            for tool_name, references in calls if tool_name == name
+        ]
+        for name, _ in calls
+    }
+    cited = [
+        earlier, wiki, repeated, later,
+        Reference(title="Unmatched document", source="", link="https://example.test/unmatched"),
+    ]
+    expected_references = [
+        ref if ref in expected_context else Reference(title=ref.title, source="", link=ref.link)
+        for ref in cited
+    ]
+    if searches == "last_empty":
+        # Keep link-only fallback when the cited section was not retrieved.
+        expected_references[3] = earlier
+
+    result = service._postprocess(request, response, "conversation")
+
+    assert result.answer == "Answer using retrieved evidence."
+    assert result.references == expected_references
+    assert result.agent_conversation_id == "conversation"
+    if with_full_context and expected_context:
+        assert json.loads(result.full_context) == [
+            DocumentContext.from_reference(ref).model_dump(mode="json")
+            for ref in expected_context
+        ]
+    else:
+        assert result.full_context is None
 
 
 # -- Memory scope handling ------------

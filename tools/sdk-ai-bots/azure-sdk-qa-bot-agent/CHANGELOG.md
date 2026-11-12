@@ -1,5 +1,19 @@
 # Release History
 
+## 0.2.1 (2026-10-30)
+
+### Features Added
+
+- Add read-only GitHub Actions job log retrieval with generic structured-diagnostic extraction and bounded verbatim excerpts.
+- Load shared PR review guidance on demand through a dedicated skill.
+
+### Bugs Fixed
+
+- Preserve GitHub file evidence and pagination metadata while retaining output limits and trusted-author filtering.
+- Expand raw static Q&A hits to the complete same-source, same-document question and answer, prioritize answers, and deduplicate repeated topic hits.
+- Keep repository-access questions in the current tenant and include API Spec Review engineering guidance without design-title restrictions.
+- Improve current-head PR readiness checks, workflow failure diagnosis, and evidence-grounded answer coverage.
+
 ## 0.2.0 (2026-10-13)
 
 ### Other Changes

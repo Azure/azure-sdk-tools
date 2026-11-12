@@ -1,5 +1,17 @@
 # Release History
 
+## 0.6.58 (2026-11-10)
+
+### Features Added
+
+- Automatic overdue release-plan cleanup now skips recently updated plans and SDK PRs with recent commits, submitted reviews, or human comments. The inactivity window defaults to 30 days and can be set with `--inactivity-days`. Routine bot comments and CI checks do not reset it. Missing or unreadable activity prevents abandonment and reports an error. Overdue reminders describe abandonment as conditional on those activity checks.
+
+## 0.6.57 (2026-11-06)
+
+### Features Added
+
+- Updated `azsdk_customized_code_update` to modify only the content required by the request and preserve unrelated existing `client.tsp` content.
+
 ## 0.6.56 (2026-10-28)
 
 ### Features Added

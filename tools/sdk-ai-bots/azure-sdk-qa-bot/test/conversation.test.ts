@@ -7,6 +7,7 @@ import {
   ContactCard,
 } from '../src/input/ConversationHandler.js';
 import { Reference } from '../src/backend/rag.js';
+import { ManagedIdentityCredential } from '@azure/identity';
 
 const testTimestamp = new Date('2023-10-01T12:00:00Z');
 
@@ -122,8 +123,12 @@ vi.mock('@azure/data-tables', () => {
 // Mock Azure Identity
 vi.mock('@azure/identity', () => {
   return {
-    DefaultAzureCredential: vi.fn().mockImplementation(function () { return {}; }),
-    ManagedIdentityCredential: vi.fn().mockImplementation(function () { return {}; }),
+    DefaultAzureCredential: vi.fn().mockImplementation(function () {
+      return {};
+    }),
+    ManagedIdentityCredential: vi.fn().mockImplementation(function () {
+      return {};
+    }),
   };
 });
 
@@ -132,6 +137,7 @@ vi.mock('../src/config/config.js', () => {
   return {
     default: {
       MicrosoftAppId: 'test-bot-id',
+      userManagedIdentityClientID: 'test-managed-identity-id',
       azureStorageUrl: 'https://test-storage.table.core.windows.net/',
       azureTableNameForConversation: 'conversations',
     },
@@ -159,6 +165,7 @@ describe('ConversationHandler', () => {
   it('should initialize correctly', async () => {
     await handler.initialize();
     expect(handler).toBeDefined();
+    expect(ManagedIdentityCredential).toHaveBeenCalledWith('test-managed-identity-id');
   });
 
   it('should save a message', async () => {

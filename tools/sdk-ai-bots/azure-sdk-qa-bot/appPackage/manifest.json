@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.25/MicrosoftTeams.schema.json",
   "manifestVersion": "1.25",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "id": "${{TEAMS_APP_ID}}",
   "developer": {
     "name": "Azure SDK Team",

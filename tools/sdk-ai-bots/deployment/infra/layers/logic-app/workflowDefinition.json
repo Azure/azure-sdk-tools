@@ -1,0 +1,627 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "notes": {}
+  },
+  "parameters": {
+    "$connections": {
+      "defaultValue": {},
+      "type": "Object"
+    },
+    "maxImageBytes": {
+      "defaultValue": 5242880,
+      "type": "Int"
+    },
+    "teamsGroupId": {
+      "type": "String"
+    },
+    "teamsChannelIds": {
+      "type": "Array"
+    },
+    "serverBaseUrl": {
+      "type": "String"
+    },
+    "serverApplicationIdUri": {
+      "type": "String"
+    },
+    "serverIdentityResourceId": {
+      "type": "String"
+    },
+    "botBaseUrl": {
+      "type": "String"
+    },
+    "botAudience": {
+      "type": "String"
+    },
+    "botIdentityResourceId": {
+      "type": "String"
+    }
+  },
+  "triggers": {
+    "When_a_new_message_is_added_to_a_chat_or_channel": {
+      "type": "ApiConnectionWebhook",
+      "inputs": {
+        "body": {
+          "channels": "@parameters('teamsChannelIds')",
+          "groupId": "@parameters('teamsGroupId')",
+          "notificationUrl": "@listCallbackUrl()"
+        },
+        "host": {
+          "connection": {
+            "name": "@parameters('$connections')['teams']['connectionId']"
+          }
+        },
+        "path": "/beta/subscriptions/newmessagetrigger/threadType/@{encodeURIComponent('channel')}"
+      }
+    }
+  },
+  "outputs": {},
+  "actions": {
+    "Initialize_downloaded_images": {
+      "type": "InitializeVariable",
+      "inputs": {
+        "variables": [
+          {
+            "name": "downloadedImages",
+            "type": "array",
+            "value": []
+          }
+        ]
+      },
+      "runAfter": {}
+    },
+    "For_each": {
+      "type": "Foreach",
+      "foreach": "@triggerBody()?['value']",
+      "operationOptions": "Sequential",
+      "runAfter": {
+        "Initialize_downloaded_images": [
+          "Succeeded"
+        ]
+      },
+      "actions": {
+        "Get_and_resolve_message_details": {
+          "type": "Scope",
+          "actions": {
+            "Get_message_details": {
+              "type": "ApiConnection",
+              "inputs": {
+                "body": {
+                  "recipient": {
+                    "channelId": "@item()?['channelId']",
+                    "groupId": "@parameters('teamsGroupId')",
+                    "parentMessageId": "@item()?['replyToMessageId']"
+                  }
+                },
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['teams']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "/beta/teams/messages/@{encodeURIComponent(item()?['messageId'])}/messageType/@{encodeURIComponent('channel')}"
+              }
+            },
+            "Resolve_forwarded_message_content": {
+              "type": "JavaScriptCode",
+              "inputs": {
+                "code": "var message=workflowContext.actions.Get_message_details.outputs.body;\nif(!message||!message.body)return message;\nvar content=message.body.content||'';\nvar attachments=message.attachments||[];\nfor(var index=0;index<attachments.length;index++){\n  var attachment=attachments[index];\n  if(attachment.contentType!=='forwardedMessageReference'||!attachment.content)continue;\n  var forwarded=attachment.content;\n  try{\n    var parsed=typeof forwarded==='string'?JSON.parse(forwarded):forwarded;\n    forwarded=parsed.body&&parsed.body.content||parsed.message&&parsed.message.body&&parsed.message.body.content||parsed.originalMessage&&parsed.originalMessage.body&&parsed.originalMessage.body.content||parsed.content||forwarded;\n  }catch(error){}\n  var placeholder='<attachment id=\"'+attachment.id+'\"></attachment>';\n  content=content.split(placeholder).join(forwarded);\n}\nmessage.body.content=content;\nreturn message;",
+                "explicitDependencies": {
+                  "actions": [
+                    "Get_message_details"
+                  ]
+                }
+              },
+              "runAfter": {
+                "Get_message_details": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Include_post_title_in_message_content": {
+              "type": "JavaScriptCode",
+              "inputs": {
+                "code": "var message=workflowContext.actions.Resolve_forwarded_message_content.outputs.body;\nif(!message||!message.body)return message;\nif(typeof message.subject==='string'&&message.subject.trim().length>0){\n  message.body.content='title: '+message.subject.trim()+'\\n\\n'+(message.body.content||'');\n}\nreturn message;",
+                "explicitDependencies": {
+                  "actions": [
+                    "Resolve_forwarded_message_content"
+                  ]
+                }
+              },
+              "runAfter": {
+                "Resolve_forwarded_message_content": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Resolved_message_details": {
+              "type": "Compose",
+              "inputs": "@body('Include_post_title_in_message_content')",
+              "runAfter": {
+                "Include_post_title_in_message_content": [
+                  "Succeeded"
+                ]
+              }
+            }
+          }
+        },
+        "Filter_messages_mentioned_bot": {
+          "type": "Query",
+          "inputs": {
+            "from": "@outputs('Resolved_message_details')?['mentions']",
+            "where": "@contains(coalesce(item()?['mentioned']?['application']?['displayName'], ''), 'Azure SDK Q&A Bot')"
+          },
+          "runAfter": {
+            "Get_and_resolve_message_details": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Filter_announcement_messages": {
+          "type": "Query",
+          "inputs": {
+            "from": "@outputs('Resolved_message_details')['attachments']",
+            "where": "@equals(item()?['contentType'], 'application/vnd.microsoft.teams.messaging-announcementBanner')"
+          },
+          "runAfter": {
+            "Filter_messages_mentioned_bot": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Filter_meeting_messages": {
+          "type": "Query",
+          "inputs": {
+            "from": "@outputs('Resolved_message_details')['attachments']",
+            "where": "@equals(item()?['contentType'], 'meetingReference')"
+          },
+          "runAfter": {
+            "Filter_announcement_messages": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Thread_Message_From_User": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "not": {
+                  "equals": [
+                    "@trim(coalesce(outputs('Resolved_message_details')?['body']?['content'], ''))",
+                    ""
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@outputs('Resolved_message_details')?['from']?['user']?['displayName']",
+                    "@null"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "startsWith": [
+                    "@outputs('Resolved_message_details')?['body']?['plainTextContent']",
+                    "Your feedback is received"
+                  ]
+                }
+              },
+              {
+                "equals": [
+                  "@length(body('Filter_announcement_messages'))",
+                  0
+                ]
+              },
+              {
+                "equals": [
+                  "@outputs('Resolved_message_details')?['messageType']",
+                  "message"
+                ]
+              },
+              {
+                "equals": [
+                  "@length(body('Filter_meeting_messages'))",
+                  0
+                ]
+              },
+              {
+                "equals": [
+                  "@outputs('Resolved_message_details')?['from']?['application']",
+                  "@null"
+                ]
+              }
+            ]
+          },
+          "runAfter": {
+            "Filter_meeting_messages": [
+              "Succeeded"
+            ]
+          },
+          "actions": {
+            "Get_Channel_Config": {
+              "type": "Http",
+              "inputs": {
+                "authentication": {
+                  "audience": "@parameters('serverApplicationIdUri')",
+                  "identity": "@parameters('serverIdentityResourceId')",
+                  "type": "ManagedServiceIdentity"
+                },
+                "method": "get",
+                "uri": "@{parameters('serverBaseUrl')}/config/channel?channel_id=@{encodeURIComponent(item()?['channelId'])}"
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Build_Conversation_Save_Request_Body": {
+              "type": "Compose",
+              "inputs": {
+                "content": "@outputs('Resolved_message_details')?['body']?['content']",
+                "conversation_id": "@concat(outputs('Resolved_message_details')?['channelId'], ';messageid=', outputs('Resolved_message_details')?['replyToId'])",
+                "conversation_type": "teams_channel",
+                "created_at": "@outputs('Resolved_message_details')?['createdDateTime']",
+                "extra_info": {
+                  "channel_id": "@item()?['channelId']",
+                  "message_link": "@outputs('Resolved_message_details')?['messageLink']"
+                },
+                "id": "@item()?['messageId']",
+                "sender_id": "@if(not(equals(outputs('Resolved_message_details')?['from']?['application'], null)), outputs('Resolved_message_details')?['from']?['application']?['id'], outputs('Resolved_message_details')?['from']?['user']?['id'])",
+                "sender_name": "@if(not(equals(outputs('Resolved_message_details')?['from']?['application'], null)), outputs('Resolved_message_details')?['from']?['application']?['displayName'], outputs('Resolved_message_details')?['from']?['user']?['displayName'])",
+                "sender_role": "@if(not(equals(outputs('Resolved_message_details')?['from']?['application'], null)), 'system', 'user')",
+                "tenant_id": "@body('Get_Channel_Config')?['tenant_id']"
+              },
+              "runAfter": {
+                "Get_Channel_Config": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Save_Conversation_Message": {
+              "type": "Http",
+              "inputs": {
+                "authentication": {
+                  "audience": "@parameters('serverApplicationIdUri')",
+                  "identity": "@parameters('serverIdentityResourceId')",
+                  "type": "ManagedServiceIdentity"
+                },
+                "body": "@outputs('Build_Conversation_Save_Request_Body')",
+                "method": "POST",
+                "uri": "@{parameters('serverBaseUrl')}/conversation/save"
+              },
+              "runAfter": {
+                "Build_Conversation_Save_Request_Body": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Need_Reply": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@outputs('Resolved_message_details')?['from']?['application']",
+                      "@null"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@length(body('Filter_messages_mentioned_bot'))",
+                      0
+                    ]
+                  }
+                ]
+              },
+              "runAfter": {
+                "Save_Conversation_Message": [
+                  "Succeeded"
+                ]
+              },
+              "actions": {
+                "Build_Intention_Request_Body": {
+                  "type": "Compose",
+                  "inputs": {
+                    "conversation_id": "@concat(outputs('Resolved_message_details')?['channelId'], ';messageid=', outputs('Resolved_message_details')?['replyToId'])",
+                    "conversation_type": "teams_channel",
+                    "message": {
+                      "content": "@outputs('Resolved_message_details')?['body']?['content']",
+                      "role": "user",
+                      "id": "@item()?['messageId']",
+                      "user_id": "@outputs('Resolved_message_details')?['from']?['user']?['id']",
+                      "user_name": "@outputs('Resolved_message_details')?['from']?['user']?['displayName']"
+                    }
+                  }
+                },
+                "Check_Intention": {
+                  "type": "Http",
+                  "inputs": {
+                    "authentication": {
+                      "audience": "@parameters('serverApplicationIdUri')",
+                      "identity": "@parameters('serverIdentityResourceId')",
+                      "type": "ManagedServiceIdentity"
+                    },
+                    "body": "@outputs('Build_Intention_Request_Body')",
+                    "method": "POST",
+                    "uri": "@{parameters('serverBaseUrl')}/message/intention"
+                  },
+                  "runAfter": {
+                    "Build_Intention_Request_Body": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "contentTransfer": {
+                      "transferMode": "Chunked"
+                    }
+                  }
+                },
+                "Should_Reply": {
+                  "type": "If",
+                  "expression": {
+                    "equals": [
+                      "@body('Check_Intention')['should_respond']",
+                      true
+                    ]
+                  },
+                  "runAfter": {
+                    "Check_Intention": [
+                      "Succeeded"
+                    ]
+                  },
+                  "actions": {
+                    "convertActivity": {
+                      "type": "Http",
+                      "inputs": {
+                        "authentication": {
+                          "audience": "@parameters('serverApplicationIdUri')",
+                          "identity": "@parameters('serverIdentityResourceId')",
+                          "type": "ManagedServiceIdentity"
+                        },
+                        "body": "@outputs('Resolved_message_details')",
+                        "headers": {
+                          "Content-Type": "application/json"
+                        },
+                        "method": "POST",
+                        "uri": "@{parameters('serverBaseUrl')}/activity/convert"
+                      }
+                    },
+                    "Filter_image_attachments": {
+                      "type": "Query",
+                      "inputs": {
+                        "from": "@coalesce(body('convertActivity')?['attachments'], json('[]'))",
+                        "where": "@startsWith(coalesce(item()?['contentType'], ''), 'image/')"
+                      },
+                      "runAfter": {
+                        "convertActivity": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Has_image_attachments": {
+                      "type": "If",
+                      "expression": "@greater(length(body('Filter_image_attachments')), 0)",
+                      "runAfter": {
+                        "Filter_image_attachments": [
+                          "Succeeded"
+                        ]
+                      },
+                      "actions": {
+                        "Resolve_image_bytes": {
+                          "type": "Scope",
+                          "runAfter": {},
+                          "actions": {
+                            "Reset_downloaded_images": {
+                              "type": "SetVariable",
+                              "inputs": {
+                                "name": "downloadedImages",
+                                "value": []
+                              },
+                              "runAfter": {}
+                            },
+                            "Filter_graph_hosted_images": {
+                              "type": "Query",
+                              "inputs": {
+                                "from": "@take(body('Filter_image_attachments'), 4)",
+                                "where": "@and(startsWith(coalesce(item()?['contentUrl'], ''), 'https://graph.microsoft.com/'), contains(coalesce(item()?['contentUrl'], ''), '/hostedContents/'), endsWith(coalesce(item()?['contentUrl'], ''), '/$value'))"
+                              },
+                              "runAfter": {
+                                "Reset_downloaded_images": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Download_graph_images": {
+                              "type": "Foreach",
+                              "foreach": "@body('Filter_graph_hosted_images')",
+                              "operationOptions": "Sequential",
+                              "actions": {
+                                "Download_Graph_image": {
+                                  "type": "ApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "connection": {
+                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                      }
+                                    },
+                                    "method": "post",
+                                    "path": "/httprequest",
+                                    "headers": {
+                                      "Uri": "@items('Download_graph_images')['contentUrl']",
+                                      "Method": "GET",
+                                      "Content-Type": "application/json"
+                                    },
+                                    "retryPolicy": {
+                                      "type": "none"
+                                    }
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "outputs"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "Append_downloaded_image": {
+                                  "type": "AppendToArrayVariable",
+                                  "inputs": {
+                                    "name": "downloadedImages",
+                                    "value": {
+                                      "url": "@items('Download_graph_images')['contentUrl']",
+                                      "body": "@if(lessOrEquals(length(coalesce(body('Download_Graph_image')?['$content'], '')), mul(4, div(add(parameters('maxImageBytes'), 2), 3))), body('Download_Graph_image'), null)"
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "Download_Graph_image": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                }
+                              },
+                              "runAfter": {
+                                "Filter_graph_hosted_images": [
+                                  "Succeeded"
+                                ]
+                              }
+                            },
+                            "Image_download_results": {
+                              "type": "Compose",
+                              "inputs": "@variables('downloadedImages')",
+                              "runAfter": {
+                                "Download_graph_images": [
+                                  "Succeeded",
+                                  "Failed",
+                                  "TimedOut"
+                                ]
+                              },
+                              "runtimeConfiguration": {
+                                "secureData": {
+                                  "properties": [
+                                    "inputs"
+                                  ]
+                                }
+                              }
+                            },
+                            "Prepare_activity_images": {
+                              "type": "JavaScriptCode",
+                              "inputs": {
+                                "code": "var activity=workflowContext.actions.convertActivity.outputs.body;\nvar results=workflowContext.actions.Image_download_results.outputs,images={};\nfor(var i=0;i<results.length;i++){\n  var image=results[i];\n  if(!image||image.body===null)continue;\n  var b=image.body;\n  if(!image.url||!b||typeof b['$content']!=='string'||typeof b['$content-type']!=='string')throw new Error('Invalid Teams image body');\n  images[image.url]='data:'+b['$content-type'].split(';')[0].trim().toLowerCase()+';base64,'+b['$content'];\n}\nactivity.attachments=(activity.attachments||[]).map(function(a){\n  return images[a.contentUrl]?Object.assign({},a,{contentUrl:images[a.contentUrl]}):a;\n});\nreturn activity;",
+                                "explicitDependencies": {
+                                  "actions": [
+                                    "convertActivity",
+                                    "Image_download_results"
+                                  ]
+                                }
+                              },
+                              "runAfter": {
+                                "Image_download_results": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "runtimeConfiguration": {
+                                "secureData": {
+                                  "properties": [
+                                    "outputs"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Invoke_QA_Bot": {
+                          "type": "Http",
+                          "inputs": {
+                            "authentication": {
+                              "audience": "@parameters('botAudience')",
+                              "identity": "@parameters('botIdentityResourceId')",
+                              "type": "ManagedServiceIdentity"
+                            },
+                            "body": "@if(equals(actions('Prepare_activity_images')?['status'], 'Succeeded'), body('Prepare_activity_images'), body('convertActivity'))",
+                            "headers": {
+                              "Content-Type": "application/json"
+                            },
+                            "method": "POST",
+                            "retryPolicy": {
+                              "type": "none"
+                            },
+                            "uri": "@{parameters('botBaseUrl')}/api/messages"
+                          },
+                          "runAfter": {
+                            "Resolve_image_bytes": [
+                              "Succeeded",
+                              "Failed",
+                              "TimedOut",
+                              "Skipped"
+                            ]
+                          },
+                          "runtimeConfiguration": {
+                            "secureData": {
+                              "properties": [
+                                "inputs"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {
+                          "Invoke_QA_Bot_without_images": {
+                            "type": "Http",
+                            "inputs": {
+                              "authentication": {
+                                "audience": "@parameters('botAudience')",
+                                "identity": "@parameters('botIdentityResourceId')",
+                                "type": "ManagedServiceIdentity"
+                              },
+                              "body": "@body('convertActivity')",
+                              "headers": {
+                                "Content-Type": "application/json"
+                              },
+                              "method": "POST",
+                              "retryPolicy": {
+                                "type": "none"
+                              },
+                              "uri": "@{parameters('botBaseUrl')}/api/messages"
+                            },
+                            "runAfter": {},
+                            "runtimeConfiguration": {
+                              "secureData": {
+                                "properties": [
+                                  "inputs"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        }
+      }
+    }
+  }
+}

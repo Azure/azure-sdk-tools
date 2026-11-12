@@ -1,5 +1,3 @@
-// vitest.config.ts
-// Compatible with Vitest v3.1.2 (latest as of April 21, 2025)
 import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
@@ -15,7 +13,7 @@ export default defineConfig({
     environment: 'node',
     // Specify test file patterns
     include: ['test/**/*.{test,spec}.{js,ts,jsx,tsx}'],
-    exclude: ['node_modules/', 'dist/'],
+    exclude: ['node_modules/', 'dist/', 'test/e2e/**'],
     // Coverage configuration
     coverage: {
       provider: 'v8', // Use V8 for faster coverage

@@ -1,0 +1,327 @@
+/**
+ * Reconcile hosted-agent roles and runtime configuration after native azd deploy.
+ * The pinned extension does not embed AZURE_APPCONFIG_ENDPOINT in the version
+ * definition, so create a follow-up version when its image, environment, or
+ * source-branch metadata needs updating, then reconcile that version's identity.
+ */
+
+import { execFileSync, execSync } from "child_process";
+
+import { ensureRoleAssignment } from "./lib/ensure-role-assignment.js";
+import { resolveAgentTargetImage } from "./lib/resolve-agent-image.js";
+import { ROLE_IDS } from "./lib/resource-roles.js";
+import { agentVersionMetadata } from "./lib/agent-version-metadata.js";
+
+// Foundry data-plane api-version that returns/accepts environment_variables in
+// the hosted agent version definition.
+const AGENT_API_VERSION = "2025-11-15-preview";
+
+/** Subset of the hosted agent version `definition` we read/clone. */
+interface AgentDefinition {
+  container_configuration?: { image?: string };
+  environment_variables?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+function log(msg: string): void {
+  console.log(`[agent:postdeploy] ${msg}`);
+}
+
+/** Load azd env values into process.env if not already present. */
+function loadAzdEnv(): void {
+  const raw = execSync("azd env get-values", { encoding: "utf8" });
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) {
+      val = val.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\").replace(/\\n/g, "\n");
+    }
+    if (!process.env[key]) process.env[key] = val;
+  }
+}
+
+/**
+ * Resolve the hosted agent's runtime managed-identity principal (object) ID by
+ * reading the deployed agent version from the Foundry data-plane API. The
+ * container runs as `instance_identity` (the auto-created "…-AgentIdentity"
+ * ServiceIdentity), which is what needs the data-plane role grants.
+ */
+async function getAgentIdentityPrincipalId(): Promise<string> {
+  let endpoint = process.env.AGENT_AGENT_ENDPOINT?.trim();
+  if (!endpoint) {
+    const projectEndpoint = process.env.FOUNDRY_PROJECT_ENDPOINT?.trim();
+    const agentName = process.env.AGENT_AGENT_NAME?.trim();
+    const agentVersion = process.env.AGENT_AGENT_VERSION?.trim();
+    if (projectEndpoint && agentName && agentVersion) {
+      endpoint = `${projectEndpoint}/agents/${agentName}/versions/${agentVersion}`;
+    }
+  }
+  if (!endpoint) {
+    throw new Error("The deployed agent endpoint is required to reconcile its runtime roles.");
+  }
+
+  const token = execSync(
+    "az account get-access-token --resource https://ai.azure.com --query accessToken -o tsv",
+    { encoding: "utf8" }
+  ).trim();
+
+  const url = `${endpoint}${endpoint.includes("?") ? "&" : "?"}api-version=2025-05-15-preview`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    throw new Error(`Cannot read the deployed agent identity (HTTP ${res.status}).`);
+  }
+  const body = (await res.json()) as {
+    instance_identity?: { principal_id?: string };
+  };
+  const principalId = body.instance_identity?.principal_id?.trim();
+  if (!principalId) {
+    throw new Error("Deployed agent version has no instance_identity.principal_id.");
+  }
+  return principalId;
+}
+
+/**
+ * Idempotently grant a built-in role to a service principal at a scope.
+ * Returns true on success (including when the assignment already exists).
+ */
+function grantRole(principalId: string, role: string, scope: string): boolean {
+  const equivalentRoles: Record<string, readonly string[]> = {
+    "App Configuration Data Reader": [ROLE_IDS.configOwner],
+    "Cognitive Services OpenAI User": [ROLE_IDS.foundryUser, ROLE_IDS.foundryManager],
+    "Foundry User": [ROLE_IDS.foundryManager],
+  };
+  return ensureRoleAssignment({
+    principalId,
+    roleDefinitionId: role,
+    scope,
+    principalType: "ServicePrincipal",
+    equivalentRoleDefinitionIds: equivalentRoles[role],
+    log,
+  });
+}
+
+/**
+ * Grant the hosted agent's runtime identity every data-plane role it needs.
+ * Mirrors the role set held by the shared qabot-identity, since the hosted
+ * container authenticates as the agent's own identity (AZURE_CLIENT_ID is unset
+ * in Foundry hosted containers, so ManagedIdentityCredential() resolves to the
+ * agent identity rather than the shared one).
+ *
+ * "App Configuration Data Reader" is the critical, boot-blocking grant: without
+ * it the container crashes in app_config.init() before it can serve /readiness.
+ */
+async function ensureAgentIdentityRbac(): Promise<void> {
+  const sub = process.env.AZURE_SUBSCRIPTION_ID?.trim();
+  const rg = process.env.AZURE_RESOURCE_GROUP?.trim();
+  if (!sub || !rg) {
+    throw new Error("Subscription and resource group are required to reconcile the hosted agent's roles.");
+  }
+
+  const principalId = await getAgentIdentityPrincipalId();
+
+  const providers = `/subscriptions/${sub}/resourceGroups/${rg}/providers`;
+  const scopeFor = (type: string, name: string | undefined) =>
+    name ? `${providers}/${type}/${name}` : undefined;
+
+  const appConfigScope = scopeFor("Microsoft.AppConfiguration/configurationStores", process.env.APP_CONFIG_NAME?.trim());
+  const aiScope = scopeFor("Microsoft.CognitiveServices/accounts", process.env.AI_RESOURCE_NAME?.trim());
+  const storageScope = scopeFor("Microsoft.Storage/storageAccounts", process.env.STORAGE_ACCOUNT_NAME?.trim());
+  const searchScope = scopeFor("Microsoft.Search/searchServices", process.env.SEARCH_SERVICE_NAME?.trim());
+
+  const grants: Array<[string, string | undefined]> = [
+    ["App Configuration Data Reader", appConfigScope],
+    ["Foundry User", aiScope],
+    ["Cognitive Services OpenAI User", aiScope],
+    ["Storage Blob Data Owner", storageScope],
+    ["Storage Table Data Contributor", storageScope],
+    ["Storage Queue Data Contributor", storageScope],
+    ["Search Index Data Contributor", searchScope],
+  ];
+
+  log(`Granting data-plane roles to hosted agent identity ${principalId}`);
+  for (const [role, scope] of grants) {
+    if (!scope) {
+      throw new Error(`Cannot reconcile "${role}": target resource name is missing.`);
+    }
+    if (!grantRole(principalId, role, scope)) {
+      throw new Error(`Failed to reconcile required hosted-agent role "${role}" at ${scope}.`);
+    }
+  }
+  log("Agent identity RBAC complete.");
+}
+
+/**
+ * Resolve the Foundry project endpoint (…/api/projects/<project>) used for the
+ * agent versions data-plane API.
+ */
+function getProjectEndpoint(): string | undefined {
+  const direct = process.env.FOUNDRY_PROJECT_ENDPOINT?.trim();
+  if (direct) return direct.replace(/\/+$/, "");
+  // Derive from the full agent-version endpoint if only that is set.
+  const agentEndpoint = process.env.AGENT_AGENT_ENDPOINT?.trim();
+  const m = agentEndpoint?.match(/^(.*\/api\/projects\/[^/]+)\/agents\//);
+  return m ? m[1] : undefined;
+}
+
+/** Acquire a Foundry data-plane bearer token via the Azure CLI. */
+function getFoundryToken(): string {
+  return execSync(
+    "az account get-access-token --resource https://ai.azure.com --query accessToken -o tsv",
+    { encoding: "utf8" }
+  ).trim();
+}
+
+/**
+ * Ensure the hosted agent's LATEST version carries the AZURE_APPCONFIG_ENDPOINT
+ * environment variable in its container definition.
+ *
+ * azd's "Registering agent environment variables" step does NOT embed
+ * agent.yaml `environment_variables` into the version definition, so the
+ * container boots without AZURE_APPCONFIG_ENDPOINT and crashes in
+ * app_config.init() (→ 424 session_not_ready). We clone the newly deployed
+ * version with environment_variables embedded and make it @latest.
+ *
+ * Idempotent: if the latest version already runs the target image with the
+ * correct AZURE_APPCONFIG_ENDPOINT we do nothing, so re-running postdeploy
+ * without a fresh `azd deploy` is a no-op.
+ */
+async function ensureAgentAppConfigEnv(): Promise<boolean> {
+  const appConfigEndpoint = process.env.AZURE_APPCONFIG_ENDPOINT?.trim();
+  if (!appConfigEndpoint) {
+    throw new Error("AZURE_APPCONFIG_ENDPOINT is required to configure the hosted agent version.");
+  }
+  const projectEndpoint = getProjectEndpoint();
+  const agentName = process.env.AGENT_AGENT_NAME?.trim();
+  if (!projectEndpoint || !agentName) {
+    throw new Error("FOUNDRY_PROJECT_ENDPOINT and AGENT_AGENT_NAME are required to configure the hosted agent version.");
+  }
+
+  const token = getFoundryToken();
+  const authHeader = { Authorization: `Bearer ${token}` };
+  const versionsUrl = `${projectEndpoint}/agents/${agentName}/versions?api-version=${AGENT_API_VERSION}`;
+
+  // Resolve the latest version (versions list is returned newest-first).
+  const listRes = await fetch(versionsUrl, { headers: authHeader });
+  if (!listRes.ok) {
+    throw new Error(`Failed to list hosted agent versions (HTTP ${listRes.status}).`);
+  }
+  const list = (await listRes.json()) as {
+    data?: Array<{ version?: string; definition?: AgentDefinition; metadata?: Record<string, string> }>;
+  };
+  const versions = (list.data ?? [])
+    .map((v) => ({ n: Number(v.version), def: v.definition, metadata: v.metadata }))
+    .filter((v) => Number.isFinite(v.n))
+    .sort((a, b) => b.n - a.n);
+  if (versions.length === 0) {
+    throw new Error("No hosted agent versions found to configure.");
+  }
+  const latest = versions[0];
+  const def = latest.def;
+  const latestImage = def?.container_configuration?.image;
+  if (!def || !latestImage) {
+    throw new Error(`Latest hosted agent version ${latest.n} has no container image.`);
+  }
+
+  const targetImage = resolveAgentTargetImage(process.env);
+  const metadata = agentVersionMetadata(process.env, latest.metadata);
+  if (!targetImage) {
+    throw new Error(
+      "Cannot determine the deployment-selected agent image. Set " +
+        "AZURE_CONTAINER_REGISTRY_ENDPOINT, AGENT_IMAGE_REPOSITORY, " +
+        "AZURE_ENV_NAME, and AZD_IMAGE_TAG.",
+    );
+  }
+
+  if (
+    latestImage === targetImage &&
+    def.environment_variables?.AZURE_APPCONFIG_ENDPOINT === appConfigEndpoint &&
+    latest.metadata?.branchname === metadata.branchname
+  ) {
+    log(
+      `Latest agent version ${latest.n} already runs ${targetImage} with ` +
+        `AZURE_APPCONFIG_ENDPOINT — no new version needed.`
+    );
+    return false;
+  }
+
+  log(
+    `Creating hosted agent version: image ${targetImage} + AZURE_APPCONFIG_ENDPOINT ` +
+      `(latest v${latest.n} runs ${latestImage}, env=${def.environment_variables?.AZURE_APPCONFIG_ENDPOINT ?? "unset"}).`
+  );
+
+  const newDefinition: AgentDefinition = {
+    ...def,
+    container_configuration: { ...def.container_configuration, image: targetImage },
+    environment_variables: {
+      ...(def.environment_variables ?? {}),
+      AZURE_APPCONFIG_ENDPOINT: appConfigEndpoint,
+    },
+  };
+  const body = {
+    definition: newDefinition,
+    metadata: {
+      ...metadata,
+      appconfigEnvInjected: targetImage,
+    },
+  };
+
+  const createUrl = `${projectEndpoint}/agents/${agentName}/versions?api-version=${AGENT_API_VERSION}`;
+  const createRes = await fetch(createUrl, {
+    method: "POST",
+    headers: { ...authHeader, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!createRes.ok) {
+    const detail = await createRes.text().catch(() => "");
+    throw new Error(
+      `Failed to create hosted agent version with AZURE_APPCONFIG_ENDPOINT ` +
+        `(HTTP ${createRes.status}): ${detail.slice(0, 500)}`
+    );
+  }
+  const created = (await createRes.json()) as {
+    version?: string;
+    definition?: AgentDefinition;
+    metadata?: Record<string, string>;
+  };
+  const injected = created.definition?.environment_variables?.AZURE_APPCONFIG_ENDPOINT;
+  if (!created.version) {
+    throw new Error("Created hosted agent response has no version.");
+  }
+  if (injected !== appConfigEndpoint) {
+    throw new Error(
+      `Created agent version ${created.version} but AZURE_APPCONFIG_ENDPOINT was not persisted.`
+    );
+  }
+  if (created.metadata?.branchname !== metadata.branchname) {
+    throw new Error(`Created agent version ${created.version} but its source branch metadata was not persisted.`);
+  }
+  const endpoint = `${projectEndpoint}/agents/${agentName}/versions/${created.version}`;
+  for (const [key, value] of [
+    ["AGENT_AGENT_VERSION", created.version],
+    ["AGENT_AGENT_ENDPOINT", endpoint],
+  ]) {
+    execFileSync("azd", ["env", "set", key, value], { stdio: "inherit" });
+    process.env[key] = value;
+  }
+  log(`  ✓ created agent version ${created.version} (image ${targetImage}, AZURE_APPCONFIG_ENDPOINT set, @latest).`);
+  return true;
+}
+
+(async () => {
+  loadAzdEnv();
+  await ensureAgentIdentityRbac();
+
+  if (await ensureAgentAppConfigEnv()) {
+    await ensureAgentIdentityRbac();
+  }
+
+})().catch((err) => {
+  console.error(`[agent:postdeploy] FAILED: ${err.message}`);
+  process.exit(1);
+});
+
+export {};

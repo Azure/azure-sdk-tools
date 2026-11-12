@@ -13,6 +13,7 @@ vi.mock('../src/common/shared.js', () => ({
 vi.mock('../src/config/config.js', () => ({
   default: {
     MicrosoftAppId: 'test-bot-id',
+    userManagedIdentityClientID: 'test-managed-identity-id',
     azureBlobStorageUrl: 'https://test.blob.core.windows.net',
     blobContainerName: 'bot-configs',
   },
@@ -64,7 +65,9 @@ describe('BlobClientManager', () => {
       getContainerClient: vi.fn().mockReturnValue(mockContainerClient),
     };
 
-    (BlobServiceClient as unknown as Mock).mockImplementation(() => mockBlobServiceClient);
+    (BlobServiceClient as unknown as Mock).mockImplementation(function () {
+      return mockBlobServiceClient;
+    });
     (getAzureCredential as Mock).mockResolvedValue({ token: 'test-token' });
   });
 
@@ -94,6 +97,7 @@ describe('BlobClientManager', () => {
       const manager = BlobClientManager.getInstance();
       await manager.initialize();
 
+      expect(getAzureCredential).toHaveBeenCalledWith('test-managed-identity-id');
       expect(BlobServiceClient).toHaveBeenCalledWith(
         'https://test.blob.core.windows.net',
         expect.anything()

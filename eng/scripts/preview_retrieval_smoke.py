@@ -8,6 +8,9 @@ import time
 import urllib.request
 
 
+TARGET = os.environ.get("TARGET_ENVIRONMENT", "preview")
+
+
 def verify_runtime():
     token_result = subprocess.run(
         [
@@ -25,7 +28,7 @@ def verify_runtime():
     with urllib.request.urlopen(request, timeout=60) as response:
         version = json.load(response)
     if version.get("miseVersion") != "MISEv2":
-        raise RuntimeError("Preview runtime did not report MISEv2")
+        raise RuntimeError(TARGET + " runtime did not report MISEv2")
     print("Authenticated runtime:", json.dumps(version), flush=True)
 
 
@@ -116,7 +119,7 @@ def verify_retrieval(dll):
                 knowledge = json.loads(context)
                 if isinstance(knowledge, list) and knowledge:
                     print(
-                        "PASS: pipeline identity -> live MCP -> preview MISEv2 -> "
+                        "PASS: pipeline identity -> live MCP -> " + TARGET + " MISEv2 -> "
                         + str(len(knowledge)) + " knowledge results.",
                         flush=True,
                     )

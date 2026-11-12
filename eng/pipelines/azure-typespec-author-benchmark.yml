@@ -1,6 +1,14 @@
 trigger: none
 pr: none
 
+parameters:
+- name: TargetEnvironment
+  type: string
+  default: preview
+  values:
+  - preview
+  - production
+
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
 
@@ -31,7 +39,7 @@ extends:
             artifactName: mcp-servers
             targetPath: $(Pipeline.Workspace)/retrieval-mcp
         - task: AzureCLI@2
-          displayName: Verify preview MISE v2 and invoke knowledge retrieval
+          displayName: Verify ${{ parameters.TargetEnvironment }} MISE v2 and invoke knowledge retrieval
           inputs:
             azureSubscription: azuresdkqabot-dev
             scriptType: bash
@@ -41,6 +49,12 @@ extends:
           env:
             AZSDKTOOLS_AGENT_TESTING: 'false'
             AZSDKTOOLS_COLLECT_TELEMETRY: 'false'
-            AZURE_SDK_KB_ENDPOINT: https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net
-            AZURE_SDK_KB_CLIENT_ID: 674414e1-152b-41ac-b0d2-763535edea6c
-            AZURE_SDK_KB_SCOPE: api://azure-sdk-qa-bot-test/user_impersonation
+            TARGET_ENVIRONMENT: ${{ parameters.TargetEnvironment }}
+            ${{ if eq(parameters.TargetEnvironment, 'preview') }}:
+              AZURE_SDK_KB_ENDPOINT: https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net
+              AZURE_SDK_KB_CLIENT_ID: 674414e1-152b-41ac-b0d2-763535edea6c
+              AZURE_SDK_KB_SCOPE: api://azure-sdk-qa-bot-test/user_impersonation
+            ${{ if eq(parameters.TargetEnvironment, 'production') }}:
+              AZURE_SDK_KB_ENDPOINT: https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net
+              AZURE_SDK_KB_CLIENT_ID: 899da762-d510-48f2-911a-db9ea0cc41fd
+              AZURE_SDK_KB_SCOPE: api://azure-sdk-qa-bot/token

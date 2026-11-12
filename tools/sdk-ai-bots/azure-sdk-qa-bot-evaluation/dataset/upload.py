@@ -1,14 +1,14 @@
 """Upload curated per-scenario datasets as Foundry versioned Dataset assets.
 
 Third step of *dataset preparation*. Each curated file becomes one Foundry Dataset
-asset named ``qa-bot-<target>-<scenario>`` with version ``<scenario>-YYYY-MM-DD``
+asset named ``qa-bot-perf-<scenario>`` with version ``<scenario>-YYYY-MM-DD``
 (O3: one asset per scenario, named/versioned by scenario + time). The returned
-asset id is recorded in ``evaluation_datasets/registry.json`` so evaluation runs can resolve
-``--dataset <name:latest>`` to an asset id.
+asset id is recorded in ``evaluation_datasets/registry.json`` for published-asset
+tracking. Completion-mode runs read the local scenario files.
 
 Usage:
-    python -m dataset.upload --target basic
-    python -m dataset.upload --target perf --scenario typespec
+    python -m dataset.upload
+    python -m dataset.upload --scenario typespec
 """
 
 from __future__ import annotations
@@ -105,13 +105,12 @@ def upload(target_dir: Path, target: str, scenario_filter: str | None, registry_
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(asctime)s - %(levelname)s - %(message)s")
     parser = argparse.ArgumentParser(description="Upload curated datasets as Foundry versioned assets.")
-    parser.add_argument("--target", choices=["basic", "perf"], required=True)
     parser.add_argument("--scenario", type=str, default=None, help="Only this scenario (file stem).")
     args = parser.parse_args(argv)
 
     load_dotenv()
     script_dir = Path(__file__).resolve().parent.parent
-    target_dir = script_dir / "evaluation_datasets" / args.target
+    target_dir = script_dir / "evaluation_datasets" / "perf"
     registry_path = script_dir / "evaluation_datasets" / REGISTRY_NAME
 
     if not target_dir.exists():
@@ -119,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        upload(target_dir, args.target, args.scenario, registry_path)
+        upload(target_dir, "perf", args.scenario, registry_path)
     except Exception as exc:  # noqa: BLE001
         logging.exception("Upload failed: %s", exc)
         return 1

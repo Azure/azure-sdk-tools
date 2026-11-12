@@ -1,9 +1,7 @@
 """Shared Azure Blob Storage helpers for dataset preparation.
 
-Both ``curate`` (all blobs) and ``online_snapshot`` (recent rolling window) pull the
-same Q&A markdown container, and the evaluation entry point needs the same credential
-selection. This module centralizes credential choice and the blob-download loop so the
-logic lives in exactly one place.
+``curate`` pulls collected Q&A markdown, and evaluation uses the same credential
+selection. This module centralizes credentials and blob downloads.
 """
 
 from __future__ import annotations

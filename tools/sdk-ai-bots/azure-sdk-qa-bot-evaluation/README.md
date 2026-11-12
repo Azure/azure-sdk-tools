@@ -12,8 +12,8 @@ There are **two independent parts**:
 1. **Dataset preparation** (`dataset/`) — infrequent. Scans storage, screens cases
    into curated per-scenario JSONL, and publishes them as Foundry versioned
    Dataset assets.
-2. **Evaluation runs** (`evals_run.py`) — consume the published assets locally or in
-   CI/CD.
+2. **Evaluation runs** (`evals_run.py`) — evaluate core or full scenario datasets
+   locally or in the perf pipeline.
 
 ## Prerequisites
 
@@ -37,7 +37,8 @@ by the evaluators.
 
 ```json
 {
-  "testcase": "unique name",
+  "testcase": "001003-version-required-to-optional",
+  "tags": ["core"],
   "query": "question to ask the bot",
   "ground_truth": "expected answer",
   "expected_references": [{"title": "t", "link": "https://..."}],
@@ -56,8 +57,7 @@ and dropped, or a leftover `todo` finalized at promote time).
 Validate any file/folder:
 
 ```bash
-python -m dataset.validate evaluation_datasets/basic
-python -m dataset.validate evaluation_datasets/basic --require-reviewed
+python -m dataset.validate evaluation_datasets/perf --require-reviewed
 ```
 
 ## Part 1 — Dataset preparation
@@ -68,34 +68,34 @@ python -m dataset.curate                       # downloads all blobs first
 python -m dataset.curate --source_md_path online-qa-tests   # or use local md
 
 # 2) Human review: edit evaluation_datasets/_staging/<scenario>.jsonl, fix links/answers,
-#    set "reviewed": "pass" on keepers.
+#    assign a unique testcase ID and tags, then set "reviewed": "pass" on keepers.
 
 # 3) Promote "pass" rows into the curated set (append, incremental). Any rows
 #    still "todo" are finalized to "abandoned" and kept in staging (deduped).
-python -m dataset.review --target basic      # or --target perf
+python -m dataset.review
 
 # 4) Upload one versioned Foundry Dataset asset per scenario; writes registry.json.
-python -m dataset.upload --target basic      # qa-bot-basic-<scenario>:<scenario>-YYYY-MM-DD
+python -m dataset.upload                     # qa-bot-perf-<scenario>:<scenario>-YYYY-MM-DD
 ```
 
 `evaluation_datasets/_staging/` is committed (shared review state, so concurrent
-contributors don't re-curate the same cases); `evaluation_datasets/basic/`, `evaluation_datasets/perf/` and
+contributors don't re-curate the same cases); `evaluation_datasets/perf/` and
 `evaluation_datasets/registry.json` are committed.
 
 ## Part 2 — Running evaluations
 
-We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached results after grading. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
+We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached results after grading. Reads cases from the local `evaluation_datasets/perf/<scenario>.jsonl`. `--scope core` is the default.
 
 ```bash
 # Concurrent /completion collection + inline grading:
 python evals_run.py \
-  --dataset "qa-bot-basic-typespec:latest" \
+  --dataset "qa-bot-perf-typespec:latest" \
   --evaluators "bot_evals,groundedness" \
   --max_concurrency 8 \
   --baseline_check False --is_ci False
 
 # Or point at a local curated file directly:
-python evals_run.py --dataset evaluation_datasets/basic/typespec.jsonl --is_ci False
+python evals_run.py --dataset evaluation_datasets/perf/typespec.jsonl --scope full --is_ci False
 ```
 
 Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE` or `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py` locally (defaults to `http://localhost:8089`). `AI_FOUNDRY_AGENT_NAME` selects the Hosted Agent whose stored responses are retrieved and defaults to `azure-sdk-chat-agent`. Tenant routing is resolved from `BOT_CONFIG_CONTAINER` / `BOT_CONFIG_CHANNEL_BLOB`.
@@ -128,12 +128,9 @@ but are not scored by an evaluator.
 
 | Pipeline | Purpose |
 |---|---|
-| `offline-evaluation.yml` | PR gate; starts agent server.py, evaluates the curated `basic` sets via local /completion. |
-| `online-evaluation.yml` | weekly production check; snapshots the last 21 days of storage md (`dataset.online_snapshot`) and evaluates that fresh data against the deployed bot. |
-| `perf-evaluation.yml` | weekly/manual, large per-scenario perf datasets. |
+| `perf-evaluation.yml` | Manual core/full evaluation for selected scenarios. |
 
-Offline/perf start a local development backend and always use the running pipeline's
-branch name via `EVAL_AGENT_BRANCH`. No additional pipeline parameters are needed.
+The perf pipeline uses the running pipeline's branch name via `EVAL_AGENT_BRANCH`.
 Branch deployments must already exist: targeting a branch does not build/deploy it.
 Each request prepends `[branch:<running-branch>]` to the message, using the same
 routing as channel messages. The backend resolves the tenant's agent from configuration,
@@ -141,19 +138,7 @@ then selects its newest active Foundry version with matching `metadata.branchnam
 Failed, provisioning, or unknown-readiness versions are not selected; missing active
 branch deployments fail instead of falling back. Each tagged request looks up Foundry directly.
 Dataset queries and grading inputs remain unchanged; only the outgoing message includes the prefix.
-Local runs without `EVAL_AGENT_BRANCH` and online production retain environment defaults.
-
-The online pipeline evaluates the **freshly collected weekly md** (not the static
-`basic` set): `dataset.online_snapshot` downloads recent md and converts it to
-per-scenario `online-tests/<scenario>.jsonl`, then `evals_run.py` grades each file:
-
-```bash
-python -m dataset.online_snapshot --is_ci False --days_before 21 --dest online-tests
-for f in online-tests/*.jsonl; do
-  python evals_run.py --dataset "$f" --evaluators bot_evals --baseline_check False --is_ci False
-done
-```
-
+Local runs without `EVAL_AGENT_BRANCH` retain environment defaults.
 
 ## Tests
 

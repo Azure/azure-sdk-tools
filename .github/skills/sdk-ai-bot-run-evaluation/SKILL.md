@@ -4,7 +4,7 @@ license: MIT
 metadata:
   version: "1.0.0"
   distribution: local
-description: 'Run Azure SDK QA bot evaluations on curated datasets locally, including a single test case. WHEN: "run evaluation", "run eval", "evaluate the bot", "run perf evaluation", "run basic evaluation", "run a single test case", "evaluate one question", "run all scenarios", "score the bot", "run evals locally". DO NOT USE FOR: preparing or uploading datasets, pipeline troubleshooting, knowledge-graph indexing.'
+description: 'Run Azure SDK QA bot core or full evaluations locally, including one case. WHEN: "run evaluation", "run eval", "evaluate the bot", "run perf evaluation", "run core evaluation", "run full evaluation", "run a single test case", "evaluate one question", "run all scenarios", "score the bot", "run evals locally". DO NOT USE FOR: preparing datasets or pipeline troubleshooting.'
 compatibility: "local azure-sdk-tools clone, python 3.12 venv, az login, bot /completion endpoint"
 ---
 
@@ -19,14 +19,15 @@ Run all commands from `tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation` with the p
 
 ## Triggers
 
-USE FOR: run an evaluation on a curated dataset (basic or perf); run a single scenario; run all scenarios; run a single test case; grade against the local or deployed bot; inspect results and the pass/fail gate
-WHEN: "run evaluation", "run eval", "evaluate the bot", "run perf evaluation", "run basic evaluation", "run a single test case", "evaluate one question", "run all scenarios", "score the bot", "run evals locally"
+USE FOR: run core or full evaluation; run a scenario or one case; grade against a local or deployed bot; inspect results and the pass/fail gate
+WHEN: "run evaluation", "run eval", "evaluate the bot", "run perf evaluation", "run core evaluation", "run full evaluation", "run a single test case", "evaluate one question", "run all scenarios", "score the bot", "run evals locally"
 DO NOT USE FOR: preparing or uploading datasets, pipeline troubleshooting, knowledge-graph indexing
 
 ## Rules
 
-- `--dataset` accepts a local `evaluation_datasets/<target>/<scenario>.jsonl` path **or** a Foundry asset name `qa-bot-<target>-<scenario>[:version]` (the asset name resolves to the local file; the version is informational).
-- There is **no single-testcase flag**. To run **one case**, make a one-row JSONL file and pass it as `--dataset` (see the reference).
+- `--dataset` accepts `evaluation_datasets/perf/<scenario>.jsonl` or `qa-bot-perf-<scenario>[:version]`; the alias resolves locally.
+- `--scope` selects `core` (default) or `full`.
+- There is no single-case flag. Make a one-row JSONL file and pass it as `--dataset`.
 - Use `--is_ci False` locally (uses `az login`); CI uses pipeline identity.
 - The bot endpoint comes from `BOT_SERVICE_ENDPOINT`; if unset it defaults to the **local** `http://localhost:8089` — start the agent `server.py` first for local runs.
 - Default evaluators are all seven; pass `--evaluators` to subset.
@@ -49,13 +50,14 @@ Confirm and remind the user to set these before running (loads `.env`; copy and 
 ```bash
 # One scenario (all evaluators), against the local server, no baseline gate:
 python evals_run.py --dataset evaluation_datasets/perf/typespec.jsonl \
-  --is_ci False --baseline_check False --cache_result full
+  --scope core --is_ci False --baseline_check False --cache_result full
 
 # Same via the asset name:
-python evals_run.py --dataset "qa-bot-perf-typespec:latest" --is_ci False --baseline_check False
+python evals_run.py --dataset "qa-bot-perf-typespec:latest" \
+  --scope full --is_ci False --baseline_check False
 
 # Subset of evaluators:
-python evals_run.py --dataset "qa-bot-basic-python:latest" \
+python evals_run.py --dataset "qa-bot-perf-python:latest" --scope core \
   --evaluators "bot_evals,groundedness" --is_ci False --baseline_check False
 ```
 

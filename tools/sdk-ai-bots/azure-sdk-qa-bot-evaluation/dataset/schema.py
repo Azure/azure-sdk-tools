@@ -21,6 +21,8 @@ REVIEW_STATUS_TODO = "todo"
 REVIEW_STATUS_PASS = "pass"
 REVIEW_STATUS_ABANDONED = "abandoned"
 REVIEW_STATUSES = (REVIEW_STATUS_TODO, REVIEW_STATUS_PASS, REVIEW_STATUS_ABANDONED)
+CASE_ID_PATTERN = r"^(\d{3})(\d{3})-([A-Za-z][A-Za-z0-9]*)-([a-z0-9]+(?:-[a-z0-9]+)*)$"
+_CASE_ID_RE = re.compile(CASE_ID_PATTERN)
 
 
 def normalize_query(query: str) -> str:
@@ -70,10 +72,17 @@ JSON_SCHEMA: dict[str, Any] = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "QA bot evaluation canonical case",
     "type": "object",
+    "allOf": [
+        {
+            "if": {"properties": {"reviewed": {"enum": [REVIEW_STATUS_PASS, True]}}},
+            "then": {"properties": {"testcase": {"pattern": CASE_ID_PATTERN}}},
+        }
+    ],
     "additionalProperties": True,
     "required": ["testcase", "query", "ground_truth", "scenario", "reviewed"],
     "properties": {
         "testcase": {"type": "string", "minLength": 1},
+        "tags": {"type": "array", "items": {"enum": ["core"]}, "uniqueItems": True},
         "query": {"type": "string", "minLength": 1},
         "ground_truth": {"type": "string", "minLength": 1},
         "expected_references": {
@@ -107,7 +116,7 @@ JSON_SCHEMA: dict[str, Any] = {
 }
 
 
-REQUIRED_STR_FIELDS = ("testcase", "query", "ground_truth", "scenario")
+REQUIRED_STR_FIELDS = ("query", "ground_truth", "scenario")
 REFERENCE_LIST_FIELDS = ("expected_references", "expected_knowledges")
 
 
@@ -129,9 +138,10 @@ class CanonicalCase:
     expected_references: list[dict[str, str]] = field(default_factory=list)
     expected_knowledges: list[dict[str, str]] = field(default_factory=list)
     dedup_key: str = ""
+    tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "testcase": self.testcase,
             "query": self.query,
             "ground_truth": self.ground_truth,
@@ -142,7 +152,9 @@ class CanonicalCase:
             "source": self.source,
             "reviewed": self.reviewed,
             "dedup_key": self.dedup_key or case_hash(self.scenario, self.query),
+            "tags": list(self.tags),
         }
+        return result
 
     @classmethod
     def from_dict(cls, obj: dict[str, Any]) -> "CanonicalCase":
@@ -158,6 +170,7 @@ class CanonicalCase:
             expected_references=list(obj.get("expected_references", []) or []),
             expected_knowledges=list(obj.get("expected_knowledges", []) or []),
             dedup_key=obj.get("dedup_key", "") or "",
+            tags=list(obj.get("tags", [])),
         )
 
 
@@ -176,13 +189,28 @@ def _validate_reference_list(value: Any, field_name: str, where: str) -> None:
                 raise ValidationError(f"{where}: '{field_name}[{i}].{key}' must be a string")
 
 
-def validate_case(obj: Any, where: str = "case") -> None:
+def validate_case(obj: Any, where: str = "case", *, require_benchmark: bool = False) -> None:
     """Validate a single decoded JSON object against the canonical schema.
 
     Raises ``ValidationError`` with a descriptive message on the first problem.
     """
     if not isinstance(obj, dict):
         raise ValidationError(f"{where}: expected an object, got {type(obj).__name__}")
+
+    if "testcase" not in obj:
+        raise ValidationError(f"{where}: missing required field 'testcase'")
+    if require_benchmark and "tags" not in obj:
+        raise ValidationError(f"{where}: missing required benchmark field 'tags'")
+    testcase = obj["testcase"]
+    require_testcase_id = require_benchmark or obj.get("reviewed") in (REVIEW_STATUS_PASS, True)
+    if not isinstance(testcase, str) or not testcase.strip():
+        raise ValidationError(f"{where}: 'testcase' must be a non-empty string")
+    if require_testcase_id and not _CASE_ID_RE.fullmatch(testcase):
+        raise ValidationError(f"{where}: 'testcase' must use CCCSSS-category-situation format")
+    if "tags" in obj:
+        tags = obj["tags"]
+        if not isinstance(tags, list) or any(tag != "core" for tag in tags) or len(tags) > 1:
+            raise ValidationError(f"{where}: 'tags' must be [] or ['core']")
 
     for f in REQUIRED_STR_FIELDS:
         if f not in obj:
@@ -225,37 +253,86 @@ def iter_jsonl(path: str | Path) -> Iterator[tuple[int, dict[str, Any]]]:
             yield line_no, obj
 
 
-def validate_file(path: str | Path, *, require_reviewed: bool = False) -> int:
-    """Validate every line of a JSONL dataset file.
-
-    Args:
-        path: dataset JSONL file.
-        require_reviewed: when True, also require every row to have ``reviewed=='pass'``
-            (used to gate official datasets).
-
-    Returns:
-        The number of valid cases.
-
-    Raises:
-        ValidationError: on the first invalid row.
-    """
-    p = Path(path)
+def _validate_rows(
+    rows: Iterable[tuple[int, dict[str, Any]]],
+    *,
+    source: str,
+    require_reviewed: bool,
+    require_benchmark: bool,
+    scenario: str | None = None,
+) -> int:
     count = 0
     seen_keys: set[str] = set()
-    for line_no, obj in iter_jsonl(p):
-        where = f"{p}:{line_no}"
-        validate_case(obj, where=where)
+    seen_numbers: set[str] = set()
+    categories: dict[str, str] = {}
+    category_numbers: dict[str, str] = {}
+    for line_no, obj in rows:
+        where = f"{source}:{line_no}"
+        validate_case(obj, where=where, require_benchmark=require_benchmark)
         if require_reviewed and normalize_review_status(obj.get("reviewed", REVIEW_STATUS_TODO)) != REVIEW_STATUS_PASS:
             raise ValidationError(f"{where}: case is not passed (reviewed != 'pass')")
-        # The canonical dedup identity is the persisted ``dedup_key`` (frozen at
-        # curation time), falling back to the normalized query for legacy rows.
-        # testcase titles may legitimately repeat (e.g. the placeholder "Untitled").
-        key = resolve_dedup_key(obj)
+        if scenario is not None and obj["scenario"] != scenario:
+            raise ValidationError(f"{where}: expected scenario {scenario!r}, got {obj['scenario']!r}")
+        testcase = obj.get("testcase")
+        match = _CASE_ID_RE.fullmatch(testcase) if isinstance(testcase, str) else None
+        # Structured IDs distinguish preserved benchmark cases. Staging titles
+        # continue to use their stable query-based dedup identity.
+        key = testcase if match else resolve_dedup_key(obj)
         if key in seen_keys:
-            raise ValidationError(f"{where}: duplicate case (same dedup_key/query) within file")
+            raise ValidationError(f"{where}: duplicate case identity within file: {key}")
         seen_keys.add(key)
+        if match:
+            category_number, situation_number, category, _ = match.groups()
+            number = category_number + situation_number
+            if number in seen_numbers:
+                raise ValidationError(f"{where}: duplicate numeric case ID {number}")
+            seen_numbers.add(number)
+            if categories.setdefault(category_number, category) != category:
+                raise ValidationError(f"{where}: inconsistent category for {category_number}")
+            if category_numbers.setdefault(category, category_number) != category_number:
+                raise ValidationError(f"{where}: inconsistent number for category {category}")
         count += 1
     return count
+
+
+def validate_records(
+    records: list[dict[str, Any]],
+    *,
+    require_reviewed: bool = True,
+    scenario: str | None = None,
+) -> int:
+    """Validate identified benchmark cases without accessing Azure."""
+    return _validate_rows(
+        enumerate(records, 1),
+        source="cases",
+        require_reviewed=require_reviewed,
+        require_benchmark=True,
+        scenario=scenario,
+    )
+
+
+def select_cases(records: list[dict[str, Any]], scope: str, *, scenario: str) -> list[dict[str, Any]]:
+    """Select a deterministic benchmark scope, rejecting invalid or empty input."""
+    if scope not in ("core", "full"):
+        raise ValidationError(f"Unknown evaluation scope: {scope!r}")
+    validate_records(records, scenario=scenario)
+    selected = [record for record in records if scope == "full" or "core" in record["tags"]]
+    if not selected:
+        raise ValidationError(f"No {scope} cases selected for scenario {scenario!r}")
+    return selected
+
+
+def validate_file(path: str | Path, *, require_reviewed: bool = False) -> int:
+    """Validate JSONL; canonical case libraries also require IDs and tags."""
+    p = Path(path)
+    benchmark = p.parent.name == "perf"
+    return _validate_rows(
+        iter_jsonl(p),
+        source=str(p),
+        require_reviewed=require_reviewed,
+        require_benchmark=benchmark,
+        scenario=p.stem if benchmark else None,
+    )
 
 
 def validate_paths(paths: Iterable[str | Path], *, require_reviewed: bool = False) -> tuple[int, int]:

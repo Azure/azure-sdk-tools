@@ -12,8 +12,8 @@ compatibility: "local azure-sdk-tools clone, python 3.12 venv, az login"
 
 Create a new per-scenario evaluation dataset or add cases to an existing one for the
 QA bot evaluation package at `tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation`. Datasets
-are per-scenario JSONL files under `evaluation_datasets/<target>/<scenario>.jsonl`
-(`target` = `basic` or `perf`) holding **inputs + expectations only**.
+are per-scenario JSONL files under `evaluation_datasets/perf/<scenario>.jsonl`
+holding **inputs + expectations only**.
 
 Run all commands from `tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation` with the package
 `.venv` active and `az login` done. See [schema and workflows](references/dataset-schema-and-workflows.md) for the canonical row format and step-by-step recipes.
@@ -26,10 +26,11 @@ DO NOT USE FOR: running evaluations, pipeline troubleshooting, knowledge-graph i
 
 ## Rules
 
-- A **dataset** is one file: `evaluation_datasets/<target>/<scenario>.jsonl`. **Creating a new dataset = creating a new `<scenario>.jsonl`** in `basic/` or `perf/`.
-- The canonical **dedup key is the normalized `query`** (applied at curation). `testcase` titles may legitimately repeat (e.g. `Untitled`) — never dedup or fail on `testcase`.
+- A dataset is one file: `evaluation_datasets/perf/<scenario>.jsonl`.
+- `testcase` is the case identity and must contain `CCCSSS-category-situation`. `tags: ["core"]` includes a case in core and full; `tags: []` makes it full-only.
+- New curation deduplicates on persisted `dedup_key`, or normalized scenario/query when absent. Existing benchmark rows are identified by `testcase`.
 - Only `reviewed: "pass"` rows are curated/committed; see the [review status lifecycle](references/dataset-schema-and-workflows.md) for the three states and how leftovers are finalized.
-- `evaluation_datasets/_staging/` **is committed** (shared review state) so concurrent contributors don't re-curate the same cases; `basic/`, `perf/` and `registry.json` are committed too.
+- `evaluation_datasets/_staging/`, `perf/`, and `registry.json` are committed.
 - Always validate before upload, and after editing any curated file.
 
 ## Environment
@@ -61,13 +62,13 @@ env vars; only `dataset.upload` then requires `AZURE_AI_PROJECT_ENDPOINT` + `az 
 
 ```bash
 # Validate a file or folder (--require-reviewed gates official datasets on reviewed=="pass")
-python -m dataset.validate evaluation_datasets/<target>/<scenario>.jsonl --require-reviewed
+python -m dataset.validate evaluation_datasets/perf/<scenario>.jsonl --require-reviewed
 
 # Promote reviewed (pass) staging rows; leftover items are finalized to abandoned
-python -m dataset.review --target <basic|perf> [--scenario <scenario>]
+python -m dataset.review [--scenario <scenario>]
 
 # Upload one versioned Foundry asset per scenario; writes registry.json
-python -m dataset.upload --target <basic|perf> [--scenario <scenario>]
+python -m dataset.upload [--scenario <scenario>]
 ```
 
 After adding or creating a dataset: **validate → upload → commit** the per-scenario
@@ -76,7 +77,7 @@ file, `registry.json`, and updated `_staging/` files.
 ## Steps
 
 1. Pick a workflow from the table above (manual add, curate from blob, or new dataset).
-2. Add or stage canonical rows in `evaluation_datasets/<target>/<scenario>.jsonl`.
+2. Add or stage canonical rows in `evaluation_datasets/perf/<scenario>.jsonl`.
 3. For staged cases, promote the reviewed ones with `python -m dataset.review`.
 4. Validate the file with `python -m dataset.validate ... --require-reviewed`.
 5. Publish with `python -m dataset.upload`, then commit the per-scenario file,

@@ -18,8 +18,8 @@ from agent_framework.foundry import FoundryChatClient
 from pytest import MonkeyPatch
 
 from utils.azure_ai_foundry import (
-    MODEL_CONTEXT_WINDOW_TOKENS,
-    MODEL_MAX_OUTPUT_TOKENS,
+    HARNESS_CONTEXT_WINDOW_TOKENS,
+    HARNESS_MAX_OUTPUT_TOKENS,
     create_hosted_chat_agent,
 )
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
@@ -100,9 +100,12 @@ def test_harness_adds_managed_providers(
         for middleware in agent.middleware or []
     )
     assert isinstance(agent.compaction_strategy, ContextWindowCompactionStrategy)
-    assert agent.compaction_strategy.max_context_window_tokens == MODEL_CONTEXT_WINDOW_TOKENS
-    assert agent.compaction_strategy.max_output_tokens == MODEL_MAX_OUTPUT_TOKENS
-    assert agent.default_options["max_tokens"] == MODEL_MAX_OUTPUT_TOKENS
+    assert (
+        agent.compaction_strategy.max_context_window_tokens
+        == HARNESS_CONTEXT_WINDOW_TOKENS
+    )
+    assert agent.compaction_strategy.max_output_tokens == HARNESS_MAX_OUTPUT_TOKENS
+    assert agent.default_options["max_tokens"] == HARNESS_MAX_OUTPUT_TOKENS
     instructions = agent.default_options["instructions"]
     assert "Treat large tool results as datasets." in instructions
     assert "Test instructions." in instructions

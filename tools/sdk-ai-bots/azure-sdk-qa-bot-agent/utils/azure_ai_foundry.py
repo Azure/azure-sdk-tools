@@ -34,9 +34,9 @@ from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
-# GPT-5.4 limits: https://developers.openai.com/api/docs/models/gpt-5.4
-MODEL_CONTEXT_WINDOW_TOKENS = 1_050_000
-MODEL_MAX_OUTPUT_TOKENS = 128_000
+# Conservative operating budgets independent of the configured model's maximums.
+HARNESS_CONTEXT_WINDOW_TOKENS = 256_000
+HARNESS_MAX_OUTPUT_TOKENS = 16_384
 
 _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
@@ -108,8 +108,8 @@ def create_hosted_chat_agent(
         harness_instructions=harness_instructions,
         agent_instructions=instructions,
         tools=[web_search_tool, *tools] if isinstance(tools, Sequence) else [web_search_tool, tools],
-        max_context_window_tokens=MODEL_CONTEXT_WINDOW_TOKENS,
-        max_output_tokens=MODEL_MAX_OUTPUT_TOKENS,
+        max_context_window_tokens=HARNESS_CONTEXT_WINDOW_TOKENS,
+        max_output_tokens=HARNESS_MAX_OUTPUT_TOKENS,
         disable_todo=True,
         disable_mode=True,
         disable_file_memory=True,

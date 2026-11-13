@@ -58,6 +58,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("", "fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443 after 0 ms: Couldn't connect to server", 1, true)]
         [InlineData("", "fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443 after ms: Couldn't connect to server", 1, false)]
         [InlineData("", "", 0, false)]
+        [InlineData("", "error: could not lock config file /root/.gitconfig: File exists", 255, true)]
+        // git 2.54+ already retried the rate-limited request before reporting this.
+        [InlineData("", "fatal: rate limited by 'https://github.com/Azure/azure-sdk-assets/', please try again later", 128, false)]
         public void VerifyGitExceptionParser(string inputStdOut, string inputStdErr, int exitCode, bool expectedResult)
         {
             var processHandler = new GitProcessHandler();
@@ -72,19 +75,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        // Windows git version strings
-        [InlineData("git version 2.51.0.windows.1", false)]
-        [InlineData("git version 2.50.1.windows.1", true)]
+        // Windows git version strings. There is no Git for Windows 2.45.4, so Windows needs 2.46.0 or later.
+        [InlineData("git version 2.46.0.windows.1", false)]
+        [InlineData("git version 2.45.2.windows.2", true)]
         // Mac git version strings
-        [InlineData("git version 2.51.0 (Apple Git-154)", false)]
-        [InlineData("git version 2.50.1 (Apple Git-154)", true)]
+        [InlineData("git version 2.50.1 (Apple Git-155)", false)]
+        [InlineData("git version 2.39.5 (Apple Git-154)", true)]
         [InlineData("git version 1.37.1 (Apple Git-133)", true)]
         // Linux git version string
         [InlineData("git version 2.25.0", true)]
-        [InlineData("git version 2.50.9", true)]
+        [InlineData("git version 2.45.3", true)]
+        [InlineData("git version 2.45.4", false)]
+        [InlineData("git version 2.45.10", false)]
+        [InlineData("git version 2.46", false)]
         [InlineData("git version 2.51.0", false)]
-        [InlineData("git version 2.51.1", false)]
-        [InlineData("git version 2.52.0", false)]
         [InlineData("git version 3.0.0", false)]
         // Check the actual version on the machine
         [InlineData(null, false)]
@@ -96,7 +100,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Action action = () => gph.VerifyGitMinVersion(gitTestVersionString);
                 Exception ex = Assert.Throws<GitVersionException>(action);
                 Assert.StartsWith($"{gitTestVersionString} is less than the minimum supported Git version", ex.Message);
-                Assert.EndsWith("2.51.0", ex.Message);
+                Assert.EndsWith("2.45.4", ex.Message);
             }
             else
             {
@@ -110,6 +114,25 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     Assert.True(false, $"Expected no exception, but received exception of type {ex.GetType()}, message:{ex.Message}");
                 }
             }
+        }
+
+        [Theory]
+        [InlineData("git version 2.45.4", false, false)]
+        // clone --revision exists, but can crash when the server falls back to protocol v0.
+        [InlineData("git version 2.49.0.windows.1", false, false)]
+        [InlineData("git version 2.54.0", false, true)]
+        [InlineData("git version 2.56.0 (Apple Git-160)", true, true)]
+        public void GitVersionSelectsOptionalFeatures(string gitVersionOutput, bool cloneRevision, bool httpRateLimitRetries)
+        {
+            Assert.True(GitProcessHandler.TryParseGitVersion(gitVersionOutput, out Version version));
+            var gph = new GitProcessHandler { GitVersion = version };
+
+            var environment = gph.CreateGitProcessInfo(Environment.CurrentDirectory).Environment;
+
+            Assert.Equal(cloneRevision, gph.SupportsCloneRevision);
+            Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_MAX_RETRIES"));
+            Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_RETRY_AFTER"));
+            Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_MAX_RETRY_TIME"));
         }
     }
 }

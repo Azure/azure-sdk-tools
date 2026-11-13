@@ -1,0 +1,218 @@
+name: azsdk-customized-code-update-tool-eval
+description: Evaluation for the azsdk_customized_code_update mcp tool
+version: "1.0"
+type: capability
+
+tags:
+  tier: unit
+  area: customization
+  input: breakingChange
+
+environment: azsdk-mcp-live
+
+# Execution configuration
+defaults:
+  runs: 1 # Trials per stimulus
+  timeout: "660s" # Seconds per trial
+  model: gpt-6.1-sol # Model for agent execution
+  executor: copilot-sdk # Which executor to use
+
+scoring:
+  threshold: 1.0
+
+# Test cases
+stimuli:
+  - name: 004007-property-type-change-breaking-change-SpecInputs-go
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve Go sdk breaking change: EmployeeProperties.profileUri type changed from uri to string"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@alternateType(Microsoft.Widget.EmployeeProperties.profileUri, url, "go");'
+
+  - name: 004007-property-type-change-breaking-change-SpecInputs-csharp
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve C# sdk breaking change: EmployeeProperties.profileUri type changed from uri to string"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@alternateType(Microsoft.Widget.EmployeeProperties.profileUri, url, "csharp");'
+
+  - name: 004007-property-type-change-breaking-change-SpecInputs-python
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve Python sdk breaking change: EmployeeProperties.profileUri type changed from uri to string"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@alternateType(Microsoft.Widget.EmployeeProperties.profileUri, url, "python");'
+
+  - name: 004007-property-type-breaking-change-SpecInputs-java
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve Java sdk breaking change: EmployeeProperties.profileUri type changed from uri to string"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@alternateType(Microsoft.Widget.EmployeeProperties.profileUri, url, "java");'
+
+  - name: 004007-property-type-breaking-change-SpecInputs-javascript
+    tags:
+      editScope: SpecInputs
+    prompt: |
+      First, use the shell to resolve
+      specification/widget/resource-manager/Microsoft.Widget/Widget against
+      your current working directory and obtain its absolute directory path.
+      Then call azsdk_customized_code_update with parameters:
+      - customizationRequest: "resolve JavaScript sdk breaking change: EmployeeProperties.profileUri type changed from uri to string"
+      - tspProjectPath: use the exact absolute path returned by the shell
+      - editScope: "SpecInputs"
+
+      Do not pass a relative path or literal placeholder text as
+      tspProjectPath.
+    environment:
+      files:
+        - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/employee.tsp
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
+        - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../../eng/common/knowledge/customizing-client-tsp.md
+          dest: eng/common/knowledge/customizing-client-tsp.md
+      commands:
+        - git init
+    constraints:
+      max_turns: 20
+      max_tokens: 50000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_customized_code_update
+      - type: file-contains
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          value: '@@alternateType(Microsoft.Widget.EmployeeProperties.profileUri, url, "javascript");'

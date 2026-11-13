@@ -61,10 +61,12 @@ suites:
 
   scenarios-live:
     description: |
-      Scenarios against live MCP — real DevOps / GitHub / pipelines. Slow;
+      Scenarios and customization tool evals against live MCP — real DevOps / GitHub / pipelines. Slow;
       nightly only. Prime any required clones first via
       `eng/common/scripts/eval/sync-eval-git-repo.js`.
-    evals: ["workflows/live/*.eval.yaml"]
+    evals:
+      - "workflows/live/*.eval.yaml"
+      - "tools/azsdk-customized-code-update-tool/**/*.eval.yaml"
 
   # ---- composite suites ----
   pr-gate:

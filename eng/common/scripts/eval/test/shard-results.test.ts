@@ -394,7 +394,7 @@ test("summary selects latest expected attempts once; completed failures remain e
     });
     assert.match(markdown, /results — FAILED/);
     assert.doesNotMatch(markdown, /Selected shard attempts|\| Shard \| Attempt \| Result data \|/);
-    assert.match(markdown, /\| Shard \| Result \| Pass rate \| Passed \| Failed \| Skipped \| Time \(s\) \|/);
+    assert.ok(markdown.includes(">Shard</th>") && markdown.includes(">Time (s)</th>"));
     assert.deepEqual(fs.readdirSync(path.join(root, "selected")).sort(), ["eval-result-area_a-2", "eval-result-area_b-1"]);
     assert.deepEqual(index, {
         schemaVersion: 1, complete: true, expectedShards: ["area_a", "area_b"],
@@ -415,6 +415,8 @@ test("failure table uses every recorded failed check and only selected task-line
         record.stimulus = record.itemId;
         record.model = "model";
         record.sourceLog = { ...oldLog, graderLines: { "failed tool": 999 } };
+        record.trajectory = { metrics: { tokenUsage: { totalTokens: 33065,
+            cost: { provider: "github-copilot", unit: "nano-aiu", amount: validLines ? 4354490000 : 0 } } } };
         record.gradeResult = { details: [
             { name: "failed tool", passed: false, evidence: "Required tool was not called" },
             { name: "failed skill", passed: false, evidence: "Required skill was not called" },
@@ -434,10 +436,11 @@ test("failure table uses every recorded failed check and only selected task-line
         assert.equal(child.status, 0, child.stderr);
         assert.equal(result.complete, true);
         assert.match(child.stdout, /task.addattachment type=Distributedtask.Core.Summary;name=Evaluation results;/);
-        assert.match(markdown, /\| Scenario \| Failed check \| Trials passed \| Evidence \|/);
+        assert.ok(markdown.includes(">Scenario</th>") && markdown.includes(">Failed check</th>") && markdown.includes(">Trials passed</th>"));
+        assert.ok(markdown.includes("33,065") && markdown.includes(validLines ? "4.35" : "0.00"));
         assert.ok(markdown.includes("failed tool") && markdown.includes("failed skill"));
-        const urls = [...markdown.matchAll(/\]\((https:\/\/dev\.azure\.com\/[^)]+)\)/g)].map(match => new URL(match[1]));
-        assert.ok(urls.length >= 6);
+        const urls = [...markdown.matchAll(/href="(https:\/\/dev\.azure\.com\/[^\"]+)"/g)].map(match => new URL(match[1].replaceAll("&amp;", "&")));
+        assert.ok(urls.length >= 4);
         assert.ok(urls.every(url => url.searchParams.get("j") === sourceLog.jobId && url.searchParams.get("t") === sourceLog.taskId));
         if (validLines) assert.deepEqual([...new Set(urls.map(url => url.searchParams.get("l")))].sort(), ["259", "261"]);
         else assert.ok(urls.every(url => !url.searchParams.has("l")));
@@ -541,7 +544,7 @@ test("legacy-layout JUnit is diagnostic only, and never causes fallback to an ol
     assert.equal(result.complete, false);
     assert.deepEqual(result.totals, { scenarios: 1, failed: 1, skipped: 0 });
     assert.equal(index.attempts[0].attempt, 2);
-    assert.match(markdown, /\| latest<br>.*\| Check details unavailable \| 0\/1 \|/);
+    assert.match(markdown, /latest<br>.*Check details unavailable.*>0\/1<\/td>/);
     assert.equal(fs.existsSync(path.join(root, "selected", "eval-result-area_a-1")), false);
 });
 

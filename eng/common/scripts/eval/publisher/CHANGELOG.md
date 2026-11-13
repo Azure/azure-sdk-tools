@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add recorded token and Copilot AIU costs to the shard report, marking missing/partial
+	usage rather than treating it as zero. Simplify failures to three columns and remove
+	duplicate delivery titles, the pending headline and unnecessary rerun instructions.
 - Render the approved evaluation failure table with direct per-check ADO log links,
   sharing selected-task and exact-line provenance with archive packaging. Name the
   visible attachments Evaluation results and Result delivery instead of exposing

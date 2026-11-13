@@ -108,6 +108,11 @@ their retained filenames remain unchanged. Failed scenarios use the approved
 Scenario names, failed-check labels and Task log actions link to the same verified
 check-specific task and line. Every recorded failed check is included; JUnit still owns
 which scenarios failed their configured threshold.
+This table-verification revision emits bordered and padded HTML tables directly in the
+Markdown attachments, adds recorded token and Copilot AIU columns, reduces failures to
+Scenario / Failed check / Trials passed, and removes duplicate delivery headings and
+pending/rerun text. Azure DevOps controls sanitization; this hosted test checks the final
+appearance without changing the trusted-manual publishing policy or dashboard runtime.
 Missing publisher output also leaves dashboard import **not confirmed**, not **not attempted**.
 Only a known publication skip or an explicit upload failure establishes that no import was attempted.
 

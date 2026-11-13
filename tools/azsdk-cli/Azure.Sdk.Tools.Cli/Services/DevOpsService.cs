@@ -184,6 +184,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
+        Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task EnsureReleasePlanAutomationRelationAsync(int releasePlanWorkItemId, int completedReleasePlanWorkItemId, CancellationToken ct);
@@ -224,6 +225,24 @@ namespace Azure.Sdk.Tools.Cli.Services
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct)
         {
             return _cachedRelationTypes ??= await connection.GetWorkItemClient(ct).GetRelationTypesAsync(cancellationToken: ct);
+        }
+
+        public async Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default)
+        {
+            const int pageSize = 200;
+            const int maxUpdates = 1000;
+            var updates = new List<WorkItemUpdate>();
+            for (var skip = 0; skip < maxUpdates; skip += pageSize)
+            {
+                var page = await connection.GetWorkItemClient(ct).GetUpdatesAsync(workItemId,
+                    top: pageSize, skip: skip, cancellationToken: ct);
+                updates.AddRange(page);
+                if (page.Count < pageSize)
+                {
+                    return updates;
+                }
+            }
+            throw new InvalidOperationException("Work-item history exceeds the bounded readiness lookup.");
         }
 
         private bool IsAgentTesting => Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING") == "true";
@@ -529,6 +548,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
                 if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
                 {
+                    releasePlan.ApiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                     releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
@@ -2428,7 +2448,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return null;
                 }
 
-                logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}", 
+                logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}",
                     releasePlanWorkItems.Count, typeSpecProjectPath, apiVersion);
 
                 // Loop through all release plans to find one with matching API version
@@ -2496,7 +2516,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             if (wi.Id == null)
             {
                 logger.LogError("Work item ID is null.");
-                throw new ($"Work item ID is null");
+                throw new($"Work item ID is null");
             }
 
             var result = new ProductOnboardingWorkItem
@@ -2537,7 +2557,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             serviceCondition.Append($"[{productIdPropertyName}] = '{productId.ToString()}' AND [{serviceIdPropertyName}] = '{serviceId.ToString()}'");
             serviceCondition.Append(
                 $" AND [{ProductOnboardingWorkItem.TestFieldName}] {(isTest ? "" : "NOT ")}CONTAINS '{ProductOnboardingWorkItem.TestFieldTestValue}'");
-            
+
             var query
                 = $"SELECT [System.Id] "
                 + $"FROM WorkItems "
@@ -2555,7 +2575,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (workItems.Count > 1)
                 {
                     logger.LogError("Found multiple work items matching criteria.");
-                    throw new ($"Found multiple work items matching criteria. Query: '{query}'");
+                    throw new($"Found multiple work items matching criteria. Query: '{query}'");
                 }
                 return ToProductOnboardingWorkItem(workItems[0]);
             }

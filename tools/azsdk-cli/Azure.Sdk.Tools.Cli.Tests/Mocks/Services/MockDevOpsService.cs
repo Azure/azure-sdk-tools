@@ -428,6 +428,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(new List<WorkItem>());
         }
 
+        public Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default)
+        {
+            return Task.FromResult(new List<WorkItemUpdate>());
+        }
+
         public Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default)
         {
             throw new NotImplementedException();

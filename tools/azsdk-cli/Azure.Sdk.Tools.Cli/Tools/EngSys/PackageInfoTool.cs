@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
@@ -18,7 +19,8 @@ public class PackageInfoTool(
     IGitHelper gitHelper,
     ILogger<PackageInfoTool> _logger,
     IPackageInfoHelper packageInfoHelper,
-    IEnumerable<LanguageService> languageServices
+    IEnumerable<LanguageService> languageServices,
+    IPackageApiMetadataService apiMetadata
 ) : LanguageMcpTool(languageServices, gitHelper, _logger)
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.EngSys];
@@ -33,6 +35,11 @@ public class PackageInfoTool(
     {
         Description = "Inspect one package. Without --out-dir, return its PackageInfo directly.",
         Required = false,
+    };
+
+    private readonly Option<bool> resourceTypesOpt = new("--include-resource-types")
+    {
+        Description = "Resolve RP/version-scoped resource types from pinned specifications for one package; requires GitHub access, not Azure access.",
     };
 
     private readonly Option<string> serviceDirectoryOpt = new("--service-directory")
@@ -71,6 +78,7 @@ public class PackageInfoTool(
     protected override Command GetCommand() => new("package-info", "Inspect an SDK package or generate PackageInfo JSON files for CI pipelines")
     {
         packagePathOpt,
+        resourceTypesOpt,
         outDirOpt,
         serviceDirectoryOpt,
         ciOpt,
@@ -85,6 +93,7 @@ public class PackageInfoTool(
         {
             var options = ParseOptions(parseResult);
             var packagePath = parseResult.GetValue(packagePathOpt);
+            var includeResourceTypes = parseResult.GetValue(resourceTypesOpt);
             if (packagePath != null)
             {
                 if (string.IsNullOrWhiteSpace(packagePath))
@@ -96,7 +105,11 @@ public class PackageInfoTool(
                 {
                     throw new ArgumentException("--package-path cannot be combined with --service-directory, --artifact, --ci, or --repo-root.");
                 }
-                return await ExecuteSinglePackage(packagePath, options, ct);
+                return await ExecuteSinglePackage(packagePath, options, includeResourceTypes, ct);
+            }
+            if (includeResourceTypes)
+            {
+                throw new ArgumentException("--include-resource-types requires --package-path.");
             }
             if (string.IsNullOrWhiteSpace(options.OutDir))
             {
@@ -116,7 +129,7 @@ public class PackageInfoTool(
         }
     }
 
-    private async Task<CommandResponse> ExecuteSinglePackage(string packagePath, PackageInfoOptions options, CancellationToken ct)
+    private async Task<CommandResponse> ExecuteSinglePackage(string packagePath, PackageInfoOptions options, bool includeResourceTypes, CancellationToken ct)
     {
         var fullPath = Path.GetFullPath(packagePath);
         if (!Directory.Exists(fullPath))
@@ -130,6 +143,11 @@ public class PackageInfoTool(
         if (string.IsNullOrWhiteSpace(packageInfo.PackageName))
         {
             throw new InvalidOperationException("Cannot retrieve PackageInfo because the package name could not be determined.");
+        }
+
+        if (includeResourceTypes)
+        {
+            packageInfo = await apiMetadata.GetPackageInfoAsync(packageInfo, ct);
         }
 
         if (options.AddDevVersion)

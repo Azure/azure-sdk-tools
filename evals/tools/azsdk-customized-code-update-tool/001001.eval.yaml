@@ -188,7 +188,7 @@ stimuli:
       commands:
         - git init
         - git remote add origin https://github.com/Azure/azure-rest-api-specs.git
-        - node evals/scripts/generage-sdk.ts
+        - node evals/scripts/generage-sdk.ts azure-sdk-for-java
     constraints:
       max_turns: 20
       max_tokens: 50000

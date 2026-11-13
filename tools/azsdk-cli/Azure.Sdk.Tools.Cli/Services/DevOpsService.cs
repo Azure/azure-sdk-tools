@@ -547,6 +547,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
                 if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
                 {
+                    releasePlan.ApiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                     releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
                     releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
@@ -2421,7 +2422,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return null;
                 }
 
-                logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}", 
+                logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}",
                     releasePlanWorkItems.Count, typeSpecProjectPath, apiVersion);
 
                 // Loop through all release plans to find one with matching API version
@@ -2489,7 +2490,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             if (wi.Id == null)
             {
                 logger.LogError("Work item ID is null.");
-                throw new ($"Work item ID is null");
+                throw new($"Work item ID is null");
             }
 
             var result = new ProductOnboardingWorkItem
@@ -2530,7 +2531,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             serviceCondition.Append($"[{productIdPropertyName}] = '{productId.ToString()}' AND [{serviceIdPropertyName}] = '{serviceId.ToString()}'");
             serviceCondition.Append(
                 $" AND [{ProductOnboardingWorkItem.TestFieldName}] {(isTest ? "" : "NOT ")}CONTAINS '{ProductOnboardingWorkItem.TestFieldTestValue}'");
-            
+
             var query
                 = $"SELECT [System.Id] "
                 + $"FROM WorkItems "
@@ -2548,7 +2549,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (workItems.Count > 1)
                 {
                     logger.LogError("Found multiple work items matching criteria.");
-                    throw new ($"Found multiple work items matching criteria. Query: '{query}'");
+                    throw new($"Found multiple work items matching criteria. Query: '{query}'");
                 }
                 return ToProductOnboardingWorkItem(workItems[0]);
             }

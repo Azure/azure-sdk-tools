@@ -25,9 +25,9 @@
     { "toolName": "azsdk_package_get_approval_status", "prompt": "Is this package version approved for release?", "category": "all" },
     { "toolName": "azsdk_package_get_approval_status", "prompt": "Get release-gate status for this package", "category": "all" },
 
-    { "toolName": "azsdk_check_service_api_version", "prompt": "Check whether Azure lists the service API version used by https://github.com/Azure/azure-sdk-for-java/pull/123", "category": "all" },
-    { "toolName": "azsdk_check_service_api_version", "prompt": "Does ARM advertise the exact API version generated in this SDK PR? https://github.com/Azure/azure-sdk-for-js/pull/123", "category": "all" },
-    { "toolName": "azsdk_check_service_api_version", "prompt": "Check service API-version readiness for https://github.com/Azure/azure-sdk-for-python/pull/123 without modifying GitHub", "category": "all" },
+    { "toolName": "azsdk_validate_service_api_readiness", "prompt": "Validate service API readiness for https://github.com/Azure/azure-sdk-for-java/pull/123", "category": "all" },
+    { "toolName": "azsdk_validate_service_api_readiness", "prompt": "Does ARM advertise the exact API version generated in this SDK PR? https://github.com/Azure/azure-sdk-for-js/pull/123", "category": "all" },
+    { "toolName": "azsdk_validate_service_api_readiness", "prompt": "Validate service API readiness for https://github.com/Azure/azure-sdk-for-python/pull/123 without modifying GitHub", "category": "all" },
 
     { "toolName": "azsdk_check_service_label", "prompt": "Check if a service label exists for my service", "category": "all" },
     { "toolName": "azsdk_check_service_label", "prompt": "Does the service label for Contoso already exist?", "category": "all" },

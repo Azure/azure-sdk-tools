@@ -25,10 +25,10 @@ public class ServiceApiReadinessToolTests
             .Where(method => method.IsDefined(typeof(McpServerToolAttribute), false)).ToArray();
         Assert.That(typeof(ServiceApiReadinessTool).IsDefined(typeof(McpServerToolTypeAttribute), false), Is.True);
         Assert.That(methods, Has.Length.EqualTo(1));
-        Assert.That(methods.Single().Name, Is.EqualTo(nameof(ServiceApiReadinessTool.CheckServiceApiVersion)));
+        Assert.That(methods.Single().Name, Is.EqualTo(nameof(ServiceApiReadinessTool.ValidateServiceApiReadiness)));
 
         var descriptor = McpServerTool.Create(methods.Single(), _ => tool).ProtocolTool;
-        Assert.That(descriptor.Name, Is.EqualTo("azsdk_check_service_api_version"));
+        Assert.That(descriptor.Name, Is.EqualTo("azsdk_validate_service_api_readiness"));
         Assert.That(descriptor.Annotations?.ReadOnlyHint, Is.True);
         Assert.That(descriptor.InputSchema.GetProperty("properties").EnumerateObject().Select(property => property.Name),
             Is.EquivalentTo(new[] { "pullRequestUrl", "packagePath" }));
@@ -46,7 +46,7 @@ public class ServiceApiReadinessToolTests
         service.Setup(value => value.CheckAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ServiceApiReadinessResponse { ReadinessStatus = state, HeadSha = head });
         var tool = CreateTool(service.Object);
-        var method = typeof(ServiceApiReadinessTool).GetMethod(nameof(ServiceApiReadinessTool.CheckServiceApiVersion))!;
+        var method = typeof(ServiceApiReadinessTool).GetMethod(nameof(ServiceApiReadinessTool.ValidateServiceApiReadiness))!;
         var server = new Mock<McpServer>();
         using var services = new ServiceCollection().BuildServiceProvider();
         server.SetupGet(value => value.Services).Returns(services);
@@ -54,7 +54,7 @@ public class ServiceApiReadinessToolTests
         {
             Params = new()
             {
-                Name = "azsdk_check_service_api_version",
+                Name = "azsdk_validate_service_api_readiness",
                 Arguments = new Dictionary<string, JsonElement>
                 {
                     ["pullRequestUrl"] = JsonSerializer.SerializeToElement("https://github.com/Azure/azure-sdk-for-java/pull/12")
@@ -88,7 +88,8 @@ public class ServiceApiReadinessToolTests
         Assert.That(((ServiceApiReadinessResponse)response).ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(tool.CommandHierarchy, Is.EqualTo(new[] { SharedCommandGroups.Package }));
         Assert.That(SharedOptions.ToolsList, Does.Contain(typeof(ServiceApiReadinessTool)));
-        Assert.That(command.Description, Does.Contain("API version used by an SDK pull request").And.Not.Contains("writing"));
+        Assert.That(command.Name, Is.EqualTo("validate-service-api-readiness"));
+        Assert.That(command.Description, Does.Contain("service API readiness").And.Not.Contains("writing"));
         service.VerifyAll();
     }
 
@@ -125,7 +126,7 @@ public class ServiceApiReadinessToolTests
     {
         var service = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
         var tool = CreateTool(service.Object);
-        var response = await tool.CheckServiceApiVersion(url);
+        var response = await tool.ValidateServiceApiReadiness(url);
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(response.Detail, Does.Contain("exactly one GitHub SDK pull request URL"));
         service.VerifyNoOtherCalls();
@@ -151,7 +152,7 @@ public class ServiceApiReadinessToolTests
         service.Setup(value => value.CheckAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("secret response"));
         var tool = CreateTool(service.Object);
-        var response = await tool.CheckServiceApiVersion("https://github.com/Azure/azure-sdk-for-java/pull/12");
+        var response = await tool.ValidateServiceApiReadiness("https://github.com/Azure/azure-sdk-for-java/pull/12");
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(JsonSerializer.Serialize(response), Does.Not.Contain("secret response"));
     }
@@ -180,11 +181,11 @@ public class ServiceApiReadinessToolTests
             {
                 Params = new()
                 {
-                    Name = "azsdk_check_service_api_version",
+                    Name = "azsdk_validate_service_api_readiness",
                     Arguments = new Dictionary<string, JsonElement> { ["packagePath"] = JsonSerializer.SerializeToElement(directory.DirectoryPath) }
                 }
             };
-            var method = typeof(ServiceApiReadinessTool).GetMethod(nameof(ServiceApiReadinessTool.CheckServiceApiVersion))!;
+            var method = typeof(ServiceApiReadinessTool).GetMethod(nameof(ServiceApiReadinessTool.ValidateServiceApiReadiness))!;
             var call = await McpServerTool.Create(method, _ => tool).InvokeAsync(context);
             Assert.That(call.IsError, Is.Not.True);
             using var json = JsonDocument.Parse(call.Content.OfType<TextContentBlock>().Single().Text);
@@ -206,7 +207,7 @@ public class ServiceApiReadinessToolTests
     public async Task AmbiguousOrAbsentPackageSourcesAreRejected(string? url, string? path)
     {
         var readiness = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
-        var response = await CreateTool(readiness.Object).CheckServiceApiVersion(url, path);
+        var response = await CreateTool(readiness.Object).ValidateServiceApiReadiness(url, path);
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(response.Detail, Does.Contain("exactly one"));
         readiness.VerifyNoOtherCalls();

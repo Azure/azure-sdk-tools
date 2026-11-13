@@ -11,7 +11,7 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package;
 
-[McpServerToolType, Description("Read-only service API-version evidence for SDK pull requests or local packages.")]
+[McpServerToolType, Description("Validate service API readiness for SDK pull requests or local packages using read-only ARM evidence.")]
 public class ServiceApiReadinessTool(IServiceApiReadinessService readiness, ILogger<ServiceApiReadinessTool> toolLogger,
     IGitHelper gitHelper, IEnumerable<LanguageService> languageServices,
     ReleasePlanReadinessService releasePlanReadiness) : LanguageMcpTool(languageServices, gitHelper, toolLogger)
@@ -23,7 +23,7 @@ public class ServiceApiReadinessTool(IServiceApiReadinessService readiness, ILog
     private readonly Option<bool> _metadataOnly = new("--metadata-only") { Description = "Return current-head package metadata and resource requirements without querying ARM; requires --pull-request-url." };
     private readonly Option<bool> _recordReleasePlan = new("--record-release-plan") { Description = "Explicitly record fresh service evidence in the configured release-plan field; requires PR input and cannot be combined with --metadata-only." };
 
-    protected override Command GetCommand() => new("check-api-version", "Check whether Azure lists the API version used by an SDK pull request or local package.")
+    protected override Command GetCommand() => new("validate-service-api-readiness", "Validate service API readiness for an SDK pull request or local package using ARM metadata.")
     {
         _pullRequestUrl,
         _packagePath,
@@ -76,12 +76,12 @@ public class ServiceApiReadinessTool(IServiceApiReadinessService readiness, ILog
                 };
             }
         }
-        return await CheckServiceApiVersion(parseResult.GetValue(_pullRequestUrl), parseResult.GetValue(_packagePath), ct);
+        return await ValidateServiceApiReadiness(parseResult.GetValue(_pullRequestUrl), parseResult.GetValue(_packagePath), ct);
     }
 
-    [McpServerTool(Name = "azsdk_check_service_api_version", ReadOnly = true)]
-    [Description("Check whether ARM metadata lists the exact API versions recorded in SDK metadata. Supply exactly one of pullRequestUrl or packagePath. Returns Passed, Not detected, Inconclusive, or Error with enriched PackageInfo evidence. Does not merge, release, comment, or change labels. Only PR input attests a captured PR head; callers must verify that head before publishing results.")]
-    public async Task<ServiceApiReadinessResponse> CheckServiceApiVersion(
+    [McpServerTool(Name = "azsdk_validate_service_api_readiness", ReadOnly = true)]
+    [Description("Validate service API readiness by checking whether ARM metadata lists the exact API versions recorded in SDK metadata. Supply exactly one of pullRequestUrl or packagePath. Returns Passed, Not detected, Inconclusive, or Error with enriched PackageInfo evidence. Does not merge, release, comment, or change labels. Only PR input attests a captured PR head; callers must verify that head before publishing results.")]
+    public async Task<ServiceApiReadinessResponse> ValidateServiceApiReadiness(
         [Description("GitHub SDK pull request URL, for example https://github.com/Azure/azure-sdk-for-java/pull/123. Mutually exclusive with packagePath.")] string? pullRequestUrl = null,
         [Description("Local SDK package directory, inspected from the working tree. Mutually exclusive with pullRequestUrl.")] string? packagePath = null,
         CancellationToken ct = default)

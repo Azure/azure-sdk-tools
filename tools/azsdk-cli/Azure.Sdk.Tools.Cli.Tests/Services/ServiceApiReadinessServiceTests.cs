@@ -175,6 +175,52 @@ public class ServiceApiReadinessServiceTests
         _azure.Verify(service => service.GetCredential(It.IsAny<string?>()), Times.Never);
     }
 
+    [Test]
+    public async Task ValidatingPopulatedMetadataDoesNotReadSdkOrSpecificationFilesAgain()
+    {
+        var metadata = await _service.GetPackageMetadataAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
+        var package = metadata.Packages.Single();
+        var githubReads = _requests.Count(request => request.Uri.Host != "management.azure.com");
+
+        var response = await _service.ValidateAsync(metadata, CancellationToken.None);
+
+        Assert.That(response, Is.SameAs(metadata));
+        Assert.That(response.Packages.Single(), Is.SameAs(package));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(_requests.Count(request => request.Uri.Host != "management.azure.com"), Is.EqualTo(githubReads));
+        Assert.That(_pullRequestReads, Is.EqualTo(1));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
+    [TestCase("missing")]
+    [TestCase("data-plane")]
+    [TestCase("error")]
+    public async Task UnusableMetadataCannotBecomePassingOrStartMoreEvidenceReads(string kind)
+    {
+        if (kind == "missing")
+        {
+            _files.Remove(Key(_repository, Head, $"{Package}/{Metadata}"));
+        }
+        else if (kind == "data-plane")
+        {
+            SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", DataConfiguration);
+        }
+        else
+        {
+            _githubStatus = HttpStatusCode.Forbidden;
+        }
+        var metadata = await _service.GetPackageMetadataAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
+        var status = metadata.ReadinessStatus;
+        var reads = _requests.Count;
+
+        var response = await _service.ValidateAsync(metadata, CancellationToken.None);
+
+        Assert.That(response, Is.SameAs(metadata));
+        Assert.That(response.ReadinessStatus, Is.EqualTo(status).And.Not.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(_requests, Has.Count.EqualTo(reads));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public async Task PartialSwaggerEvidenceCannotProducePassingMetadataOrReadiness(bool invalidPaths)
@@ -206,8 +252,12 @@ public class ServiceApiReadinessServiceTests
         await File.WriteAllTextAsync(Path.Combine(directory.DirectoryPath, "tsp-location.yaml"),
             $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
         SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", DataConfiguration);
-        var package = new PackageInfo { PackagePath = directory.DirectoryPath, Language = SdkLanguage.JavaScript,
-            ApiVersions = [new(Version)] };
+        var package = new PackageInfo
+        {
+            PackagePath = directory.DirectoryPath,
+            Language = SdkLanguage.JavaScript,
+            ApiVersions = [new(Version)]
+        };
 
         var result = await new SdkPackageMetadataHelper(_http, "github-test-token").ReadLocalGenerationEvidenceAsync(package);
 

@@ -12,6 +12,7 @@ public interface IServiceApiReadinessService
     Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct);
     Task<ServiceApiReadinessResponse> GetPackageMetadataAsync(string owner, string repository, int pullRequest, CancellationToken ct);
     Task<ServiceApiReadinessResponse> CheckPackageAsync(PackageInfo package, CancellationToken ct);
+    Task<ServiceApiReadinessResponse> ValidateAsync(ServiceApiReadinessResponse metadata, CancellationToken ct);
 }
 
 public class ServiceApiReadinessService(IGitHubService github, IAzureService azure, IHttpClientFactory clients,
@@ -79,8 +80,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 result.Detail = "Pinned package metadata and resource requirements only; no ARM readiness check was performed.";
                 return result;
             }
-            await ValidatePackagesAsync(result.Packages, result, ct);
-            SetOverallResult(result);
+            await ValidateAsync(result, ct);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -107,8 +107,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 return result;
             }
             await PopulatePackageResourceTypesAsync(result, ct);
-            await ValidatePackagesAsync(result.Packages, result, ct);
-            SetOverallResult(result);
+            await ValidateAsync(result, ct);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -118,6 +117,27 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             result.ResponseError = result.Detail;
         }
         return result;
+    }
+
+    public async Task<ServiceApiReadinessResponse> ValidateAsync(ServiceApiReadinessResponse metadata, CancellationToken ct)
+    {
+        if (metadata.ReadinessStatus == ServiceApiReadinessResponse.Error ||
+            metadata.Plane != SdkPackageMetadataHelper.ManagementPlane || metadata.Projects.Count == 0)
+        {
+            return metadata;
+        }
+        try
+        {
+            await ValidatePackagesAsync(metadata.Packages, metadata, ct);
+            SetOverallResult(metadata);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            metadata.ReadinessStatus = ServiceApiReadinessResponse.Error;
+            metadata.Detail = SafeError(exception);
+            metadata.ResponseError = metadata.Detail;
+        }
+        return metadata;
     }
 
     private static bool HasValidationEvidence(IReadOnlyList<PackageInfo> packages, IReadOnlyList<string> discoveryIssues, ServiceApiReadinessResponse result)

@@ -34,7 +34,6 @@ from models.qa_dashboard import (
     QAOverview,
 )
 from models.qa_record import QAStatus
-from models.support_contact import get_support_catalog_context
 from services.activity_converter_service import ActivityConverterService
 from services.bot_config_service import BotConfigService
 from services.chat_service import ChatService, AgentRoutingError
@@ -116,7 +115,6 @@ configure_metrics()
 async def lifespan(application: FastAPI):
     """Startup / shutdown lifecycle for the FastAPI app."""
     logger.info("Backend server starting up")
-    get_support_catalog_context()
     await app_config.init()
     yield
     # Cleanup SDK clients on shutdown

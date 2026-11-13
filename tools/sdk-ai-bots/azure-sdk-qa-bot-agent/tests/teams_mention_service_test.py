@@ -74,16 +74,9 @@ async def test_disabled_mentions_render_plain_contacts(lookup):
 @pytest.mark.parametrize("answer", [
     "Hello, @reviewer-a.",
     "<at>unverified@example.test</at>, please help.",
-    "`{{mention:reviewer-a}}`",
-    "``{{mention:reviewer-a}}``",
-    "```text\n{{mention:reviewer-a}}\n```",
-    "````text\n`code` {{mention:reviewer-a}}\n````",
-    "~~~text\n{{contact:reviewer-a}}\n~~~",
-    "```text\n{{mention:reviewer-a}}",
-    "> {{mention:reviewer-a}}, please help.",
     "\\{{mention:reviewer-a}}",
 ])
-async def test_plain_handles_unverified_tags_and_literals_do_not_trigger_lookup(lookup, answer):
+async def test_plain_handles_unverified_tags_and_escaped_placeholders_do_not_trigger_lookup(lookup, answer):
     rendered, mentions = await resolve_answer_mentions(answer, enabled=True)
     assert rendered == answer
     assert mentions is None
@@ -91,14 +84,63 @@ async def test_plain_handles_unverified_tags_and_literals_do_not_trigger_lookup(
 
 
 @pytest.mark.asyncio
-async def test_literals_do_not_hide_a_direct_request_elsewhere(lookup):
-    literal = "```text\n{{mention:another-user}}\n```\n> {{contact:quoted-user}}\n"
+@pytest.mark.parametrize("template", [
+    "`{placeholder}`",
+    "``{placeholder}``",
+    "```text\n{placeholder}\n```",
+    "````text\n`code` {placeholder}\n````",
+    "~~~text\n{placeholder}\n~~~",
+    "```text\n{placeholder}",
+    "> {placeholder}, please help.",
+    "> Quoted request:\n{placeholder}, please help.",
+    "Example:\n\n    {placeholder}, please help.",
+])
+@pytest.mark.parametrize("kind", ["mention", "contact"])
+@pytest.mark.parametrize("enabled", [True, False])
+async def test_markdown_does_not_prevent_placeholder_resolution(lookup, template, kind, enabled):
+    placeholder = "{{" + kind + ":reviewer-a}}"
     answer, mentions = await resolve_answer_mentions(
-        literal + "{{mention:reviewer-a}}, please help.", enabled=True,
+        template.format(placeholder=placeholder), enabled=enabled,
     )
-    assert answer == literal + resolved_user().text + ", please help."
-    assert mentions is not None and len(mentions) == 1
+    user = resolved_user()
+    notify = enabled and kind == "mention"
+    assert answer == template.format(placeholder=user.text if notify else user.plain_text)
+    assert mentions == ([TeamsMention(text=user.text, mentioned=user.mentioned)] if notify else None)
     lookup.assert_awaited_once_with(usernames=["reviewer-a"])
+
+
+@pytest.mark.asyncio
+async def test_fenced_rereview_request_resolves_all_reviewers(lookup):
+    logins = ["ArthurMa1978", "live1206", "ArcturusZhang"]
+    lookup.return_value = ResolveGitHubUsersResult(
+        users={login.lower(): resolved_user(login.lower()) for login in logins},
+    )
+    raw = (
+        "You can post this directly:\n\n```text\n"
+        + " ".join("{{mention:" + login + "}}" for login in logins)
+        + " requesting re-review on https://github.com/Azure/azure-sdk-for-net/pull/64733.\n\n"
+        "All previous comments have been addressed. Could you please take another look?\n```"
+    )
+    answer, mentions = await resolve_answer_mentions(raw, enabled=True)
+    expected = raw
+    for login in logins:
+        expected = expected.replace("{{mention:" + login + "}}", resolved_user(login.lower()).text)
+    assert answer == expected
+    assert mentions == [
+        TeamsMention(text=user.text, mentioned=user.mentioned)
+        for user in lookup.return_value.users.values()
+    ]
+    lookup.assert_awaited_once_with(usernames=[login.lower() for login in logins])
+
+
+@pytest.mark.asyncio
+async def test_failed_quoted_lookup_falls_back_to_plain_handle(lookup):
+    lookup.return_value = ResolveGitHubUsersResult(errors={"reviewer-a": "HTTP 403"})
+    answer, mentions = await resolve_answer_mentions(
+        "```text\n{{mention:reviewer-a}}, please review.\n```", enabled=True,
+    )
+    assert answer == "```text\n@reviewer-a, please review.\n```"
+    assert mentions is None
 
 
 @pytest.mark.asyncio

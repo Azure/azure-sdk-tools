@@ -36,7 +36,7 @@ In the automated management-plane flow, spec merge can create or find the releas
 Read normal PR discussion comments (`get_comments`) as well as formal reviews and inline threads; review comments alone omit author/reviewer clarifications and automation summaries. Inspect current automatic workflow results, Copilot feedback, and linked specification approval where applicable. Reconcile the latest discussion and automation summaries with current checks; distinguish required actions from non-blocking suggestions. Check the release plan's package and PR state. Identify remaining blockers and fixes.
 When re-approval is required for an SDK PR, tag the previous approving reviewer rather than other requested reviewers or catalog contacts, even if they are no longer in the requested-reviewer list.
 Otherwise, when human participation is needed for an SDK PR, prefer contacts in the matching `[support_catalog]` area over requested reviewers or `CODEOWNERS`, matching SDK language, management/data plane, and blocker.
-Follow the shared Next Action or Help Request and Contact Placeholders rules.
+Follow the shared Next Action or Help Request rules.
 
 #### 5. Release and Publication
 Inspect the affected package's release plan and release pipeline, including trigger, approval, and failed-stage evidence as relevant. Confirm the intended package version was published; a merged PR or green PR checks do not establish release success. Distinguish a confirmed blocker from missing evidence before recommending a repair.

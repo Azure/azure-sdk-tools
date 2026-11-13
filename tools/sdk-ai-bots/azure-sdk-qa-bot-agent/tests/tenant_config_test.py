@@ -85,9 +85,8 @@ def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
         _AGENT_ROOT / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
 
-    assert "Plan tool calls within runtime limits." in instruction
-    assert "8 tool calls" not in instruction
-    assert "8-call cap" not in instruction
+    assert "Tool call budget: at most 8 tool calls per turn total (across all tools)." in instruction
+    assert "within the same 8-call cap" in instruction
     assert "3 dependent follow-up rounds" in instruction
     assert "`load_skill` ALONE" in instruction
 
@@ -423,7 +422,7 @@ def test_sdk_pr_guidance_prefers_prior_approvers_then_catalog_contacts(tenant_id
     assert "Otherwise, when human participation is needed for an SDK PR" in review
     assert "prefer contacts in the matching `[support_catalog]` area over requested reviewers or `CODEOWNERS`" in review
     assert "matching SDK language, management/data plane, and blocker" in review
-    assert "Follow the shared Next Action or Help Request and Contact Placeholders rules." in review
+    assert "Follow the shared Next Action or Help Request rules." in review
 
 
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:

@@ -482,7 +482,7 @@ async def test_catalog_context_matches_tenant_instructions_on_creation_and_recov
     CONFIG, b"support_areas: []", None, b"", b"bad yaml", b"support_areas: [",
     b"\xff", b"support_areas: [{}]",
 ])
-async def test_server_startup_caches_context_before_serving(
+async def test_support_catalog_is_cached_on_first_request_not_startup(
     monkeypatch, support_config_path, data, caplog,
 ):
     import server
@@ -498,14 +498,16 @@ async def test_server_startup_caches_context_before_serving(
         server.BackgroundTaskTracker, "instance",
         lambda: SimpleNamespace(shutdown=AsyncMock()),
     )
+    read = MagicMock(wraps=support_config_path.read_bytes)
+    monkeypatch.setattr(Path, "read_bytes", read)
     async with server.lifespan(server.app):
         initialize.assert_awaited_once()
+        read.assert_not_called()
+        assert get_support_catalog_context() == expected
+        read.assert_called_once_with()
         support_config_path.write_bytes(b"invalid")
-        with patch.object(
-            support_contact, "parse_support_catalog",
-            side_effect=AssertionError("Catalog must already be cached at startup."),
-        ):
-            assert get_support_catalog_context() == expected
+        assert get_support_catalog_context() == expected
+        read.assert_called_once_with()
     if data not in (CONFIG, b"support_areas: []"):
         assert "Support-contact configuration failed" in caplog.text
     else:
@@ -568,7 +570,7 @@ def test_prompt_keeps_guidance_optional_without_a_new_output_format():
     text = (ROOT / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
     heading = "## Next Action or Help Request (When Needed)"
     assert text.count(heading) == 1
-    section = text.split(heading + "\n", 1)[1].split("## Contact Placeholders\n", 1)[0]
+    section = text.split(heading + "\n", 1)[1].split("\n## ", 1)[0]
     assert "Add a next step only when needed to resolve the request; routine instructions do not require an extra request." in section
     assert "ask for missing user facts only when they determine the next action" in section
     assert "If no owner is established, explain the limitation and provide any known support route." in section
@@ -594,7 +596,7 @@ def test_prompt_keeps_guidance_optional_without_a_new_output_format():
 
 def test_help_request_example_uses_placeholders_and_conditional_approval():
     text = (ROOT / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
-    section = text.split("## Next Action or Help Request (When Needed)\n", 1)[1].split("## Contact Placeholders\n", 1)[0]
+    section = text.split("## Next Action or Help Request (When Needed)\n", 1)[1].split("\n## ", 1)[0]
     assert "Example (replace the GitHub login and PR link with evidence-backed values):" in section
     example = section.split("```text\n", 1)[1].split("```", 1)[0]
     assert example.startswith("**Actions needed**\n\n{{mention:owner-login}}")
@@ -606,9 +608,9 @@ def test_help_request_example_uses_placeholders_and_conditional_approval():
 
 def test_prompt_uses_backend_placeholders_for_direct_mentions_and_plain_contacts():
     text = (ROOT / "agents" / "chat_agent" / "instruction.md").read_text(encoding="utf-8")
-    mentions = text.split("## Contact Placeholders\n", 1)[1].split("\n## ", 1)[0]
+    mentions = text.split("## Next Action or Help Request (When Needed)\n", 1)[1].split("\n## ", 1)[0]
     assert "Teams User Mentions" not in text
-    assert sum(line.startswith("- ") for line in mentions.splitlines()) == 3
+    assert "Contact Placeholders" not in text
     assert "Tag only direct requests for help, judgment or action" in mentions
     assert "including in PR, tenant and skill guidance" in mentions
     assert "keep contact recommendations and quoted/incidental usernames plain" in mentions
@@ -622,9 +624,8 @@ def test_prompt_uses_backend_placeholders_for_direct_mentions_and_plain_contacts
     assert "Identity resolution does not imply approval or completed work." in mentions
     assert "@github-handle" not in mentions
     tenant = (ROOT / "prompts" / "tenants" / "api_spec_review.md").read_text(encoding="utf-8")
-    assert "Use contact placeholders for recommendations" in tenant
-    assert "mention placeholders only when directly requesting participation" in tenant
-    assert "**Contact Placeholders**" in tenant
+    assert "**Next Action or Help Request**" in tenant
+    assert "Contact Placeholders" not in tenant
     assert "Teams mentions" not in tenant
     assert "(as `@github-handle` mentions)" not in tenant
 
@@ -634,5 +635,5 @@ def test_pr_review_uses_shared_direct_request_and_mention_rules():
     approval = skill.split("7. **Review approval:**", 1)[1]
     assert "qualified, verified reviewers/code owners" in approval
     assert "directly with a specific request and PR link" in approval
-    assert "following the shared Next Action or Help Request and Contact Placeholders rules" in approval
+    assert "following the shared Next Action or Help Request rules" in approval
     assert "@github-handle" not in approval

@@ -18,27 +18,21 @@ logger = logging.getLogger(__name__)
 MAX_RESOLVED_USERS = 10
 RESOLUTION_TIMEOUT_SECONDS = 10
 
-# Preserve code examples and quoted text rather than notifying their subjects.
 _TOKEN_RE = re.compile(
-    r"(?P<literal>(?P<fence>`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:(?P=fence)|\Z)"
-    r"|(?P<ticks>`+)[^\n]*?(?P=ticks)|^[ \t]*>.*$)"
-    r"|(?<!\\)\{\{(?P<kind>mention|contact):(?P<login>[^{}\r\n]*)\}\}",
-    re.MULTILINE,
+    r"(?<!\\)\{\{(?P<kind>mention|contact):(?P<login>[^{}\r\n]*)\}\}",
 )
 
 
 async def resolve_answer_mentions(
     answer: str, *, enabled: bool
 ) -> tuple[str, list[TeamsMention] | None]:
-    """Resolve at most ten people; only enabled direct requests become mentions.
+    """Resolve placeholders regardless of Markdown formatting, for at most ten people.
 
     Returns the rendered answer and deduplicated Teams mention metadata.
-    The metadata is None when no notifications should be sent.
+    Only enabled mention placeholders notify; otherwise the metadata is None.
     """
     logins: dict[str, str] = {}
     for match in _TOKEN_RE.finditer(answer):
-        if match.group("literal") is not None:
-            continue
         raw = match.group("login")
         if raw in logins:
             continue
@@ -76,8 +70,6 @@ async def resolve_answer_mentions(
     mentions: list[TeamsMention] = []
 
     def replace(match: re.Match[str]) -> str:
-        if match.group("literal") is not None:
-            return match.group(0)
         raw = match.group("login")
         login = logins.get(raw)
         user = identities.users.get(login) if login is not None and login in usernames else None

@@ -70,13 +70,137 @@ function runSummary(root, shards, options = {}) {
     const child = runCli("build-eval-summary.ts", [
         "--results-root", path.join(root, "download"), "--selected-root", path.join(root, "selected"),
         "--output-path", output,
-    ], { TF_BUILD: "true", EVAL_EXPECTED_MATRIX: matrix });
+    ], { TF_BUILD: "true", EVAL_EXPECTED_MATRIX: matrix, ...options.environment });
     return {
         child, markdown: fs.readFileSync(output, "utf8"),
         result: readJson(path.join(root, "summary", "eval-summary.json")),
         index: readJson(path.join(root, "download", "shard-index.json")),
     };
 }
+
+test("grader line discovery handles every name, model and shard without fixed line offsets", async () => {
+    const { mapGraderLogLines } = await import("../lib/grader-log-lines.ts");
+    const records = [
+        { itemId: "first", evalName: "suite", stimulus: "rename-client-property", model: "model-a",
+            gradeResult: { details: [{ name: "tool-calls requires edit|apply_patch", passed: false, evidence: "Required edit was not called" }] } },
+        { itemId: "second", evalName: "suite", stimulus: "generate-sdk", model: "model-b",
+            gradeResult: { details: [{ name: "output-matches [CreatedAt]", passed: true, evidence: "Pattern matched" },
+                { name: "forbids wrong-tool", passed: false, evidence: "Disallowed tool was called" }] } },
+    ];
+    for (const prefix of [[], ["Condition evaluation", "Evaluating condition", "Result: True", ""]]) {
+        const lines = [...prefix,
+            "\u001b[1m\u2501\u2501\u2501 suite \u00b7 rename-client-property [model-a] \u2501\u2501\u2501\u001b[0m",
+            "  Graders (0/1)", "  ----------------", "  \u2718 tool-calls requires edit|apply_patch  Required edit was not called", "  1 grader(s) failed.",
+            "\u2501\u2501\u2501 suite \u00b7 generate-sdk [model-b] \u2501\u2501\u2501",
+            "  Graders (1/2)", "  ----------------", "  \u2714 output-matches [CreatedAt]  Pattern matched",
+            "  \u2718 forbids wrong-tool  Disallowed tool was called", "  1 grader(s) failed."];
+        const mapped = mapGraderLogLines(records, lines);
+        assert.equal(mapped.first.graderLines[records[0].gradeResult.details[0].name], prefix.length + 4);
+        assert.equal(mapped.second.graderLines[records[1].gradeResult.details[0].name], prefix.length + 9);
+        assert.equal(mapped.second.graderLines[records[1].gradeResult.details[1].name], prefix.length + 10);
+        assert.equal(mapGraderLogLines([records[0]], [...lines, ...lines]).first, undefined,
+            "Repeated indistinguishable trial logs must not invent a line");
+        assert.equal(mapGraderLogLines([{ ...records[0], model: "another-model" }], lines).first, undefined);
+    }
+});
+
+test("task display prefix derives condition, trace and dependency lines from the selected task", async () => {
+    const { taskLogPrefixLineCount, taskLogDisplayLines } = await import("../lib/grader-log-lines.ts");
+    const sourceLog = { jobId: "job", taskId: "task" };
+    const task = { id: "task", parentId: "job", state: 2, result: 2, logId: 7, condition: "succeeded()" };
+    const provider = { tasks: [task], jobs: [{ id: "job" }], jobDependencies: { job: [] }, phases: [] };
+    assert.equal(taskLogPrefixLineCount(provider, sourceLog, 7), 8);
+    assert.equal(taskLogPrefixLineCount({ ...provider, jobDependencies: {} }, sourceLog, 7), 8);
+    assert.equal(taskLogPrefixLineCount({ ...provider, tasks: [{ ...task, condition: null }] }, sourceLog, 7), 5);
+    const changed = { ...provider, tasks: [{ ...task, condition: "and(\ntrue,\ntrue)", message: "first\nsecond" }],
+        jobDependencies: { job: ["prepare", "validate"] }, phases: [{ refName: "prepare", name: "Prepare\ninputs" }] };
+    assert.equal(taskLogPrefixLineCount(changed, sourceLog, 7), 16);
+    for (const invalid of [{ ...task, parentId: "other" }, { ...task, logId: 8 }, { ...task, state: 1 },
+        { ...task, condition: "variables.x", originalCondition: "\nvariables.x" }]) {
+        assert.equal(taskLogPrefixLineCount({ ...provider, tasks: [invalid] }, sourceLog, 7), undefined);
+    }
+    assert.equal(taskLogPrefixLineCount({ ...provider, tasks: [{ ...task, condition: "variables.x" }],
+        variables: { x: "first\nsecond" } }, sourceLog, 7), undefined);
+    assert.deepEqual(taskLogDisplayLines("##[group]Output\r\nfirst\r\n##[endgroup]\r\nsecond", 2),
+        ["", "", "##[group]Output", "first", "second"]);
+});
+
+test("grouped trials share only their verified grader aggregate line across repeated trials", async () => {
+    const { mapGraderLogLines } = await import("../lib/grader-log-lines.ts");
+    const records = [true, false, true].map((passed, index) => ({ itemId: String(index), evalName: "suite",
+        stimulus: "scenario", model: "model", gradeResult: { details: [{ name: "grader [a|b]", passed }] } }));
+    const lines = ["\u2501\u2501\u2501 suite \u00b7 scenario [model] \u2501\u2501\u2501", "Graders", "\u2718 grader [a|b]  2/3"];
+    const mapped = mapGraderLogLines(records, lines);
+    for (const record of records) assert.equal(mapped[record.itemId].graderLines["grader [a|b]"], 3);
+    assert.equal(mapGraderLogLines(records, [...lines, ...lines])["0"], undefined);
+    assert.equal(mapGraderLogLines(records.slice(1), lines)["1"], undefined);
+});
+
+test("repeated grader names preserve unique locations and select only an unambiguous failing occurrence", async () => {
+    const { mapGraderLogLines } = await import("../lib/grader-log-lines.ts");
+    const record = { itemId: "trial", evalName: "suite", stimulus: "conversation", model: "model", gradeResult: { details: [
+        { name: "repeated", passed: true, evidence: "Matched" }, { name: "unique", passed: true, evidence: "Complete" },
+        { name: "repeated", passed: true, evidence: "Matched" },
+    ] } };
+    const lines = ["\u2501\u2501\u2501 suite \u00b7 conversation [model] \u2501\u2501\u2501", "Graders", "------",
+        "\u2714 repeated #1  Matched", "\u2714 unique  Complete", "\u2714 repeated #2  Matched"];
+    const mapped = mapGraderLogLines([record], lines).trial;
+    assert.equal(mapped.line, 1);
+    assert.equal(mapped.graderLines.unique, 5);
+    assert.equal(mapped.graderLines.repeated, undefined);
+    const failing = structuredClone(record);
+    failing.gradeResult.details[2] = { name: "repeated", passed: false, evidence: "Missing tool" };
+    assert.equal(mapGraderLogLines([failing], [...lines.slice(0, -1), "\u2718 repeated #2  Missing tool"])
+        .trial.graderLines.repeated, 6);
+});
+
+test("timeline capture maps every selected shard, retains retry identity and tolerates unavailable logs", async t => {
+    const root = setup(t), matrix = {}, records = [], tasks = [], jobs = [], jobDependencies = {};
+    const expected = [];
+    for (const [index, condition] of ["succeeded()", "and(\ntrue,\ntrue)"].entries()) {
+        const shard = `area_${index}`, directory = artifact(root, shard, 2);
+        const jobId = `11111111-1111-4111-8111-11111111111${index}`, taskId = `22222222-2222-4222-8222-22222222222${index}`;
+        const trial = { type: "trial-result", status: "success", itemId: `trial-${index}`, evalName: "suite",
+            stimulus: `scenario-${index}`, model: "model", gradeResult: { details: [{ name: `grader [${index}|x]`, passed: false, evidence: "Missing tool" }] } };
+        fs.writeFileSync(path.join(directory, "results.jsonl"), JSON.stringify(trial) + '\n{"type":"run-summary","evals":[{"name":"suite"}]}\n');
+        const raw = fs.readFileSync(path.join(directory, "results.jsonl"), "utf8");
+        matrix[`leg_${index}`] = { shardName: shard }; jobs.push({ id: jobId });
+        if (index) jobDependencies[jobId] = [];
+        records.push({ type: "Job", identifier: `Eval.RunShard.leg_${index}`, id: jobId, attempt: 2, state: "completed", result: "failed" },
+            { type: "Task", name: `vally eval ${shard}`, id: taskId, parentId: jobId, attempt: 2, state: "completed", log: { id: index + 7, url: "https://untrusted.invalid/log" } });
+        tasks.push({ id: taskId, parentId: jobId, state: 2, result: 2, logId: index + 7, condition });
+        expected.push({ directory, raw, trial, shard, line: 12 + index * 2 });
+    }
+    const environment = { ...timelineEnv, EVAL_EXPECTED_MATRIX: JSON.stringify(matrix) };
+    const fetchImpl = async (url, options) => {
+        assert.equal(new URL(url).origin, "https://dev.azure.com");
+        assert.equal(options.redirect, "error");
+        assert.equal(options.headers.authorization, "Bearer fixture-token");
+        if (String(url).includes("/timeline?")) return Response.json({ records });
+        if (String(url).includes("/Contribution/")) return Response.json({ dataProviders: {
+            "ms.vss-build-web.run-logs-data-provider": { buildId: 1001, projectId: timelineEnv.SYSTEM_TEAMPROJECTID, tasks, jobs, jobDependencies },
+        } });
+        assert.equal(options.headers.accept, "text/plain");
+        const index = Number(/\/logs\/(\d+)/.exec(String(url))[1]) - 7;
+        return new Response([`\u2501\u2501\u2501 suite \u00b7 scenario-${index} [model] \u2501\u2501\u2501`, "Graders", "------",
+            `\u2718 grader [${index}|x]  Missing tool`].join("\n"));
+    };
+    const evidence = await readShardAttempts(environment, { fetchImpl, resultsRoot: path.join(root, "download") });
+    for (const entry of expected) {
+        assert.equal(evidence.attempts[entry.shard].logLines, "source-log-lines.json");
+        const mapped = readJson(path.join(entry.directory, "source-log-lines.json"));
+        assert.equal(mapped.trials[entry.trial.itemId].graderLines[entry.trial.gradeResult.details[0].name], entry.line);
+        assert.equal(fs.readFileSync(path.join(entry.directory, "results.jsonl"), "utf8"), entry.raw);
+    }
+    const selected = selectSummaryResults({ resultsRoot: path.join(root, "download"), selectedRoot: path.join(root, "selected"),
+        expectedShards: expected.map(entry => entry.shard), jobAttempts: evidence });
+    assert.equal(selected.complete, true);
+    assert.ok(selected.shardInput.attempts.every(attempt => attempt.attempt === 2 && attempt.logLines === "source-log-lines.json"));
+    const unavailable = await readShardAttempts(environment, { resultsRoot: path.join(root, "download"), fetchImpl: (url, options) =>
+        String(url).includes("/logs/") ? new Response("denied", { status: 403 }) : fetchImpl(url, options) });
+    assert.equal(unavailable.valid, true);
+    assert.ok(Object.values(unavailable.attempts).every(attempt => attempt.complete && attempt.sourceLog && !attempt.logLines));
+});
 
 test("selected shard attempts retain their exact evaluation task IDs, never another job or retry", () => {
     const jobId = "11111111-1111-4111-8111-111111111111";
@@ -269,12 +393,56 @@ test("summary selects latest expected attempts once; completed failures remain e
         totals: { scenarios: 2, failed: 1, skipped: 0 },
     });
     assert.match(markdown, /results — FAILED/);
-    assert.match(markdown, /\| area_a \| 2 \| Complete \|/);
+    assert.doesNotMatch(markdown, /Selected shard attempts|\| Shard \| Attempt \| Result data \|/);
+    assert.match(markdown, /\| Shard \| Result \| Pass rate \| Passed \| Failed \| Skipped \| Time \(s\) \|/);
     assert.deepEqual(fs.readdirSync(path.join(root, "selected")).sort(), ["eval-result-area_a-2", "eval-result-area_b-1"]);
     assert.deepEqual(index, {
         schemaVersion: 1, complete: true, expectedShards: ["area_a", "area_b"],
         attempts: [{ shard: "area_a", attempt: 2, directory: "eval-result-area_a-2" }, { shard: "area_b", attempt: 1, directory: "eval-result-area_b-1" }],
     });
+});
+
+test("failure table uses every recorded failed check and only selected task-line evidence", (t) => {
+    const sourceLog = { jobId: "11111111-1111-4111-8111-111111111111", taskId: "22222222-2222-4222-8222-222222222222" };
+    const oldLog = { jobId: "33333333-3333-4333-8333-333333333333", taskId: "44444444-4444-4444-8444-444444444444" };
+    for (const validLines of [true, false]) {
+        const root = setup(t);
+        artifact(root, "area_a", 1, { failed: true });
+        const directory = artifact(root, "area_a", 2, { failed: true });
+        const file = path.join(directory, "results.jsonl");
+        const records = fs.readFileSync(file, "utf8").trim().split("\n").map(line => JSON.parse(line));
+        const record = records.find(item => item.type === "trial-result");
+        record.stimulus = record.itemId;
+        record.model = "model";
+        record.sourceLog = { ...oldLog, graderLines: { "failed tool": 999 } };
+        record.gradeResult = { details: [
+            { name: "failed tool", passed: false, evidence: "Required tool was not called" },
+            { name: "failed skill", passed: false, evidence: "Required skill was not called" },
+        ] };
+        fs.writeFileSync(file, records.map(item => JSON.stringify(item)).join("\n") + "\n");
+        const evidencePath = path.join(root, "job-attempts.json");
+        const evidence = readJson(evidencePath);
+        evidence.attempts.area_a.sourceLog = sourceLog;
+        evidence.attempts.area_a.logLines = "source-log-lines.json";
+        fs.writeFileSync(evidencePath, JSON.stringify(evidence));
+        fs.writeFileSync(path.join(directory, "source-log-lines.json"), JSON.stringify({ schemaVersion: 1,
+            ...(validLines ? sourceLog : oldLog), trials: { [record.itemId]: { line: 250,
+                graderLines: { "failed tool": 259, "failed skill": 261 } } } }));
+        const { child, markdown, result } = runSummary(root, ["area_a"], { environment: {
+            SYSTEM_COLLECTIONURI: "https://dev.azure.com/azure-sdk/", SYSTEM_TEAMPROJECT: "internal", BUILD_BUILDID: "12345",
+        } });
+        assert.equal(child.status, 0, child.stderr);
+        assert.equal(result.complete, true);
+        assert.match(child.stdout, /task.addattachment type=Distributedtask.Core.Summary;name=Evaluation results;/);
+        assert.match(markdown, /\| Scenario \| Failed check \| Trials passed \| Evidence \|/);
+        assert.ok(markdown.includes("failed tool") && markdown.includes("failed skill"));
+        const urls = [...markdown.matchAll(/\]\((https:\/\/dev\.azure\.com\/[^)]+)\)/g)].map(match => new URL(match[1]));
+        assert.ok(urls.length >= 6);
+        assert.ok(urls.every(url => url.searchParams.get("j") === sourceLog.jobId && url.searchParams.get("t") === sourceLog.taskId));
+        if (validLines) assert.deepEqual([...new Set(urls.map(url => url.searchParams.get("l")))].sort(), ["259", "261"]);
+        else assert.ok(urls.every(url => !url.searchParams.has("l")));
+        assert.doesNotMatch(markdown, /999|33333333-3333/);
+    }
 });
 
 test("a later incomplete attempt and a missing shard never fall back to complete older artifacts", (t) => {
@@ -373,7 +541,7 @@ test("legacy-layout JUnit is diagnostic only, and never causes fallback to an ol
     assert.equal(result.complete, false);
     assert.deepEqual(result.totals, { scenarios: 1, failed: 1, skipped: 0 });
     assert.equal(index.attempts[0].attempt, 2);
-    assert.match(markdown, /latest \(0\/1 runs passed\)/);
+    assert.match(markdown, /\| latest<br>.*\| Check details unavailable \| 0\/1 \|/);
     assert.equal(fs.existsSync(path.join(root, "selected", "eval-result-area_a-1")), false);
 });
 
@@ -476,7 +644,7 @@ test("summary CLI without selected-root preserves legacy JUnit-only behavior and
         { TF_BUILD: "true", EVAL_EXPECTED_MATRIX: "invalid matrix is irrelevant in legacy mode" }, root);
     assert.equal(child.status, 0, child.stderr);
     assert.match(fs.readFileSync(path.join(root, "eval-summary.md"), "utf8"), /results — PASSED/);
-    assert.match(child.stdout, /##vso\[task.uploadsummary\]/);
+    assert.match(child.stdout, /##vso\[task.addattachment type=Distributedtask.Core.Summary;name=Evaluation results;\]/);
     assert.doesNotMatch(child.stdout, /EvalSummaryComplete/);
     assert.equal(fs.existsSync(path.join(root, "eval-summary.json")), false);
     assert.equal(fs.existsSync(path.join(root, "download", "shard-index.json")), false);

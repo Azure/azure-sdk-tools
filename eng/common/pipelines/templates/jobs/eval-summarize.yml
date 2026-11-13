@@ -54,10 +54,11 @@ jobs:
             eval-result-*/**/*.junit.xml
           targetPath: $(Pipeline.Workspace)/eval-results
 
-      # Only attempt verification needs the current build token; rendering uses saved evidence.
+      # Attempt and log-location capture use the build token; rendering uses saved evidence.
       - script: |
           node --experimental-strip-types "$(Build.SourcesDirectory)/eng/common/scripts/eval/lib/shard-results.ts" \
-            --attempts-output "$(Build.ArtifactStagingDirectory)/eval-summary/job-attempts.json"
+            --attempts-output "$(Build.ArtifactStagingDirectory)/eval-summary/job-attempts.json" \
+            --results-root "$(Pipeline.Workspace)/eval-results"
         displayName: 'Verify latest shard job attempts from current build timeline'
         condition: always()
         env:
@@ -101,12 +102,11 @@ jobs:
           EVAL_ARCHIVE_STATUS: $(EvalArchiveStatus)
           EVAL_IMPORT_STATUS: $(EvalImportStatus)
           EVAL_STORAGE_CONFIGURED: $(EvalStorageConfigured)
+          EVAL_DASHBOARD_BASE_URL: $(EvalDashboardBaseUrl)
           EVAL_DASHBOARD_REFRESH_URL: $(EvalDashboardRefreshUrl)
           ${{ if not(parameters.publishDashboardResults) }}:
             EVAL_PUBLICATION_SKIP_REASON: disabled
-          ${{ elseif ne(variables['Build.SourceBranch'], 'refs/heads/main') }}:
-            EVAL_PUBLICATION_SKIP_REASON: feature_branch
-          ${{ elseif not(and(eq(variables['System.CollectionUri'], 'https://dev.azure.com/azure-sdk/'), eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.Repository.Name'], 'Azure/azure-sdk-tools'), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI', 'Schedule', 'Manual'))) }}:
+          ${{ elseif not(and(eq(variables['System.CollectionUri'], 'https://dev.azure.com/azure-sdk/'), eq(variables['System.TeamProject'], 'internal'), startsWith(variables['Build.Repository.Name'], 'Azure/'), not(endsWith(variables['Build.Repository.Name'], '-pr')), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI', 'Schedule', 'Manual'), or(eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/main')))) }}:
             EVAL_PUBLICATION_SKIP_REASON: ineligible_run
           ${{ else }}:
             EVAL_PUBLICATION_SKIP_REASON: ''

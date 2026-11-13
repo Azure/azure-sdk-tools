@@ -505,9 +505,11 @@ Describe 'Tools publisher CI integration' -Tag 'UnitTest' {
         $summary | Should -Match 'EvalArchiveStatus: not_started'
         $summary | Should -Match 'EvalImportStatus: not_attempted'
         $summary | Should -Match '(?s)PublishTestResults@2.*--delivery --output-path.*eval-delivery\.md.*Report final evaluation result delivery.*condition: always\(\)'
-        foreach ($reason in @('disabled', 'feature_branch', 'ineligible_run')) {
+        foreach ($reason in @('disabled', 'ineligible_run')) {
             $summary | Should -Match "EVAL_PUBLICATION_SKIP_REASON: $reason"
         }
+        $summary | Should -Not -Match 'EVAL_PUBLICATION_SKIP_REASON: feature_branch'
+        $summary | Should -Match "eq\(variables\['Build.Reason'\], 'Manual'\)"
         $summary | Should -Match 'EVAL_DASHBOARD_REFRESH_URL: \$\(EvalDashboardRefreshUrl\)'
         $summary | Should -Not -Match 'EVAL_.*TOKEN|azureSubscription:'
         $publish = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../common/pipelines/templates/steps/eval-publish-results.yml') -Raw

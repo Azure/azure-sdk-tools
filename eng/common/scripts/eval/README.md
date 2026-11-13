@@ -66,12 +66,15 @@ access. The dashboard reads that account's existing `vally-results` container;
 publishing to another account does not redirect the reader. Service-connection
 authorization, approved branch checks and existing RBAC remain required.
 
-Publishing policy stays in YAML: organization `https://dev.azure.com/azure-sdk/`,
-project `internal`, repository `Azure/azure-sdk-tools`, exact `refs/heads/main`, and
-a CI, scheduled or manual reason. There is no hardcoded definition-ID allowlist or
-variable template in shared code. Feature branches, other repositories, PRs, pull
-refs and public-project runs do not get the credential-bearing task. At runtime it
-also requires a complete summary and a configured storage account.
+This hosted-verification snapshot combines the tested Extensions renderer with the
+trusted-manual policy proposed in Tools PR #17567. Publishing policy remains in YAML:
+organization `https://dev.azure.com/azure-sdk/`, project `internal`, an Azure-owned
+repository other than a private `-pr` repository, and no pull-request source ref.
+Trusted manual runs can publish from feature branches or tags using the existing
+`publishDashboardResults` setting. CI and scheduled runs retain their main-branch
+restriction. At runtime upload still requires successful preceding steps, a complete
+latest-attempt summary and the pipeline-owned storage account. Service-connection
+approvals, branch checks, permissions and immutable-archive rules are unchanged.
 
 There is no separate automatic-publication, feature-branch override or network-access
 flag. Publication requests the documented
@@ -95,18 +98,45 @@ missing or incomplete results fail Summary and cannot publish.
 The Summary job always renders a final `eval-delivery.md`, including after publication
 or the evaluation gate fails. It separates the scenario verdict, result completeness,
 archive storage and dashboard import confirmation. Known skips name the reason; a task
-that did not report an outcome is not shown as a successful upload. The existing shard
-attempt table and incomplete-result warnings remain in the evaluation summary.
+that did not report an outcome is not shown as a successful upload. The evaluation
+summary keeps its scenario overview, full shard metrics table, totals and incomplete-result
+warnings. Selected-attempt provenance remains in the retained summary JSON and shard
+index instead of a separate customer-facing attempt table.
+The visible ADO attachments are named **Evaluation results** and **Result delivery**;
+their retained filenames remain unchanged. Failed scenarios use the approved
+**Scenario / Failed check / Trials passed / Evidence** table, not a collapsed bullet list.
+Scenario names, failed-check labels and Task log actions link to the same verified
+check-specific task and line. Every recorded failed check is included; JUnit still owns
+which scenarios failed their configured threshold.
 Missing publisher output also leaves dashboard import **not confirmed**, not **not attempted**.
 Only a known publication skip or an explicit upload failure establishes that no import was attempted.
 
 With `-AzurePipelines`, the publisher emits fixed outcome variables for this final report.
 It does not read pipeline policy or write a local receipt. The report reuses the saved
 summary JSON, needs no token or network, and is retained with the existing Summary artifact.
-An exact dashboard build/attempt link derives from the protected refresh URL's origin;
-ADO tests, logs and artifacts remain separate links. Dashboard and ADO access are unchanged.
-An unconfirmed refresh after storage calls for rediscovering the archive, not rerunning
-evaluations. The saved ZIP and its checksum are never rewritten to add delivery status.
+
+- Non-publishing runs show **Artifacts only**, result completeness and the retained ADO
+  artifacts, without skipped upload/import rows or a dashboard link.
+- Successful uploads show **Available in dashboard** only after confirmed import;
+  otherwise they show **Uploaded; dashboard import pending** with the reported refresh
+  outcome. Both keep the **Retained artifacts** download link.
+- **View this build in dashboard** is the main publishing action. Redundant ADO tests
+  and generic log shortcuts are omitted; the build's native navigation remains available.
+
+Configure the optional pipeline-owned `EvalDashboardBaseUrl` as the dashboard's HTTPS
+App Service origin, without credentials, a nondefault port, an extra path, query or fragment.
+If it is unset, the report uses the existing protected `EvalDashboardRefreshUrl` origin.
+An invalid explicit base URL is not replaced with another destination. This configuration
+controls only the link; notification configuration and authentication remain separate.
+The link contract is `/build?organization=<org>&project=<project>&definition=<definition-id>&build=<build-id>&attempt=<summary-attempt>`.
+Values are encoded from the current pipeline identity, using the build ID rather than the
+display build number. The same link is shown immediately after confirmed upload whether
+or not import is confirmed. A temporary dashboard 404 before import completes is accepted;
+no waiting page, retry UI or import-on-click mechanism is introduced.
+
+Dashboard and ADO access are unchanged. An unconfirmed refresh after storage is not a
+reason to rerun evaluations. The saved ZIP and its checksum are never rewritten to add
+delivery status.
 
 ### Archive and retry contract
 
@@ -121,8 +151,25 @@ completed `vally eval` task ID when there is one unambiguous match for that atte
 Bundling attaches optional `sourceLog: { jobId, taskId }` provenance to each executed trial,
 overriding trial-supplied values. The IDs are validated GUID strings; missing or ambiguous
 task evidence omits the optional field without changing completeness or publishing policy.
-The schema-v1 archive layout is unchanged. The reader can construct exact ADO task links
-with `j` and `t`; older archives keep build-level links and are never rewritten to add metadata.
+That same token-bearing step also queries the current build's log-view metadata and completed
+task logs. It derives display-line positions from each task's condition, trace and dependencies,
+including omitted empty dependency entries, rather than adding a fixed raw-log offset.
+The shared mapper matches eval, scenario, model, grader name, result and evidence, supports
+grouped trial counts, and saves only derived item/grader locations beside the downloaded results.
+Capture has a 30-second total deadline, a 32 MiB response budget and an 8 MiB per-response limit.
+Rendering and bundling still need no token or network.
+The report and archive use the same selected-task provenance resolver. Trial-supplied
+log destinations cannot override the selected job/task identity, and line evidence must
+match that task and item. Missing or ambiguous line evidence keeps a task-level link;
+missing task identity is shown as unavailable rather than an invented exact destination.
+
+Bundling adds optional `line` and exact-name `graderLines` fields to each trial's `sourceLog`
+only from that selected task's saved evidence. Ambiguous repeated names keep task-level links
+unless their failing occurrence has one verified line. Unavailable, oversized or invalid log
+evidence never changes grading or completeness. Raw task logs, provider variables and task
+inputs are not included in the archive. The schema-v1 archive layout is unchanged: the reader
+uses `j`, `t` and optional `l` without making ADO requests. Older archives retain their recorded
+links and are never rewritten to add metadata.
 
 Reader limits are **32 MiB ZIP, 128 MiB expanded, 10,000 entries and 100,000 trials**.
 Canonical identities, UTC calendar dates, safe entries and counts are validated

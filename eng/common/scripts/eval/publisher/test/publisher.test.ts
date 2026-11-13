@@ -70,6 +70,33 @@ test("bundles attach only verified selected-attempt task identities to each tria
     }
 });
 
+test("optional grader-line evidence is scoped to the selected task and cannot replace trial identities", async t => {
+    const sourceLog = { jobId: "11111111-1111-4111-8111-111111111111", taskId: "22222222-2222-4222-8222-222222222222" };
+    for (const mode of ["verified", "unselected", "other-task", "other-item", "invalid-line", "corrupt"]) {
+        const fixture = await constructionFixture(t), index = JSON.parse(await readFile(fixture.indexPath, "utf8"));
+        index.attempts[0].sourceLog = sourceLog;
+        if (mode !== "unselected") index.attempts[0].logLines = "source-log-lines.json";
+        await writeFile(fixture.indexPath, JSON.stringify(index));
+        await writeFile(join(fixture.artifact, "results.jsonl"), JSON.stringify({ ...trial,
+            gradeResult: { details: [{ name: "grader [a|b]", passed: false }] },
+            sourceLog: { jobId: "untrusted", taskId: "untrusted", line: 999, graderLines: { "grader [a|b]": 999 } },
+        }));
+        const evidence = { schemaVersion: 1, ...sourceLog,
+            ...(mode === "other-task" ? { taskId: "33333333-3333-4333-8333-333333333333" } : {}),
+            trials: { [mode === "other-item" ? "foreign" : trial.itemId]: {
+                jobId: "must-not-replace", taskId: "must-not-replace", line: mode === "invalid-line" ? "17" : 17,
+                graderLines: { "grader [a|b]": 21, "unrecorded grader": 25 },
+            } },
+        };
+        await writeFile(join(fixture.artifact, "source-log-lines.json"), mode === "corrupt" ? "not JSON" : JSON.stringify(evidence));
+        await prepareBundle(fixture);
+        const checked = validateBundle(await readFile(fixture.outputPath));
+        const record = JSON.parse(Buffer.from(checked.entries["results.jsonl"]).toString().trim());
+        assert.deepEqual(record.sourceLog, mode === "verified" ? { ...sourceLog, line: 17, graderLines: { "grader [a|b]": 21 } } : sourceLog, mode);
+        assert.equal(record.itemId, trial.itemId);
+    }
+});
+
 test("shared shards -> saved timeline evidence -> token-free summary -> one schema-v1 ZIP", async (t) => {
     const f = await fixture(t), scripts = resolve(import.meta.dirname, "../..");
     const downloads = join(f.root, "downloads"); await mkdir(downloads);
@@ -77,7 +104,8 @@ test("shared shards -> saved timeline evidence -> token-free summary -> one sche
         const source = join(f.root, shard), invocation = join(source, "invocation");
         await mkdir(invocation, { recursive: true });
         await writeFile(join(invocation, "results.jsonl"), [
-            { ...trial, itemId: shard }, { type: "run-summary", evals: [{ name: trial.evalName, stimuliRun: 1, passed: false }] },
+            { ...trial, itemId: shard, gradeResult: { details: [{ name: `grader [${shard}|x]`, passed: false, evidence: "Missing tool" }] } },
+            { type: "run-summary", evals: [{ name: trial.evalName, stimuliRun: 1, passed: false }] },
         ].map(record => JSON.stringify(record)).join("\n") + "\n");
         await writeFile(join(invocation, "eval-results.junit.xml"),
             `<testsuites><testsuite><testcase name="${shard}"><failure message="Unit test result"/></testcase></testsuite></testsuites>`);
@@ -87,19 +115,31 @@ test("shared shards -> saved timeline evidence -> token-free summary -> one sche
     const mock = join(f.root, "timeline-fetch.mjs");
     await writeFile(mock, `import { Socket } from "node:net";
         Socket.prototype.connect = function() { throw new Error("Network disabled"); };
-        globalThis.fetch = async (url, options) => {
-            if (url.origin !== "https://dev.azure.com" || options.headers.authorization !== "Bearer fixture-token" || options.redirect !== "error") throw new Error("Unexpected timeline request");
-            return Response.json({ records: ["a", "b"].flatMap((key, index) => {
+        const records = ["a", "b"].flatMap((key, index) => {
                 const jobId = (index + 1).toString().repeat(8) + '-1111-4111-8111-111111111111';
                 const taskId = (index + 3).toString().repeat(8) + '-2222-4222-8222-222222222222';
                 return [{ type: "Job", id: jobId, identifier: "Eval.RunShard." + key,
                     attempt: 1, state: "completed", result: "failed" },
                     { type: "Task", id: taskId, parentId: jobId, name: "vally eval shard_" + key,
-                        attempt: 1, state: "completed" }];
-            }) });
+                        attempt: 1, state: "completed", log: { id: index + 7 } }];
+            });
+        globalThis.fetch = async (url, options) => {
+            if (url.origin !== "https://dev.azure.com" || options.headers.authorization !== "Bearer fixture-token" || options.redirect !== "error") throw new Error("Unexpected evidence request");
+            if (url.pathname.includes("/timeline")) return Response.json({ records });
+            if (url.pathname.includes("/Contribution/")) return Response.json({ dataProviders: {
+                "ms.vss-build-web.run-logs-data-provider": { buildId: 1001, projectId: "00000000-0000-4000-8000-000000000001",
+                    jobs: records.filter(record => record.type === "Job"),
+                    tasks: records.filter(record => record.type === "Task").map((record, index) => ({ ...record,
+                        state: 2, result: 2, logId: record.log.id, condition: index ? "and(\\ntrue,\\ntrue)" : "succeeded()" })),
+                    jobDependencies: Object.fromEntries(records.filter(record => record.type === "Job").map(record => [record.id, []])),
+                }
+            } });
+            const key = Number(url.pathname.split("/").at(-1)) === 7 ? "a" : "b";
+            return new Response(["\u2501\u2501\u2501 synthetic \u00b7 synthetic [no-llm] \u2501\u2501\u2501", "Graders", "------",
+                "\u2718 grader [shard_" + key + "|x]  Missing tool"].join("\\n"));
         };`);
     const matrix = JSON.stringify({ a: { shardName: "shard_a" }, b: { shardName: "shard_b" } });
-    run(join(scripts, "lib/shard-results.ts"), ["--attempts-output", attempts], {
+    run(join(scripts, "lib/shard-results.ts"), ["--attempts-output", attempts, "--results-root", downloads], {
         EVAL_EXPECTED_MATRIX: matrix, SYSTEM_COLLECTIONURI: "https://dev.azure.com/azure-sdk/",
         SYSTEM_TEAMPROJECTID: "00000000-0000-4000-8000-000000000001", BUILD_BUILDID: "1001", SYSTEM_ACCESSTOKEN: "fixture-token",
     }, ["--import", pathToFileURL(mock).href]);
@@ -123,6 +163,8 @@ test("shared shards -> saved timeline evidence -> token-free summary -> one sche
         ["shard_a", "11111111-1111-4111-8111-111111111111", "33333333-2222-4222-8222-222222222222"],
         ["shard_b", "22222222-1111-4111-8111-111111111111", "44444444-2222-4222-8222-222222222222"],
     ]);
+    assert.deepEqual(records.map(record => [record.sourceLog.line, record.sourceLog.graderLines[record.gradeResult.details[0].name]]), [[9, 12], [11, 14]]);
+    assert.ok(Object.keys(checked.entries).every(name => !name.includes("source-log")));
     await assert.rejects(prepareBundle({ indexPath: join(downloads, "shard-index.json"), summaryPath: summary, outputPath: output, manifest }), { code: "EEXIST" });
 });
 
@@ -336,10 +378,21 @@ test("shared publisher tests run without Tools-only files", async t => {
 test("pipeline separates token-bearing attempt verification from rendering and uploads before the score gate", async () => {
     const root = resolve(import.meta.dirname, "../../../..");
     const summary = await readFile(join(root, "pipelines/templates/jobs/eval-summarize.yml"), "utf8");
-    const verification = summary.slice(summary.indexOf("# Only attempt verification"), summary.indexOf('"$(Build.SourcesDirectory)/eng/common/scripts/eval/build-eval-summary.ts"'));
+    const scripts = summary.split(/^      - script: \|/m).slice(1);
+    const verification = scripts.find(step => step.includes("/lib/shard-results.ts"));
+    assert.ok(verification);
     assert.match(verification, /--attempts-output/); assert.match(verification, /SYSTEM_ACCESSTOKEN: \$\(System.AccessToken\)/);
-    const rendering = summary.slice(summary.indexOf('"$(Build.SourcesDirectory)/eng/common/scripts/eval/build-eval-summary.ts"'));
+    assert.match(verification, /^ {12}--attempts-output /m);
+    assert.match(verification, /^ {12}--results-root "\$\(Pipeline.Workspace\)\/eval-results"/m);
+    const rendering = scripts.find(step => step.includes("/build-eval-summary.ts") && step.includes("--attempts-file"));
+    assert.ok(rendering);
     assert.match(rendering, /--attempts-file/); assert.doesNotMatch(rendering, /SYSTEM_ACCESSTOKEN/);
+    const delivery = scripts.find(step => step.includes("/build-eval-summary.ts") && step.includes("--delivery"));
+    assert.ok(delivery);
+    assert.match(delivery, /EVAL_DASHBOARD_BASE_URL: \$\(EvalDashboardBaseUrl\)/);
+    assert.match(delivery, /EVAL_DASHBOARD_REFRESH_URL: \$\(EvalDashboardRefreshUrl\)/);
+    assert.match(delivery, /condition: always\(\)/);
+    assert.doesNotMatch(delivery, /SYSTEM_ACCESSTOKEN/);
     assert.ok(summary.indexOf("../steps/eval-publish-results.yml") < summary.indexOf("task: PublishTestResults@2"));
     const steps = await readFile(join(root, "pipelines/templates/steps/eval-publish-results.yml"), "utf8");
     assert.match(steps, /pnpm\/bin\/pnpm\.mjs.*--ignore-workspace install --pm-on-fail=ignore --frozen-lockfile --prod --ignore-scripts/);
@@ -376,6 +429,9 @@ test("one checkbox gates trusted-run egress; owner configuration additionally ga
     const evaluate = (expression, variables, enabled = true, succeeds = true) => runInNewContext(expression.replace(/\bin\(/g, "oneOf("), {
         variables, parameters: { publishDashboardResults: enabled }, succeeded: () => succeeds,
         and: (...values) => values.every(Boolean), eq: (a, b) => String(a ?? "").toLowerCase() === String(b ?? "").toLowerCase(),
+        or: (...values) => values.some(Boolean), not: value => !value,
+        startsWith: (value, prefix) => String(value ?? "").toLowerCase().startsWith(String(prefix).toLowerCase()),
+        endsWith: (value, suffix) => String(value ?? "").toLowerCase().endsWith(String(suffix).toLowerCase()),
         ne: (a, b) => String(a ?? "").toLowerCase() !== String(b ?? "").toLowerCase(),
         oneOf: (value, ...items) => items.some(item => String(value ?? "").toLowerCase() === String(item).toLowerCase()),
     });
@@ -386,9 +442,21 @@ test("one checkbox gates trusted-run egress; owner configuration additionally ga
     for (const account of [undefined, ""]) assert.equal(evaluate(runtime, { ...base, EvalStorageAccountName: account }), false);
     assert.equal(evaluate(runtime, { ...base, EvalSummaryComplete: "false" }), false);
     for (const [key, value] of [["System.CollectionUri", "https://dev.azure.com/other/"], ["System.TeamProject", "public"],
-        ["Build.Repository.Name", "Azure/azure-rest-api-specs"], ["Build.Reason", "PullRequest"], ["Build.Reason", "ResourceTrigger"],
-        ...["refs/pull/1/merge", "refs/heads/feature", "refs/heads/feature/main", "refs/tags/main", ""].map(branch => ["Build.SourceBranch", branch])]) {
+        ["Build.Repository.Name", "helen229/azure-sdk-tools"], ["Build.Repository.Name", "Azure/azure-rest-api-specs-pr"],
+        ["Build.Reason", "PullRequest"], ["Build.Reason", "ResourceTrigger"], ["Build.SourceBranch", "refs/pull/1/merge"]]) {
         const variables = { ...base, [key]: value };
+        assert.equal(evaluate(networkGate, variables), false); assert.equal(evaluate(runtime, variables), false);
+    }
+    for (const repository of ["Azure/azure-sdk-tools", "Azure/azure-rest-api-specs"]) {
+        for (const branch of ["refs/heads/main", "refs/heads/feature", "refs/tags/test"]) {
+            const variables = { ...base, "Build.Repository.Name": repository, "Build.SourceBranch": branch };
+            assert.equal(evaluate(networkGate, variables), true); assert.equal(evaluate(runtime, variables), true);
+        }
+    }
+    for (const reason of ["IndividualCI", "BatchedCI", "Schedule"]) {
+        assert.equal(evaluate(networkGate, { ...base, "Build.Reason": reason }), true);
+        assert.equal(evaluate(runtime, { ...base, "Build.Reason": reason }), true);
+        const variables = { ...base, "Build.Reason": reason, "Build.SourceBranch": "refs/heads/feature" };
         assert.equal(evaluate(networkGate, variables), false); assert.equal(evaluate(runtime, variables), false);
     }
     for (const id of ["8255", "9999"]) assert.equal(evaluate(networkGate, { ...base, "System.DefinitionId": id }), true, "Definition IDs are archive identity, not shared policy");

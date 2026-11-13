@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Render the approved evaluation failure table with direct per-check ADO log links,
+  sharing selected-task and exact-line provenance with archive packaging. Name the
+  visible attachments Evaluation results and Result delivery instead of exposing
+  internal report filenames.
+- Implement publishing and artifact-only result-delivery summaries, retain raw artifact
+	downloads, and remove redundant navigation and visible selected-attempt details without
+	changing metrics or retained provenance.
+- Construct the dashboard build link from pipeline identity and an optional protected
+	base URL as soon as upload succeeds, independently of import confirmation; retain the
+	refresh-URL fallback and existing temporary-404 behavior.
+- Capture grader locations for every selected shard using task-specific ADO display metadata, and preserve verified item/grader line anchors in the existing archive without changing grading or publication gates.
 - Exclude older JUnit from summaries and selected test files when it does not match the latest verified timeline attempt; keep missing results incomplete.
 - Keep shared publisher tests independent of Tools-only CI/Pester/redirect files, while retaining those checks in Tools and testing consumer copies.
 - Pass the create-only wildcard as one `--if-none-match=*` argument so Linux cannot expand it into working-directory file names.

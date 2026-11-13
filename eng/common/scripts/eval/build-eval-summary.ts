@@ -7,6 +7,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { globFiles } from "./lib/glob.ts";
 import { expectedShardsFromMatrix, selectSummaryResults } from "./lib/shard-results.ts";
+import { selectedLogLines, sourceLogForTrial } from "./lib/source-log.ts";
 
 // Maps a JUnit file path back to its shard and job attempt. Result artifacts download into
 // folders named `eval-result-<shardName>-<attempt>` (the attempt suffix keeps "Rerun failed
@@ -195,7 +196,61 @@ export function getEvalSummary(resultsRoot) {
  * @param {Record<string, object>} shards Output of getEvalSummary.
  * @returns {string} Markdown.
  */
-export function formatEvalSummaryMarkdown(shards, incompleteShards = []) {
+function summaryCell(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+    .replaceAll("|", "&#124;").replaceAll("[", "&#91;").replaceAll("]", "&#93;")
+    .replaceAll("`", "&#96;").replaceAll("*", "&#42;").replace(/\r?\n/g, "<br>");
+}
+
+function failureLogUrl({ organization, project, build }, sourceLog, gradeName) {
+  const guid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
+  if (!/^[a-z0-9][a-z0-9-]{0,99}$/.test(organization ?? "") || typeof project !== "string" ||
+    !project || project.length > 200 || /[\x00-\x1f\x7f]/.test(project) || /^\.+$/.test(project) ||
+    !/^[1-9]\d{0,14}$/.test(String(build ?? "")) || !guid.test(sourceLog?.jobId ?? "") || !guid.test(sourceLog?.taskId ?? "")) return null;
+  const encodedProject = encodeURIComponent(project).replaceAll("(", "%28").replaceAll(")", "%29");
+  const url = new URL(`https://dev.azure.com/${organization}/${encodedProject}/_build/results`);
+  url.search = new URLSearchParams({ buildId: String(build), view: "logs", j: sourceLog.jobId, t: sourceLog.taskId }).toString();
+  const line = sourceLog.graderLines?.[gradeName];
+  if (Number.isSafeInteger(line) && line > 0) url.searchParams.set("l", String(line));
+  return url.href;
+}
+
+async function selectedFailureDetails(resultsRoot, selection) {
+  const details = [];
+  let bytesLeft = 128 * 1024 * 1024;
+  let recordsLeft = 100_000;
+  for (const selected of selection.shardInput.attempts) {
+    try {
+      const directory = path.join(resultsRoot, selected.directory);
+      const file = path.join(directory, "results.jsonl");
+      const metadata = fs.lstatSync(file);
+      if (!metadata.isFile() || metadata.size < 1 || metadata.size > bytesLeft) continue;
+      bytesLeft -= metadata.size;
+      const bytes = fs.readFileSync(file);
+      if (bytes.length !== metadata.size) continue;
+      const locations = await selectedLogLines(directory, selected);
+      for (const line of bytes.toString("utf8").split(/\r?\n/)) {
+        if (!line.trim() || Buffer.byteLength(line) > 8 * 1024 * 1024) continue;
+        if (--recordsLeft < 0) return details;
+        let record;
+        try { record = JSON.parse(line); } catch { continue; }
+        if (!record || record.experiment || ![undefined, "trial-result"].includes(record.type) ||
+          !["success", "error"].includes(record.status) || typeof record.stimulus !== "string") continue;
+        const grades = record.gradeResult?.details ?? record.grade?.details;
+        if (!Array.isArray(grades)) continue;
+        let sourceLog;
+        try { if (selected.sourceLog) sourceLog = sourceLogForTrial(record, selected.sourceLog, locations); } catch {}
+        for (const grade of grades) {
+          if (grade?.passed === false && typeof grade.name === "string") details.push({ shard: selected.shard,
+            scenario: record.stimulus, model: record.model ?? "Unknown model", grade, sourceLog });
+        }
+      }
+    } catch {}
+  }
+  return details;
+}
+
+export function formatEvalSummaryMarkdown(shards, incompleteShards = [], options = {}) {
   const all = Object.values(shards);
   const shardCount = all.length;
 
@@ -232,7 +287,7 @@ export function formatEvalSummaryMarkdown(shards, incompleteShards = []) {
   const nonSkipped = totalPassed + totalFailed;
   const overallRatio = nonSkipped > 0 ? totalPassed / nonSkipped : 0;
 
-  lines.push(`## ${overallIcon} Vally eval results — ${overall}`);
+  lines.push(`## ${overallIcon} Evaluation results — ${overall}`);
   lines.push("");
 
   if (incompleteShards.length) {
@@ -299,28 +354,42 @@ export function formatEvalSummaryMarkdown(shards, incompleteShards = []) {
   );
 
   if (totalFailed > 0) {
-    const failWord = totalFailed === 1 ? "scenario" : "scenarios";
-    lines.push("");
-    lines.push(`<details open><summary><strong>❌ ${totalFailed} failing ${failWord}</strong></summary>`);
-    lines.push("");
+    lines.push("", "### Failing scenarios", "", "| Scenario | Failed check | Trials passed | Evidence |",
+      "| --- | --- | :---: | --- |");
     for (const shard of ordered) {
-      if (shard.failed === 0) {
-        continue;
-      }
-      lines.push(`- **${shard.shardName}**`);
-      for (const name of shard.failures) {
-        lines.push(`  - ❌ ${name}`);
+      if (shard.failed === 0) continue;
+      for (const failure of shard.failures) {
+        const match = /^(.*) \((\d+)\/(\d+) runs passed\)$/.exec(failure);
+        const scenario = match?.[1] ?? failure;
+        const trials = match ? `${match[2]}/${match[3]}` : "Not recorded";
+        const details = (options.failureDetails ?? []).filter(item => item.shard === shard.shardName &&
+          item.scenario === scenario && item.grade?.passed === false);
+        if (!details.length) {
+          lines.push(`| ${summaryCell(scenario)}<br><small>${summaryCell(shard.shardName)}</small> | Check details unavailable | ${trials} | Not recorded |`);
+          continue;
+        }
+        const seen = new Set();
+        for (const detail of details) {
+          const grade = detail.grade;
+          const url = failureLogUrl(options, detail.sourceLog, grade.name);
+          const key = JSON.stringify([detail.model, grade.name, grade.evidence, url]);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          const linked = value => url ? `[${summaryCell(value)}](${url})` : summaryCell(value);
+          const evidence = String(grade.evidence ?? "");
+          const reason = evidence.split(/\r?\n/).find(line => /not called:|disallowed.*called:/.test(line)) ?? evidence;
+          lines.push(`| ${linked(scenario)}<br><small>${summaryCell(shard.shardName)} · ${summaryCell(detail.model)}</small> | ${linked(grade.name)}${reason ? `<br>${linked(reason)}` : ""} | ${trials} | ${url ? `[Task log](${url})` : "Not recorded"} |`);
+        }
       }
     }
-    lines.push("");
-    lines.push("</details>");
+    lines.push("", "Scenario verdicts use the configured threshold. Trial counts show passing executions.");
   }
 
   return lines.join("\n") + "\n";
 }
 
 export function formatDeliverySummary(summary, { skipReason = "", storageConfigured = false,
-  archiveStatus = "not_started", importStatus = "not_attempted", dashboardRefreshUrl = "",
+  archiveStatus = "not_started", importStatus = "not_attempted", dashboardBaseUrl = "", dashboardRefreshUrl = "",
   organization, project, definition, build, attempt } = {}) {
   const totals = summary?.totals;
   const verified = summary?.schemaVersion === 1 && typeof summary.complete === "boolean" && totals
@@ -328,7 +397,7 @@ export function formatDeliverySummary(summary, { skipReason = "", storageConfigu
     && totals.failed + totals.skipped <= totals.scenarios;
   const complete = verified && summary.complete;
   const evaluations = !verified ? "unavailable; summary generation did not finish."
-    : !complete ? "incomplete; check the selected shard attempts."
+    : !complete ? "incomplete; check the affected shards in the evaluation summary."
     : totals.scenarios === totals.skipped ? "no scenarios ran."
     : totals.failed ? `completed; ${totals.failed} scenario(s) failed.` : "completed; all executed scenarios passed.";
   const reasons = { disabled: "publication was not requested", feature_branch: "feature-branch run",
@@ -336,18 +405,39 @@ export function formatDeliverySummary(summary, { skipReason = "", storageConfigu
     missing_configuration: "storage configuration is missing" };
   const reason = skipReason || (!complete ? "incomplete" : !storageConfigured ? "missing_configuration" : "");
   const stored = archiveStatus === "stored";
-  const storage = stored ? "stored; upload or matching existing archive verified."
-    : archiveStatus === "failed" ? "upload failed; check the publication task logs."
-    : reason ? `not uploaded; publication skipped: ${reasons[reason] ?? reasons.ineligible_run}.`
-    : "not confirmed; check the bundle and publication task logs.";
-  const imported = importStatus === "confirmed" ? "confirmed by the refresh response."
-    : importStatus === "failed" ? "not confirmed; the refresh request failed."
-    : importStatus === "not_configured" ? "not confirmed; refresh configuration is missing or invalid."
-    : !stored && (archiveStatus === "failed" || reason) ? "not attempted; publication was skipped or upload failed."
-    : "not confirmed; the publisher did not report an import outcome. Check the publication task logs.";
-  const lines = ["## Result Delivery", "", `- Evaluations: ${evaluations}`,
-    `- Result data: ${!verified ? "not verified" : complete ? "complete" : "incomplete"}.`,
-    `- Storage: ${storage}`, `- Dashboard import: ${imported}`, ""];
+  const available = stored && importStatus === "confirmed";
+  const artifactsOnly = !stored && archiveStatus !== "failed" && ["disabled", "feature_branch", "ineligible_run"].includes(reason);
+  const status = available ? "Available in dashboard" : stored ? "Uploaded; dashboard import pending"
+    : artifactsOnly ? "Artifacts only" : archiveStatus === "failed" ? "Delivery failed"
+    : !complete ? "Result data not complete" : reason ? "Publishing not configured" : "Delivery unconfirmed";
+  const message = available ? "Results for this build are available in the dashboard."
+    : stored ? "Results were uploaded successfully. Dashboard import is not yet confirmed."
+    : artifactsOnly ? `Results are retained in ADO; ${reasons[reason]}.`
+    : archiveStatus === "failed" ? "Storage upload failed. Evaluation results remain in ADO artifacts."
+    : reason ? `Results remain in ADO artifacts; ${reasons[reason] ?? reasons.ineligible_run}.`
+    : "The publisher did not report a confirmed upload. Evaluation results remain in ADO artifacts.";
+  const lines = ["## Result Delivery", "", `**${status}**`, "", message, ""];
+  const actionIndex = lines.length;
+  lines.push("| Stage | Status | Details |", "| --- | --- | --- |",
+    `| Result data | ${!verified ? "Not verified" : complete ? "Complete" : "Incomplete"} | Evaluations: ${evaluations} |`,
+    `| ADO artifacts | Retained | ${complete ? "JSONL, JUnit and evaluation summary" : "Available diagnostics; some result files may be missing"} |`);
+  if (!artifactsOnly) {
+    const storageState = stored ? "Complete" : archiveStatus === "failed" ? "Failed" : reason ? "Skipped" : "Not confirmed";
+    const storageDetail = stored ? "Upload or matching existing archive verified."
+      : archiveStatus === "failed" ? "Upload failed; evaluation results remain in ADO artifacts."
+      : reason ? `Publication skipped: ${reasons[reason] ?? reasons.ineligible_run}.`
+      : "The publisher did not report a confirmed upload.";
+    const notAttempted = !stored && (archiveStatus === "failed" || reason);
+    const importState = available ? "Confirmed" : stored ? "Unconfirmed" : notAttempted ? "Not attempted" : "Not confirmed";
+    const importDetail = available ? "Confirmed by the dashboard refresh response."
+      : stored && importStatus === "failed" ? "The refresh request failed; import is not confirmed."
+      : stored && importStatus === "not_configured" ? "Refresh configuration is missing or invalid; import is not confirmed."
+      : notAttempted ? "Publication was skipped or upload failed."
+      : "The publisher did not report a confirmed import.";
+    lines.push(`| Storage upload | ${storageState} | ${storageDetail} |`,
+      `| Dashboard import | ${importState} | ${importDetail} |`);
+  }
+  lines.push("");
   const validIdentity = /^[a-z0-9][a-z0-9-]{0,99}$/.test(organization ?? "") && typeof project === "string"
     && project.length > 0 && project.length <= 200 && !/[\x00-\x1f\x7f]/.test(project) && !/^\.+$/.test(project)
     && [definition, build, attempt].every(value => /^[1-9]\d{0,14}$/.test(String(value ?? "")));
@@ -355,24 +445,20 @@ export function formatDeliverySummary(summary, { skipReason = "", storageConfigu
     const encodedProject = encodeURIComponent(project).replaceAll("(", "%28").replaceAll(")", "%29");
     const ado = new URL(`https://dev.azure.com/${organization}/${encodedProject}/_build/results`);
     ado.searchParams.set("buildId", build);
-    lines.push(`[ADO tests](${ado}&view=ms.vss-test-web.build-test-results-tab) | [ADO logs](${ado}&view=logs) | [Retained artifacts](${ado}&view=artifacts)`, "");
     try {
-      const refresh = new URL(dashboardRefreshUrl);
-      if (refresh.protocol === "https:" && refresh.port === "" && !refresh.username && !refresh.password
-        && /^[a-z0-9][a-z0-9.-]*\.azurewebsites\.net$/.test(refresh.hostname)
-        && refresh.pathname === "/api/refresh" && !refresh.search && !refresh.hash && (stored || !reason)) {
-        const dashboard = new URL("/build", refresh);
+      const explicitBase = dashboardBaseUrl && !/^\$\([A-Za-z0-9_.-]+\)$/.test(dashboardBaseUrl);
+      const base = new URL(explicitBase ? dashboardBaseUrl : dashboardRefreshUrl);
+      if (stored && base.protocol === "https:" && base.port === "" && !base.username && !base.password
+        && /^[a-z0-9][a-z0-9.-]*\.azurewebsites\.net$/.test(base.hostname)
+        && base.pathname === (explicitBase ? "/" : "/api/refresh") && !base.search && !base.hash) {
+        const dashboard = new URL("/build", base);
         dashboard.search = new URLSearchParams({ organization, project, definition, build, attempt }).toString();
-        lines.push(`[View dashboard results](${dashboard})`, "");
+        lines.splice(actionIndex, 0, `**[View this build in dashboard](${dashboard})**`, "");
       }
     } catch {}
+    lines.push(`[Retained artifacts](${ado}&view=artifacts)`, "");
   }
-  const next = stored ? importStatus === "confirmed" ? "View dashboard results."
-    : "Reload the dashboard to discover the stored archive. No evaluation rerun is needed just to recover delivery."
-    : !complete ? "Check the Eval Summary and affected shard logs before retrying execution."
-    : reason ? "Use the retained ADO artifacts."
-    : "Inspect the publication logs and retain the saved ZIP for delivery recovery; do not rerun evaluations solely for delivery.";
-  lines.push(`Next: ${next}`, "");
+  if (stored && !available) lines.push("No evaluation rerun is needed for dashboard import.", "");
   return lines.join("\n");
 }
 
@@ -424,6 +510,7 @@ async function main(argv) {
       skipReason: process.env.EVAL_PUBLICATION_SKIP_REASON,
       storageConfigured: process.env.EVAL_STORAGE_CONFIGURED?.toLowerCase() === "true",
       archiveStatus: process.env.EVAL_ARCHIVE_STATUS, importStatus: process.env.EVAL_IMPORT_STATUS,
+      dashboardBaseUrl: process.env.EVAL_DASHBOARD_BASE_URL,
       dashboardRefreshUrl: process.env.EVAL_DASHBOARD_REFRESH_URL,
       organization: process.env.SYSTEM_COLLECTIONURI?.replace(/\/$/, "").split("/").at(-1),
       project: process.env.SYSTEM_TEAMPROJECT, definition: process.env.SYSTEM_DEFINITIONID,
@@ -431,7 +518,7 @@ async function main(argv) {
     });
     fs.writeFileSync(options.outputPath, markdown, "utf8");
     console.log(markdown);
-    if (process.env.TF_BUILD) console.log(`##vso[task.uploadsummary]${path.resolve(options.outputPath)}`);
+    if (process.env.TF_BUILD) console.log(`##vso[task.addattachment type=Distributedtask.Core.Summary;name=Result delivery;]${path.resolve(options.outputPath)}`);
     return;
   }
   fs.mkdirSync(options.resultsRoot, { recursive: true });
@@ -475,10 +562,12 @@ async function main(argv) {
     selection.shardInput.complete = selection.complete;
     fs.writeFileSync(path.join(options.resultsRoot, "shard-index.json"), JSON.stringify(selection.shardInput, null, 2) + "\n");
   }
-  let markdown = formatEvalSummaryMarkdown(shards, selection?.status.filter((entry) => !entry.complete) ?? []);
+  const markdown = formatEvalSummaryMarkdown(shards, selection?.status.filter((entry) => !entry.complete) ?? [], {
+    organization: process.env.SYSTEM_COLLECTIONURI?.replace(/\/$/, "").split("/").at(-1),
+    project: process.env.SYSTEM_TEAMPROJECT, build: process.env.BUILD_BUILDID,
+    failureDetails: selection ? await selectedFailureDetails(options.resultsRoot, selection) : [],
+  });
   if (selection) {
-    markdown += "\n### Selected shard attempts\n\n| Shard | Attempt | Result data |\n| --- | ---: | --- |\n";
-    for (const entry of selection.status) markdown += `| ${entry.shard} | ${entry.attempt ?? "—"} | ${entry.complete ? "Complete" : "Incomplete"} |\n`;
     fs.writeFileSync(path.join(path.dirname(options.outputPath), "eval-summary.json"), JSON.stringify({
       schemaVersion: 1, complete: selection.complete, shards: selection.status,
       totals: Object.values(shards).reduce((totals, shard) => ({ scenarios: totals.scenarios + shard.total,
@@ -490,7 +579,7 @@ async function main(argv) {
   console.log(markdown);
 
   if (process.env.TF_BUILD) {
-    console.log(`##vso[task.uploadsummary]${path.resolve(options.outputPath)}`);
+    console.log(`##vso[task.addattachment type=Distributedtask.Core.Summary;name=Evaluation results;]${path.resolve(options.outputPath)}`);
     if (selection) console.log(`##vso[task.setvariable variable=EvalSummaryComplete]${selection.complete}`);
   }
 

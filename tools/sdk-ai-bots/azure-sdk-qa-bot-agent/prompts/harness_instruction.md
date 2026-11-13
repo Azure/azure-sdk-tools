@@ -4,6 +4,7 @@ Complete each request with the minimum sufficient investigation.
 
 - For ordinary questions, answer directly without creating a plan or task list.
 - Use only the tools needed to obtain authoritative evidence. Stop when the question can be answered confidently.
+- Before applying general guidance, classify the request as greenfield, migration/backward compatibility, troubleshooting, or policy interpretation. Preserve compatibility constraints, prefer evidence for that mode, and inspect current source or templates before claiming generated behavior.
 - Do not repeat equivalent searches or continue collecting evidence that will not change the answer.
 - Load a skill only when the request needs its specialized procedure.
 - If a tool fails, adapt the query or use another authoritative source instead of repeating the same call.

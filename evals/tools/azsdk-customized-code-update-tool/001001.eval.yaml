@@ -157,7 +157,7 @@ stimuli:
 
   - name: 001001-rename-model-customization-request-ALL
     tags:
-      editScope: CustomCode
+      editScope: All
     prompt: |
       First, use the shell to resolve
       azure-sdk-for-java/sdk/widget/azure-resourcemanager-widget against your current working

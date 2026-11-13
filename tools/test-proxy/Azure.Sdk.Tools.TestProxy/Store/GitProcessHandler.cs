@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
@@ -35,12 +34,73 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         class GitMinVersion
         {
-            // Require a baseline that is at least a year old to ensure compatibility with a wide set of setups.
+            // Azure Linux 3.0 ships git 2.45.4. Features from newer versions are used when the local git supports them.
             public static int Major = 2;
-            public static int Minor = 51;
-            public static int Patch = 0;
+            public static int Minor = 45;
+            public static int Patch = 4;
             public static string minVersionString = $"{Major}.{Minor}.{Patch}";
         }
+
+        /// <summary>
+        /// "clone --revision" was added in git 2.49.0, but before 2.56.0 it crashes when the server conversation falls back
+        /// to protocol v0. That happens over SSH clients other than OpenSSH, such as PuTTY and plink, which don't send
+        /// the requested protocol version.
+        /// </summary>
+        public static readonly Version CloneRevisionMinVersion = new Version(2, 56, 0);
+
+        /// <summary>
+        /// git 2.54.0 can retry HTTP requests that receive 429 (Too Many Requests) responses.
+        /// </summary>
+        public static readonly Version HttpRateLimitRetriesMinVersion = new Version(2, 54, 0);
+
+        private static readonly Regex GitVersionRegex = new Regex(@"git version (?<Major>\d+)\.(?<Minor>\d+)(\.(?<Patch>\d+))?", RegexOptions.Compiled);
+
+        // The git on PATH doesn't change while the proxy runs, so all handlers share one "git --version" invocation.
+        private static string localGitVersionOutput;
+
+        private Version gitVersion;
+
+        /// <summary>
+        /// The git version that decides which optional git features are used. Defaults to the version of the git on PATH;
+        /// set it to use the features of another version.
+        /// </summary>
+        public Version GitVersion
+        {
+            get
+            {
+                if (gitVersion == null)
+                {
+                    string versionOutput = null;
+                    try
+                    {
+                        versionOutput = GetLocalGitVersionOutput();
+                    }
+                    catch (Exception e)
+                    {
+                        // Feature detection must not change how a missing git fails; VerifyGitMinVersion reports it.
+                        DebugLogger.LogDebug(e.Message);
+                    }
+
+                    gitVersion = TryParseGitVersion(versionOutput, out Version version) ? version : new Version(0, 0, 0);
+                }
+
+                return gitVersion;
+            }
+            set
+            {
+                gitVersion = value;
+            }
+        }
+
+        /// <summary>
+        /// Whether "git clone --revision" can be used to clone a single tag.
+        /// </summary>
+        public bool SupportsCloneRevision => GitVersion >= CloneRevisionMinVersion;
+
+        /// <summary>
+        /// Whether git can retry HTTP requests that are rate limited.
+        /// </summary>
+        public bool SupportsHttpRateLimitRetries => GitVersion >= HttpRateLimitRetriesMinVersion;
 
         /// <summary>
         /// This dictionary is used to ensure that each git directory will only ever have a SINGLE git command running it at a time.
@@ -65,6 +125,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             };
 
             startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
+
+            if (SupportsHttpRateLimitRetries)
+            {
+                // Let git retry HTTP 429 responses itself when it connects, which also covers the lazy fetches of a
+                // blobless checkout. git counts the first attempt, so this makes up to 3 attempts, honoring a Retry-After
+                // of up to 60 seconds and waiting 5 seconds when there is none. Values set in the environment take precedence.
+                startInfo.Environment.TryAdd("GIT_HTTP_MAX_RETRIES", "3");
+                startInfo.Environment.TryAdd("GIT_HTTP_RETRY_AFTER", "5");
+                startInfo.Environment.TryAdd("GIT_HTTP_MAX_RETRY_TIME", "60");
+            }
 
             return startInfo;
         }
@@ -195,6 +265,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             }
                         }
                     }
+
+                    // Every attempt failed with a retriable error, such as a lock that another process never released.
+                    if (result.ExitCode != 0)
+                    {
+                        throw new GitProcessException(result);
+                    }
                 }
                 // exceptions caught here will be to do with inability to recover from a failed git process
                 // rather than endlessly retrying and concealing the git error from the user, immediately report and exit the process with an error code
@@ -239,7 +315,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
 
                 // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': The requested URL returned error: 429
+                // git 2.54+ retries rate-limited requests itself (see CreateGitProcessInfo), then reports
+                // "rate limited by '<url>', please try again later". That isn't retried again here, which keeps the
+                // number of attempts the same as with older versions.
                 if (result.StdErr.Contains("The requested URL returned error: 429"))
+                {
+                    return true;
+                }
+
+                // error: could not lock config file /root/.gitconfig: File exists
+                // Another process is writing the same config file, such as a concurrent safe.directory registration in a
+                // container. git 2.56+ also retries this itself for up to a second (core.configLockTimeout).
+                if (result.StdErr.Contains("could not lock config file"))
                 {
                     return true;
                 }
@@ -387,59 +474,67 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Verify that the version of git running on the machine is greater equal the git minimum version.
         /// This is more for the people running the CLI/TestProxy locally than for lab machines which seem
         /// to be running on the latest, released versions. The baseline includes sparse-index support
-        /// and partial-clone fixes without requiring a recently released version.
+        /// and partial-clone fixes; features of newer versions are used only when available.
         /// </summary>
-        /// <exception cref="GitProcessException">Thrown by the internal call to Run.</exception>
         /// <exception cref="GitVersionException">Thrown if the version doesn't meet the min or if we can't determine it.</exception>
         public void VerifyGitMinVersion(string testVersion=null)
         {
-            string localGitVersion = testVersion;
-            if (String.IsNullOrEmpty(testVersion))
-            {
-                // We need to run git --version to get the current version. The directory in which
-                // the process executes is irrelevant.
-                CommandResult result = Run("--version", Directory.GetCurrentDirectory());
-                localGitVersion = result.StdOut.Trim();
-            }
-            // Sample git versions from the various platforms:
-            // Windows: git version 2.37.2.windows.2
-            // Mac: git version 2.32.1 (Apple Git-133)
-            // Linux: git version 2.25.1
-            // Regex to scrape major, minor and patch versions from the git version string
-            Regex rx = new Regex(@"git version (?<Major>\d*)\.(?<Minor>\d*)(\.(?<Patch>\d*)?)?", RegexOptions.Compiled);
-            Match match = rx.Match(localGitVersion);
+            string localGitVersion = String.IsNullOrEmpty(testVersion) ? GetLocalGitVersionOutput() : testVersion;
 
-            if (match.Success)
+            if (!TryParseGitVersion(localGitVersion, out Version version))
             {
-                string gitVersionExceptionMessage = $"{localGitVersion} is less than the minimum supported Git version {GitMinVersion.minVersionString}";
-                // match.Groups["Major"].Value, match.Groups["Minor"].Value, match.Groups["Patch"].Value
-                int major = int.Parse(match.Groups["Major"].Value);
-                int minor = int.Parse(match.Groups["Minor"].Value);
-                int patch = int.Parse(match.Groups["Patch"].Value);
-                if (major < GitMinVersion.Major)
-                {
-                    throw new GitVersionException(gitVersionExceptionMessage);
-                }
-                else if (major == GitMinVersion.Major)
-                {
-                    if (minor < GitMinVersion.Minor)
-                    {
-                        throw new GitVersionException(gitVersionExceptionMessage);
-                    }
-                    else if (minor == GitMinVersion.Minor)
-                    {
-                        if (patch < GitMinVersion.Patch)
-                        {
-                            throw new GitVersionException(gitVersionExceptionMessage);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // In theory we shouldn't get here. If git isn't installed or on the path, the Run command should throw.
+                // In theory we shouldn't get here. If git isn't installed or on the path, running it should throw.
                 throw new GitVersionException($"Unable to determine the local git version from the returned version string '{localGitVersion}'. Please ensure that git is installed on the machine and has been added to the PATH.");
             }
+
+            if (version < new Version(GitMinVersion.Major, GitMinVersion.Minor, GitMinVersion.Patch))
+            {
+                throw new GitVersionException($"{localGitVersion} is less than the minimum supported Git version {GitMinVersion.minVersionString}");
+            }
+        }
+
+        /// <summary>
+        /// Parses the major, minor, and patch numbers of a "git --version" output. Sample outputs from the various platforms:
+        /// Windows: git version 2.37.2.windows.2
+        /// Mac: git version 2.32.1 (Apple Git-133)
+        /// Linux: git version 2.25.1
+        /// </summary>
+        public static bool TryParseGitVersion(string versionOutput, out Version version)
+        {
+            Match match = GitVersionRegex.Match(versionOutput ?? string.Empty);
+            if (!match.Success)
+            {
+                version = null;
+                return false;
+            }
+
+            int patch = match.Groups["Patch"].Success ? int.Parse(match.Groups["Patch"].Value) : 0;
+            version = new Version(int.Parse(match.Groups["Major"].Value), int.Parse(match.Groups["Minor"].Value), patch);
+            return true;
+        }
+
+        private static string GetLocalGitVersionOutput()
+        {
+            if (localGitVersionOutput == null)
+            {
+                DebugLogger.LogInformation("git --version");
+                var startInfo = new ProcessStartInfo("git", "--version")
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true,
+                };
+
+                using (var process = Process.Start(startInfo))
+                {
+                    string output = process.StandardOutput.ReadToEnd().Trim();
+                    process.WaitForExit();
+                    DebugLogger.LogDebug($"StdOut: {output}");
+                    localGitVersionOutput = output;
+                }
+            }
+
+            return localGitVersionOutput;
         }
     }
 }

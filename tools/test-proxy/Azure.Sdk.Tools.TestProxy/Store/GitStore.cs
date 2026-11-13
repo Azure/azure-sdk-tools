@@ -29,6 +29,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     public class GitStore : IAssetsStore
     {
         private const string RepositoryConfigurationMarker = "test-proxy-config-v1";
+        // Exists in a new repository's git directory until its first checkout succeeds.
+        private const string IncompleteInitializationMarker = "test-proxy-initializing";
 
         private HttpClient httpClient = new HttpClient();
         private IConsoleWrapper _consoleWrapper;
@@ -453,10 +455,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// clone looks the same as being on the wrong tag. This variable allows us to prevent over-active cleaning that would result in exceptions.</param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled = true)
         {
-            CheckoutRepoAtConfig(config, cleanEnabled, settingsConfiguredDuringClone: false);
+            CheckoutRepoAtConfig(config, cleanEnabled, settingsConfiguredDuringInitialization: false);
         }
 
-        private void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled, bool settingsConfiguredDuringClone)
+        private void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled, bool settingsConfiguredDuringInitialization, bool tagFetched = false)
         {
             bool alreadyCheckedOut = Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag;
             string repositoryLocation = config.AssetsRepoLocation.ToString();
@@ -489,7 +491,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
                 SetOrigin(config);
 
-                if (configureRepository && !settingsConfiguredDuringClone)
+                if (configureRepository && !settingsConfiguredDuringInitialization)
                 {
                     GitHandler.Run(config,
                         "config --local remote.origin.partialCloneFilter blob:none",
@@ -505,7 +507,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         Clean(config);
                     }
 
-                    if (!string.IsNullOrEmpty(config.Tag))
+                    if (!string.IsNullOrEmpty(config.Tag) && !tagFetched)
                     {
                         // Fetch once per tag change; later restores use the cached checkout.
                         GitHandler.Run($"fetch origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
@@ -527,7 +529,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
                 }
 
-                if (configureRepository && !settingsConfiguredDuringClone)
+                if (configureRepository && !settingsConfiguredDuringInitialization)
                 {
                     // index.version only affects new indexes, so convert existing caches explicitly.
                     GitHandler.Run("update-index --index-version=4", config);
@@ -671,7 +673,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 return true;
             }
 
-            return config.IsAssetsRepoInitialized();
+            // A repository whose initialization was interrupted has no checkout to restore from, so it is initialized again.
+            return config.IsAssetsRepoInitialized() && !Directory.Exists(GetIncompleteInitializationMarker(config));
         }
 
         /// <summary>
@@ -690,7 +693,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 var assetRepo = config.AssetsRepoLocation;
                 var initialized = IsAssetsRepoInitialized(config);
 
-                if (forceInit)
+                // An interrupted initialization has no recordings worth keeping, but its partial checkout would get in the
+                // way of the new one, so it is discarded entirely.
+                if (forceInit || Directory.Exists(GetIncompleteInitializationMarker(config)))
                 {
                     DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
                     Directory.CreateDirectory(assetRepo.ToString());
@@ -702,28 +707,68 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     Assets.TryRemove(config.AssetsJsonRelativeLocation.ToString(), out _);
                     _configuredRepositories.TryRemove(assetRepo.ToString(), out _);
 
+                    bool tagFetched = false;
                     try
                     {
                         var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-                        string revision = string.IsNullOrEmpty(config.Tag)
-                            ? "--single-branch"
-                            : $"--revision=refs/tags/{config.Tag}";
-                        // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                        GitHandler.Run("-c protocol.version=2 clone -c core.longpaths=true -c core.safecrlf=false " +
-                            "-c protocol.version=2 -c index.version=4 -c core.untrackedCache=true " +
-                            $"--no-checkout --filter=blob:none --no-tags {revision} {cloneUrl} .", config);
+                        if (string.IsNullOrEmpty(config.Tag) || GitHandler.SupportsCloneRevision)
+                        {
+                            string revision = string.IsNullOrEmpty(config.Tag)
+                                ? "--single-branch"
+                                : $"--revision=refs/tags/{config.Tag}";
+                            // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
+                            GitHandler.Run("-c protocol.version=2 clone -c core.longpaths=true -c core.safecrlf=false " +
+                                "-c protocol.version=2 -c index.version=4 -c core.untrackedCache=true " +
+                                $"--no-checkout --filter=blob:none --no-tags {revision} {cloneUrl} .", config);
+                            Directory.CreateDirectory(GetIncompleteInitializationMarker(config));
+                        }
+                        else
+                        {
+                            InitializeAssetsRepoAtTag(config, cloneUrl);
+                            tagFetched = true;
+                        }
                     }
                     catch (GitProcessException e)
                     {
                         throw GenerateInvokeException(e.Result);
                     }
 
-                    CheckoutRepoAtConfig(config, cleanEnabled: false, settingsConfiguredDuringClone: true);
+                    CheckoutRepoAtConfig(config, cleanEnabled: false, settingsConfiguredDuringInitialization: true, tagFetched);
+                    Directory.Delete(GetIncompleteInitializationMarker(config));
                     workCompleted = true;
                 }
             });
 
             return workCompleted;
+        }
+
+        /// <summary>
+        /// Creates the same blobless repository as "clone --revision=refs/tags/{tag}", for git versions that can't use it.
+        /// "clone --branch" isn't equivalent, because it prefers a branch with the same name as the tag.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="cloneUrl"></param>
+        private void InitializeAssetsRepoAtTag(GitAssetsConfiguration config, string cloneUrl)
+        {
+            // Unlike clone, the commands below run inside the new repository, so they're subject to ownership checks.
+            SetSafeDirectory(config);
+            GitHandler.Run("init --quiet", config);
+            Directory.CreateDirectory(GetIncompleteInitializationMarker(config));
+            GitHandler.Run(config,
+                "config core.longpaths true",
+                "config core.safecrlf false",
+                "config protocol.version 2",
+                "config index.version 4",
+                "config core.untrackedCache true",
+                $"remote add origin {cloneUrl}",
+                "config remote.origin.tagOpt --no-tags");
+            // Fetching with a filter registers origin as a blobless partial clone remote, as cloning with one does.
+            GitHandler.Run($"fetch --filter=blob:none origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
+        }
+
+        private static string GetIncompleteInitializationMarker(GitAssetsConfiguration config)
+        {
+            return Path.Join(config.AssetsRepoLocation, ".git", IncompleteInitializationMarker);
         }
 
         /// <summary>

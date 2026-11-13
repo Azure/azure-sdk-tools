@@ -305,7 +305,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
               ""Tag"": ""INVALID_TAG""
-        }", "--revision=refs/tags/INVALID_TAG")]
+        }", "refs/tags/INVALID_TAG")]
         [Trait("Category", "Integration")]
         public async Task InvalidTagThrows(string inputJson, string httpException)
         {

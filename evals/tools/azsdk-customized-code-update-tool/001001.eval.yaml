@@ -137,8 +137,6 @@ stimuli:
           dest: .artifacts/mcp/cli
         - src: ../../scripts/generage-sdk.ts
           dest: evals/scripts/generage-sdk.ts
-        - src: ../../scripts/sdk-environment-setup.ts
-          dest: evals/scripts/sdk-environment-setup.ts
         - src: ../../../eng/common/scripts/eval/lib/exec.ts
           dest: eng/common/scripts/eval/lib/exec.ts
       commands:

@@ -693,7 +693,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 var assetRepo = config.AssetsRepoLocation;
                 var initialized = IsAssetsRepoInitialized(config);
 
-                if (forceInit)
+                // An interrupted initialization has no recordings worth keeping, but its partial checkout would get in the
+                // way of the new one, so it is discarded entirely.
+                if (forceInit || Directory.Exists(GetIncompleteInitializationMarker(config)))
                 {
                     DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
                     Directory.CreateDirectory(assetRepo.ToString());
@@ -704,12 +706,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     Assets.TryRemove(config.AssetsJsonRelativeLocation.ToString(), out _);
                     _configuredRepositories.TryRemove(assetRepo.ToString(), out _);
-
-                    if (Directory.Exists(GetIncompleteInitializationMarker(config)))
-                    {
-                        // Discard the repository of an interrupted initialization, as git does for a failed clone.
-                        DirectoryHelper.DeleteGitDirectory(Path.Join(assetRepo, ".git"));
-                    }
 
                     bool tagFetched = false;
                     try

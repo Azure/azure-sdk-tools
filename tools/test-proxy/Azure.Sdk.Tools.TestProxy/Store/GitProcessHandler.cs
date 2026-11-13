@@ -265,6 +265,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             }
                         }
                     }
+
+                    // Every attempt failed with a retriable error, such as a lock that another process never released.
+                    if (result.ExitCode != 0)
+                    {
+                        throw new GitProcessException(result);
+                    }
                 }
                 // exceptions caught here will be to do with inability to recover from a failed git process
                 // rather than endlessly retrying and concealing the git error from the user, immediately report and exit the process with an error code

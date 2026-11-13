@@ -175,11 +175,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var config = await CreateConfiguration();
             _git.FailCommandOnce = "-c advice.detachedHead=false checkout recordings_v1";
             await Assert.ThrowsAsync<HttpException>(() => _store.Restore(config.AssetsJsonLocation));
+            // An interrupted checkout can leave files behind, including ones of a tag that's no longer targeted.
+            string recordingPath = Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json");
+            TestHelpers.WriteTestFile("partial recording", recordingPath);
+            TestHelpers.WriteTestFile("partial recording", Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "partial.json"));
 
             await new GitStore { GitHandler = _git }.Restore(config.AssetsJsonLocation);
 
             AssertOptimized(config);
-            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+            Assert.Equal("recording version 1", File.ReadAllText(recordingPath));
+            Assert.Empty(_store.DetectPendingChanges(config));
         }
 
         [Theory]

@@ -1,4 +1,7 @@
 using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
@@ -133,6 +136,49 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_MAX_RETRIES"));
             Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_RETRY_AFTER"));
             Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_MAX_RETRY_TIME"));
+        }
+
+        [Fact]
+        public void RunThrowsWhenEveryAttemptFailsWithRetriableError()
+        {
+            string testFolder = TestHelpers.GetTmpPath();
+            try
+            {
+                string repository = Path.Join(testFolder, "repo");
+                Directory.CreateDirectory(repository);
+                new GitProcessHandler().Run("init --quiet", repository);
+                // A stale lock, such as one left behind by a killed git process.
+                File.WriteAllText(Path.Join(repository, ".git", "config.lock"), string.Empty);
+                string tracePath = Path.Join(testFolder, "trace.json");
+                var gph = new TracingGitProcessHandler(tracePath);
+
+                var error = Assert.Throws<GitProcessException>(() => gph.Run("config --local test.key value", repository));
+
+                Assert.Contains("could not lock config file", error.Result.StdErr);
+                Assert.Equal(GitProcessHandler.RETRY_INTERMITTENT_FAILURE_COUNT,
+                    File.ReadLines(tracePath).Count(line => line.Contains("\"event\":\"start\"", StringComparison.Ordinal)));
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        private class TracingGitProcessHandler : GitProcessHandler
+        {
+            private readonly string _tracePath;
+
+            public TracingGitProcessHandler(string tracePath)
+            {
+                _tracePath = tracePath;
+            }
+
+            public override ProcessStartInfo CreateGitProcessInfo(string workingDirectory)
+            {
+                var startInfo = base.CreateGitProcessInfo(workingDirectory);
+                startInfo.Environment["GIT_TRACE2_EVENT"] = _tracePath;
+                return startInfo;
+            }
         }
     }
 }

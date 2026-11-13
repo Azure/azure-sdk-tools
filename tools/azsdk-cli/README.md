@@ -167,6 +167,20 @@ status, not a passing service observation. Automation can compare that evidence
 with release-plan state before deciding whether a full ARM check is needed.
 Metadata-only mode requires PR input and retains the captured-head contract.
 
+Release-plan reuse is handled by the CLI coordinator using the existing ADO
+service. Set `AZSDK_SERVICE_READINESS_FIELD`, `AZSDK_SERVICE_READINESS_ENVIRONMENT`,
+and `AZSDK_SERVICE_READINESS_MAX_AGE_SECONDS` to enable optional cache reads. Plan
+association and project/commit values come from the existing work item, not copies
+in the readiness payload. Existing ADO change history invalidates older evidence.
+An unconfigured or unavailable cache falls back to the stateless ARM check.
+
+Add `--record-release-plan` with PR input to explicitly allow revision-safe ADO
+persistence after a fresh check. This CLI-only option is incompatible with local
+package input and `--metadata-only`; the MCP check and normal CLI invocation do
+not write ADO. The JSON stores only Resource Provider, API version, status, matched
+resource types, validation environment, and check time. No project, commit, entry
+ID, explicit expiry, or diagnostic values are duplicated.
+
 Supply exactly one of `--pull-request-url` or `--package-path`. The MCP tool
 `azsdk_check_service_api_version` accepts the same alternatives:
 

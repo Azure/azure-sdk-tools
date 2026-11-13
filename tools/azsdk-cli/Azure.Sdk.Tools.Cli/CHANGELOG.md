@@ -4,6 +4,12 @@
 
 ### Features Added
 
+- Move optional release-plan readiness reuse into a CLI coordinator that reuses
+	existing ADO lookup, history, and revision-checked update services. A CLI-only
+	`--record-release-plan` option explicitly allows writes; ordinary checks and MCP
+	remain read-only. Store six observation values, deriving plan scope from existing
+	fields/history rather than creating duplicate metadata fields.
+
 - Add `pkg check-api-version --metadata-only` for SDK PRs, returning current-head
 	package metadata and pinned resource requirements without ARM calls or Azure
 	credentials. The read-only result supports release-plan evidence reuse outside

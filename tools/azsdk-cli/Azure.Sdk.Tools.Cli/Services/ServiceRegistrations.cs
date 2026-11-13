@@ -45,6 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IPackageApiMetadataService, PackageApiMetadataService>();
             services.AddSingleton<IServiceApiReadinessService, ServiceApiReadinessService>();
+            services.AddSingleton<ReleasePlanReadinessService>();
             services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
             services.AddSingleton<IUpgradeService, UpgradeService>();
             services.AddSingleton<INotificationService, NotificationService>();

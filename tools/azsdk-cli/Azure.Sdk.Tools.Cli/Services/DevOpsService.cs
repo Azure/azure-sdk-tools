@@ -183,6 +183,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
+        Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task EnsureReleasePlanAutomationRelationAsync(int releasePlanWorkItemId, int completedReleasePlanWorkItemId, CancellationToken ct);
@@ -223,6 +224,24 @@ namespace Azure.Sdk.Tools.Cli.Services
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct)
         {
             return _cachedRelationTypes ??= await connection.GetWorkItemClient(ct).GetRelationTypesAsync(cancellationToken: ct);
+        }
+
+        public async Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default)
+        {
+            const int pageSize = 200;
+            const int maxUpdates = 1000;
+            var updates = new List<WorkItemUpdate>();
+            for (var skip = 0; skip < maxUpdates; skip += pageSize)
+            {
+                var page = await connection.GetWorkItemClient(ct).GetUpdatesAsync(workItemId,
+                    top: pageSize, skip: skip, cancellationToken: ct);
+                updates.AddRange(page);
+                if (page.Count < pageSize)
+                {
+                    return updates;
+                }
+            }
+            throw new InvalidOperationException("Work-item history exceeds the bounded readiness lookup.");
         }
 
         private bool IsAgentTesting => Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING") == "true";

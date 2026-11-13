@@ -169,7 +169,8 @@ public class ServiceApiReadinessToolTests
         language.Setup(service => service.GetPackageInfo(directory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync(package);
         var readiness = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
         readiness.Setup(service => service.CheckPackageAsync(package, It.IsAny<CancellationToken>())).ReturnsAsync(new ServiceApiReadinessResponse { InputKind = "package" });
-        var tool = new ServiceApiReadinessTool(readiness.Object, NullLogger<ServiceApiReadinessTool>.Instance, git.Object, [language.Object]);
+        var tool = new ServiceApiReadinessTool(readiness.Object, NullLogger<ServiceApiReadinessTool>.Instance, git.Object, [language.Object],
+            new ReleasePlanReadinessService(Mock.Of<IDevOpsService>(), readiness.Object));
         if (useMcp)
         {
             var server = new Mock<McpServer>();
@@ -211,6 +212,27 @@ public class ServiceApiReadinessToolTests
         readiness.VerifyNoOtherCalls();
     }
 
-    private static ServiceApiReadinessTool CreateTool(IServiceApiReadinessService? service = null) =>
-        new(service ?? Mock.Of<IServiceApiReadinessService>(), NullLogger<ServiceApiReadinessTool>.Instance, Mock.Of<IGitHelper>(), []);
+    private static ServiceApiReadinessTool CreateTool(IServiceApiReadinessService? service = null)
+    {
+        var readiness = service ?? Mock.Of<IServiceApiReadinessService>();
+        return new(readiness, NullLogger<ServiceApiReadinessTool>.Instance, Mock.Of<IGitHelper>(), [],
+            new ReleasePlanReadinessService(Mock.Of<IDevOpsService>(), readiness));
+    }
+
+    [TestCase("--metadata-only")]
+    [TestCase("--package-path")]
+    public async Task ExplicitRecordingRejectsReadOnlyMetadataOrLocalInput(string option)
+    {
+        var readiness = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
+        var tool = CreateTool(readiness.Object);
+        var args = new List<string> { "--pull-request-url", "https://github.com/Azure/azure-sdk-for-java/pull/12", "--record-release-plan", option };
+        if (option == "--package-path")
+        {
+            args.Add("local-package");
+        }
+        var parsed = tool.GetCommandInstances().Single().Parse(args.ToArray());
+        var result = (ServiceApiReadinessResponse)await tool.HandleCommand(parsed, CancellationToken.None);
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
+        readiness.VerifyNoOtherCalls();
+    }
 }

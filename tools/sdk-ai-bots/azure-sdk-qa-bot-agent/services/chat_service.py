@@ -30,8 +30,9 @@ from models.chat import (
 )
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
-from models.identity import ResolveGitHubUsersResult
+from models.support_contact import get_support_catalog_context
 from services.conversation_service import ConversationService
+from services.teams_mention_service import resolve_answer_mentions
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
     build_skill_content,
@@ -142,6 +143,7 @@ class ChatService:
         """Process one chat turn and return API response shape."""
         project_client = self._get_project_client()
         tenant_config = get_tenant_config(req.tenant_id)
+        support_context = get_support_catalog_context()
         agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
         agent_version = configured_agent_version or None
         request_agent_version = await self._resolve_request_version(
@@ -180,9 +182,17 @@ class ChatService:
                 content=tenant_system_msg,
             ).model_dump(mode="json", exclude_none=True),
         )
+        support_context_item = cast(
+            ResponseInputItemParam,
+            ConversationItem(
+                role=Role.System,
+                content=support_context,
+            ).model_dump(mode="json", exclude_none=True),
+        )
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             conversation_items.append(tenant_system_item)
+            conversation_items.append(support_context_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -251,6 +261,7 @@ class ChatService:
             )
             # The replacement conversation has no tenant context of its own.
             conversation_items.insert(0, tenant_system_item)
+            conversation_items.insert(1, support_context_item)
             # Additional infos are not persisted in Cosmos; reuse the items already built.
             conversation_items.extend(additional_items)
             # Replace the poisoned mapping before the single recovery attempt.
@@ -301,6 +312,9 @@ class ChatService:
             )
 
         chat_response = self._postprocess(req, response, agent_conversation_id)
+        chat_response.answer, chat_response.mentions = await resolve_answer_mentions(
+            chat_response.answer, enabled=self._teams_mentions_enabled(req),
+        )
         chat_response.agent_name = agent.name
         chat_response.trace_id = trace_id
         BackgroundTaskTracker.instance().track(
@@ -700,18 +714,12 @@ class ChatService:
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
-        if req.conversation_type == ConversationType.teams_channel:
-            identities = ResolveGitHubUsersResult()
-            for result in tool_results.get("resolve_github_users", []):
-                if isinstance(result, ResolveGitHubUsersResult):
-                    for login in result.errors:
-                        identities.mentions.pop(login, None)
-                    identities.mentions.update(result.mentions)
-            resp.mentions = [
-                mention for mention in identities.mentions.values()
-                if mention.text in answer
-            ] or None
         return resp
+
+    def _teams_mentions_enabled(self, req: ChatRequest) -> bool:
+        return req.conversation_type == ConversationType.teams_channel and (
+            self._settings("ENABLE_TEAMS_MENTION", "true") or "true"
+        ).lower() == "true"
 
     @staticmethod
     def _extract_references_from_text(

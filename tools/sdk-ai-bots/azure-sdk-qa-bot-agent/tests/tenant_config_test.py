@@ -80,12 +80,13 @@ def test_chat_agent_exposes_github_actions_log_retrieval() -> None:
 
 
 def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
-    """Guard hard limits; model adherence is evaluated with the Foundry scenarios."""
+    """Guard planning constraints; model adherence is evaluated with the Foundry scenarios."""
     instruction = (
         _AGENT_ROOT / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
 
-    assert "8 tool calls" in instruction
+    assert "Tool call budget: at most 8 tool calls per turn total (across all tools)." in instruction
+    assert "within the same 8-call cap" in instruction
     assert "3 dependent follow-up rounds" in instruction
     assert "`load_skill` ALONE" in instruction
 
@@ -106,6 +107,26 @@ def test_pr_review_preserves_required_access_links() -> None:
         "https://docs.github.com/en/account-and-profile/how-tos/"
         "organization-membership/publicizing-or-hiding-organization-membership"
     ) in pr_review
+
+
+def test_pr_review_separates_review_requests_from_label_authority() -> None:
+    approval = _read_pr_review_skill().split("7. **Review approval:**", 1)[1]
+    label, github = approval.split("**Approval-label gate:**", 1)[1].split(
+        "**GitHub review approval:**", 1,
+    )
+    assert "user's stated blocker and current PR merge guidance before selecting or resolving people" in approval
+    assert "If the user or PR merge guidance identifies a missing approval label" in label
+    assert "address that gate rather than turn a general PR-review request into an ordinary GitHub approval request" in label
+    assert "Use this route only when an approving GitHub review is an outstanding requirement." in github
+    assert "Use requested reviewers or matching `CODEOWNERS` entries." in github
+    assert "Select up to 3 qualified, verified reviewers/code owners." in github
+    assert "up to 3" not in label
+    assert "follow the SDK-language contact and re-approval priorities" in github
+    assert "only after establishing their authority for that specific label" in label
+    assert "current policy or explicit approval ownership in `[support_catalog]`" in label
+    assert "requested-reviewer/`CODEOWNERS` status alone does not establish label authority" in label
+    assert "give the current documented PR/repository review route directly, not as a later escalation" in label
+    assert "For individuals established by the applicable route" in approval
 
 
 def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
@@ -383,6 +404,25 @@ def test_dotnet_skill_composes_common_and_specific_guidelines_once() -> None:
     )
     assert "{{tenant_id}}" not in content
     assert "mgmt-review-comment-resolution/SKILL.md" in content
+
+
+@pytest.mark.parametrize("tenant_id", [
+    TenantID.PYTHON_CHANNEL_QA_BOT,
+    TenantID.DOTNET_CHANNEL_QA_BOT,
+    TenantID.JAVA_CHANNEL_QA_BOT,
+    TenantID.JAVASCRIPT_CHANNEL_QA_BOT,
+    TenantID.GOLANG_CHANNEL_QA_BOT,
+])
+def test_sdk_pr_guidance_prefers_prior_approvers_then_catalog_contacts(tenant_id) -> None:
+    content = build_skill_content(tenant_id)
+    review = content.split("#### 4. SDK PR Review\n", 1)[1].split("\n#### ", 1)[0]
+    assert "When re-approval is required for an SDK PR, tag the previous approving reviewer" in review
+    assert "rather than other requested reviewers or catalog contacts" in review
+    assert "even if they are no longer in the requested-reviewer list" in review
+    assert "Otherwise, when human participation is needed for an SDK PR" in review
+    assert "prefer contacts in the matching `[support_catalog]` area over requested reviewers or `CODEOWNERS`" in review
+    assert "matching SDK language, management/data plane, and blocker" in review
+    assert "Follow the shared Next Action or Help Request rules." in review
 
 
 def test_azure_mcp_server_source_resolves_repository_paths() -> None:

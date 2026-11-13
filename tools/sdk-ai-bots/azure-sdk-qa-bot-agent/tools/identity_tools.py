@@ -4,48 +4,36 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import re
 from html import escape
-from typing import Annotated
 from uuid import UUID
 
 import httpx
 from azure.core.exceptions import ClientAuthenticationError
 
 from models.identity import (
+    ResolvedGitHubUser,
     ResolveGitHubUsersResult,
-    TeamsMention,
     TeamsUser,
+    normalize_github_username,
 )
-from tools import tool
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
 _PORTAL_SCOPE = "api://2efaf292-00a0-426c-ba7d-f5d2b214b8fc/.default"
 _LINKS_URL = "https://repos.opensource.microsoft.com/api/people/links/github"
-_LOGIN_RE = re.compile(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
 
 
 class IdentityTools:
-    @tool
     async def resolve_github_users(
         self,
         *,
-        usernames: Annotated[
-            list[str],
-            "One to ten GitHub usernames to map to Microsoft accounts for Teams "
-            "mentions. Batch all people in one call; do not pass organizations/teams.",
-        ],
+        usernames: list[str],
     ) -> ResolveGitHubUsersResult:
-        """Return verified Teams mention entities; copy their text directly into the answer."""
+        """Resolve verified Microsoft account details for backend answer rendering."""
         if not 1 <= len(usernames) <= 10:
             raise ValueError("Provide between one and ten GitHub usernames.")
-        logins = list(dict.fromkeys(
-            name.strip().removeprefix("@").lower() for name in usernames
-        ))
-        if any(len(name) > 39 or not _LOGIN_RE.fullmatch(name) for name in logins):
-            raise ValueError("Each username must be a valid individual GitHub login.")
+        logins = list(dict.fromkeys(normalize_github_username(name) for name in usernames))
 
         try:
             token = await get_credential().get_token(_PORTAL_SCOPE)
@@ -70,14 +58,16 @@ class IdentityTools:
             ))
         resolved = ResolveGitHubUsersResult()
         for login, result in zip(logins, results):
-            if isinstance(result, TeamsMention):
-                resolved.mentions[login] = result
-            else:
+            if isinstance(result, str):
                 resolved.errors[login] = result
+            else:
+                resolved.users[login] = result
         return resolved
 
     @staticmethod
-    async def _lookup(client: httpx.AsyncClient, login: str) -> TeamsMention | str:
+    async def _lookup(
+        client: httpx.AsyncClient, login: str
+    ) -> ResolvedGitHubUser | str:
         try:
             response = await client.get(
                 f"{_LINKS_URL}/{login}", params={"showOrganizations": "false"}
@@ -107,9 +97,10 @@ class IdentityTools:
             upn = aad.get("userPrincipalName")
             if not isinstance(upn, str) or not upn.strip():
                 raise ValueError("No Microsoft user principal name.")
-            return TeamsMention(
+            return ResolvedGitHubUser(
                 text=f"<at>{escape(upn.strip(), quote=False)}</at>",
                 mentioned=user,
+                plain_text=f"{user.name} ({upn.strip()})",
             )
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code

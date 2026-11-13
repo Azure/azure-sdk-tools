@@ -3,9 +3,13 @@
 import asyncio
 import json
 from pathlib import Path
+from typing import cast
 
 import pytest
-from agent_framework import FileSkillsSource
+from agent_framework import (
+    FileSkillsSource,
+    SkillsSourceContext,  # pyright: ignore[reportAttributeAccessIssue]
+)
 
 from config import tenant_config
 from config.tenant_config import (
@@ -46,6 +50,7 @@ def test_review_engineering_docs_keep_source_scope_without_title_restrictions(
     from tools.knowledge_tools import _resolve_source_filters
 
     config = get_tenant_config(tenant_id)
+    assert config is not None
     filters = _resolve_source_filters(
         [source.name for source in config.sources],
         tenant_id.value,
@@ -57,7 +62,9 @@ def test_review_engineering_docs_keep_source_scope_without_title_restrictions(
         expected += f" and (service_type eq '{service_type}' or service_type eq null)"
     assert filters[SRC_AZURE_SDK_DOCS_ENG] == expected
     assert set(filters) == {source.name for source in config.sources}
-    assert get_knowledge_source(SRC_AZURE_SDK_DOCS_ENG).get_link(
+    source = get_knowledge_source(SRC_AZURE_SDK_DOCS_ENG)
+    assert source is not None
+    assert source.get_link(
         "docs#develop#namespace-review.md"
     ) == (
         "https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review"
@@ -66,6 +73,7 @@ def test_review_engineering_docs_keep_source_scope_without_title_restrictions(
 
 def test_api_spec_review_preserves_other_source_filters() -> None:
     config = get_tenant_config(TenantID.API_SPEC_REVIEW_BOT)
+    assert config is not None
 
     assert config.source_filter == {
         SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
@@ -318,7 +326,11 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     skills = asyncio.run(
-        FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
+        FileSkillsSource(
+            skill_paths=_AGENT_ROOT / "skills" / "chat_agent"
+        ).get_skills(  # pyright: ignore[reportCallIssue]
+            cast(SkillsSourceContext, None)  # pyright: ignore[reportCallIssue]
+        )
     )
     assert [skill.frontmatter.name for skill in skills] == ["pr-review"]
     assert "pr-review" not in get_skill_to_tenant_map()
@@ -326,7 +338,8 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     init = (
         _AGENT_ROOT / "agents" / "chat_agent" / "init.py"
     ).read_text(encoding="utf-8")
-    assert "FileSkillsSource(skills_dir).get_skills()" in init
+    assert "FileSkillsSource(skill_paths=skills_dir)" in init
+    assert "AggregatingSkillsSource" in init
     assert "skills_dir = _get_chat_skill_dir()" in init
 
     from agents.chat_agent import init as chat_agent_init
@@ -470,7 +483,11 @@ def test_api_spec_review_tenant_delegates_workflow_diagnosis_to_shared_guidance(
 def test_azure_mcp_server_pr_review_help_skill_is_discoverable() -> None:
     root = Path(__file__).parents[1]
     skills = asyncio.run(
-        FileSkillsSource(root / "skills" / "azure_mcp_server").get_skills()
+        FileSkillsSource(
+            skill_paths=root / "skills" / "azure_mcp_server"
+        ).get_skills(  # pyright: ignore[reportCallIssue]
+            cast(SkillsSourceContext, None)  # pyright: ignore[reportCallIssue]
+        )
     )
     instruction = (
         root / "agents" / "azure_mcp_server_agent" / "instruction.md"

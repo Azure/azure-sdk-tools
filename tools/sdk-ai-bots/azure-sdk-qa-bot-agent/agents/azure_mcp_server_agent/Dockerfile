@@ -13,6 +13,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --pre -r requirements.txt
 
 COPY config/ ./config/
+COPY middleware/ ./middleware/
 COPY models/ ./models/
 COPY prompts/ ./prompts/
 COPY services/ ./services/

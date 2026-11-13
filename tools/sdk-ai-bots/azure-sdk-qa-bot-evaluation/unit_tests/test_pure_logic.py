@@ -35,6 +35,7 @@ from dataset.schema import (  # noqa: E402
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
     FoundryEvalsRunner,
+    _build_grounding_context,
     _retry_foundry_call,
     _upload_eval_items,
     output_items_to_rows,
@@ -372,6 +373,48 @@ def test_output_items_to_rows_raises_for_grader_error():
         assert "Missing inputs" in str(exc)
     else:
         raise AssertionError("Expected grader errors to fail the evaluation")
+
+
+def test_build_grounding_context_adds_tool_evidence_and_removes_images():
+    retrieved_context = json.dumps([
+        {
+            "document_title": "Guide",
+            "content": "Open the check. ![screenshot](https://example.test/image.png)",
+        }
+    ])
+    tool_calls = [
+        {
+            "tool_name": "search_knowledge_base",
+            "arguments": {"query": "black"},
+            "output": {"results": [{"content": "duplicate"}]},
+        },
+        {
+            "tool_name": "get_file_contents",
+            "arguments": {"path": "azpysdk/black.py"},
+            "output": "BLACK_VERSION = '24.4.0'",
+        },
+        {
+            "tool_name": "load_skill",
+            "arguments": {"name": "python"},
+            "output": "Agent instructions",
+        },
+    ]
+
+    context = _build_grounding_context(
+        retrieved_context,
+        tool_calls,
+        query="Add exportEmployeeData to Employee.",
+    )
+
+    assert "User request:" in context
+    assert "exportEmployeeData" in context
+    assert "Retrieved documentation:" in context
+    assert "[Image: screenshot]" in context
+    assert "https://example.test/image.png" not in context
+    assert "get_file_contents" in context
+    assert "BLACK_VERSION = '24.4.0'" in context
+    assert "duplicate" not in context
+    assert "Agent instructions" not in context
 
 
 def test_build_testing_criteria_all_builtins():

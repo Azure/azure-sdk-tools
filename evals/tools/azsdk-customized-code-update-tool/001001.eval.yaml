@@ -157,13 +157,15 @@ stimuli:
     tags:
       editScope: All
     prompt: |
-      First, use the shell to resolve
-      azure-sdk-for-java/sdk/widget/azure-resourcemanager-widget against your current working
-      directory and obtain its absolute directory path.
+      First, use the shell to resolve both of these directories against your
+      current working directory and obtain their absolute paths:
+      - azure-sdk-for-java/sdk/widget/azure-resourcemanager-widget
+      - specification/widget/resource-manager/Microsoft.Widget/Widget
       Then call azsdk_customized_code_update with parameters:
       - customizationRequest: API review feedback requires renaming SDK model
         'Employee' to 'Staff' for Java.
-      - packagePath: use the exact absolute path returned by the shell
+      - packagePath: use the resolved absolute SDK package path
+      - tspProjectPath: use the resolved absolute TypeSpec project path
       - editScope: "All"
 
       Do not pass a relative path or literal placeholder text as

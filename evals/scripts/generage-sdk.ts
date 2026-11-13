@@ -67,7 +67,7 @@ export async function generateSdk(
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-    generateSdk(process.argv[2], process.argv[3]).catch((error: unknown) => {
+    generateSdk(process.argv[2], process.argv[3]!== "false").catch((error: unknown) => {
         console.error(error);
         process.exitCode = 1;
     });

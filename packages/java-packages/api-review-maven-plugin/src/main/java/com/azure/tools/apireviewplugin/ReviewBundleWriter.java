@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,6 +35,11 @@ final class ReviewBundleWriter {
     }
 
     void write(ApiListing listing, String version, String packagePath, Path outputDirectory) throws IOException {
+        if (version == null || version.trim().isEmpty() || version.contains("${")
+            || version.contains("\n") || version.contains("\r")) {
+            throw new IOException("Package version must be a nonempty literal version.");
+        }
+        packagePath = normalizePackagePath(packagePath);
         String markdown = MarkdownRenderer.render(listing).replace("\r\n", "\n").replace('\r', '\n');
         if (markdown.trim().isEmpty()) {
             throw new IOException("Generated API Markdown is empty.");
@@ -87,6 +93,21 @@ final class ReviewBundleWriter {
                 failure.addSuppressed(cleanupFailure);
             }
         }
+    }
+
+    static String normalizePackagePath(String value) {
+        value = value.replace('\\', '/');
+        if (value.trim().isEmpty() || value.startsWith("/") || value.matches("^[A-Za-z]:.*")
+            || value.contains("\n") || value.contains("\r")) {
+            throw new IllegalArgumentException("Package path must be a nonempty repository-relative path.");
+        }
+        for (String segment : value.split("/")) {
+            if ("..".equals(segment)) {
+                throw new IllegalArgumentException("Package path cannot contain '..'.");
+            }
+        }
+        String normalized = Paths.get(value).normalize().toString().replace('\\', '/');
+        return normalized.isEmpty() ? "." : normalized;
     }
 
     private static String quote(String value) {

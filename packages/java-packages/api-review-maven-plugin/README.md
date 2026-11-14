@@ -1,8 +1,24 @@
 # Java API Review Maven Plugin
 
-Generates `api.md` and `api.metadata.yml` from a built Java sources JAR. No generation scripts, plugin configuration, or checked-in API snapshots are required in the SDK repository.
+Generates `api.md` and `api.metadata.yml` from a built Java sources JAR. The same artifact works as a Maven plugin or a standalone executable JAR.
 
-## Generate a bundle
+## Standalone execution and API Review Hub
+
+Use the main plugin JAR, not the sources or Javadoc JAR. It includes its runtime dependencies and needs only Java 8+:
+
+```shell
+java -jar api-review-maven-plugin-1.0.0-beta.1.jar --sources-jar azure-json-1.6.0-beta.1-sources.jar --package-relative-path sdk/serialization/azure-json --output-directory api-review
+```
+
+All three options are required. The sources JAR must retain its original `<artifact>-<version>-sources.jar` filename. Its Maven metadata supplies the package version; no external POM, Maven installation, repository cache, or plugin downloads are needed. Use `--help` for usage.
+
+For API Review Hub, the build-tools wrapper obtains the pinned main JAR once and copies it into `$(BinOutputDirectory)`. The generation wrapper builds the requested package's sources JAR, then runs the downloaded tool from `$(BinDirectory)` with output directed to `$(ArtifactOutputDirectory)`. Pass the package path relative to `$(Build.SourcesDirectory)`.
+
+Normal SDK package builds may still restore their own dependencies; standalone review generation does not. The two language-owned ARH wrappers remain required.
+
+## Maven execution
+
+The Maven goal reads the module's existing `pom.xml`; no plugin declaration or new SDK-repository scripts are needed.
 
 From a library module, run its normal build followed by the plugin:
 
@@ -32,7 +48,7 @@ For an explicit module path, including sparse or exported checkouts:
 mvn com.azure.tools:api-review-maven-plugin:1.0.0-beta.1:generate -Dapi-review.packageRelativePath=sdk/serialization/azure-json
 ```
 
-Metadata records the literal package POM version and the forward-slash repository-relative path. `apiHash` is lowercase SHA-256 of the complete UTF-8, no-BOM, LF-normalized Markdown with one trailing newline. Existing bundles are preserved if generation or replacement fails.
+Both modes record the literal package version and forward-slash repository-relative path. `apiHash` is lowercase SHA-256 of the complete UTF-8, no-BOM, LF-normalized Markdown with one trailing newline. Existing bundles are preserved if generation or replacement fails.
 
 ## Develop
 
@@ -42,7 +58,7 @@ Use Maven 3.6.3+ and JDK 8+:
 mvn -f packages/java-packages/api-review-maven-plugin/pom.xml clean verify
 ```
 
-The plugin includes the shared processor sources and resources from `src/java/apiview-java-processor`; there is no separately published processor dependency. Unit tests and a Maven invocation test run during `verify`. CI also verifies the standalone processor.
+The plugin includes the shared processor sources and resources from `src/java/apiview-java-processor`; there is no separately published processor dependency. `verify` checks Maven invocation and standalone execution of a copied JAR without a POM or Maven cache, comparing both bundles byte-for-byte. CI also verifies the standalone processor.
 
 ## Release
 

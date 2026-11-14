@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -98,18 +97,12 @@ public class GenerateMojo extends AbstractMojo {
 
     private String resolvePackagePath(Path packageDirectory) throws IOException, MojoFailureException {
         if (packageRelativePath != null) {
-            String value = packageRelativePath.replace('\\', '/');
-            if (value.trim().isEmpty() || value.startsWith("/") || value.matches("^[A-Za-z]:.*")
-                || value.contains("\n") || value.contains("\r")) {
-                throw new MojoFailureException("api-review.packageRelativePath must be a nonempty repository-relative path.");
+            try {
+                return ReviewBundleWriter.normalizePackagePath(packageRelativePath);
+            } catch (IllegalArgumentException exception) {
+                throw new MojoFailureException("Invalid api-review.packageRelativePath: " + exception.getMessage(),
+                    exception);
             }
-            for (String segment : value.split("/")) {
-                if ("..".equals(segment)) {
-                    throw new MojoFailureException("api-review.packageRelativePath cannot contain '..'.");
-                }
-            }
-            String normalized = Paths.get(value).normalize().toString().replace('\\', '/');
-            return normalized.isEmpty() ? "." : normalized;
         }
         Path root = repositoryRoot == null ? findGitRoot(packageDirectory) : resolve(packageDirectory, repositoryRoot);
         if (root == null) {

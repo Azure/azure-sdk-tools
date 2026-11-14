@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.azure.tools.apiviewplugin;
+package com.azure.tools.apireviewplugin;
 
 import com.azure.tools.apiview.processor.model.ApiListing;
 import java.io.IOException;

@@ -21,9 +21,9 @@ function Get-MavenPluginPackage {
     $groupId = [string]$pom.project.groupId
     $artifactId = [string]$pom.project.artifactId
     $version = [string]$pom.project.version
-    if ($groupId -ne 'com.azure.tools' -or $artifactId -ne 'apiview-maven-plugin' -or
+    if ($groupId -ne 'com.azure.tools' -or $artifactId -ne 'api-review-maven-plugin' -or
         [string]$pom.project.packaging -ne 'maven-plugin') {
-        throw 'Expected the com.azure.tools:apiview-maven-plugin Maven plugin package.'
+        throw 'Expected the com.azure.tools:api-review-maven-plugin Maven plugin package.'
     }
     if ([string]::IsNullOrWhiteSpace($version) -or $version.Contains('${') -or $version.EndsWith('-SNAPSHOT')) {
         throw 'The release package must have a literal, non-SNAPSHOT version.'

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.azure.tools.apiviewplugin;
+package com.azure.tools.apireviewplugin;
 
 import com.azure.tools.apiview.processor.Main;
 import com.azure.tools.apiview.processor.model.ApiListing;
@@ -28,23 +28,23 @@ public class GenerateMojo extends AbstractMojo {
     private MavenProject project;
 
     /** Existing sources JAR; defaults to the attached sources artifact or build output. */
-    @Parameter(property = "apiview.sourcesJar")
+    @Parameter(property = "api-review.sourcesJar")
     private File sourcesJar;
 
     /** Build-artifact destination, never the package root. */
-    @Parameter(property = "apiview.outputDirectory", defaultValue = "${project.build.directory}/api-review")
+    @Parameter(property = "api-review.outputDirectory", defaultValue = "${project.build.directory}/api-review")
     private File outputDirectory;
 
     /** Repository root for exported sources without Git metadata. */
-    @Parameter(property = "apiview.repositoryRoot")
+    @Parameter(property = "api-review.repositoryRoot")
     private File repositoryRoot;
 
     /** Explicit repository-relative module path, using forward slashes. */
-    @Parameter(property = "apiview.packageRelativePath")
+    @Parameter(property = "api-review.packageRelativePath")
     private String packageRelativePath;
 
     /** Skips generation. */
-    @Parameter(property = "apiview.skip", defaultValue = "false")
+    @Parameter(property = "api-review.skip", defaultValue = "false")
     private boolean skip;
 
     @Override
@@ -62,7 +62,7 @@ public class GenerateMojo extends AbstractMojo {
         File input = findSourcesJar(packageDirectory);
         if (!input.isFile() || !input.getName().endsWith("-sources.jar")) {
             throw new MojoFailureException("Expected an existing -sources.jar: " + input
-                + ". Build the package first, or set apiview.sourcesJar.");
+                + ". Build the package first, or set api-review.sourcesJar.");
         }
         Path output = resolve(packageDirectory, outputDirectory).toAbsolutePath().normalize();
         if (output.equals(packageDirectory)) {
@@ -101,11 +101,11 @@ public class GenerateMojo extends AbstractMojo {
             String value = packageRelativePath.replace('\\', '/');
             if (value.trim().isEmpty() || value.startsWith("/") || value.matches("^[A-Za-z]:.*")
                 || value.contains("\n") || value.contains("\r")) {
-                throw new MojoFailureException("apiview.packageRelativePath must be a nonempty repository-relative path.");
+                throw new MojoFailureException("api-review.packageRelativePath must be a nonempty repository-relative path.");
             }
             for (String segment : value.split("/")) {
                 if ("..".equals(segment)) {
-                    throw new MojoFailureException("apiview.packageRelativePath cannot contain '..'.");
+                    throw new MojoFailureException("api-review.packageRelativePath cannot contain '..'.");
                 }
             }
             String normalized = Paths.get(value).normalize().toString().replace('\\', '/');
@@ -113,13 +113,13 @@ public class GenerateMojo extends AbstractMojo {
         }
         Path root = repositoryRoot == null ? findGitRoot(packageDirectory) : resolve(packageDirectory, repositoryRoot);
         if (root == null) {
-            throw new MojoFailureException("Cannot locate the repository root. Set apiview.repositoryRoot"
-                + " or apiview.packageRelativePath.");
+            throw new MojoFailureException("Cannot locate the repository root. Set api-review.repositoryRoot"
+                + " or api-review.packageRelativePath.");
         }
         root = root.toRealPath();
         Path directory = packageDirectory.toRealPath();
         if (!directory.startsWith(root)) {
-            throw new MojoFailureException("The package directory is outside apiview.repositoryRoot.");
+            throw new MojoFailureException("The package directory is outside api-review.repositoryRoot.");
         }
         String result = root.relativize(directory).toString().replace('\\', '/');
         return result.isEmpty() ? "." : result;

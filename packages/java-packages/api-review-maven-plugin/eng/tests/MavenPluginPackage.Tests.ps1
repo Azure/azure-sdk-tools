@@ -11,11 +11,11 @@ BeforeAll {
             return
         }
         New-Item -ItemType Directory -Path $Directory -Force | Out-Null
-        $pom = '<project><groupId>com.azure.tools</groupId><artifactId>apiview-maven-plugin</artifactId>' +
+        $pom = '<project><groupId>com.azure.tools</groupId><artifactId>api-review-maven-plugin</artifactId>' +
             '<version>1.0.0-beta.1</version><packaging>maven-plugin</packaging></project>'
-        Set-Content -LiteralPath (Join-Path $Directory 'apiview-maven-plugin-1.0.0-beta.1.pom') -Value $pom
+        Set-Content -LiteralPath (Join-Path $Directory 'api-review-maven-plugin-1.0.0-beta.1.pom') -Value $pom
         foreach ($suffix in @('', '-sources', '-javadoc')) {
-            Set-Content -LiteralPath (Join-Path $Directory "apiview-maven-plugin-1.0.0-beta.1$suffix.jar") -Value 'fixture'
+            Set-Content -LiteralPath (Join-Path $Directory "api-review-maven-plugin-1.0.0-beta.1$suffix.jar") -Value 'fixture'
         }
     }
 }
@@ -41,18 +41,18 @@ Describe 'Maven plugin package validation' {
     }
 
     It 'rejects a missing sources JAR' {
-        Remove-Item -LiteralPath (Join-Path $packageDirectory 'apiview-maven-plugin-1.0.0-beta.1-sources.jar')
+        Remove-Item -LiteralPath (Join-Path $packageDirectory 'api-review-maven-plugin-1.0.0-beta.1-sources.jar')
         { Get-MavenPluginPackage $packageDirectory } | Should -Throw '*Expected package artifact*'
     }
 
     It 'rejects duplicate POMs' {
-        Copy-Item -LiteralPath (Join-Path $packageDirectory 'apiview-maven-plugin-1.0.0-beta.1.pom') `
+        Copy-Item -LiteralPath (Join-Path $packageDirectory 'api-review-maven-plugin-1.0.0-beta.1.pom') `
             -Destination (Join-Path $packageDirectory 'other.pom')
         { Get-MavenPluginPackage $packageDirectory } | Should -Throw '*Expected one package POM*'
     }
 
     It 'rejects snapshot release versions' {
-        $pomPath = Join-Path $packageDirectory 'apiview-maven-plugin-1.0.0-beta.1.pom'
+        $pomPath = Join-Path $packageDirectory 'api-review-maven-plugin-1.0.0-beta.1.pom'
         (Get-Content -LiteralPath $pomPath -Raw).Replace('1.0.0-beta.1', '1.0.0-SNAPSHOT') |
             Set-Content -LiteralPath $pomPath
         { Get-MavenPluginPackage $packageDirectory } | Should -Throw '*non-SNAPSHOT*'
@@ -63,7 +63,7 @@ Describe 'Maven plugin package validation' {
         Mock Invoke-WebRequest { return [pscustomobject]@{ StatusCode = 404 } }
         Assert-MavenPluginVersionAvailable (Get-MavenPluginPackage $packageDirectory) 'https://example.test/maven'
         Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
-            $Uri -eq 'https://example.test/maven/com/azure/tools/apiview-maven-plugin/1.0.0-beta.1/apiview-maven-plugin-1.0.0-beta.1.pom'
+            $Uri -eq 'https://example.test/maven/com/azure/tools/api-review-maven-plugin/1.0.0-beta.1/api-review-maven-plugin-1.0.0-beta.1.pom'
         }
     }
 

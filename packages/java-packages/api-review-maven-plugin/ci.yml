@@ -3,7 +3,7 @@ trigger:
     include: [main]
   paths:
     include:
-      - /packages/java-packages/apiview-maven-plugin/
+      - /packages/java-packages/api-review-maven-plugin/
       - /src/java/apiview-java-processor/
 
 pr:
@@ -11,7 +11,7 @@ pr:
     include: [main]
   paths:
     include:
-      - /packages/java-packages/apiview-maven-plugin/
+      - /packages/java-packages/api-review-maven-plugin/
       - /src/java/apiview-java-processor/
 
 extends:
@@ -44,17 +44,17 @@ extends:
               - task: Maven@4
                 displayName: Verify Maven plugin
                 inputs:
-                  mavenPomFile: packages/java-packages/apiview-maven-plugin/pom.xml
+                  mavenPomFile: packages/java-packages/api-review-maven-plugin/pom.xml
                   goals: clean verify
                   options: --batch-mode --no-transfer-progress
                   javaHomeOption: JDKVersion
                   jdkVersionOption: '1.8'
                   jdkArchitectureOption: x64
                   publishJUnitResults: true
-                  testResultsFiles: packages/java-packages/apiview-maven-plugin/target/surefire-reports/TEST-*.xml
+                  testResultsFiles: packages/java-packages/api-review-maven-plugin/target/surefire-reports/TEST-*.xml
               - task: PowerShell@2
                 displayName: Test release scripts
                 inputs:
                   targetType: filePath
-                  filePath: packages/java-packages/apiview-maven-plugin/eng/Test-Scripts.ps1
+                  filePath: packages/java-packages/api-review-maven-plugin/eng/Test-Scripts.ps1
                   pwsh: true

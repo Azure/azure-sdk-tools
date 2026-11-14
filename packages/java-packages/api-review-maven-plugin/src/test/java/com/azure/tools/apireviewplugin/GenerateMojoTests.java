@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.azure.tools.apiviewplugin;
+package com.azure.tools.apireviewplugin;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -66,7 +66,7 @@ public class GenerateMojoTests {
     public void failsWithoutRepositoryContextRatherThanGuessing() throws Exception {
         GenerateMojo mojo = mojo("public class Widget {}");
         MojoFailureException failure = assertThrows(MojoFailureException.class, mojo::execute);
-        assertTrue(failure.getMessage().contains("apiview.packageRelativePath"));
+        assertTrue(failure.getMessage().contains("api-review.packageRelativePath"));
     }
 
     @Test

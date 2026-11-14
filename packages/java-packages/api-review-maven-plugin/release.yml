@@ -62,33 +62,33 @@ extends:
               - task: Maven@4
                 displayName: Build and test plugin
                 inputs:
-                  mavenPomFile: packages/java-packages/apiview-maven-plugin/pom.xml
+                  mavenPomFile: packages/java-packages/api-review-maven-plugin/pom.xml
                   goals: clean verify
                   options: --batch-mode --no-transfer-progress
                   javaHomeOption: JDKVersion
                   jdkVersionOption: '1.8'
                   jdkArchitectureOption: x64
                   publishJUnitResults: true
-                  testResultsFiles: packages/java-packages/apiview-maven-plugin/target/surefire-reports/TEST-*.xml
+                  testResultsFiles: packages/java-packages/api-review-maven-plugin/target/surefire-reports/TEST-*.xml
               - task: PowerShell@2
                 displayName: Test release scripts
                 inputs:
                   targetType: filePath
-                  filePath: packages/java-packages/apiview-maven-plugin/eng/Test-Scripts.ps1
+                  filePath: packages/java-packages/api-review-maven-plugin/eng/Test-Scripts.ps1
                   pwsh: true
               - task: PowerShell@2
                 displayName: Stage Maven plugin package
                 inputs:
                   targetType: filePath
-                  filePath: packages/java-packages/apiview-maven-plugin/eng/Stage-Package.ps1
+                  filePath: packages/java-packages/api-review-maven-plugin/eng/Stage-Package.ps1
                   arguments: >-
-                    -PackageDirectory "$(Build.SourcesDirectory)/packages/java-packages/apiview-maven-plugin/target"
-                    -OutputDirectory "$(Build.ArtifactStagingDirectory)/apiview-maven-plugin"
+                    -PackageDirectory "$(Build.SourcesDirectory)/packages/java-packages/api-review-maven-plugin/target"
+                    -OutputDirectory "$(Build.ArtifactStagingDirectory)/api-review-maven-plugin"
                   pwsh: true
               - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
                 parameters:
-                  ArtifactName: apiview-maven-plugin
-                  ArtifactPath: $(Build.ArtifactStagingDirectory)/apiview-maven-plugin
+                  ArtifactName: api-review-maven-plugin
+                  ArtifactPath: $(Build.ArtifactStagingDirectory)/api-review-maven-plugin
 
       - ${{ if parameters.publishDevFeed }}:
         - stage: PublishDevFeed
@@ -116,15 +116,15 @@ extends:
                 - checkout: azure-sdk-build-tools
                   path: azure-sdk-build-tools
                 - download: current
-                  artifact: apiview-maven-plugin
+                  artifact: api-review-maven-plugin
                 - template: /eng/common/pipelines/templates/steps/maven-authenticate.yml
                 - task: PowerShell@2
                   displayName: Validate package version
                   inputs:
                     targetType: filePath
-                    filePath: packages/java-packages/apiview-maven-plugin/eng/Prepare-Release.ps1
+                    filePath: packages/java-packages/api-review-maven-plugin/eng/Prepare-Release.ps1
                     arguments: >-
-                      -PackageDirectory "$(Pipeline.Workspace)/apiview-maven-plugin"
+                      -PackageDirectory "$(Pipeline.Workspace)/api-review-maven-plugin"
                       -FeedUrl "${{ parameters.devFeedUrl }}"
                     pwsh: true
                   env:
@@ -139,7 +139,7 @@ extends:
                     EsrpClientId: ${{ parameters.esrpClientId }}
                     AuthAKVName: ${{ parameters.signingKeyVault }}
                     AuthSignCertName: ${{ parameters.signingCertificate }}
-                    FolderPath: $(Pipeline.Workspace)/apiview-maven-plugin
+                    FolderPath: $(Pipeline.Workspace)/api-review-maven-plugin
                     Pattern: '*.jar'
                     signConfigType: inlineSignParams
                     inlineOperation: |
@@ -166,7 +166,7 @@ extends:
                 - task: Maven@4
                   displayName: GPG sign and publish Maven plugin
                   inputs:
-                    mavenPomFile: packages/java-packages/apiview-maven-plugin/pom.xml
+                    mavenPomFile: packages/java-packages/api-review-maven-plugin/pom.xml
                     goals: org.apache.maven.plugins:maven-gpg-plugin:3.2.8:sign-and-deploy-file
                     options: >-
                       --batch-mode --no-transfer-progress
@@ -188,6 +188,6 @@ extends:
                     publishJUnitResults: false
                 - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
                   parameters:
-                    ArtifactName: apiview-maven-plugin-signed
-                    ArtifactPath: $(Pipeline.Workspace)/apiview-maven-plugin
+                    ArtifactName: api-review-maven-plugin-signed
+                    ArtifactPath: $(Pipeline.Workspace)/api-review-maven-plugin
                     CustomCondition: succeeded()

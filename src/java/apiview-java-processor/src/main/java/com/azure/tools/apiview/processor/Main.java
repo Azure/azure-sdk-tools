@@ -1,12 +1,16 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor;
 
 import com.azure.tools.apiview.processor.analysers.Analyser;
 import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.models.Constants;
-import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiListing;
 import com.azure.tools.apiview.processor.model.ApiViewProperties;
 import com.azure.tools.apiview.processor.model.Language;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
+import com.azure.tools.apiview.processor.model.MarkdownRenderer;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,35 +35,57 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+/**
+ * Command-line entry point for Java API review generation.
+ */
 public class Main {
-
     // expected argument order:
-    // [inputFiles] <outputDirectory>
+    /**
+     * Generates API review files from the command-line arguments.
+     *
+     * @param args the args
+     */
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("Expected argument order: [comma-separated sources jarFiles] <outputFile>, e.g. /path/to/jarfile.jar ./temp/");
+        final CommandLineOptions options;
+        try {
+            options = CommandLineOptions.parse(args);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            printUsage();
             System.exit(-1);
+            return;
         }
 
         long startMillis = System.currentTimeMillis();
-        final String jarFiles = args[0];
-        final String[] jarFilesArray = jarFiles.split(",");
-
-        final File outputDir = new File(args[1]);
 
         System.out.println("Running with following configuration:");
-        System.out.printf("  Output directory: '%s'%n", outputDir);
+        System.out.printf("  Output directory: '%s'%n", options.getOutputDirectory());
+        System.out.printf("  Renderer: %s%n", options.getRenderer().getValue());
 
-        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+        Arrays.stream(options.getJarFiles())
+            .forEach(jarFile -> run(new File(jarFile), options.getOutputDirectory(), options.getRenderer()));
         System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
+    }
+
+    private static void printUsage() {
+        System.out.println("Expected argument order: [--renderer=json|markdown] "
+            + "[comma-separated sources jarFiles] <outputDirectory>, e.g. /path/to/jarfile.jar ./temp/");
     }
 
     /**
      * Runs APIView parser and returns the output file path as an array. The first value in the array is the
-     * JSON file. If there are multiple outputs (i.e. gzipping is enabled), the second value in the array is the
-     * gzipped file.
+     *     JSON file. If there are multiple outputs (i.e. gzipping is enabled), the second value in the array is the
+     *     gzipped file.
+     *
+     * @param jarFile the jar file
+     * @param outputDir the output dir
+     * @return the JSON output file, followed by the compressed file when enabled
      */
     public static File[] run(File jarFile, File outputDir) {
+        return run(jarFile, outputDir, OutputRenderer.JSON);
+    }
+
+    private static File[] run(File jarFile, File outputDir, OutputRenderer renderer) {
         System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
 
         if (!jarFile.exists()) {
@@ -74,66 +100,86 @@ public class Main {
             }
         }
 
-        final String outputFileName = jarFile.getName().substring(0, jarFile.getName().length() - 4) + ".json";
-        final Optional<APIListing> apiListing = processFile(jarFile);
+        final String outputFileNameBase = jarFile.getName().substring(0, jarFile.getName().length() - 4);
+        final Optional<ApiListing> apiListing = processFile(jarFile);
 
         if (apiListing.isPresent()) {
-            File[] files = new File[Constants.GZIP_OUTPUT ? 2 : 1];
-            files[0] = new File(outputDir, outputFileName);
-            apiListing.get().toFile(files[0], false);
-            System.out.println("  Output written to file: " + files[0]);
+            switch (renderer) {
+                case JSON:
+                    return renderJson(apiListing.get(), outputDir, outputFileNameBase);
 
-            if (Constants.PRETTY_PRINT_JSON) {
-                try {
-                    String json = new String(Files.readAllBytes(files[0].toPath()));
-                    ObjectMapper mapper = new ObjectMapper();
-                    Object jsonObject = mapper.readValue(json, Object.class);
-                    mapper.writerWithDefaultPrettyPrinter().writeValue(files[0], jsonObject);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                case MARKDOWN:
+                    return renderMarkdown(apiListing.get(), outputDir, outputFileNameBase);
+
+                default:
+                    throw new IllegalStateException("Unsupported renderer: " + renderer);
             }
-
-            if (Constants.VALIDATE_JSON_SCHEMA) {
-                System.out.println("  Validating the generated JSON file against the schema...");
-                try {
-                    JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
-                    // Load the schema from the classpath resource
-                    URL resource = Main.class.getResource(Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
-                    if (resource == null) {
-                        throw new IllegalStateException("Resource not found: " + Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
-                    }
-                    URI localResourceUri = resource.toURI();
-                    JsonSchema schema = factory.getSchema(localResourceUri);
-
-                    JsonNode jsonNode = new ObjectMapper().readTree(files[0]);
-                    schema.initializeValidators();
-                    Set<ValidationMessage> validationMessages = schema.validate(jsonNode);
-                    if (validationMessages.isEmpty()) {
-                        System.out.println("    Validation passed.");
-                    } else {
-                        System.out.println("    Validation failed. Errors:");
-                        validationMessages.forEach(msg -> System.out.println("      " + msg.getMessage()));
-                    }
-                } catch (IOException | URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            if (Constants.GZIP_OUTPUT) {
-                files[1] = new File(outputDir, outputFileName + ".tgz");
-                apiListing.get().toFile(files[1], true);
-                System.out.println("  Output written to file: " + files[1]);
-            }
-
-            return files;
         }
 
         return new File[] { };
     }
 
-    private static Optional<APIListing> processFile(final File inputFile) {
-        final APIListing apiListing = new APIListing();
+    private static File[] renderJson(ApiListing apiListing, File outputDir, String outputFileNameBase) {
+        File[] files = new File[Constants.GZIP_OUTPUT ? 2 : 1];
+        files[0] = new File(outputDir, outputFileNameBase + ".json");
+        apiListing.toFile(files[0], false);
+        System.out.println("  Output written to file: " + files[0]);
+
+        if (Constants.PRETTY_PRINT_JSON) {
+            try {
+                String json = new String(Files.readAllBytes(files[0].toPath()));
+                ObjectMapper mapper = new ObjectMapper();
+                Object jsonObject = mapper.readValue(json, Object.class);
+                mapper.writerWithDefaultPrettyPrinter().writeValue(files[0], jsonObject);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (Constants.VALIDATE_JSON_SCHEMA) {
+            System.out.println("  Validating the generated JSON file against the schema...");
+            try {
+                JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
+                // Load the schema from the classpath resource
+                URL resource = Main.class.getResource(Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                if (resource == null) {
+                    throw new IllegalStateException("Resource not found: " + Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                }
+                URI localResourceUri = resource.toURI();
+                JsonSchema schema = factory.getSchema(localResourceUri);
+
+                JsonNode jsonNode = new ObjectMapper().readTree(files[0]);
+                schema.initializeValidators();
+                Set<ValidationMessage> validationMessages = schema.validate(jsonNode);
+                if (validationMessages.isEmpty()) {
+                    System.out.println("    Validation passed.");
+                } else {
+                    System.out.println("    Validation failed. Errors:");
+                    validationMessages.forEach(msg -> System.out.println("      " + msg.getMessage()));
+                }
+            } catch (IOException | URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (Constants.GZIP_OUTPUT) {
+            files[1] = new File(outputDir, outputFileNameBase + ".json.tgz");
+            apiListing.toFile(files[1], true);
+            System.out.println("  Output written to file: " + files[1]);
+        }
+
+        return files;
+    }
+
+    private static File[] renderMarkdown(ApiListing apiListing, File outputDir, String outputFileNameBase) {
+        File outputFile = new File(outputDir, outputFileNameBase + ".md");
+        MarkdownRenderer.write(apiListing, outputFile);
+        System.out.println("  Output written to file: " + outputFile);
+        return new File[] { outputFile };
+    }
+
+    private static Optional<ApiListing> processFile(final File inputFile) {
+        final ApiListing apiListing = new ApiListing();
 
         if (inputFile.getName().endsWith("-sources.jar")) {
             processJavaSourcesJar(inputFile, apiListing);
@@ -143,7 +189,7 @@ public class Main {
         return Optional.empty();
     }
 
-    private static void processJavaSourcesJar(File inputFile, APIListing apiListing) {
+    private static void processJavaSourcesJar(File inputFile, ApiListing apiListing) {
         final Pom mavenPom = Pom.fromSourcesJarFile(inputFile);
         final String groupId = mavenPom.getGroupId();
         final String artifactId = mavenPom.getArtifactId();
@@ -185,7 +231,7 @@ public class Main {
             final Analyser analyser = new JavaASTAnalyser(apiListing);
             analyser.analyse(allFiles);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Failed to process sources JAR: " + inputFile, e);
         }
     }
 }

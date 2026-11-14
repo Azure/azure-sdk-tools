@@ -1,6 +1,8 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.model;
 
-import com.azure.json.*;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 
 import java.io.IOException;
@@ -11,10 +13,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
 /**
  * Sometimes libraries carry additional metadata with them that can make the output from APIView more useful. This
- * class is used to store that metadata, as it is deserialized from the /META-INF/[artifactid]_metadata.json file.
+ * class is used to store that metadata, as it is deserialized from the /META-INF/[artifactId]_metadata.json file.
  */
 public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
     private Flavor flavor;
@@ -22,15 +29,18 @@ public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
     // This is a map of model names and methods to their TypeSpec definition IDs.
     private Map<String, String> crossLanguageDefinitions = new HashMap<>();
 
-    ApiViewProperties() { }
+    ApiViewProperties() {
+    }
 
     /**
-     * Attempts to process the {@code [artifactid]_metadata.json} file in the jar file, if it exists.
+     * Attempts to process the {@code [artifactId]_metadata.json} file in the jar file, if it exists.
      *
      * @param fs the {@link FileSystem} representing the jar file
+     * @param pom the pom
+     * @return the metadata when present and readable
      */
     public static Optional<ApiViewProperties> fromSourcesJarFile(FileSystem fs, Pom pom) {
-        // the filename is <artifactid>_metadata.json
+        // the filename is <artifactId>_metadata.json
         final String artifactId = pom.getArtifactId();
         final String artifactName = (artifactId != null && !artifactId.isEmpty()) ? (artifactId + "_") : "";
         final String filePath = "/META-INF/" + artifactName + "metadata.json";
@@ -48,7 +58,7 @@ public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
                 final ApiViewProperties properties = ApiViewProperties.fromJson(reader);
                 System.out.println("  Found metadata.json file in jar file");
                 System.out.println("    - Found " + properties.getCrossLanguageDefinitions().size()
-                        + " cross-language definition IDs");
+                    + " cross-language definition IDs");
                 return Optional.of(properties);
             }
         } catch (IOException e) {
@@ -61,8 +71,11 @@ public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
 
     /**
      * Cross Languages Definition ID is used to map from a model name or a method name to a TypeSpec definition ID. This
-     * is used to enable cross-language linking, to make review time quicker as reviewers can jump between languages to
-     * see how the API is implemented in each language.
+     *     is used to enable cross-language linking, to make review time quicker as reviewers can jump between languages to
+     *     see how the API is implemented in each language.
+     *
+     * @param fullyQualifiedName the fully qualified name
+     * @return the cross language definition id
      */
     public Optional<String> getCrossLanguageDefinitionId(String fullyQualifiedName) {
         return Optional.ofNullable(crossLanguageDefinitions.get(fullyQualifiedName));
@@ -70,11 +83,18 @@ public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
 
     /**
      * Returns an unmodifiable map of all the cross-language definition IDs.
+     *
+     * @return the cross language definitions
      */
     public Map<String, String> getCrossLanguageDefinitions() {
         return Collections.unmodifiableMap(crossLanguageDefinitions);
     }
 
+    /**
+     * Returns the flavor.
+     *
+     * @return the flavor
+     */
     public Flavor getFlavor() {
         return flavor;
     }

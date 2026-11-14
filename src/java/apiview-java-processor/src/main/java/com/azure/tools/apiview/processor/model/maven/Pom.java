@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.model.maven;
 
 import org.w3c.dom.Document;
@@ -16,11 +19,15 @@ import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This represents an entire Maven POM file, consisting of the GAV, parent GAV, dependencies, and other metadata.
@@ -50,13 +57,19 @@ public class Pom {
     // These are the dependencies specifies in the maven-enforcer that are allowed
     private final List<String> allowedDependencies;
 
+    /**
+     * Reads Maven metadata embedded in a sources JAR.
+     *
+     * @param sourcesJarFile the sources jar file
+     * @return the Maven metadata, using the JAR filename if no POM can be read
+     */
     public static Pom fromSourcesJarFile(File sourcesJarFile) {
         Pom pom = null;
         final String filename = sourcesJarFile.getName();
         Map<String, String> filenameParts = parseFilename(filename);
 
         // we will firstly try to get the artifact ID from the maven file inside the jar file...if it exists
-        try (final JarFile jarFile = new JarFile(sourcesJarFile)) {
+        try (JarFile jarFile = new JarFile(sourcesJarFile)) {
             final Enumeration<JarEntry> enumOfJar = jarFile.entries();
             while (enumOfJar.hasMoreElements()) {
                 final JarEntry entry = enumOfJar.nextElement();
@@ -64,7 +77,8 @@ public class Pom {
 
                 // use the pom.xml of this artifact only
                 // shaded jars can contain a pom.xml file each for every shaded dependencies
-                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(filenameParts.get(ARTIFACT_ID) + "/pom.xml")) {
+                if (fullPath.startsWith("META-INF/maven")
+                    && fullPath.endsWith(filenameParts.get(ARTIFACT_ID) + "/pom.xml")) {
                     pom = new Pom(jarFile.getInputStream(entry));
                 }
             }
@@ -85,7 +99,7 @@ public class Pom {
         Matcher matcher = SOURCES_JAR_PATTERN.matcher(filename);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Filename does not match the expected package naming pattern " + filename
-                    + ". Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar");
+                + ". Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar");
         }
         Map<String, String> filenameParts = new HashMap<>();
         String artifactId = matcher.group(1);
@@ -108,7 +122,7 @@ public class Pom {
         this.checkstyleExcludes = null;
     }
 
-    private Pom(InputStream pomFileStream) throws IOException {
+    Pom(InputStream pomFileStream) throws IOException {
         this.dependencies = new ArrayList<>();
         this.allowedDependencies = new ArrayList<>();
         this.fileExists = true;
@@ -133,14 +147,18 @@ public class Pom {
             }
 
             // jacoco configuration
-            Node n = (Node) xPath.evaluate("/project/properties/jacoco.min.linecoverage", xmlDocument, XPathConstants.NODE);
+            Node n = (Node) xPath.evaluate("/project/properties/jacoco.min.linecoverage", xmlDocument,
+                XPathConstants.NODE);
             this.jacocoMinLineCoverage = n == null ? null : Float.parseFloat(n.getTextContent());
 
-            n = (Node) xPath.evaluate("/project/properties/jacoco.min.branchcoverage", xmlDocument, XPathConstants.NODE);
+            n = (Node) xPath.evaluate("/project/properties/jacoco.min.branchcoverage", xmlDocument,
+                XPathConstants.NODE);
             this.jacocoMinBranchCoverage = n == null ? null : Float.parseFloat(n.getTextContent());
 
             // checkstyle excludes
-            n = (Node) xPath.evaluate("/project/build/plugins/plugin/artifactId[text()='maven-checkstyle-plugin']/../configuration/excludes", xmlDocument, XPathConstants.NODE);
+            n = (Node) xPath.evaluate(
+                "/project/build/plugins/plugin/artifactId[text()='maven-checkstyle-plugin']/../configuration/excludes",
+                xmlDocument, XPathConstants.NODE);
             this.checkstyleExcludes = n == null ? null : n.getTextContent();
 
             // Maven name
@@ -153,7 +171,8 @@ public class Pom {
 
             // actual dependencies
             final String dependencyExpression = "/project/dependencies/dependency";
-            NodeList dependenciesNodeList = (NodeList) xPath.evaluate(dependencyExpression, xmlDocument, XPathConstants.NODESET);
+            NodeList dependenciesNodeList
+                = (NodeList) xPath.evaluate(dependencyExpression, xmlDocument, XPathConstants.NODESET);
             for (int i = 0; i < dependenciesNodeList.getLength(); i++) {
                 Node dep = dependenciesNodeList.item(i);
                 String depGroupId = xPath.evaluate("groupId", dep);
@@ -164,68 +183,127 @@ public class Pom {
             }
 
             // allowed dependencies
-            final String allowedDependencies = "/project/build/plugins/plugin/artifactId[text()='maven-enforcer-plugin']/../configuration/rules/bannedDependencies/includes/include";
+            final String allowedDependencies
+                = "/project/build/plugins/plugin/artifactId[text()='maven-enforcer-plugin']/../configuration/rules/bannedDependencies/includes/include";
             dependenciesNodeList = (NodeList) xPath.evaluate(allowedDependencies, xmlDocument, XPathConstants.NODESET);
             for (int i = 0; i < dependenciesNodeList.getLength(); i++) {
                 this.allowedDependencies.add(dependenciesNodeList.item(i).getTextContent().trim());
             }
         } catch (ParserConfigurationException | SAXException | XPathExpressionException e) {
-            throw new IOException("Cannot parse given file as a Maven POM");
+            throw new IOException("Cannot parse given file as a Maven POM", e);
         }
     }
 
+    /**
+     * Returns the group id.
+     *
+     * @return the group id
+     */
     public String getGroupId() {
         return gav.getGroupId() != null ? gav.getGroupId() : parent.getGroupId();
     }
 
+    /**
+     * Returns the artifact id.
+     *
+     * @return the artifact id
+     */
     public String getArtifactId() {
         return gav.getArtifactId();
     }
 
+    /**
+     * Returns the version.
+     *
+     * @return the version
+     */
     public String getVersion() {
         return gav.getVersion() != null ? gav.getVersion() : parent.getVersion();
     }
 
+    /**
+     * Returns the parent.
+     *
+     * @return the parent
+     */
     public Gav getParent() {
         return parent;
     }
 
+    /**
+     * Returns the name.
+     *
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns the description.
+     *
+     * @return the description
+     */
     public String getDescription() {
         return description;
     }
 
+    /**
+     * Returns the dependencies.
+     *
+     * @return the dependencies
+     */
     public List<Dependency> getDependencies() {
         return dependencies;
     }
 
+    /**
+     * Returns the jacoco min line coverage.
+     *
+     * @return the jacoco min line coverage
+     */
     public Float getJacocoMinLineCoverage() {
         return jacocoMinLineCoverage;
     }
 
+    /**
+     * Returns the jacoco min branch coverage.
+     *
+     * @return the jacoco min branch coverage
+     */
     public Float getJacocoMinBranchCoverage() {
         return jacocoMinBranchCoverage;
     }
 
+    /**
+     * Returns the checkstyle excludes.
+     *
+     * @return the checkstyle excludes
+     */
     public String getCheckstyleExcludes() {
         return checkstyleExcludes;
     }
 
+    /**
+     * Returns the allowed dependencies.
+     *
+     * @return the allowed dependencies
+     */
     public List<String> getAllowedDependencies() {
         return allowedDependencies;
     }
 
     /**
      * Sometimes we can't find a pom file, so we fake it with the info we do have.
+     *
+     * @return true if metadata was read from a POM rather than inferred from the filename
      */
     public boolean isPomFileReal() {
         return fileExists;
     }
 
-    private Gav createGav(final XPath xPath, final Document xmlDocument, final String root) throws XPathExpressionException {
+    private Gav createGav(final XPath xPath, final Document xmlDocument, final String root)
+        throws XPathExpressionException {
         final String groupIdExpression = root + "/groupId";
         final Node groupIdNode = (Node) xPath.evaluate(groupIdExpression, xmlDocument, XPathConstants.NODE);
         String groupId = groupIdNode == null ? "" : groupIdNode.getTextContent();
@@ -242,12 +320,14 @@ public class Pom {
         // lets go up to the parent to get it from there
         if (groupId.isEmpty()) {
             final String parentGroupIdExpression = root + "/parent/groupId";
-            final Node parentGroupIdNode = (Node) xPath.evaluate(parentGroupIdExpression, xmlDocument, XPathConstants.NODE);
+            final Node parentGroupIdNode
+                = (Node) xPath.evaluate(parentGroupIdExpression, xmlDocument, XPathConstants.NODE);
             groupId = parentGroupIdNode == null ? "" : parentGroupIdNode.getTextContent();
         }
         if (version.isEmpty()) {
             final String parentVersionExpression = root + "/parent/version";
-            final Node parentVersionNode = (Node) xPath.evaluate(parentVersionExpression, xmlDocument, XPathConstants.NODE);
+            final Node parentVersionNode
+                = (Node) xPath.evaluate(parentVersionExpression, xmlDocument, XPathConstants.NODE);
             version = parentVersionNode == null ? "" : parentVersionNode.getTextContent();
         }
 

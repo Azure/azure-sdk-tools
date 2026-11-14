@@ -1,7 +1,10 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
-import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
@@ -38,7 +41,7 @@ public class NoLocalesInJavadocUrlDiagnosticRule implements DiagnosticRule {
     }
 
     @Override
-    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final ApiListing listing) {
         getClasses(cu).forEach(typeDeclaration -> {
             // Javadoc on the type itself
             checkJavaDoc(typeDeclaration, makeId(typeDeclaration), listing);
@@ -50,16 +53,17 @@ public class NoLocalesInJavadocUrlDiagnosticRule implements DiagnosticRule {
         });
     }
 
-    void checkJavaDoc(NodeWithJavadoc<?> n, String id, APIListing listing) {
+    void checkJavaDoc(NodeWithJavadoc<?> n, String id, ApiListing listing) {
         n.getJavadocComment().ifPresent(javadoc -> {
             final String javadocString = javadoc.getContent();
 
             Matcher matcher = LANGUAGE_PATTERN.matcher(javadocString);
             while (matcher.find()) {
                 listing.addDiagnostic(new Diagnostic(WARNING, id,
-                    "The JavaDoc string for this API contains what appears to be a locale ('/" + matcher.group(1) + "/'). " +
-                        "Commonly, this indicates a URL in the JavaDoc is linking to a specific locale. If so, this " +
-                        "should be removed, so we do not assume about the user's locale when accessing a URL."));
+                    "The JavaDoc string for this API contains what appears to be a locale ('/" + matcher.group(1)
+                        + "/'). "
+                        + "Commonly, this indicates a URL in the JavaDoc is linking to a specific locale. If so, this "
+                        + "should be removed, so we do not assume about the user's locale when accessing a URL."));
             }
         });
     }

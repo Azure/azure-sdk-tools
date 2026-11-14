@@ -19,8 +19,6 @@ $ErrorActionPreference = 'Stop'
 $package = Get-MavenPluginPackage -PackageDirectory $PackageDirectory
 Assert-MavenPluginVersionAvailable -Package $package -FeedUrl $FeedUrl
 $variables = @{
-    PackageGroupId = $package.GroupId
-    PackageArtifactId = $package.ArtifactId
     PackageVersion = $package.Version
     PackagePomPath = $package.Pom
     PackageJarPath = $package.Jar

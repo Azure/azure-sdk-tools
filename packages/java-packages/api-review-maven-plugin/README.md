@@ -63,4 +63,4 @@ The plugin includes the shared processor sources and resources from `src/java/ap
 ## Release
 
 Run `release.yml` manually from `main` in the internal project, opting into `publishDevFeed`. It builds and tests on Linux, then ESRP-signs all three JARs and GPG-signs/publishes the plugin JAR, POM, sources, and Javadoc to the Java dev feed on Windows. Existing versions cannot be overwritten.
-Supply the ESRP service connection, identity, vault, and certificate parameters from the EngSys signing configuration. Register `ci.yml` as `tools - api-review-maven-plugin - ci` and `release.yml` as an internal release pipeline.
+The pipeline uses the EngSys-approved Java signing and publishing configuration. Register `ci.yml` as `tools - api-review-maven-plugin - ci` and `release.yml` as an internal release pipeline.

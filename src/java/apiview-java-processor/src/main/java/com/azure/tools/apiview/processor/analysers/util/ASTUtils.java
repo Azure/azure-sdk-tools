@@ -1,6 +1,9 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.analysers.util;
 
-import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiListing;
 import com.azure.tools.apiview.processor.model.ReviewLine;
 import com.azure.tools.apiview.processor.model.traits.Parent;
 import com.github.javaparser.Range;
@@ -60,9 +63,7 @@ public final class ASTUtils {
      * @return The package name for the type declaration if it exists or an empty string if it doesn't.
      */
     public static String getPackageName(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getFullyQualifiedName()
-            .map(str -> str.substring(0, str.lastIndexOf(".")))
-            .orElse("");
+        return typeDeclaration.getFullyQualifiedName().map(str -> str.substring(0, str.lastIndexOf("."))).orElse("");
     }
 
     /**
@@ -100,12 +101,13 @@ public final class ASTUtils {
         // previously we simply return 'cu.getTypes().stream()', but this had the effect of not returning all inner
         // types, as was expected. This is because the 'getTypes()' method only returns the top-level types, and not
         // member types. To fix this, we now return a stream of all types, including member types.
-        return Stream.concat(
-                cu.getTypes().stream(), // top-level types
-                cu.getTypes().stream()  // member types
-                     .flatMap(type -> type.getMembers().stream()
-                          .filter(member -> member instanceof TypeDeclaration<?>)
-                          .map(member -> (TypeDeclaration<?>) member)));
+        return Stream.concat(cu.getTypes().stream(), // top-level types
+            cu.getTypes()
+                .stream()  // member types
+                .flatMap(type -> type.getMembers()
+                    .stream()
+                    .filter(member -> member instanceof TypeDeclaration<?>)
+                    .map(member -> (TypeDeclaration<?>) member)));
     }
 
     /**
@@ -125,7 +127,8 @@ public final class ASTUtils {
      * @return All public API constructors contained in the type declaration.
      */
     public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMembers().stream()
+        return typeDeclaration.getMembers()
+            .stream()
             .filter(member -> member instanceof ConstructorDeclaration)
             .map(member -> (ConstructorDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
@@ -148,7 +151,8 @@ public final class ASTUtils {
      * @return All public API methods contained in the type declaration.
      */
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMembers().stream()
+        return typeDeclaration.getMembers()
+            .stream()
             .filter(member -> member instanceof MethodDeclaration)
             .map(member -> (MethodDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
@@ -171,7 +175,8 @@ public final class ASTUtils {
      * @return All public API fields contained in the type declaration.
      */
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMembers().stream()
+        return typeDeclaration.getMembers()
+            .stream()
             .filter(member -> member instanceof FieldDeclaration)
             .map(member -> (FieldDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
@@ -197,10 +202,22 @@ public final class ASTUtils {
         return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.NONE);
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param cu the cu
+     * @return the navigation identifier
+     */
     public static String makeId(CompilationUnit cu) {
         return makeId(cu.getPrimaryType().get());
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param node the node
+     * @return the navigation identifier
+     */
     public static String makeId(Node node) {
         // switch based on known subtypes
         if (node instanceof TypeDeclaration<?>) {
@@ -218,30 +235,76 @@ public final class ASTUtils {
         }
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param typeDeclaration the type declaration
+     * @return the navigation identifier
+     */
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
         return makeId(typeDeclaration.getFullyQualifiedName().get());
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param annotationMemberDeclaration the annotation member declaration
+     * @return the navigation identifier
+     */
     public static String makeId(AnnotationMemberDeclaration annotationMemberDeclaration) {
-        return makeId(getNodeFullyQualifiedName(annotationMemberDeclaration.getParentNode()) + "." + annotationMemberDeclaration.getName());
+        return makeId(getNodeFullyQualifiedName(annotationMemberDeclaration.getParentNode()) + "."
+            + annotationMemberDeclaration.getName());
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param variableDeclarator the variable declarator
+     * @return the navigation identifier
+     */
     public static String makeId(VariableDeclarator variableDeclarator) {
-        return makeId(getNodeFullyQualifiedName(variableDeclarator.getParentNode()) + "." + variableDeclarator.getNameAsString());
+        return makeId(
+            getNodeFullyQualifiedName(variableDeclarator.getParentNode()) + "." + variableDeclarator.getNameAsString());
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param callableDeclaration the callable declaration
+     * @return the navigation identifier
+     */
     public static String makeId(CallableDeclaration<?> callableDeclaration) {
-        return makeId(getNodeFullyQualifiedName(callableDeclaration.getParentNode()) + "." + callableDeclaration.getDeclarationAsString());
+        return makeId(getNodeFullyQualifiedName(callableDeclaration.getParentNode()) + "."
+            + callableDeclaration.getDeclarationAsString());
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param fieldDeclaration the field declaration
+     * @return the navigation identifier
+     */
     public static String makeId(FieldDeclaration fieldDeclaration) {
         return makeId(fieldDeclaration.getVariables().get(0));
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param enumDeclaration the enum declaration
+     * @return the navigation identifier
+     */
     public static String makeId(EnumConstantDeclaration enumDeclaration) {
-        return makeId(getNodeFullyQualifiedName(enumDeclaration.getParentNode()) + "." + enumDeclaration.getNameAsString());
+        return makeId(
+            getNodeFullyQualifiedName(enumDeclaration.getParentNode()) + "." + enumDeclaration.getNameAsString());
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param fullPath the full path
+     * @return the navigation identifier
+     */
     public static String makeId(String fullPath) {
         // Previously, this used a regex to replace '"' and ' ' with '-', that wasn't necessary. The replacement pattern
         // is simple and can be replaced with a simple loop. This is a performance optimization.
@@ -283,6 +346,13 @@ public final class ASTUtils {
         return sb.toString();
     }
 
+    /**
+     * Builds a stable navigation identifier for the declaration.
+     *
+     * @param annotation the annotation
+     * @param nodeWithAnnotations the node with annotations
+     * @return the navigation identifier
+     */
     public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {
         String annotationContext = getAnnotationContext(nodeWithAnnotations);
 
@@ -290,7 +360,8 @@ public final class ASTUtils {
         if (annotationContext != null && !annotationContext.isEmpty()) {
             idSuffix = "-" + annotationContext;
         }
-        return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);
+        return makeId(
+            getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);
     }
 
     private static String getAnnotationContext(NodeWithAnnotations<?> nodeWithAnnotations) {
@@ -386,7 +457,10 @@ public final class ASTUtils {
     }
 
     /**
-     * Returns true if the type is a public interface.
+     * Checks whether the declaration is an interface.
+     *
+     * @param type the type
+     * @return true if the declaration is an interface
      */
     public static boolean isInterfaceType(TypeDeclaration<?> type) {
         if (type.isClassOrInterfaceDeclaration()) {
@@ -395,11 +469,28 @@ public final class ASTUtils {
         return false;
     }
 
+    /**
+     * Checks whether a type directly implements the named interface.
+     *
+     * @param type the type
+     * @param interfaceName the interface name
+     * @return true if the type directly implements the named interface
+     */
     public static boolean isTypeImplementingInterface(TypeDeclaration<?> type, String interfaceName) {
-        return type.asClassOrInterfaceDeclaration().getImplementedTypes().stream()
-                .anyMatch(_interface -> _interface.getNameAsString().equals(interfaceName));
+        return type.asClassOrInterfaceDeclaration()
+            .getImplementedTypes()
+            .stream()
+            .anyMatch(_interface -> _interface.getNameAsString().equals(interfaceName));
     }
 
+    /**
+     * Returns the node fully qualified name.
+     *
+     * @param node the node
+     * @return the node fully qualified name
+     * @throws NullPointerException if the operation cannot be completed
+     * @throws IllegalArgumentException if the operation cannot be completed
+     */
     public static String getNodeFullyQualifiedName(Node node) {
         if (node == null) {
             throw new NullPointerException("node cannot be null");
@@ -407,38 +498,38 @@ public final class ASTUtils {
 
         if (node instanceof CompilationUnit) {
             CompilationUnit cu = (CompilationUnit) node;
-            String packageName = cu.getPackageDeclaration()
-                    .map(PackageDeclaration::getNameAsString)
-                    .orElse("");
-            String typeName = cu.getPrimaryType()
-                    .map(NodeWithSimpleName::getNameAsString)
-                    .orElse("");
+            String packageName = cu.getPackageDeclaration().map(PackageDeclaration::getNameAsString).orElse("");
+            String typeName = cu.getPrimaryType().map(NodeWithSimpleName::getNameAsString).orElse("");
             return packageName.isEmpty() ? typeName : packageName + "." + typeName;
         }
 
         if (node instanceof TypeDeclaration<?>) {
-            return ((TypeDeclaration<?>)node).getFullyQualifiedName().orElse("");
+            return ((TypeDeclaration<?>) node).getFullyQualifiedName().orElse("");
         }
 
         if (node instanceof CallableDeclaration<?>) {
             CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
-            return getNodeFullyQualifiedName(callableDeclaration.getParentNode().orElse(null)) + "." + callableDeclaration.getSignature();
+            return getNodeFullyQualifiedName(callableDeclaration.getParentNode().orElse(null)) + "."
+                + callableDeclaration.getSignature();
         }
 
         if (node instanceof FieldDeclaration) {
             FieldDeclaration fieldDeclaration = (FieldDeclaration) node;
-            return getNodeFullyQualifiedName(fieldDeclaration.getParentNode().orElse(null)) + "." + fieldDeclaration.getVariables().get(0).getNameAsString();
+            return getNodeFullyQualifiedName(fieldDeclaration.getParentNode().orElse(null)) + "."
+                + fieldDeclaration.getVariables().get(0).getNameAsString();
         }
 
         if (node instanceof EnumConstantDeclaration) {
             EnumConstantDeclaration enumConstantDeclaration = (EnumConstantDeclaration) node;
-            return getNodeFullyQualifiedName(enumConstantDeclaration.getParentNode().orElse(null)) + "." + enumConstantDeclaration.getNameAsString();
+            return getNodeFullyQualifiedName(enumConstantDeclaration.getParentNode().orElse(null)) + "."
+                + enumConstantDeclaration.getNameAsString();
         }
 
         if (node instanceof ClassOrInterfaceType) {
             ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) node;
             if (classOrInterfaceType.getScope().isPresent()) {
-                return getNodeFullyQualifiedName(classOrInterfaceType.getScope().get()) + "." + classOrInterfaceType.getNameAsString();
+                return getNodeFullyQualifiedName(classOrInterfaceType.getScope().get()) + "."
+                    + classOrInterfaceType.getNameAsString();
             } else {
                 return classOrInterfaceType.getNameAsString();
             }
@@ -446,15 +537,16 @@ public final class ASTUtils {
 
         if (node instanceof NodeWithSimpleName<?>) {
             NodeWithSimpleName<?> nodeWithSimpleName = (NodeWithSimpleName<?>) node;
-            return getNodeFullyQualifiedName(node.getParentNode().orElse(null)) + "." + nodeWithSimpleName.getNameAsString();
+            return getNodeFullyQualifiedName(node.getParentNode().orElse(null)) + "."
+                + nodeWithSimpleName.getNameAsString();
         }
 
         if (node instanceof SimpleName) {
-            return ((SimpleName)node).getIdentifier();
+            return ((SimpleName) node).getIdentifier();
         }
 
         if (node instanceof PrimitiveType) {
-            return ((PrimitiveType)node).toString();
+            return ((PrimitiveType) node).toString();
         }
 
         throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
@@ -493,9 +585,8 @@ public final class ASTUtils {
         }
 
         // Get the orphaned comments.
-        List<Comment> orphanedComments = bodyDeclaration.getParentNode()
-            .map(Node::getOrphanComments)
-            .orElse(Collections.emptyList());
+        List<Comment> orphanedComments
+            = bodyDeclaration.getParentNode().map(Node::getOrphanComments).orElse(Collections.emptyList());
 
         // Traverse up the comments between the Javadoc and the body declaration.
         Optional<Comment> commentTraversalNode = bodyDeclaration.getComment();
@@ -510,8 +601,8 @@ public final class ASTUtils {
         }
 
         // Check if there are any orphaned Javadoc comments before the additional code comments.
-        Range expectedJavadocRangeOverlap = comment.getRange().get()
-            .withBeginLine(comment.getRange().get().begin.line - 1);
+        Range expectedJavadocRangeOverlap
+            = comment.getRange().get().withBeginLine(comment.getRange().get().begin.line - 1);
 
         return orphanedComments.stream()
             .filter(c -> c instanceof JavadocComment)
@@ -520,8 +611,15 @@ public final class ASTUtils {
             .findFirst();
     }
 
-    public static Optional<ReviewLine> findReviewLine(APIListing listing, Function<ReviewLine, Boolean> f) {
-        return findReviewLine((Parent)listing, f);
+    /**
+     * Finds the first review line matching the predicate.
+     *
+     * @param listing the listing
+     * @param f the f
+     * @return the matching line, or an empty optional if none matches
+     */
+    public static Optional<ReviewLine> findReviewLine(ApiListing listing, Function<ReviewLine, Boolean> f) {
+        return findReviewLine((Parent) listing, f);
     }
 
     private static Optional<ReviewLine> findReviewLine(Parent parent, Function<ReviewLine, Boolean> f) {

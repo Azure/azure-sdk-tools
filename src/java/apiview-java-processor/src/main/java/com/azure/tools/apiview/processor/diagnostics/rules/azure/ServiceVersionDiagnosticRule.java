@@ -1,7 +1,10 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.diagnostics.rules.azure;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
-import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.github.javaparser.ast.CompilationUnit;
@@ -22,21 +25,26 @@ public class ServiceVersionDiagnosticRule implements DiagnosticRule {
     private boolean isHttpService;
 
     @Override
-    public void scanIndividual(CompilationUnit cu, APIListing listing) {
+    public void scanIndividual(CompilationUnit cu, ApiListing listing) {
         if (cu.getPrimaryTypeName().get().endsWith("ClientBuilder")) {
             serviceClientPackage = cu.getPackageDeclaration().get().getNameAsString();
             cu.getTypes().forEach(typeDeclaration -> {
-                Optional<AnnotationExpr> clientBuilderAnnotation = typeDeclaration
-                        .getAnnotationByName("ServiceClientBuilder");
+                Optional<AnnotationExpr> clientBuilderAnnotation
+                    = typeDeclaration.getAnnotationByName("ServiceClientBuilder");
                 if (clientBuilderAnnotation.isPresent()) {
                     Optional<MemberValuePair> protocol = clientBuilderAnnotation.get()
-                            .asAnnotationExpr()
-                            .toNormalAnnotationExpr().get()
-                            .getPairs()
-                            .stream()
-                            .filter(pair -> pair.getNameAsString().equals("protocol"))
-                            .findFirst();
-                    this.isHttpService = !protocol.isPresent() || protocol.get().getNameAsString().contains("HTTP");
+                        .asAnnotationExpr()
+                        .toNormalAnnotationExpr()
+                        .get()
+                        .getPairs()
+                        .stream()
+                        .filter(pair -> "protocol".equals(pair.getNameAsString()))
+                        .findFirst();
+                    this.isHttpService = protocol.map(MemberValuePair::getValue)
+                        .map(Object::toString)
+                        .map(name -> name.substring(name.lastIndexOf('.') + 1))
+                        .map("HTTP"::equalsIgnoreCase)
+                        .orElse(true);
                 }
             });
         }
@@ -45,28 +53,30 @@ public class ServiceVersionDiagnosticRule implements DiagnosticRule {
             foundServiceVersion = true;
             cu.getTypes().forEach(typeDeclaration -> {
                 if (!typeDeclaration.isEnumDeclaration()) {
-                    listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration), "Service version should be" +
-                            " an enum and must implement 'ServiceVersion' interface."));
+                    listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration),
+                        "Service version should be" + " an enum and must implement 'ServiceVersion' interface."));
                     return;
                 }
 
-                boolean implementsServiceVersion = typeDeclaration.asEnumDeclaration().getImplementedTypes().stream()
-                        .anyMatch(type -> type.getNameAsString().equals("ServiceVersion"));
+                boolean implementsServiceVersion = typeDeclaration.asEnumDeclaration()
+                    .getImplementedTypes()
+                    .stream()
+                    .anyMatch(type -> "ServiceVersion".equals(type.getNameAsString()));
                 if (!implementsServiceVersion) {
-                    listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration), "This type " +
-                            "should implement 'ServiceVersion' interface."));
+                    listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration),
+                        "This type " + "should implement 'ServiceVersion' interface."));
                 }
             });
         }
     }
 
     @Override
-    public void scanFinal(APIListing listing) {
+    public void scanFinal(ApiListing listing) {
         // If ServiceVersion type is not found and the module contains a client
         // show a diagnostic warning about missing service version type.
         if (!foundServiceVersion && serviceClientPackage != null && isHttpService) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, makeId(serviceClientPackage),
-                    "ServiceVersion type is missing."));
+                "ServiceVersion type is missing."));
         }
     }
 }

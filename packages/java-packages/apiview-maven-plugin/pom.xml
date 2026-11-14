@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) Microsoft Corporation. All rights reserved.
+     Licensed under the MIT License. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.azure.tools</groupId>
+  <artifactId>apiview-maven-plugin</artifactId>
+  <version>1.0.0-beta.1</version> <!-- {x-version-update;com.azure.tools:apiview-maven-plugin;current} -->
+  <packaging>maven-plugin</packaging>
+  <name>Java APIView Maven Plugin</name>
+  <description>Generates Java API review Markdown and metadata from built sources JARs.</description>
+  <url>https://github.com/Azure/azure-sdk-tools</url>
+  <licenses>
+    <license>
+      <name>The MIT License (MIT)</name>
+      <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer><id>microsoft</id><name>Microsoft Corporation</name></developer>
+  </developers>
+  <scm>
+    <url>https://github.com/Azure/azure-sdk-tools</url>
+    <connection>scm:git:https://github.com/Azure/azure-sdk-tools.git</connection>
+    <tag>HEAD</tag>
+  </scm>
+  <prerequisites><maven>3.6.3</maven></prerequisites>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+    <maven.version>3.9.11</maven.version>
+    <processorDirectory>${project.basedir}/../../../src/java/apiview-java-processor</processorDirectory>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId><artifactId>maven-plugin-api</artifactId>
+      <version>${maven.version}</version><scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId><artifactId>maven-core</artifactId>
+      <version>${maven.version}</version><scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId><artifactId>maven-plugin-annotations</artifactId>
+      <version>3.15.2</version> <!-- {x-version-update;org.apache.maven.plugin-tools:maven-plugin-annotations;external_dependency} -->
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.azure</groupId><artifactId>azure-json</artifactId>
+      <version>1.5.0</version> <!-- {x-version-update;com.azure:azure-json;external_dependency} -->
+    </dependency>
+    <dependency>
+      <groupId>com.github.javaparser</groupId><artifactId>javaparser-core</artifactId>
+      <version>3.26.4</version> <!-- {x-version-update;com.github.javaparser:javaparser-core;external_dependency} -->
+    </dependency>
+    <dependency>
+      <groupId>com.networknt</groupId><artifactId>json-schema-validator</artifactId>
+      <version>1.5.6</version> <!-- {x-version-update;com.networknt:json-schema-validator;external_dependency} -->
+      <exclusions>
+        <exclusion><groupId>com.fasterxml.jackson.dataformat</groupId><artifactId>jackson-dataformat-yaml</artifactId></exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId><artifactId>slf4j-nop</artifactId>
+      <version>2.0.13</version> <!-- {x-version-update;org.slf4j:slf4j-nop;external_dependency} -->
+    </dependency>
+    <dependency>
+      <groupId>org.unbescape</groupId><artifactId>unbescape</artifactId>
+      <version>1.1.6.RELEASE</version> <!-- {x-version-update;org.unbescape:unbescape;external_dependency} -->
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-api</artifactId>
+      <version>5.13.4</version> <!-- {x-version-update;org.junit.jupiter:junit-jupiter-api;external_dependency} -->
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-engine</artifactId>
+      <version>5.13.4</version> <!-- {x-version-update;org.junit.jupiter:junit-jupiter-engine;external_dependency} -->
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <resources>
+      <resource><directory>src/main/resources</directory></resource>
+      <resource><directory>${processorDirectory}/src/main/resources</directory></resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.6.1</version> <!-- {x-version-update;org.codehaus.mojo:build-helper-maven-plugin;external_dependency} -->
+        <executions>
+          <execution>
+            <id>include-processor</id><phase>generate-sources</phase><goals><goal>add-source</goal></goals>
+            <configuration><sources><source>${processorDirectory}/src/main/java</source></sources></configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.1</version> <!-- {x-version-update;org.apache.maven.plugins:maven-compiler-plugin;external_dependency} -->
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.6</version> <!-- {x-version-update;org.apache.maven.plugins:maven-surefire-plugin;external_dependency} -->
+      </plugin>
+      <plugin>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>3.15.2</version> <!-- {x-version-update;org.apache.maven.plugins:maven-plugin-plugin;external_dependency} -->
+        <configuration><goalPrefix>apiview</goalPrefix></configuration>
+        <executions>
+          <execution><id>help-goal</id><goals><goal>helpmojo</goal></goals></execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.4.0</version> <!-- {x-version-update;org.apache.maven.plugins:maven-source-plugin;external_dependency} -->
+        <executions><execution><id>attach-sources</id><goals><goal>jar-no-fork</goal></goals></execution></executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.12.0</version> <!-- {x-version-update;org.apache.maven.plugins:maven-javadoc-plugin;external_dependency} -->
+        <configuration><quiet>true</quiet><failOnWarnings>false</failOnWarnings></configuration>
+        <executions><execution><id>attach-javadocs</id><goals><goal>jar</goal></goals></execution></executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.2.0</version> <!-- {x-version-update;org.apache.maven.plugins:maven-antrun-plugin;external_dependency} -->
+        <executions>
+          <execution>
+            <id>copy-pom</id><phase>package</phase><goals><goal>run</goal></goals>
+            <configuration><target><copy file="${project.pomFile}" tofile="${project.build.directory}/${project.build.finalName}.pom"/></target></configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-invoker-plugin</artifactId>
+        <version>3.9.1</version> <!-- {x-version-update;org.apache.maven.plugins:maven-invoker-plugin;external_dependency} -->
+        <configuration>
+          <projectsDirectory>src/it</projectsDirectory>
+          <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+          <localRepositoryPath>${project.build.directory}/it-repository</localRepositoryPath>
+          <postBuildHookScript>verify</postBuildHookScript>
+          <streamLogs>false</streamLogs>
+          <goals>
+            <goal>package</goal>
+            <goal>com.azure.tools:apiview-maven-plugin:${project.version}:generate</goal>
+          </goals>
+          <properties><apiview.packageRelativePath>sdk/test/azure-widget</apiview.packageRelativePath></properties>
+        </configuration>
+        <executions>
+          <execution><id>integration-test</id><goals><goal>install</goal><goal>run</goal></goals></execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

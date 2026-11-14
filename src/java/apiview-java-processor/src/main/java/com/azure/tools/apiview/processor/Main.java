@@ -21,6 +21,7 @@ import com.networknt.schema.ValidationMessage;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -179,14 +180,28 @@ public class Main {
     }
 
     private static Optional<ApiListing> processFile(final File inputFile) {
-        final ApiListing apiListing = new ApiListing();
-
         if (inputFile.getName().endsWith("-sources.jar")) {
-            processJavaSourcesJar(inputFile, apiListing);
-            return Optional.of(apiListing);
+            return Optional.of(processSourcesJar(inputFile));
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Processes a sources JAR without invoking the command-line entry point.
+     *
+     * @param inputFile the sources JAR
+     * @return the generated API listing
+     * @throws IllegalArgumentException if the input is not an existing sources JAR
+     * @throws IllegalStateException if the sources cannot be processed
+     */
+    public static ApiListing processSourcesJar(File inputFile) {
+        if (!inputFile.isFile() || !inputFile.getName().endsWith("-sources.jar")) {
+            throw new IllegalArgumentException("Expected an existing sources JAR: " + inputFile);
+        }
+        ApiListing listing = new ApiListing();
+        processJavaSourcesJar(inputFile, listing);
+        return listing;
     }
 
     private static void processJavaSourcesJar(File inputFile, ApiListing apiListing) {
@@ -222,8 +237,7 @@ public class Main {
                 try (Stream<Path> paths = Files.walk(root)) {
                     paths.forEach(allFiles::add);
                 } catch (IOException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
+                    throw new UncheckedIOException(e);
                 }
             });
 

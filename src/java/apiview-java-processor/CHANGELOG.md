@@ -8,6 +8,7 @@
 ### Features Added
 
 - Added direct Markdown output with `--renderer=markdown`; JSON remains the default.
+- Added in-process sources JAR processing for the Maven plugin.
 
 ### Bugs Fixed
 

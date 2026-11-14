@@ -7,11 +7,10 @@ param()
 
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'MavenPluginPackage.ps1')
 if (-not (Get-Module -ListAvailable -Name Pester | Where-Object Version -GE '5.7.1')) {
     Install-Module -Name Pester -RequiredVersion 5.7.1 -Repository PSGallery -Scope CurrentUser -Force
 }
 Import-Module Pester -MinimumVersion 5.7.1
 $result = Invoke-Pester -Path (Join-Path $PSScriptRoot 'tests') -PassThru -Output Detailed
-if ($result.FailedCount -gt 0) {
-    throw "$($result.FailedCount) Maven plugin pipeline tests failed."
-}
+Assert-MavenPluginTestResult $result

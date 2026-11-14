@@ -9,6 +9,16 @@ Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..' '..' '..' '..' 'eng' 'common' 'scripts' 'common.ps1')
 
+function Assert-MavenPluginTestResult {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][psobject]$Result)
+
+    if ($Result.Result -ne 'Passed' -or $Result.TotalCount -eq 0) {
+        throw "Maven plugin pipeline tests did not pass: $($Result.FailedCount) failed tests, " +
+            "$($Result.FailedBlocksCount) failed blocks, $($Result.FailedContainersCount) failed containers."
+    }
+}
+
 function Get-MavenPluginPackage {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$PackageDirectory)

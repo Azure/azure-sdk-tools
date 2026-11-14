@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -18,6 +20,9 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -69,11 +74,42 @@ public class GenerateMojoTests {
         assertTrue(failure.getMessage().contains("api-review.packageRelativePath"));
     }
 
-    @Test
-    public void rejectsSourceIdentityMismatch() throws Exception {
+    @ParameterizedTest
+    @CsvSource({ "custom,false", "custom-1.0.0,false", "attached-custom,true" })
+    public void supportsCustomSourcesArtifactNames(String finalName, boolean attached) throws Exception {
         GenerateMojo mojo = mojo("public class Widget {}");
         set(mojo, "packageRelativePath", "sdk/test/azure-widget");
         MavenProject project = (MavenProject) get(mojo, "project");
+        Path target = project.getBasedir().toPath().resolve("target");
+        Path archive = Files.move(target.resolve("azure-widget-1.0.0-sources.jar"),
+            target.resolve(finalName + "-sources.jar"));
+        if (attached) {
+            DefaultArtifact artifact = new DefaultArtifact("com.azure", "azure-widget", "1.0.0", "compile",
+                "java-source", "sources", new DefaultArtifactHandler("java-source"));
+            artifact.setFile(archive.toFile());
+            project.addAttachedArtifact(artifact);
+        } else {
+            project.getBuild().setFinalName(finalName);
+        }
+
+        mojo.execute();
+
+        assertTrue(Files.isRegularFile(target.resolve("api-review/api.md")));
+        assertTrue(new String(Files.readAllBytes(target.resolve("api-review/api.metadata.yml")), StandardCharsets.UTF_8)
+            .contains("packageVersion: '1.0.0'"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "azure-widget-1.0.0", "custom" })
+    public void rejectsSourceIdentityMismatch(String finalName) throws Exception {
+        GenerateMojo mojo = mojo("public class Widget {}");
+        set(mojo, "packageRelativePath", "sdk/test/azure-widget");
+        MavenProject project = (MavenProject) get(mojo, "project");
+        Path target = project.getBasedir().toPath().resolve("target");
+        if (!"azure-widget-1.0.0".equals(finalName)) {
+            Files.move(target.resolve("azure-widget-1.0.0-sources.jar"), target.resolve(finalName + "-sources.jar"));
+            project.getBuild().setFinalName(finalName);
+        }
         project.getOriginalModel().setVersion("2.0.0");
         assertThrows(MojoFailureException.class, mojo::execute);
     }

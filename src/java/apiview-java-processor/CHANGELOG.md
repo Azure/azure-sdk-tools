@@ -14,6 +14,9 @@
 
 - Stop reading diagnostic JSON at its object boundary.
 - Report invalid builder parameter shapes as diagnostics instead of aborting API review generation.
+- Handle malformed AMQP transport parameters without aborting generation.
+- Select embedded Maven metadata by project coordinates for custom sources JAR names.
+- Isolate type spacing between analyser instances.
 - Fail on source JAR processing errors.
 - Recognize explicit builder protocols and check required methods independently for each builder.
 - Finish and close compressed JSON output so it can be decompressed successfully.

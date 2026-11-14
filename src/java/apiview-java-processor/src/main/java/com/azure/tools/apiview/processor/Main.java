@@ -196,16 +196,29 @@ public class Main {
      * @throws IllegalStateException if the sources cannot be processed
      */
     public static ApiListing processSourcesJar(File inputFile) {
+        return processSourcesJar(inputFile, null, null);
+    }
+
+    /**
+     * Processes a sources JAR using the Maven project's coordinates to select its embedded POM.
+     *
+     * @param inputFile the sources JAR
+     * @param groupId the expected Maven group ID
+     * @param artifactId the expected Maven artifact ID, or null for filename-based discovery
+     * @return the generated API listing
+     */
+    public static ApiListing processSourcesJar(File inputFile, String groupId, String artifactId) {
         if (!inputFile.isFile() || !inputFile.getName().endsWith("-sources.jar")) {
             throw new IllegalArgumentException("Expected an existing sources JAR: " + inputFile);
         }
+        Pom mavenPom = artifactId == null ? Pom.fromSourcesJarFile(inputFile)
+            : Pom.fromSourcesJarFile(inputFile, groupId, artifactId);
         ApiListing listing = new ApiListing();
-        processJavaSourcesJar(inputFile, listing);
+        processJavaSourcesJar(inputFile, listing, mavenPom);
         return listing;
     }
 
-    private static void processJavaSourcesJar(File inputFile, ApiListing apiListing) {
-        final Pom mavenPom = Pom.fromSourcesJarFile(inputFile);
+    private static void processJavaSourcesJar(File inputFile, ApiListing apiListing, Pom mavenPom) {
         final String groupId = mavenPom.getGroupId();
         final String artifactId = mavenPom.getArtifactId();
 

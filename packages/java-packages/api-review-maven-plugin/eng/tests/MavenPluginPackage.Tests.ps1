@@ -20,6 +20,23 @@ BeforeAll {
     }
 }
 
+Describe 'Maven plugin test result validation' {
+    It 'rejects <Failure> without failed test cases' -ForEach @(
+        @{ Failure = 'container errors'; Status = 'Failed'; Total = 0; Blocks = 0; Containers = 1 }
+        @{ Failure = 'teardown errors'; Status = 'Failed'; Total = 1; Blocks = 1; Containers = 0 }
+        @{ Failure = 'empty test runs'; Status = 'Passed'; Total = 0; Blocks = 0; Containers = 0 }
+    ) {
+        $result = [pscustomobject]@{
+            Result = $Status
+            TotalCount = $Total
+            FailedCount = 0
+            FailedBlocksCount = $Blocks
+            FailedContainersCount = $Containers
+        }
+        { Assert-MavenPluginTestResult $result } | Should -Throw '*pipeline tests did not pass*'
+    }
+}
+
 Describe 'Maven plugin package validation' {
     BeforeEach {
         $packageDirectory = Join-Path $TestDrive "package-$([guid]::NewGuid().ToString('N'))"

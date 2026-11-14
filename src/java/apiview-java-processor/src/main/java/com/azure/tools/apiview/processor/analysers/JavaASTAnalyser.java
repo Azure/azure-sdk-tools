@@ -1713,7 +1713,7 @@ public class JavaASTAnalyser implements Analyser {
         }
     }
 
-    private static SpacingState spacingState = SpacingState.DEFAULT;
+    private SpacingState spacingState = SpacingState.DEFAULT;
 
     private enum SpacingState {
         DEFAULT(Spacing.DEFAULT),

@@ -10,7 +10,7 @@ Use the main plugin JAR, not the sources or Javadoc JAR. It includes its runtime
 java -jar api-review-maven-plugin-1.0.0-beta.1.jar --sources-jar azure-json-1.6.0-beta.1-sources.jar --package-relative-path sdk/serialization/azure-json --output-directory api-review
 ```
 
-All three options are required. The sources JAR must retain its original `<artifact>-<version>-sources.jar` filename. Its Maven metadata supplies the package version; no external POM, Maven installation, repository cache, or plugin downloads are needed. Use `--help` for usage.
+All three options are required. The sources JAR must use its `<artifact>-<version>-sources.jar` filename; rename a copy if the build uses a custom final name. Its Maven metadata supplies the package version; no external POM, Maven installation, repository cache, or plugin downloads are needed. Use `--help` for usage.
 
 For API Review Hub, the build-tools wrapper obtains the pinned main JAR once and copies it into `$(BinOutputDirectory)`. The generation wrapper builds the requested package's sources JAR, then runs the downloaded tool from `$(BinDirectory)` with output directed to `$(ArtifactOutputDirectory)`. Pass the package path relative to `$(Build.SourcesDirectory)`.
 
@@ -26,7 +26,7 @@ From a library module, run its normal build followed by the plugin:
 mvn package com.azure.tools:api-review-maven-plugin:1.0.0-beta.1:generate
 ```
 
-The package build must produce a `-sources.jar`. To reuse a previously built JAR:
+The package build must produce a `-sources.jar`. Custom `build.finalName` values are supported using the project's embedded Maven metadata. To reuse a previously built JAR:
 
 ```shell
 mvn com.azure.tools:api-review-maven-plugin:1.0.0-beta.1:generate -Dapi-review.sourcesJar=/path/to/library-1.0.0-sources.jar

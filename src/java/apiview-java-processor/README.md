@@ -16,7 +16,7 @@ mvn -f src/java/apiview-java-processor/pom.xml clean verify
 
 Artifacts are written to `src/java/apiview-java-processor/target`.
 The standalone build does not require SDK-repository formatting or lint configuration.
-Use the [Maven plugin](../../../packages/java-packages/api-review-maven-plugin/README.md) to generate a complete Markdown and metadata bundle.
+Use the [Maven plugin](https://github.com/Azure/azure-sdk-tools/blob/main/packages/java-packages/api-review-maven-plugin/README.md) to generate a complete Markdown and metadata bundle.
 
 ## Usage
 

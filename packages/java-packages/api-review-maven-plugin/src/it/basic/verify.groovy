@@ -24,7 +24,7 @@ java.nio.file.Files.createDirectories(standalone.toPath())
 def tool = new File(standalone, "tool.jar")
 def sources = new File(standalone, "azure-widget-1.0.0-sources.jar")
 java.nio.file.Files.copy(pluginJar.toPath(), tool.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-java.nio.file.Files.copy(new File(basedir, "target/azure-widget-1.0.0-sources.jar").toPath(), sources.toPath(),
+java.nio.file.Files.copy(new File(basedir, "target/custom-output-sources.jar").toPath(), sources.toPath(),
     java.nio.file.StandardCopyOption.REPLACE_EXISTING)
 def home = new File(standalone, "home")
 java.nio.file.Files.createDirectories(home.toPath())

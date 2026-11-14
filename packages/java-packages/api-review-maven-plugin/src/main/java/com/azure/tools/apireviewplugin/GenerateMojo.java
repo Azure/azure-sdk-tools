@@ -69,7 +69,7 @@ public class GenerateMojo extends AbstractMojo {
         }
         try {
             String relativePath = resolvePackagePath(packageDirectory);
-            ApiListing listing = Main.processSourcesJar(input);
+            ApiListing listing = Main.processSourcesJar(input, project.getGroupId(), project.getArtifactId());
             if (!version.equals(listing.getPackageVersion())
                 || !project.getArtifactId().equals(listing.getMavenPom().getArtifactId())
                 || (!listing.getMavenPom().getGroupId().isEmpty()

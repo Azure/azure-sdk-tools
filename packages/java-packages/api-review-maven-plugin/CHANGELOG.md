@@ -8,3 +8,9 @@
 - Run the same dependency-bundled plugin JAR directly to generate both files without Maven or an external POM.
 - Detect repository-relative module paths with explicit overrides for sparse or exported checkouts.
 - Preserve existing bundles if generation fails.
+
+### Bugs Fixed
+
+- Support custom Maven sources artifact names without overriding their package identity.
+- Isolate rendering state during parallel Maven execution.
+- Fail script validation on Pester container and teardown errors.

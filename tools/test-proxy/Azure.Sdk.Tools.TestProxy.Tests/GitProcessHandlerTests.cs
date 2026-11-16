@@ -133,9 +133,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var environment = gph.CreateGitProcessInfo(Environment.CurrentDirectory).Environment;
 
             Assert.Equal(cloneRevision, gph.SupportsCloneRevision);
-            Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_MAX_RETRIES"));
-            Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_RETRY_AFTER"));
-            Assert.Equal(httpRateLimitRetries, environment.ContainsKey("GIT_HTTP_MAX_RETRY_TIME"));
+            // Values that are already set in the environment take precedence over the defaults.
+            foreach (var (name, defaultValue) in new[] { ("GIT_HTTP_MAX_RETRIES", "3"), ("GIT_HTTP_RETRY_AFTER", "5"), ("GIT_HTTP_MAX_RETRY_TIME", "60") })
+            {
+                string inherited = Environment.GetEnvironmentVariable(name);
+                environment.TryGetValue(name, out string actual);
+                Assert.Equal(httpRateLimitRetries ? inherited ?? defaultValue : inherited, actual);
+            }
         }
 
         [Fact]

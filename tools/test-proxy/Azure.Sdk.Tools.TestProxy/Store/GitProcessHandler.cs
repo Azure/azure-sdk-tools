@@ -250,7 +250,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             }
                             var continueToAttempt = IsRetriableGitError(result);
 
-                            if (!continueToAttempt)
+                            if (!continueToAttempt || attempts == RETRY_INTERMITTENT_FAILURE_COUNT)
                             {
                                 throw new GitProcessException(result);
                             }
@@ -265,36 +265,41 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             }
                         }
                     }
-
-                    // Every attempt failed with a retriable error, such as a lock that another process never released.
-                    if (result.ExitCode != 0)
-                    {
-                        throw new GitProcessException(result);
-                    }
                 }
                 // exceptions caught here will be to do with inability to recover from a failed git process
                 // rather than endlessly retrying and concealing the git error from the user, immediately report and exit the process with an error code
                 catch (GitProcessException e)
                 {
-                    // we rethrow here in contexts where we can expect the ASP.NET middleware to handle the thrown exception
-                    if (ThrowOnException)
-                    {
-                        DebugLogger.LogError(e.Result.StdErr);
-
-                        throw new GitProcessException(e.Result);
-                    }
-                    // otherwise, we log the error, then early exit from the proces (in CLI contexts)
-                    else
-                    {
-                        DebugLogger.LogError("Git ran into an unrecoverable error. Test-Proxy is exiting. The error output from git is: ");
-                        DebugLogger.LogError(e.Result.StdErr);
-
-                        Environment.Exit(1);
-                    }
+                    HandleUnrecoverableError(e.Result);
                 }
             });
 
             return result;
+        }
+
+        /// <summary>
+        /// Reports a git command failure that can't be recovered from. Where the ASP.NET middleware handles exceptions, this
+        /// throws GitProcessException. Otherwise, in CLI contexts, it logs git's error output and exits the process.
+        /// </summary>
+        /// <param name="result">The result of the failed git command.</param>
+        /// <exception cref="GitProcessException">Thrown when ThrowOnException is true.</exception>
+        public void HandleUnrecoverableError(CommandResult result)
+        {
+            // we rethrow here in contexts where we can expect the ASP.NET middleware to handle the thrown exception
+            if (ThrowOnException)
+            {
+                DebugLogger.LogError(result.StdErr);
+
+                throw new GitProcessException(result);
+            }
+            // otherwise, we log the error, then early exit from the process (in CLI contexts)
+            else
+            {
+                DebugLogger.LogError("Git ran into an unrecoverable error. Test-Proxy is exiting. The error output from git is: ");
+                DebugLogger.LogError(result.StdErr);
+
+                Environment.Exit(1);
+            }
         }
 
         /// <summary>

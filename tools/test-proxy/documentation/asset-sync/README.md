@@ -81,8 +81,9 @@ Asset repositories use:
 
 Existing caches are upgraded in place on their first restore. Successful setup is recorded by a versioned marker in the
 repository's Git metadata, so later proxy instances reuse that configuration without running setup commands again.
-If creating an asset repository is interrupted, such as by a failed fetch or checkout, the next restore discards the
-incomplete repository, including any files it already checked out, and creates it again.
+If the initial clone or tag fetch fails, nothing is left behind. If creating an asset repository is otherwise
+interrupted, such as by a failed checkout, the next restore discards the incomplete repository, including any files it
+already checked out, and creates it again.
 Restoring the same tag preserves staged, unstaged, and untracked recordings, without cleaning or checking out the tag
 again. Existing objects are retained, and subsequent fetches use the blobless filter; old trees that were not
 downloaded previously can still require lazy fetching. Switching to a different tag retains the existing behavior of

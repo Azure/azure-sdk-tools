@@ -760,10 +760,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 "config protocol.version 2",
                 "config index.version 4",
                 "config core.untrackedCache true",
-                $"remote add origin {cloneUrl}",
-                "config remote.origin.tagOpt --no-tags");
+                // Added last, so that only the fetch below can fail while the URL, which can contain a token, is stored.
+                $"remote add --no-tags origin {cloneUrl}");
+
             // Fetching with a filter registers origin as a blobless partial clone remote, as cloning with one does.
-            GitHandler.Run($"fetch --filter=blob:none origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
+            // Unlike Run, TryRun doesn't exit the process when git fails, so the repository can be removed first.
+            string fetch = $"fetch --filter=blob:none origin refs/tags/{config.Tag}:refs/tags/{config.Tag}";
+            if (!GitHandler.TryRun(fetch, config.AssetsRepoLocation, out var fetchResult))
+            {
+                // Like a failed clone, leave nothing behind, including the URL's token.
+                DirectoryHelper.DeleteGitDirectory(config.AssetsRepoLocation.ToString());
+                Directory.CreateDirectory(config.AssetsRepoLocation.ToString());
+                GitHandler.HandleUnrecoverableError(fetchResult);
+            }
         }
 
         private static string GetIncompleteInitializationMarker(GitAssetsConfiguration config)

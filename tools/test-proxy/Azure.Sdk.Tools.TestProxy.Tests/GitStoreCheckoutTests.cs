@@ -161,6 +161,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Contains("refs/tags/INVALID_TAG", error.Message);
             Assert.Contains("had a non-zero exit code 128", error.Message);
+            // Like a failed clone, a failed initialization leaves nothing behind, including a remote URL with a token.
+            Assert.Empty(Directory.GetFileSystemEntries(config.AssetsRepoLocation));
             await _store.UpdateAssetsJson("recordings_v1", config);
             await _store.Restore(config.AssetsJsonLocation);
             Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
@@ -585,6 +587,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     });
                 }
                 return base.Run(arguments, workingDirectory);
+            }
+
+            public override bool TryRun(string arguments, string workingDirectory, out CommandResult result)
+            {
+                Commands.Add(arguments);
+                return base.TryRun(arguments, workingDirectory, out result);
             }
         }
     }

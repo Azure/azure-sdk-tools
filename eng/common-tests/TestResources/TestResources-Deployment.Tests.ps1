@@ -5,7 +5,7 @@ BeforeAll {
     $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..')).Path
     $script:HelpersPath = Join-Path $repositoryRoot 'eng' 'common' 'TestResources' 'TestResources-Helpers.ps1'
     $deploymentScript = Join-Path $repositoryRoot 'eng' 'common' 'TestResources' 'New-TestResources.ps1'
-    $script:PowerShellPath = (Get-Command pwsh -CommandType Application).Source
+    $script:PowerShellPath = (Get-Process -Id $PID).Path
 
     # Exercise the actual failure gate without loading Az modules or provisioning resources.
     $tokens = $null

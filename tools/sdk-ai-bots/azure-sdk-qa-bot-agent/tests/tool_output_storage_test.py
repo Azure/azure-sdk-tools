@@ -270,6 +270,38 @@ async def test_provider_bounds_large_single_line_grep_matches():
 
 
 @pytest.mark.asyncio
+async def test_provider_bounds_greedy_match_and_finds_later_exact_match():
+    store = InMemoryAgentFileStore()
+    provider = ToolOutputStorageProvider(store)
+    session = AgentSession(session_id="test-session")
+    context = SessionContext(session_id="test-session", input_messages=[])
+    file_name = "tool-result-search-test.txt"
+    await store.write(
+        f"test-session/{file_name}",
+        f"TypeSpec {'x' * 10_000} url PartnerMirroringUri",
+    )
+
+    await provider.before_run(
+        agent=None,
+        session=session,
+        context=context,
+        state={},
+    )
+
+    tools = {tool.name: tool for tool in context.tools}
+    matches = await tools["tool_result_grep"].func(
+        file_name=file_name,
+        regex_pattern=r"TypeSpec .*url|PartnerMirroringUri",
+        max_matches=10,
+    )
+
+    matching_lines = matches[0]["matching_lines"]
+    assert matching_lines[0]["match_truncated"] is True
+    assert len(matching_lines[0]["line"]) == 2_000
+    assert any(match["match"] == "PartnerMirroringUri" for match in matching_lines)
+
+
+@pytest.mark.asyncio
 async def test_provider_reads_bounded_character_range():
     store = InMemoryAgentFileStore()
     provider = ToolOutputStorageProvider(store)

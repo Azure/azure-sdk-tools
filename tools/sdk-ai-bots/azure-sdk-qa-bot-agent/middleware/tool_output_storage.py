@@ -186,23 +186,20 @@ class ToolOutputStorageProvider(ContextProvider):
 
             matching_lines: list[dict[str, Any]] = []
             remaining_chars = _MAX_GREP_OUTPUT_CHARS
-            for match in pattern.finditer(content):
-                if len(matching_lines) == max_matches or remaining_chars == 0:
-                    break
+            search_start = 0
+            while (
+                len(matching_lines) < max_matches
+                and remaining_chars > 0
+                and (match := pattern.search(content, search_start)) is not None
+            ):
 
                 context_chars = min(_MAX_GREP_LINE_CHARS, remaining_chars)
                 match_chars = min(len(match.group(0)), context_chars)
                 surrounding_chars = context_chars - match_chars
                 start_char = max(0, match.start() - surrounding_chars // 2)
-                end_char = min(
-                    len(content),
-                    match.end() + surrounding_chars - surrounding_chars // 2,
-                )
+                end_char = min(len(content), start_char + context_chars)
                 if end_char - start_char < context_chars:
-                    if start_char == 0:
-                        end_char = min(len(content), context_chars)
-                    else:
-                        start_char = max(0, end_char - context_chars)
+                    start_char = max(0, end_char - context_chars)
 
                 context_text = content[start_char:end_char]
                 previous_newline = content.rfind("\n", 0, match.start())
@@ -213,10 +210,16 @@ class ToolOutputStorageProvider(ContextProvider):
                         "start_char": match.start(),
                         "end_char": match.end(),
                         "match": match.group(0)[:_MAX_GREP_LINE_CHARS],
+                        "match_truncated": len(match.group(0)) > _MAX_GREP_LINE_CHARS,
                         "line": context_text,
                     }
                 )
                 remaining_chars -= len(context_text)
+                search_start = (
+                    match.start() + 1
+                    if len(match.group(0)) > _MAX_GREP_LINE_CHARS
+                    else max(match.end(), match.start() + 1)
+                )
 
             matches = (
                 [

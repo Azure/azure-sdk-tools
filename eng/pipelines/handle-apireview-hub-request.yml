@@ -12,11 +12,14 @@ parameters:
       - update
   - name: language
     type: string
+    # API Review Hub sends 'js' for JavaScript. Template files and the repository resource use
+    # the TCGC scope name 'javascript', so 'js' is mapped to 'javascript' where they're selected.
     values:
       - python
       - java
       - csharp
       - javascript
+      - js
       - go
       - rust
       - cpp
@@ -71,7 +74,7 @@ resources:
       type: github
       endpoint: Azure
       name: Azure/azure-sdk-for-js
-      ref: ${{ iif(eq(parameters.language, 'javascript'), parameters.languageToolsRef, 'main') }}
+      ref: ${{ iif(in(parameters.language, 'javascript', 'js'), parameters.languageToolsRef, 'main') }}
     - repository: go-repo
       type: github
       endpoint: Azure
@@ -124,9 +127,9 @@ stages:
   - stage: BuildTools
     displayName: 'Build API review tools'
     jobs:
-      - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-build-tools-{0}.yml@{0}-repo', parameters.language) }}
+      - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-build-tools-{0}.yml@{0}-repo', iif(eq(parameters.language, 'js'), 'javascript', parameters.language)) }}
         parameters:
-          languageRepoResource: ${{ format('{0}-repo', parameters.language) }}
+          languageRepoResource: ${{ format('{0}-repo', iif(eq(parameters.language, 'js'), 'javascript', parameters.language)) }}
           toolsRef: ${{ parameters.toolsRef }}
           languageToolsRef: ${{ parameters.languageToolsRef }}
 
@@ -136,7 +139,7 @@ stages:
     condition: succeeded()
     jobs:
       - ${{ if ne(trim(parameters.baseRef), '') }}:
-        - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-generate-artifact-{0}.yml@{0}-repo', parameters.language) }}
+        - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-generate-artifact-{0}.yml@{0}-repo', iif(eq(parameters.language, 'js'), 'javascript', parameters.language)) }}
           parameters:
             kind: base
             requestMode: ${{ parameters.requestMode }}
@@ -145,7 +148,7 @@ stages:
             packageName: ${{ parameters.packageName }}
             operationId: ${{ parameters.operationId }}
 
-      - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-generate-artifact-{0}.yml@{0}-repo', parameters.language) }}
+      - template: ${{ format('/eng/pipelines/templates/jobs/apireview-hub-generate-artifact-{0}.yml@{0}-repo', iif(eq(parameters.language, 'js'), 'javascript', parameters.language)) }}
         parameters:
           kind: target
           requestMode: ${{ parameters.requestMode }}

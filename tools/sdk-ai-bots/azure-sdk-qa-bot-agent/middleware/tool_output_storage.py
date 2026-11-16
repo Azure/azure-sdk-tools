@@ -39,8 +39,12 @@ _RESULT_FILE_PATTERN = re.compile(r"tool-result-[A-Za-z0-9._-]+\.txt")
 _PROVIDER_INSTRUCTIONS = (
     "Large external tool results may be stored outside the conversation. "
     "Only when a tool response gives a `tool-result-*.txt` file name, start with "
-    "`tool_result_grep` using specific identifiers or error text, then use "
-    "`tool_result_read` only for the relevant line range. Do not read the entire file."
+    "`tool_result_grep` using specific identifiers or error text. Its results include "
+    "match-centered context and absolute character offsets; use `tool_result_read_chars` "
+    "for additional surrounding text, or `tool_result_read` for a relevant line range. "
+    "Do not read the entire file. For an exact code or PR-review question, do not stop "
+    "at generic guidance: make one targeted follow-up when the requested property, file, "
+    "or concrete failure evidence has not yet been retrieved."
 )
 
 
@@ -124,6 +128,38 @@ class ToolOutputStorageProvider(ContextProvider):
                 f"[Output truncated at {_MAX_READ_CHARS:,} characters. Read a smaller line range.]"
             )
 
+        @tool(name="tool_result_read_chars", approval_mode="never_require")
+        async def tool_result_read_chars(
+            file_name: str,
+            start_char: int,
+            end_char: int,
+        ) -> str:
+            """Read a bounded zero-based character range from an offloaded tool result."""
+            normalized = _validate_file_name(file_name)
+            if normalized is None:
+                return f"Invalid tool-result file name: '{file_name}'."
+            if start_char < 0 or end_char <= start_char:
+                return "Invalid character range."
+            if end_char - start_char > _MAX_READ_CHARS:
+                return (
+                    f"Character range exceeds {_MAX_READ_CHARS:,} characters. "
+                    "Read a smaller range."
+                )
+
+            content = await self.store.read(f"{session_scope}/{normalized}")
+            if content is None:
+                return f"Tool-result file '{file_name}' not found."
+
+            selected = content[start_char:end_char]
+            logger.info(
+                "Reading offloaded tool result: file=%s chars=%d-%d selected_chars=%d",
+                file_name,
+                start_char,
+                end_char,
+                len(selected),
+            )
+            return selected
+
         @tool(name="tool_result_grep", approval_mode="never_require")
         async def tool_result_grep(
             file_name: str,
@@ -140,51 +176,70 @@ class ToolOutputStorageProvider(ContextProvider):
                 return f"max_matches must be between 1 and {_MAX_GREP_MATCHES}."
 
             try:
-                results = await self.store.search(
-                    session_scope,
-                    regex_pattern,
-                    normalized,
-                    recursive=False,
-                )
-            except ValueError as exc:
+                pattern = re.compile(regex_pattern, re.IGNORECASE)
+            except re.error as exc:
                 return f"Could not search tool-result file: {exc}"
-            matches: list[dict[str, Any]] = []
-            remaining_matches = max_matches
+
+            content = await self.store.read(f"{session_scope}/{normalized}")
+            if content is None:
+                return f"Tool-result file '{file_name}' not found."
+
+            matching_lines: list[dict[str, Any]] = []
             remaining_chars = _MAX_GREP_OUTPUT_CHARS
-            for result in results:
-                matching_lines = []
-                for match in result.matching_lines:
-                    if remaining_matches == 0 or remaining_chars == 0:
-                        break
-                    line = match.line[: min(_MAX_GREP_LINE_CHARS, remaining_chars)]
-                    matching_lines.append(
-                        {"line_number": match.line_number, "line": line}
-                    )
-                    remaining_matches -= 1
-                    remaining_chars -= len(line)
-                if matching_lines:
-                    snippet = result.snippet[: min(_MAX_GREP_LINE_CHARS, remaining_chars)]
-                    remaining_chars -= len(snippet)
-                    matches.append(
-                        {
-                            "file_name": result.file_name,
-                            "snippet": snippet,
-                            "matching_lines": matching_lines,
-                        }
-                    )
-                if remaining_matches == 0 or remaining_chars == 0:
+            for match in pattern.finditer(content):
+                if len(matching_lines) == max_matches or remaining_chars == 0:
                     break
+
+                context_chars = min(_MAX_GREP_LINE_CHARS, remaining_chars)
+                match_chars = min(len(match.group(0)), context_chars)
+                surrounding_chars = context_chars - match_chars
+                start_char = max(0, match.start() - surrounding_chars // 2)
+                end_char = min(
+                    len(content),
+                    match.end() + surrounding_chars - surrounding_chars // 2,
+                )
+                if end_char - start_char < context_chars:
+                    if start_char == 0:
+                        end_char = min(len(content), context_chars)
+                    else:
+                        start_char = max(0, end_char - context_chars)
+
+                context_text = content[start_char:end_char]
+                previous_newline = content.rfind("\n", 0, match.start())
+                matching_lines.append(
+                    {
+                        "line_number": content.count("\n", 0, match.start()) + 1,
+                        "column_number": match.start() - previous_newline,
+                        "start_char": match.start(),
+                        "end_char": match.end(),
+                        "match": match.group(0)[:_MAX_GREP_LINE_CHARS],
+                        "line": context_text,
+                    }
+                )
+                remaining_chars -= len(context_text)
+
+            matches = (
+                [
+                    {
+                        "file_name": normalized,
+                        "snippet": matching_lines[0]["line"][:500],
+                        "matching_lines": matching_lines,
+                    }
+                ]
+                if matching_lines
+                else []
+            )
             logger.info(
                 "Searched offloaded tool result: file=%s matches=%d",
                 file_name,
-                len(matches),
+                len(matching_lines),
             )
             return matches
 
         context.extend_instructions(self.source_id, [_PROVIDER_INSTRUCTIONS])
         context.extend_tools(
             self.source_id,
-            [tool_result_read, tool_result_grep],
+            [tool_result_read, tool_result_read_chars, tool_result_grep],
         )
 
     async def after_run(

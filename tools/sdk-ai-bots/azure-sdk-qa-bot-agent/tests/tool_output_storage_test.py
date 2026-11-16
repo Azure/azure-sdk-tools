@@ -212,12 +212,21 @@ async def test_provider_exposes_bounded_read_and_grep_tools():
     )
 
     tools = {tool.name: tool for tool in context.tools}
-    assert set(tools) == {"tool_result_grep", "tool_result_read"}
+    assert set(tools) == {
+        "tool_result_grep",
+        "tool_result_read",
+        "tool_result_read_chars",
+    }
     assert await tools["tool_result_read"].func(
         file_name=file_name,
         start_line=2,
         end_line=2,
     ) == "matching error\n"
+    assert await tools["tool_result_read_chars"].func(
+        file_name=file_name,
+        start_char=11,
+        end_char=25,
+    ) == "matching error"
     matches = await tools["tool_result_grep"].func(
         file_name=file_name,
         regex_pattern="error",
@@ -234,7 +243,7 @@ async def test_provider_bounds_large_single_line_grep_matches():
     file_name = "tool-result-search-test.txt"
     await store.write(
         f"test-session/{file_name}",
-        f"error {'x' * 100_000}\n",
+        f"{'x' * 100_000} exactTargetProperty {'y' * 100_000}\n",
     )
 
     await provider.before_run(
@@ -247,13 +256,49 @@ async def test_provider_bounds_large_single_line_grep_matches():
     tools = {tool.name: tool for tool in context.tools}
     matches = await tools["tool_result_grep"].func(
         file_name=file_name,
-        regex_pattern="error",
+        regex_pattern="exactTargetProperty",
         max_matches=1,
     )
 
     assert len(matches) == 1
     assert len(matches[0]["matching_lines"]) == 1
-    assert len(matches[0]["matching_lines"][0]["line"]) <= 2_000
+    match = matches[0]["matching_lines"][0]
+    assert len(match["line"]) <= 2_000
+    assert "exactTargetProperty" in match["line"]
+    assert match["start_char"] == 100_001
+    assert match["end_char"] == 100_020
+
+
+@pytest.mark.asyncio
+async def test_provider_reads_bounded_character_range():
+    store = InMemoryAgentFileStore()
+    provider = ToolOutputStorageProvider(store)
+    session = AgentSession(session_id="test-session")
+    context = SessionContext(session_id="test-session", input_messages=[])
+    file_name = "tool-result-search-test.txt"
+    await store.write(f"test-session/{file_name}", "0123456789")
+
+    await provider.before_run(
+        agent=None,
+        session=session,
+        context=context,
+        state={},
+    )
+
+    tools = {tool.name: tool for tool in context.tools}
+    assert await tools["tool_result_read_chars"].func(
+        file_name=file_name,
+        start_char=3,
+        end_char=7,
+    ) == "3456"
+    assert (
+        await tools["tool_result_read_chars"].func(
+            file_name=file_name,
+            start_char=7,
+            end_char=3,
+        )
+        == "Invalid character range."
+    )
 
 
 @pytest.mark.asyncio

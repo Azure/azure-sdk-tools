@@ -1,5 +1,17 @@
 # Release History
 
+## 0.6.59 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- `api-review create` and `azsdk_apireviewhub_request_review_pr` now accept `javascript` and send it to API Review Hub, defaulting the target repo to `azure-sdk-for-js`. Aliases such as `js` and `ts` normalize to `javascript`; `package get-approval-status` and release readiness checks now query API Review Hub with `javascript` instead of `js`.
+
+### Other Changes
+
 ## 0.6.58 (2026-11-10)
 
 ### Features Added

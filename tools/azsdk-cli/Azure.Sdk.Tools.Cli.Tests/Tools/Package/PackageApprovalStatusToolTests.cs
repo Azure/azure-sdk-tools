@@ -96,8 +96,8 @@ public class PackageApprovalStatusToolTests
 
     [TestCase(".NET", "csharp")]
     [TestCase("C#", "csharp")]
-    [TestCase("JavaScript", "js")]
-    [TestCase("TypeScript", "js")]
+    [TestCase("JavaScript", "javascript")]
+    [TestCase("TypeScript", "javascript")]
     [TestCase("C++", "cpp")]
     [TestCase("Py", "python")]
     public async Task GetApprovalStatus_NormalizesLanguageAliases(string language, string expectedLanguage)

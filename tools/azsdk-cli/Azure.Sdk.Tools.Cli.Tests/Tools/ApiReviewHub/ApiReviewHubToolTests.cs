@@ -46,6 +46,39 @@ public class ApiReviewHubToolTests
         Assert.That(parseResult.Errors, Is.Empty);
     }
 
+    [TestCase("javascript")]
+    [TestCase("js")]
+    [TestCase("TypeScript")]
+    public async Task CreateCommand_NormalizesJavaScriptLanguageAndDefaultRepo(string language)
+    {
+        ReviewPullRequestCreationRequest? capturedRequest = null;
+        var service = new Mock<IApiReviewHubService>();
+        service
+            .Setup(x => x.RequestReviewPullRequestAsync(
+                It.IsAny<ReviewPullRequestCreationRequest>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<ReviewPullRequestCreationRequest, string, bool, TimeSpan, CancellationToken>(
+                (request, _, _, _, _) => capturedRequest = request)
+            .ReturnsAsync(new OperationStatus { Status = "accepted" });
+        var tool = new ApiReviewHubTool(service.Object, new TestLogger<ApiReviewHubTool>());
+        var command = tool.GetCommandInstances().Single();
+
+        var parseResult = command.Parse(
+            $"--language {language} --package-name azure-test --target-branch feature --no-wait");
+        Assert.That(parseResult.Errors, Is.Empty);
+        await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedRequest!.Language, Is.EqualTo("javascript"));
+            Assert.That(capturedRequest.TargetBranch.Repo, Is.EqualTo("azure-sdk-for-js"));
+        });
+    }
+
     [Test]
     public void CreateCommand_RejectsSwift()
     {

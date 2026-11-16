@@ -20,7 +20,7 @@ Today, [`azsdk_tool_telemetry.ps1`](https://github.com/Azure/azure-sdk-tools/blo
 | Host & session metadata | `client_name` (`vscode` if `tool_use_id` contains `_vscode-`, otherwise `copilot-cli`), optional `session_id`, plus CLI `azsdk_tool_version`, `dev_device_id`, `mac_address_hash`, and `event_id` | Verified `copilot-app` surface attribution (currently falls back to `copilot-cli`) and stable per-event retry deduplication |
 | Domain / outcome metrics | Separate MCP tool calls emit their own tool-level telemetry | **Skill-specific customized telemetry** (e.g., [#17228](https://github.com/Azure/azure-sdk-tools/issues/17228): which `.tsp` files and line ranges changed, artifact finding counts, or workflow outcomes) without collecting raw prompts |
 
-Companion proposal [#16828](https://github.com/Azure/azure-sdk-tools/pull/16828) covers general SDK Agent hook consent and Application Insights storage for stateless tool/skill events. Because Azure SDK has many pure-prompt and script-backed skills across languages and planes, this spec extends that pipeline so any skill needing **customized outcome telemetry** can emit validated structured data—using `azure-typespec-author` throughout as the running example.
+Because Azure SDK has many pure-prompt and script-backed skills across languages and planes, this spec extends the existing hook and Application Insights pipeline so any skill needing **customized outcome telemetry** can emit validated structured data—using `azure-typespec-author` throughout as the running example.
 
 ## Design Proposal
 
@@ -70,7 +70,7 @@ Illustrative `skill.result` event (using `azure-typespec-author` as the example)
 ```
 
 - **Identifiers & surface**: `invocationId` groups events from one skill run; `eventId` is an immutable UUID reused across retries for KQL deduplication. Host adapters verify `invocationSurface` (`vscode`, `copilot-cli`, `copilot-app`, or `unknown`).
-- **Privacy boundary**: Never collect prompts, source code, free-text findings, absolute paths, or raw tool arguments. Disable `UserPromptSubmit` prompt collection where required, enforce repository-relative path allowlists, honor `AZSDKTOOLS_COLLECT_TELEMETRY=false` and host consent ([#16828](https://github.com/Azure/azure-sdk-tools/pull/16828)), and redact `--event-file` from `CommandExecuted` wrapper telemetry.
+- **Privacy boundary**: Never collect prompts, source code, free-text findings, absolute paths, or raw tool arguments. Disable `UserPromptSubmit` prompt collection where required, enforce repository-relative path allowlists, honor `AZSDKTOOLS_COLLECT_TELEMETRY=false` and host telemetry consent, and redact `--event-file` from `CommandExecuted` wrapper telemetry.
 
 ### 2. Shared Queue and Hook Delivery
 

@@ -296,8 +296,7 @@ async def test_provider_bounds_greedy_match_and_finds_later_exact_match():
     )
 
     matching_lines = matches[0]["matching_lines"]
-    assert matching_lines[0]["match_truncated"] is True
-    assert len(matching_lines[0]["line"]) == 500
+    assert matches[0]["oversized_matches_skipped"] == 1
     assert any(match["match"] == "PartnerMirroringUri" for match in matching_lines)
 
 

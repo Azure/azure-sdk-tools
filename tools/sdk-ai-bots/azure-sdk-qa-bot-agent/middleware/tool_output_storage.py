@@ -187,14 +187,19 @@ class ToolOutputStorageProvider(ContextProvider):
             matching_lines: list[dict[str, Any]] = []
             remaining_chars = _MAX_GREP_OUTPUT_CHARS
             search_start = 0
+            oversized_matches_skipped = 0
             while (
                 len(matching_lines) < max_matches
                 and remaining_chars > 0
                 and (match := pattern.search(content, search_start)) is not None
             ):
+                if len(match.group(0)) > _MAX_GREP_LINE_CHARS:
+                    oversized_matches_skipped += 1
+                    search_start = match.start() + 1
+                    continue
 
                 context_chars = min(_MAX_GREP_LINE_CHARS, remaining_chars)
-                match_chars = min(len(match.group(0)), context_chars)
+                match_chars = len(match.group(0))
                 surrounding_chars = context_chars - match_chars
                 start_char = max(0, match.start() - surrounding_chars // 2)
                 end_char = min(len(content), start_char + context_chars)
@@ -209,17 +214,13 @@ class ToolOutputStorageProvider(ContextProvider):
                         "column_number": match.start() - previous_newline,
                         "start_char": match.start(),
                         "end_char": match.end(),
-                        "match": match.group(0)[:_MAX_GREP_LINE_CHARS],
-                        "match_truncated": len(match.group(0)) > _MAX_GREP_LINE_CHARS,
+                        "match": match.group(0),
+                        "match_truncated": False,
                         "line": context_text,
                     }
                 )
                 remaining_chars -= len(context_text)
-                search_start = (
-                    match.start() + 1
-                    if len(match.group(0)) > _MAX_GREP_LINE_CHARS
-                    else max(match.end(), match.start() + 1)
-                )
+                search_start = max(match.end(), match.start() + 1)
 
             matches = (
                 [
@@ -227,10 +228,16 @@ class ToolOutputStorageProvider(ContextProvider):
                         "file_name": normalized,
                         "snippet": matching_lines[0]["line"][:500],
                         "matching_lines": matching_lines,
+                        "oversized_matches_skipped": oversized_matches_skipped,
                     }
                 ]
                 if matching_lines
-                else []
+                else (
+                    f"{oversized_matches_skipped} regex matches exceeded "
+                    f"{_MAX_GREP_LINE_CHARS} characters. Use a narrower pattern."
+                    if oversized_matches_skipped
+                    else []
+                )
             )
             logger.info(
                 "Searched offloaded tool result: file=%s matches=%d",

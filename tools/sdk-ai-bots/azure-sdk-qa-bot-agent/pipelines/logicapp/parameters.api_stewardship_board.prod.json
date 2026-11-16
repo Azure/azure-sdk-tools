@@ -5,9 +5,6 @@
     "logicAppName": {
       "value": "api-stewardship-board-qabot-logicapp"
     },
-    "workflowState": {
-      "value": "Disabled"
-    },
     "teamsGroupId": {
       "value": "1a10b50c-e870-4fe0-8483-bf5542a8d2d8"
     },

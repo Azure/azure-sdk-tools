@@ -12,17 +12,6 @@
       "type": "string",
       "defaultValue": "[resourceGroup().location]"
     },
-    "workflowState": {
-      "type": "string",
-      "defaultValue": "Enabled",
-      "allowedValues": [
-        "Enabled",
-        "Disabled"
-      ],
-      "metadata": {
-        "description": "Listener state; Board deployments default to Disabled"
-      }
-    },
     "teamsGroupId": {
       "type": "string",
       "metadata": {
@@ -101,7 +90,7 @@
         "userAssignedIdentities": "[parameters('userAssignedIdentities')]"
       },
       "properties": {
-        "state": "[parameters('workflowState')]",
+        "state": "Enabled",
         "integrationAccount": {
           "id": "[parameters('integrationAccountResourceId')]"
         },

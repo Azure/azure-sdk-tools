@@ -44,10 +44,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -60,6 +63,11 @@ stimuli:
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
           value: '@@clientName(Microsoft.Widget.Employee, "Staff", "go")'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004001-model-renamed-breaking-change-SpecInputs-csharp
     tags:
@@ -83,10 +91,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -122,10 +133,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -161,10 +175,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -200,10 +217,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000

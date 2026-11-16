@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 760" width="1160" height="760" role="img" aria-labelledby="title description">
+  <!-- cspell:words azsdk revalidate worktree worktrees Segoe Consolas labelledby -->
+  <title id="title">Common Skill Telemetry Architecture</title>
+  <desc id="description">The producer writes JSON events to a shared local folder, and the common hook reads the same folder. Example for a normal clone: C:\workspace\azure-rest-api-specs\.git\azsdk-skill-telemetry\eventId.ready.json. PostToolUse triggers the hook script.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8" fill="none" stroke="#536983" stroke-width="1.6"/>
+    </marker>
+    <marker id="triggerArrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8" fill="none" stroke="#c08a28" stroke-width="1.6"/>
+    </marker>
+  </defs>
+
+  <rect width="1160" height="760" rx="12" fill="#ffffff"/>
+
+  <g font-family="Segoe UI, Arial, sans-serif" fill="#17263d">
+    <text x="32" y="44" font-size="26" font-weight="700">Common Skill Telemetry Architecture</text>
+    <text x="32" y="70" font-size="14" fill="#52647d">File-based handoff: the producer writes and the hook reads the SAME target-worktree queue.</text>
+
+    <!-- Top lane -->
+    <rect x="24" y="92" width="1112" height="236" rx="14" fill="#f7f4ff" stroke="#d7c9f3" stroke-width="1.5"/>
+    <text x="44" y="120" font-size="13" font-weight="700" letter-spacing="0.8">SKILL-SPECIFIC: DEFINE AND PRODUCE</text>
+
+    <rect x="44" y="138" width="256" height="170" rx="10" fill="#ffffff" stroke="#9672ca" stroke-width="1.5"/>
+    <text x="62" y="168" font-size="18" font-weight="700">Skill telemetry contract</text>
+    <text x="62" y="198" font-size="15">Approved schema + version</text>
+    <text x="62" y="224" font-size="15">Data source + scope</text>
+    <text x="62" y="250" font-size="15">When data becomes valid</text>
+    <text x="62" y="286" font-size="13.5" fill="#52647d">Schema defines shape, not values.</text>
+
+    <path d="M300 223H342" fill="none" stroke="#536983" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="348" y="138" width="356" height="170" rx="10" fill="#ffffff" stroke="#9672ca" stroke-width="1.5"/>
+    <text x="368" y="168" font-size="18" font-weight="700">Agent / skill collector</text>
+    <text x="368" y="198" font-size="15">Agent follows the skill instructions.</text>
+    <text x="368" y="224" font-size="15">Scripts calculate measurable facts.</text>
+    <text x="368" y="250" font-size="15">Publish a complete structured event.</text>
+    <text x="368" y="286" font-size="13.5" fill="#52647d">No direct telemetry upload.</text>
+
+    <path d="M704 223H746" fill="none" stroke="#536983" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="752" y="138" width="364" height="170" rx="10" fill="#edfaf6" stroke="#4b9d88" stroke-width="1.5"/>
+    <text x="772" y="168" font-size="18" font-weight="700">Intermediate JSON file</text>
+    <text x="772" y="198" font-family="Consolas, 'Courier New', monospace" font-size="13.5">C:\workspace\azure-rest-api-specs\</text>
+    <text x="788" y="222" font-family="Consolas, 'Courier New', monospace" font-size="13.5">.git\azsdk-skill-telemetry\</text>
+    <text x="804" y="246" font-family="Consolas, 'Courier New', monospace" font-size="13.5">&lt;eventId&gt;.ready.json</text>
+    <text x="772" y="286" font-size="13.5" fill="#52647d">Example: normal clone. Local, untracked data.</text>
+
+    <!-- Host trigger & queue handoff -->
+    <rect x="44" y="356" width="356" height="72" rx="10" fill="#fff9eb" stroke="#cfac60" stroke-width="1.5"/>
+    <text x="64" y="384" font-size="18" font-weight="700">Host event: PostToolUse</text>
+    <text x="64" y="408" font-size="13.5" fill="#52647d">Triggers the script, not a skill-completion signal.</text>
+
+    <path d="M222 428V518" fill="none" stroke="#c08a28" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#triggerArrow)"/>
+    <text x="234" y="476" font-size="13.5" fill="#52647d">runs</text>
+
+    <path d="M934 308V446H340V518" fill="none" stroke="#536983" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="540" y="434" font-size="15">Hook reads ready files from this path</text>
+
+    <!-- Bottom lane -->
+    <rect x="24" y="486" width="1112" height="174" rx="14" fill="#f1f7ff" stroke="#bfd3ef" stroke-width="1.5"/>
+    <text x="44" y="512" font-size="13" font-weight="700" letter-spacing="0.8">SHARED FRAMEWORK: READ, VALIDATE AND DELIVER</text>
+
+    <rect x="44" y="524" width="356" height="116" rx="10" fill="#ffffff" stroke="#719ace" stroke-width="1.5"/>
+    <text x="64" y="554" font-size="18" font-weight="700">Common hook script</text>
+    <text x="64" y="584" font-size="15">Check opt-out; claim ready files</text>
+    <text x="64" y="610" font-size="15">Validate schema / privacy; deduplicate</text>
+
+    <path d="M400 582H442" fill="none" stroke="#536983" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="448" y="524" width="328" height="116" rx="10" fill="#ffffff" stroke="#719ace" stroke-width="1.5"/>
+    <text x="468" y="554" font-size="18" font-weight="700">Shared azsdk sender</text>
+    <text x="468" y="584" font-size="15">Revalidate; export; flush</text>
+    <text x="468" y="610" font-size="15">Record status; bounded retries</text>
+
+    <path d="M776 582H818" fill="none" stroke="#536983" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="824" y="524" width="292" height="116" rx="10" fill="#e1efff" stroke="#5286c3" stroke-width="1.5"/>
+    <text x="844" y="554" font-size="18" font-weight="700">Application Insights</text>
+    <text x="844" y="584" font-size="15">Approved telemetry fields</text>
+    <text x="844" y="610" font-size="15">KQL / Power BI</text>
+
+    <!-- Footer notes -->
+    <text x="32" y="690" font-size="15">Producer writes the JSON file. The common hook reads it and sends only approved fields.</text>
+    <text x="32" y="716" font-size="13.5" fill="#52647d">The path shown assumes a normal clone; linked worktrees use their own Git administrative folder.</text>
+    <text x="32" y="740" font-size="13.5" fill="#52647d">No ready file = no upload. Hook = a script, not another AI turn. Export success does not confirm ingestion.</text>
+  </g>
+</svg>

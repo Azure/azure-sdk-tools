@@ -22,7 +22,7 @@ Companion proposal [#16828](https://github.com/Azure/azure-sdk-tools/pull/16828)
 
 ### Architecture
 
-![Common skill telemetry architecture](8-operations-skill-telemetry-architecture.png)
+![Common skill telemetry architecture](8-operations-skill-telemetry-architecture.svg)
 
 | Component | Responsibility |
 | --- | --- |

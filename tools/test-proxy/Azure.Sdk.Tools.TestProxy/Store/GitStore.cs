@@ -730,9 +730,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 var assetRepo = config.AssetsRepoLocation;
                 var initialized = IsAssetsRepoInitialized(config);
 
-                // Interrupted initializations, and git directories that earlier versions left without a repository, have no
-                // recordings worth keeping, but their files would get in the way of the new repository, so they're discarded.
-                if (forceInit || (!initialized && Directory.Exists(Path.Join(assetRepo, ".git"))))
+                // An interrupted initialization has no recordings worth keeping, but its files would get in the way of the
+                // new repository, so it's discarded entirely.
+                if (forceInit || Directory.Exists(GetIncompleteInitializationMarker(config)))
                 {
                     DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
                     Directory.CreateDirectory(assetRepo.ToString());
@@ -741,6 +741,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 if (!initialized)
                 {
+                    // Like git clone, don't create a repository among other files, which can be recordings worth keeping. Only
+                    // a .git directory without a repository, which earlier versions could leave behind, is discarded.
+                    if (Directory.EnumerateFileSystemEntries(assetRepo).Any(entry => Path.GetFileName(entry) != ".git"))
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Unable to restore recordings to \"{assetRepo}\", because it " +
+                            "contains files but no git repository. Move out any recordings you want to keep, delete the directory, and restore again.");
+                    }
+
+                    string gitDirectory = Path.Join(assetRepo, ".git");
+                    if (Directory.Exists(gitDirectory))
+                    {
+                        DirectoryHelper.DeleteGitDirectory(gitDirectory);
+                    }
+
                     Assets.TryRemove(config.AssetsJsonRelativeLocation.ToString(), out _);
                     _configuredRepositories.TryRemove(assetRepo.ToString(), out _);
 

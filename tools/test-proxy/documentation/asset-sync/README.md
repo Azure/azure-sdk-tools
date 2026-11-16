@@ -83,8 +83,11 @@ Existing caches are upgraded in place on their first restore. Successful setup i
 repository's Git metadata, so later proxy instances reuse that configuration without running setup commands again.
 If the initial clone or tag fetch fails, nothing is left behind. An asset repository that was deleted, or whose creation
 was interrupted, such as by a failed checkout, is created again on the next restore, even if the breadcrumb still lists
-it. An incomplete repository is discarded first, including any files it already checked out. Git commands only use the
-repository in their working directory, so they never fall back to the language repository that contains `.assets`.
+it. An incomplete repository is discarded first, including any files it already checked out. If the repository's
+directory contains other files but no repository, for example after only its `.git` directory was deleted, restore fails
+without changing them; move out any recordings you want to keep, delete the directory, and restore again. Git commands
+only use the repository in their working directory, so they never fall back to the language repository that contains
+`.assets`.
 
 Restores, pushes, and resets of an asset repository run one at a time, including in separate Test Proxy processes that
 share a storage location, such as when `go test ./...` tests packages in parallel. Each holds a lock on the file

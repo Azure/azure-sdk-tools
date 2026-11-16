@@ -278,6 +278,36 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
+        [InlineData(null, false)]
+        [InlineData("2.45.4", false)]
+        [InlineData(null, true)]
+        [InlineData("2.45.4", true)]
+        public async Task RestoreRefusesToCreateRepositoryAmongExistingFiles(string gitVersion, bool leftoverGitDirectory)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            // For example, recordings that were kept after deleting only the repository's .git directory.
+            string recordingPath = Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json");
+            TestHelpers.WriteTestFile("unpublished recording", recordingPath);
+            if (leftoverGitDirectory)
+            {
+                // Earlier versions could leave this behind when the repository's .git directory was missing.
+                Directory.CreateDirectory(Path.Join(config.AssetsRepoLocation, ".git", "test-proxy-config-v1"));
+            }
+            string[] entries = ListEntries(config.AssetsRepoLocation);
+
+            // Retrying mustn't delete anything either, for example because the failed attempt left a repository behind.
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                var error = await Assert.ThrowsAsync<HttpException>(() => new GitStore { GitHandler = _git }.Restore(config.AssetsJsonLocation));
+
+                Assert.Contains(config.AssetsRepoLocation.ToString(), error.Message);
+                Assert.Equal(entries, ListEntries(config.AssetsRepoLocation));
+                Assert.Equal("unpublished recording", File.ReadAllText(recordingPath));
+            }
+        }
+
+        [Theory]
         [InlineData(null)]
         [InlineData("2.45.4")]
         public async Task RestorePrefersTagOverBranchWithSameName(string gitVersion)
@@ -596,6 +626,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 _git.GitVersion = Version.Parse(gitVersion);
             }
+        }
+
+        private static string[] ListEntries(string directory)
+        {
+            return Directory.GetFileSystemEntries(directory, "*", SearchOption.AllDirectories).OrderBy(entry => entry, StringComparer.Ordinal).ToArray();
         }
 
         private void AssertOptimized(GitAssetsConfiguration config, bool sparseIndex = true)

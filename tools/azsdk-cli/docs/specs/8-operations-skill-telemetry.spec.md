@@ -79,15 +79,7 @@ The inspected `Azure/azure-rest-api-specs` checkout registers `PostToolUse` and 
 
 ### Architecture and Responsibilities
 
-```mermaid
-flowchart LR
-    A[Skill instructions or deterministic collector] --> B[Atomic local ready-event queue]
-    B --> C[Common PostToolUse hook script]
-    C --> D[Validate, sanitize, claim, deduplicate]
-    D --> E[Shared azsdk telemetry sender]
-    E --> F[Application Insights]
-    C --> G[Bounded local delivery status]
-```
+![Common skill telemetry architecture](8-operations-skill-telemetry-architecture.png)
 
 | Component | Responsibility |
 |---|---|
@@ -166,15 +158,15 @@ Use compact common event names: optional `skill.started`, `skill.result`, and bo
 
 ### 3. Atomic Local Queue
 
-Use an untracked per-workspace/session queue under an approved local location. The adapter or shared helper supplies the queue root; producers cannot select an upload endpoint or an arbitrary queue directory. Two candidate roots satisfy the untracked isolation requirement:
+Use an untracked per-worktree/workspace queue under an approved local location so the producer writes and the hook sweeps the same queue. The adapter or shared helper supplies the queue root; producers cannot select an upload endpoint or an arbitrary queue directory.
 
-- **Git admin directory** (for example, `<git-dir>/azsdk-skill-telemetry/<opaque-session-id>/` resolved via `git rev-parse --git-dir`), which naturally isolates per-worktree state outside the working tree without separate workspace-ID mapping.
-- **Private OS application-data directory** (for example, `<local-app-data>/azsdk-skill-telemetry/<opaque-workspace-id>/<opaque-session-id>/`), which also works outside Git checkouts and keeps state completely outside repository administration directories.
+- **Default candidate — Git administrative directory** (as illustrated in the architecture diagram): `<git-dir>/azsdk-skill-telemetry/` resolved via `git rev-parse --git-dir` (`<repo>/.git/azsdk-skill-telemetry/<eventId>.ready.json` in a normal clone, or the worktree's own Git administrative folder in a linked worktree). This naturally isolates per-worktree state outside tracked files without separate workspace-ID mapping.
+- **Alternative — Private OS application-data directory**: `<local-app-data>/azsdk-skill-telemetry/<opaque-workspace-id>/<opaque-session-id>/`, which also works outside Git checkouts and keeps state completely outside repository administration directories.
 
-Within the selected session queue directory, the proposed file lifecycle layout is:
+Within the selected queue directory, the proposed file lifecycle layout is:
 
 ```text
-<session-queue-dir>/
+<queue-dir>/
     <eventId>.writing
     <eventId>.ready.json
     <eventId>.processing

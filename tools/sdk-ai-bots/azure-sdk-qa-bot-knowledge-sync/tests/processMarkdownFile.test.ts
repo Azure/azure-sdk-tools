@@ -54,7 +54,8 @@ describe('processMarkdownFile', () => {
       'documentation/validation/swagger-breaking-change.md',
       'documentation/x-ms-examples.md',
       'eng/tools/typespec-suppressions/README.md',
-      '.github/arm-leases/README.md'
+      '.github/arm-leases/README.md',
+      '.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md'
     ];
     const excluded = [
       'documentation/Getting started with OpenAPI specifications.md',
@@ -77,7 +78,7 @@ describe('processMarkdownFile', () => {
     tmpDirs.push(target);
     const sources = ConfigurationLoader.getDocumentationSources()
       .filter(source => source.folder === 'azure_rest_api_specs_docs');
-    expect(sources).toHaveLength(3);
+    expect(sources).toHaveLength(4);
     const filenames: string[] = [];
     for (const source of sources) {
       const sourceDir = path.join(root, path.relative('docs/azure-rest-api-specs', source.path));

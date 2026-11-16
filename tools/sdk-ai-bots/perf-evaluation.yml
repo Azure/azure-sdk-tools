@@ -29,6 +29,7 @@ parameters:
       - releasesupport
       - authoring
       - mcpserver
+      - apistewardshipboard
   - name: maxConcurrency
     type: number
     default: 2

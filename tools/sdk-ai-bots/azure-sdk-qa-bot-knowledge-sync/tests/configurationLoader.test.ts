@@ -97,6 +97,33 @@ describe('ConfigurationLoader', () => {
     ConfigurationLoader.setConfigPath(missing);
     expect(() => ConfigurationLoader.getDocumentationSources()).toThrow();
   });
+  it('selects maintained Stewardship documents without ingesting authorization YAML', () => {
+    const config = ConfigurationLoader.loadConfig();
+    const avocado = config.sources.find(source =>
+      source.repository.url === 'https://github.com/Azure/avocado.git');
+    expect(avocado?.repository.branch).toBe('main');
+    expect(avocado?.paths).toEqual([
+      expect.objectContaining({
+        path: '/README.md',
+        folder: 'azure_avocado_docs',
+        relativeByRepoPath: true,
+        metadata: { scope: 'branded' },
+      }),
+    ]);
+    const specs = config.sources.find(source =>
+      source.repository.url === 'https://github.com/Azure/azure-rest-api-specs.git');
+    expect(specs?.paths.map(item => item.path)).toEqual([
+      '/documentation',
+      '/eng/tools/typespec-suppressions/README.md',
+      '/.github/arm-leases/README.md',
+      '/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md',
+    ]);
+    expect(ConfigurationLoader.getRepositoryConfigs().find(repo => repo.name === 'avocado')
+      ?.sparseCheckout).toEqual(['/README.md']);
+    expect(ConfigurationLoader.getDocumentationSources().filter(source =>
+      source.folder === 'azure_rest_api_specs_docs'))
+      .toHaveLength(4);
+  });
 
   it('syncs Azure MCP contribution and evaluator guides with repository-relative citation paths', () => {
     const expectedPaths = [
@@ -185,9 +212,10 @@ describe('ConfigurationLoader', () => {
         metadata: { scope: 'branded' }
       }),
       expect.objectContaining({ path: '/eng/tools/typespec-suppressions/README.md' }),
-      expect.objectContaining({ path: '/.github/arm-leases/README.md' })
+      expect.objectContaining({ path: '/.github/arm-leases/README.md' }),
+      expect.objectContaining({ path: '/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md' })
     ]));
-    expect(specsSources[0].paths).toHaveLength(3);
+    expect(specsSources[0].paths).toHaveLength(4);
     expect(config.sources.some(
       source => source.repository.url === 'https://github.com/Azure/azure-rest-api-specs.wiki.git'
     )).toBe(false);
@@ -202,11 +230,12 @@ describe('ConfigurationLoader', () => {
     const sources = ConfigurationLoader.getDocumentationSources().filter(
       source => source.folder === 'azure_rest_api_specs_docs'
     );
-    expect(sources).toHaveLength(3);
+    expect(sources).toHaveLength(4);
     expect(sources.map(source => source.path)).toEqual([
       'docs/azure-rest-api-specs/documentation',
       'docs/azure-rest-api-specs/eng/tools/typespec-suppressions/README.md',
-      'docs/azure-rest-api-specs/.github/arm-leases/README.md'
+      'docs/azure-rest-api-specs/.github/arm-leases/README.md',
+      'docs/azure-rest-api-specs/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md'
     ]);
     expect(sources.every(source => source.citationRoot === 'docs/azure-rest-api-specs')).toBe(true);
     expect(sources.map(source => source.ignoredPaths)).toEqual([
@@ -219,6 +248,7 @@ describe('ConfigurationLoader', () => {
         'backlog-triage.md',
         'api-reviewer-agent.md'
       ],
+      undefined,
       undefined,
       undefined
     ]);

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net;
 using System;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Net.Http;
@@ -31,6 +32,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private const string RepositoryConfigurationMarker = "test-proxy-config-v1";
         // Exists in a new repository's git directory until its first checkout succeeds.
         private const string IncompleteInitializationMarker = "test-proxy-initializing";
+        private static readonly TimeSpan RepositoryLockTimeout = TimeSpan.FromMinutes(10);
+        private static readonly TimeSpan RepositoryLockRetryInterval = TimeSpan.FromMilliseconds(250);
 
         private HttpClient httpClient = new HttpClient();
         private IConsoleWrapper _consoleWrapper;
@@ -143,6 +146,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task<int> Push(string pathToAssetsJson, bool ignoreSecretProtection = false) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
+            using var repositoryLock = await LockRepositoryAsync(config);
 
             var initialized = IsAssetsRepoInitialized(config);
 
@@ -285,11 +289,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             await restoreQueue.EnqueueAsync(async () =>
             {
+                using var repositoryLock = await LockRepositoryAsync(config);
+
                 var initialized = IsAssetsRepoInitialized(config);
 
                 if (!initialized)
                 {
-                    InitializeAssetsRepo(config);
+                    InitializeAssetsRepoCore(config);
                 }
 
                 CheckoutRepoAtConfig(config, cleanEnabled: true);
@@ -308,16 +314,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task Reset(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var initialized = IsAssetsRepoInitialized(config);
             var allowReset = false;
+            string[] pendingChanges;
 
-            if (!initialized)
+            // The lock isn't held while waiting for an answer, so that other processes can use the repository meanwhile.
+            using (await LockRepositoryAsync(config))
             {
-                InitializeAssetsRepo(config);
-            }
+                var initialized = IsAssetsRepoInitialized(config);
 
-            SetOrigin(config);
-            var pendingChanges = DetectPendingChanges(config);
+                if (!initialized)
+                {
+                    InitializeAssetsRepoCore(config);
+                }
+
+                SetOrigin(config);
+                pendingChanges = DetectPendingChanges(config);
+            }
 
             if (pendingChanges.Length > 0)
             {
@@ -343,17 +355,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
             }
 
-            if (allowReset)
+            using (await LockRepositoryAsync(config))
             {
-                if (!string.IsNullOrWhiteSpace(config.Tag))
+                if (allowReset)
                 {
-                    Clean(config);
-                    CheckoutRepoAtConfig(config, cleanEnabled: false);
-                    await BreadCrumb.Update(config);
+                    if (!string.IsNullOrWhiteSpace(config.Tag))
+                    {
+                        Clean(config);
+                        CheckoutRepoAtConfig(config, cleanEnabled: false);
+                        await BreadCrumb.Update(config);
+                    }
                 }
-            }
 
-            HideOrigin(config);
+                HideOrigin(config);
+            }
         }
 
         private void Clean(GitAssetsConfiguration config)
@@ -455,10 +470,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// clone looks the same as being on the wrong tag. This variable allows us to prevent over-active cleaning that would result in exceptions.</param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled = true)
         {
-            CheckoutRepoAtConfig(config, cleanEnabled, settingsConfiguredDuringInitialization: false);
+            CheckoutRepoAtConfig(config, cleanEnabled, initializing: false);
         }
 
-        private void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled, bool settingsConfiguredDuringInitialization, bool tagFetched = false)
+        private void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled, bool initializing, bool tagFetched = false)
         {
             bool alreadyCheckedOut = Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag;
             string repositoryLocation = config.AssetsRepoLocation.ToString();
@@ -491,7 +506,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
                 SetOrigin(config);
 
-                if (configureRepository && !settingsConfiguredDuringInitialization)
+                if (configureRepository && !initializing)
                 {
                     GitHandler.Run(config,
                         "config --local remote.origin.partialCloneFilter blob:none",
@@ -527,9 +542,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 if (!alreadyCheckedOut)
                 {
                     GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
+
+                    if (initializing)
+                    {
+                        // The repository is complete now, so a later failure mustn't get it discarded.
+                        Directory.Delete(GetIncompleteInitializationMarker(config));
+                    }
                 }
 
-                if (configureRepository && !settingsConfiguredDuringInitialization)
+                if (configureRepository && !initializing)
                 {
                     // index.version only affects new indexes, so convert existing caches explicitly.
                     GitHandler.Run("update-index --index-version=4", config);
@@ -668,13 +689,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
             }
 
-            if (Assets.ContainsKey(config.AssetsJsonRelativeLocation.ToString()))
+            // The cache only records which tag was checked out; the repository can have been deleted or left incomplete since.
+            if (config.IsAssetsRepoInitialized() && !Directory.Exists(GetIncompleteInitializationMarker(config)))
             {
                 return true;
             }
 
-            // A repository whose initialization was interrupted has no checkout to restore from, so it is initialized again.
-            return config.IsAssetsRepoInitialized() && !Directory.Exists(GetIncompleteInitializationMarker(config));
+            Assets.TryRemove(config.AssetsJsonRelativeLocation.ToString(), out _);
+            return false;
         }
 
         /// <summary>
@@ -685,6 +707,21 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
         {
+            // Waiting synchronously can't deadlock, because the lock's retries don't resume on the caller's context.
+            using (LockRepositoryAsync(config).GetAwaiter().GetResult())
+            {
+                return InitializeAssetsRepoCore(config, forceInit);
+            }
+        }
+
+        /// <summary>
+        /// Initializes an asset repo for a given configuration. The caller must hold the repository's lock, which isn't reentrant.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="forceInit"></param>
+        /// <returns></returns>
+        private bool InitializeAssetsRepoCore(GitAssetsConfiguration config, bool forceInit = false)
+        {
             var workCompleted = false;
             var initQueue = InitTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
 
@@ -693,9 +730,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 var assetRepo = config.AssetsRepoLocation;
                 var initialized = IsAssetsRepoInitialized(config);
 
-                // An interrupted initialization has no recordings worth keeping, but its partial checkout would get in the
-                // way of the new one, so it is discarded entirely.
-                if (forceInit || Directory.Exists(GetIncompleteInitializationMarker(config)))
+                // Interrupted initializations, and git directories that earlier versions left without a repository, have no
+                // recordings worth keeping, but their files would get in the way of the new repository, so they're discarded.
+                if (forceInit || (!initialized && Directory.Exists(Path.Join(assetRepo, ".git"))))
                 {
                     DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
                     Directory.CreateDirectory(assetRepo.ToString());
@@ -733,8 +770,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         throw GenerateInvokeException(e.Result);
                     }
 
-                    CheckoutRepoAtConfig(config, cleanEnabled: false, settingsConfiguredDuringInitialization: true, tagFetched);
-                    Directory.Delete(GetIncompleteInitializationMarker(config));
+                    CheckoutRepoAtConfig(config, cleanEnabled: false, initializing: true, tagFetched);
                     workCompleted = true;
                 }
             });
@@ -778,6 +814,45 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private static string GetIncompleteInitializationMarker(GitAssetsConfiguration config)
         {
             return Path.Join(config.AssetsRepoLocation, ".git", IncompleteInitializationMarker);
+        }
+
+        /// <summary>
+        /// Waits for exclusive use of an assets repository, across Test Proxy processes. Operations hold the lock from before
+        /// they inspect the repository until they're done with it.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns>The lock, which is released when disposed. It isn't reentrant.</returns>
+        /// <exception cref="TimeoutException">Thrown if the repository is still in use after the timeout.</exception>
+        private async Task<FileStream> LockRepositoryAsync(GitAssetsConfiguration config)
+        {
+            // The lock file is next to the repository, rather than in it, because recovery deletes the repository's directory.
+            string lockPath = Path.Join(config.ResolveAssetsStoreLocation(), $"{config.AssetRepoShortHash}.lock");
+            Stopwatch waitTime = null;
+
+            while (true)
+            {
+                try
+                {
+                    // FileShare.None is a share-mode lock on Windows and an exclusive flock on Unix, which the OS releases
+                    // when the process exits. Read access lets processes running as other users open a lock file that root created.
+                    return new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.None);
+                }
+                catch (IOException e)
+                {
+                    if (waitTime == null)
+                    {
+                        waitTime = Stopwatch.StartNew();
+                        _consoleWrapper.WriteLine($"Waiting for another Test Proxy operation to finish with \"{config.AssetsRepoLocation}\"...");
+                    }
+                    else if (waitTime.Elapsed >= RepositoryLockTimeout)
+                    {
+                        throw new TimeoutException($"Another Test Proxy operation was still using \"{config.AssetsRepoLocation}\" after " +
+                            $"{RepositoryLockTimeout.TotalMinutes} minutes, holding the lock file \"{lockPath}\".", e);
+                    }
+                }
+
+                await Task.Delay(RepositoryLockRetryInterval).ConfigureAwait(false);
+            }
         }
 
         /// <summary>

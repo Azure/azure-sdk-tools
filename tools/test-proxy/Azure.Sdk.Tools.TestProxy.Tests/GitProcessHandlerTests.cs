@@ -168,6 +168,26 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+        [Fact]
+        public void GitDoesNotSearchParentDirectoriesForRepository()
+        {
+            string testFolder = TestHelpers.GetTmpPath();
+            try
+            {
+                var gph = new GitProcessHandler();
+                gph.Run("init --quiet", testFolder);
+                string assetsDirectory = Path.Join(testFolder, ".assets", "abc123");
+                Directory.CreateDirectory(assetsDirectory);
+
+                Assert.False(gph.TryRun("rev-parse --show-toplevel", assetsDirectory, out var result), result.StdOut);
+                Assert.Contains("not a git repository", result.StdErr);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
         private class TracingGitProcessHandler : GitProcessHandler
         {
             private readonly string _tracePath;

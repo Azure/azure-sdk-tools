@@ -1,12 +1,15 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Console;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -15,6 +18,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class GitStoreCheckoutTests : IDisposable
     {
+        private static readonly TimeSpan ConcurrencyTimeout = TimeSpan.FromMinutes(1);
         private readonly string _testFolder = TestHelpers.GetTmpPath();
         private readonly string _remotePath;
         private readonly string _languageRepo;
@@ -187,6 +191,90 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             AssertOptimized(config);
             Assert.Equal("recording version 1", File.ReadAllText(recordingPath));
             Assert.Empty(_store.DetectPendingChanges(config));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestoreWaitsWhileAnotherProcessInitializesRepository(string gitVersion)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            // Stores with separate git handlers share only the file system, like separate processes.
+            var otherGit = new LocalGitProcessHandler(_remotePath, _repositoryName) { GitVersion = _git.GitVersion };
+            var otherConsole = new RecordingConsoleWrapper();
+            var otherStore = new GitStore(otherConsole) { GitHandler = otherGit };
+            string incompleteMarker = Path.Join(config.AssetsRepoLocation, ".git", "test-proxy-initializing");
+            _git.PauseBeforeCommand = "-c advice.detachedHead=false checkout recordings_v1";
+
+            var restores = new List<Task> { Task.Run(() => _store.Restore(config.AssetsJsonLocation)) };
+            try
+            {
+                Assert.True(_git.Paused.Wait(ConcurrencyTimeout), "The first restore didn't reach its initial checkout.");
+                Assert.True(Directory.Exists(incompleteMarker));
+                restores.Add(Task.Run(() => otherStore.Restore(config.AssetsJsonLocation)));
+                Assert.True(otherConsole.WaitForLine("Waiting for another Test Proxy operation", ConcurrencyTimeout),
+                    "The second restore didn't wait for the first.");
+            }
+            finally
+            {
+                _git.Resume.Set();
+                await Task.WhenAny(Task.WhenAll(restores), Task.Delay(ConcurrencyTimeout));
+            }
+
+            var allRestores = Task.WhenAll(restores);
+            Assert.True(allRestores.IsCompleted, "The restores didn't finish.");
+            await allRestores;
+            Assert.DoesNotContain(otherGit.Commands, command =>
+                command.Contains(" clone ", StringComparison.Ordinal) || command.StartsWith("init ", StringComparison.Ordinal));
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+            Assert.False(Directory.Exists(incompleteMarker));
+            Assert.Empty(_store.DetectPendingChanges(config));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestoreRecoversInterruptedInitializationDespiteStaleBreadcrumb(string gitVersion)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            await _store.Restore(config.AssetsJsonLocation);
+            _git.FailCommandOnce = "-c advice.detachedHead=false checkout recordings_v1";
+            Assert.Throws<HttpException>(() => _store.InitializeAssetsRepo(config, forceInit: true));
+
+            // The breadcrumb still records the tag as checked out.
+            await new GitStore { GitHandler = _git }.Restore(config.AssetsJsonLocation);
+
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+            Assert.Empty(_store.DetectPendingChanges(config));
+        }
+
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData("2.45.4", false)]
+        [InlineData(null, true)]
+        [InlineData("2.45.4", true)]
+        public async Task RestoreRecreatesDeletedRepositoryWithoutChangingLanguageRepository(string gitVersion, bool leftoverGitDirectory)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            await _store.Restore(config.AssetsJsonLocation);
+            DirectoryHelper.DeleteGitDirectory(config.AssetsRepoLocation);
+            if (leftoverGitDirectory)
+            {
+                // Earlier versions left this behind after running their setup commands in the language repository instead.
+                Directory.CreateDirectory(Path.Join(config.AssetsRepoLocation, ".git", "test-proxy-config-v1"));
+            }
+
+            // The breadcrumb still records the tag as checked out.
+            await new GitStore { GitHandler = _git }.Restore(config.AssetsJsonLocation);
+
+            Assert.False(_git.TryRun("config --local --get-regexp \"^(remote\\.origin\\.partialclonefilter|protocol\\.version|index\\.version|core\\.sparsecheckout)\"",
+                _languageRepo, out var languageConfig), languageConfig.StdOut);
+            Assert.Equal($"git@github.com:{_repositoryName}.git", _git.Run("config --local --get remote.origin.url", _languageRepo).StdOut.Trim());
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+            AssertOptimized(config);
         }
 
         [Theory]
@@ -542,6 +630,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             public List<string> Commands { get; } = new List<string>();
             public string FailCommandOnce { get; set; }
+            public string PauseBeforeCommand { get; set; }
+            public ManualResetEventSlim Paused { get; } = new ManualResetEventSlim();
+            public ManualResetEventSlim Resume { get; } = new ManualResetEventSlim();
             public string GlobalConfigPath { get; set; }
             public bool AssumeDifferentOwner { get; set; }
 
@@ -576,6 +667,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             public override CommandResult Run(string arguments, string workingDirectory)
             {
                 Commands.Add(arguments);
+                if (arguments == PauseBeforeCommand)
+                {
+                    PauseBeforeCommand = null;
+                    Paused.Set();
+                    Resume.Wait(ConcurrencyTimeout);
+                }
                 if (arguments == FailCommandOnce)
                 {
                     FailCommandOnce = null;
@@ -594,6 +691,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Commands.Add(arguments);
                 return base.TryRun(arguments, workingDirectory, out result);
             }
+        }
+
+        private class RecordingConsoleWrapper : IConsoleWrapper
+        {
+            private readonly ConcurrentQueue<string> _lines = new ConcurrentQueue<string>();
+
+            public void Write(string message) => _lines.Enqueue(message);
+
+            public void WriteLine(string message) => _lines.Enqueue(message);
+
+            public string ReadLine() => throw new NotSupportedException();
+
+            public bool WaitForLine(string text, TimeSpan timeout) =>
+                SpinWait.SpinUntil(() => _lines.Any(line => line.Contains(text, StringComparison.Ordinal)), timeout);
         }
     }
 }

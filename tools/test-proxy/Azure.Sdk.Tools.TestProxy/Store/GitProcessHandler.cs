@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
@@ -125,6 +126,21 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             };
 
             startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
+
+            // Test Proxy runs git at the root of a repository, so git doesn't need to search parent directories for one.
+            // Without this limit, a command in an assets directory without a repository would use the language repository
+            // that contains the directory.
+            if (!string.IsNullOrEmpty(workingDirectory))
+            {
+                string parentDirectory = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(workingDirectory)));
+                if (!string.IsNullOrEmpty(parentDirectory))
+                {
+                    startInfo.Environment.TryGetValue("GIT_CEILING_DIRECTORIES", out string ceilingDirectories);
+                    startInfo.Environment["GIT_CEILING_DIRECTORIES"] = string.IsNullOrEmpty(ceilingDirectories)
+                        ? parentDirectory
+                        : parentDirectory + Path.PathSeparator + ceilingDirectories;
+                }
+            }
 
             if (SupportsHttpRateLimitRetries)
             {

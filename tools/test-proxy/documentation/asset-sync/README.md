@@ -81,9 +81,17 @@ Asset repositories use:
 
 Existing caches are upgraded in place on their first restore. Successful setup is recorded by a versioned marker in the
 repository's Git metadata, so later proxy instances reuse that configuration without running setup commands again.
-If the initial clone or tag fetch fails, nothing is left behind. If creating an asset repository is otherwise
-interrupted, such as by a failed checkout, the next restore discards the incomplete repository, including any files it
-already checked out, and creates it again.
+If the initial clone or tag fetch fails, nothing is left behind. An asset repository that was deleted, or whose creation
+was interrupted, such as by a failed checkout, is created again on the next restore, even if the breadcrumb still lists
+it. An incomplete repository is discarded first, including any files it already checked out. Git commands only use the
+repository in their working directory, so they never fall back to the language repository that contains `.assets`.
+
+Restores, pushes, and resets of an asset repository run one at a time, including in separate Test Proxy processes that
+share a storage location, such as when `go test ./...` tests packages in parallel. Each holds a lock on the file
+`.assets/<hash>.lock`, next to the repository's `.assets/<hash>` directory, from before it inspects the repository until
+it's done; a reset releases it while it asks for confirmation. The OS releases the lock if its process exits. Others
+report that they're waiting, and give up after 10 minutes.
+
 Restoring the same tag preserves staged, unstaged, and untracked recordings, without cleaning or checking out the tag
 again. Existing objects are retained, and subsequent fetches use the blobless filter; old trees that were not
 downloaded previously can still require lazy fetching. Switching to a different tag retains the existing behavior of

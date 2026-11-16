@@ -1,0 +1,53 @@
+# Pipeline template — HTTP smoke probe.
+#
+# Required pipeline variables: AZURE_SERVICE_CONNECTION, AZURE_RESOURCE_GROUP.
+
+parameters:
+    - name: appName
+      type: string
+    - name: healthPath
+      type: string
+      default: '/health'
+    - name: easyAuthAudience
+      type: string
+      default: '' # set to require Entra bearer for the probe
+    - name: maxAttempts
+      type: number
+      default: 12
+    - name: waitSeconds
+      type: number
+      default: 10
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'Smoke test ${{ parameters.appName }}${{ parameters.healthPath }}'
+      inputs:
+          azureSubscription: $(AZURE_SERVICE_CONNECTION)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+              set -euo pipefail
+              APP_HOST=$(az webapp show --name "${{ parameters.appName }}" --resource-group "$AZURE_RESOURCE_GROUP" --query defaultHostName -o tsv)
+              URL="https://${APP_HOST}${{ parameters.healthPath }}"
+
+              CURL_ARGS=(--silent --show-error --output /dev/null --write-out '%{http_code}')
+              if [ -n "${{ parameters.easyAuthAudience }}" ]; then
+                TOKEN=$(az account get-access-token --resource "${{ parameters.easyAuthAudience }}" --query accessToken -o tsv)
+                CURL_ARGS+=(--header "Authorization: Bearer $TOKEN")
+              fi
+
+              echo "Probing $URL"
+              for i in $(seq 1 ${{ parameters.maxAttempts }}); do
+                if ! STATUS=$(curl "${CURL_ARGS[@]}" "$URL"); then
+                  echo "##[warning]HTTP probe failed for $URL on attempt $i."
+                  STATUS=000
+                fi
+                if [ "$STATUS" = "200" ]; then
+                  echo "  ✓ healthy (HTTP $STATUS) after attempt $i"
+                  exit 0
+                fi
+                echo "  attempt $i: HTTP $STATUS"
+                sleep ${{ parameters.waitSeconds }}
+              done
+              echo "##[error]Smoke test failed for $URL"
+              exit 1

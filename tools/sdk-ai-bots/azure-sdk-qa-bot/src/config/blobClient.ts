@@ -16,7 +16,7 @@ class BlobClientManager {
   private readonly maxRetry: number;
 
   private constructor(maxRetry: number = DEFAULT_MAX_RETRY) {
-    this.botId = config.MicrosoftAppId;
+    this.botId = config.userManagedIdentityClientID;
     this.maxRetry = maxRetry;
   }
 

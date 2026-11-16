@@ -1,0 +1,259 @@
+# Environment Contract
+
+The environment-suite (`infra/environments/environment-suite.yaml`) is the
+**only** place in the deployment tree where the following values are
+declared:
+
+- environment names (`dev`, `preview`, `prod`)
+- target subscription ID
+- tenant ID
+- fixed backend application client ID and Application ID URI
+- resource group prefix
+- deployment location
+- whether local provision and deploy operations are allowed
+- whether the chatbot evolution workflow is enabled
+- candidate environment used by the production evolution workflow
+- Teams group ID and channel IDs
+- fixed Bicep resource-name and identity overrides
+- per-component health paths
+
+Every pipeline reads this file via `pipelines/templates/load-environment-suite.yml`.
+Azure DevOps requires service connections during template expansion, so
+`pipelines/templates/service-connection.yml` owns their aliases. Keep each
+connection's target subscription synchronized with the corresponding
+`subscriptionId` here.
+
+The configured `resourceGroupPrefix` identifies an existing resource group.
+Provisioning checks that group and deploys only resource-group-scoped
+templates; no subscription deployment or resource-group creation layer runs.
+
+## Schema
+
+```yaml
+environments:
+    <env>:
+        subscriptionId: GUID
+        tenantId: GUID
+        serverApplicationClientId: GUID
+        serverApplicationIdUri: string # api:// or https:// URI
+        resourceGroupPrefix: string
+        location: string
+        appConfigName: string
+        containerRegistryName: string
+        frontendSiteName: string
+        agentServerSiteName: string
+        teamsAppId: GUID
+        aiLocation: string
+        cosmosDbLocation: string
+        chatbotEvolutionAgentEnabled: bool
+        candidateEnvironment: string? # required when evolution is enabled
+        bicepOverrides: Record<string, string>?
+        teamsGroupId: string
+        teamsChannelIds: string[]
+        azureMcpTeamsGroupId: string
+        azureMcpTeamsChannelIds: string[]
+        localDeployAllowed: bool
+
+components:
+    <component>:
+        healthPath: string
+```
+
+Subscription IDs, names, locations, routing, identity overrides, and feature
+flags actively drive provisioning and deployment. Approval is expressed by the
+pipeline stage graph. Component health paths drive local smoke tests, and the
+full-stack pipeline gates frontend deployment on the agent-server readiness
+probe. Release health follows the verification steps in the
+[deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
+
+## Validation
+
+Run `npm run validate-env-suite` to validate all environments, or append
+`-- --environment dev` for an environment-scoped check. In addition to required
+values and placeholders, the validator checks that `config/<env>/channel.yaml`
+exactly matches the union of `teamsChannelIds` and
+`azureMcpTeamsChannelIds`, every route tenant is defined, and tenant links
+target the corresponding primary or Azure MCP Server Teams group.
+The MCP group and channel list must either both be set or both be empty.
+Dev includes its MCP channel in the primary listener. Preview and production
+configure a second listener for the production MCP team.
+
+## Local azd sync
+
+`azd` reads `.azure/<env>/.env`, not `environment-suite.yaml` directly. To
+keep the two in sync on a developer workstation:
+
+```bash
+npm run sync-env-suite -- --environment <env>
+```
+
+This script reads the per-env block from `environment-suite.yaml` and calls
+`azd env set` for each mapped key (`AZURE_SUBSCRIPTION_ID`,
+`AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`,
+`CONTAINER_REGISTRY_NAME`, `APP_CONFIG_NAME`,
+`AZURE_APPCONFIG_ENDPOINT`, `CANDIDATE_APPCONFIG_ENDPOINT`,
+`CHATBOT_EVOLUTION_AGENT_ENABLED`, `SERVER_APPLICATION_CLIENT_ID`,
+`SERVER_APPLICATION_ID_URI`) plus every entry in
+`bicepOverrides`. It also sets `AZD_IMAGE_TAG` to the environment name for local
+native container builds. Deployment pipelines do not run this script; they set
+an immutable reviewed tag immediately before `azd deploy`.
+
+Teams routing values are suite-owned and copied into the local azd environment:
+`teamsGroupId` → `TEAMS_GROUP_ID`, and the `teamsChannelIds` array →
+comma-separated `TEAMS_CHANNEL_IDS`. The Azure MCP Server equivalents map to
+`AZURE_MCP_TEAMS_GROUP_ID` and `AZURE_MCP_TEAMS_CHANNEL_IDS`. Pipelines export
+the same values directly from the suite. `serverApplicationClientId` becomes
+`SERVER_APPLICATION_CLIENT_ID` for Easy
+Auth. `serverApplicationIdUri` becomes `SERVER_APPLICATION_ID_URI`, and the
+frontend Bicep adapter derives its scope as `<serverApplicationIdUri>/.default`
+without persisting a second environment value. The Entra
+application is created separately with `scripts/create-entra-app.ts`; azd and
+the pipelines never manage it through Microsoft Graph.
+
+The preprovision hook detects the active login as
+`DEPLOYMENT_PRINCIPAL_ID` independently of `DEVELOPER_PRINCIPAL_ID`. This keeps
+pipeline WIF grants separate from developer access. The developer principal is
+configuration-owned and must be set explicitly in `bicepOverrides`; the hook
+never substitutes the deployment identity when it is absent.
+
+Every provision reconciles the required resource roles through layer
+postprovision hooks. Existing direct or inherited grants are reused; missing
+grants are created before application deployment. Bicep manages resource shape
+and locks, while the final postprovision hook always uploads bot routing,
+reconciles Search, and seeds App Configuration.
+
+Operators bootstrap the deployment identity's resource-management and
+authorization-write permissions. They do not need to manually preassign each
+Storage, Search, App Configuration, Cosmos, or Foundry data role.
+
+Existing environments can also carry adopted live-state values in
+`bicepOverrides`. These include stable resource IDs and principal IDs, JSON
+maps of user-assigned identities, Cosmos
+capabilities, Search knowledge-retrieval tier, model capacities, and telemetry
+retention. JSON-valued entries remain strings in YAML and are decoded by the
+layer's `main.bicepparam`. Do not copy these values to a fresh environment:
+first read the target resource state and use preview to prove that no identity,
+policy, immutable partition key, or model capacity will be removed.
+
+`SEARCH_USER_ASSIGNED_IDENTITIES` and `MANAGED_IDENTITY_RESOURCE_ID` select the
+existing shared identity for new Search datasources when it is attached to the
+service. Identity matching is case-insensitive for ARM resource IDs. Existing
+datasources retain their explicit identity on reconciliation, and the shared
+identity's Blob access is reused rather than adding an unused system-identity
+Blob Reader grant. Fresh services without an attached shared identity retain the
+system-assigned default.
+
+The dev registry sets `CONTAINER_REGISTRY_IS_EXISTING=true` because it retains
+identities from both dev and production. A resource-group-scoped developer
+cannot reassign the production identity, so shared-resource provisioning reads
+the registry as an existing resource rather than issuing a registry PUT.
+
+For the adopted dev environment, the suite supplies stable cross-layer
+outputs. Container image outputs remain azd-owned; a saved image must belong
+to the selected environment's ACR.
+
+The existing agent-server site has a `digital-avatar` slot. Dev therefore sets
+`AZD_DEPLOY_AGENT_SERVER_SLOT_NAME=production` so local and pipeline deployment
+target the main site explicitly and leave the secondary slot untouched.
+
+Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
+needed by that layer. Pipeline preview and apply use the same layer adapters.
+
+## Preview resource ownership
+
+Preview targets subscription `a18897a6-7e44-457d-9260-f2854c0aca42` and resource
+group `azure-sdk-qa-bot-test`. Its name overrides reuse the existing test-group
+resources:
+
+| Component | Existing name |
+| --- | --- |
+| Frontend site, identity, App Service plan, workspace, and bot | `azsdkqabottest` |
+| Container registry | `azsdkqabottest` |
+| App Configuration | `azuresdkqabot-preview-config` |
+| Backend site and Application Insights | `azuresdkqabot-test-server` |
+| Frontend Application Insights | `azsdkqabottest-insights` |
+| Agent log workspace | `azuresdkqabot-test-log` |
+| Primary Logic App | `azuresdkqabot-test-logicapp` |
+
+The frontend diagnostic setting, alerts, and resource-group delete lock also
+retain their existing names. Backend Application Insights reuses the
+`azsdkqabottest` workspace.
+
+The deployment contract plans preview-owned Storage, Search, Cosmos DB,
+Foundry, a shared runtime identity, backend App Service plan, Teams connection,
+and integration account. These are not existing resources in the test group.
+Preview intentionally monitors the same production Teams channels as
+production: 11 channels in the SDK team
+(`3e17dcb0-4257-4a30-b843-77f47f1d4121`) and one channel in the MCP team
+(`256e3336-e328-4683-a24a-7a36c8a123fc`). Channel routes and tenant links match
+production, but `${SERVER_BASE_URL}` resolves to preview's backend.
+The MCP listener is preview-owned, as are its connector and identities.
+Sharing Teams channels does not adopt production Azure resources.
+
+The existing backend and Logic App currently reference dev/prod hosting,
+identities, and connector resources. A future approved deployment of this
+contract will move those dependencies to preview-owned resources and use
+`TeamsChannelConversationsPreview` in preview Storage. It must include the
+application rollout, Search/routing setup, and new Teams connection consent;
+do not reuse production resource names to satisfy missing preview dependencies.
+The current Azure resources and stored App Configuration values are not changed
+by editing this contract.
+
+## Branch-based agent routing
+
+`ENABLE_AI_FOUNDRY_AGENT_ROUTING` is set through `bicepOverrides`: `true` for
+dev and `false` for preview and production. The agent-server layer applies it as
+an App Service setting. Both hosted-agent deployment paths tag dev Foundry
+versions with `metadata.branchname`, using `BUILD_SOURCEBRANCH` in Azure
+DevOps or the checked-out Git branch for local native azd deployment.
+Requests prefixed with `[branch:feature/name]` can select an active dev
+version. Routing-disabled environments reject those requests.
+
+## Environment variable ownership
+
+Use one variable per meaning. Similar-looking variables are retained only when
+they cross different contracts:
+
+| Variable or pair | Ownership and reason |
+| --- | --- |
+| `AZURE_ENV_NAME` | azd-owned logical environment name. Hooks and image naming consume it; project code must not create an alias. |
+| `AZD_IMAGE_TAG` | Deployment-owned immutable image tag. Local sync initializes it to the environment name; pipelines replace it with the reviewed tag. |
+| `CONTAINER_REGISTRY_NAME` / `AZURE_CONTAINER_REGISTRY_ENDPOINT` | ARM resource name versus ACR login server. Azure CLI and Bicep need the name; azd image references need the endpoint. |
+| `APP_CONFIG_NAME` / `AZURE_APPCONFIG_ENDPOINT` | ARM resource name versus runtime data-plane endpoint. CLI operations need the name; hosted services need the endpoint. |
+| `SERVER_APPLICATION_CLIENT_ID` / `SERVER_APPLICATION_ID_URI` | Entra application client ID versus Application ID URI. Easy Auth registration and token audiences use different forms. |
+| `<NAME>_OVERRIDE` / `<NAME>` | Desired resource name versus deployed layer output. The override survives `azd env refresh`; the canonical output feeds downstream layers and hooks. |
+| `*_IMAGE_REPOSITORY` / `AZD_IMAGE_TAG` | Repository names derive from `azure.yaml`; provisioning baselines add an environment tag, while application deployment uses the reviewed immutable tag. |
+| `SERVICE_AGENT_SERVER_IMAGE_NAME` | azd-owned full image actually published for agent-server. Bicep prefers it during reprovisioning so it does not restore a placeholder image. |
+| `BOT_ID` / `AZURE_CLIENT_ID` | The frontend UAMI client ID under two external contracts: Bot Framework application ID and Azure Identity's standard selector. |
+
+Postprovision seeds the routing settings used by the backend and feedback jobs:
+
+| App Configuration key | Deployed value |
+| --- | --- |
+| `STORAGE_CONFIG_CONTAINER` | `bot-configs` |
+| `CHANNEL_CONFIG_BLOB` | `channel.yaml` |
+
+The `preprovision` hook detects drift on every `azd provision` and fails fast
+if the azd env is out of sync, pointing you back at this script. Pipelines
+are unaffected — they read the suite directly via
+`pipelines/templates/load-environment-suite.yml` and never touch
+`.azure/<env>/.env`.
+
+## Adding a new environment
+
+1. Add a top-level block under `environments:` in `environment-suite.yaml`.
+2. Run `scripts/create-entra-app.ts`, then add its client ID and Application ID
+    URI to the environment block.
+3. Add any existing-resource pins under the environment's `bicepOverrides`.
+4. Add the environment's service-connection alias to
+    `pipelines/templates/service-connection.yml` and ensure the connection targets
+    the configured `subscriptionId`.
+5. Authorize Azure DevOps to use the connection while compiling and running the
+    deployment pipeline.
+6. Restrict that connection to the intended pipelines and configure any
+    required approvals or branch-control checks on the connection.
+7. Re-run `npm run validate-env-suite`.
+8. For a new preview or production environment, implement an approved
+    first-state bootstrap pipeline. The normal full-stack preview requires
+    existing layer state, and local deployment is disabled for those
+    environments.

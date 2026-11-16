@@ -5,9 +5,8 @@
 # `wiki` container. The dedicated Azure AI Search indexer picks the pages up on
 # its own schedule.
 #
-# Dev and prod share this file; each ADO definition supplies its own
-# AZURE_APPCONFIG_ENDPOINT and SERVICE_CONNECTION, and every other setting is
-# read from that App Configuration store.
+# The selected deployment environment supplies its service connection and App
+# Configuration store. Every runtime setting is read from that store.
 
 name: Build Azure SDK QA Bot Wiki
 
@@ -23,6 +22,11 @@ schedules:
     always: true
 
 parameters:
+  - name: environment
+    displayName: 'Target environment'
+    type: string
+    default: prod
+    values: [dev, preview, prod]
   - name: minDocs
     displayName: 'Minimum documents an entity/concept needs before it gets a page'
     type: number
@@ -31,6 +35,9 @@ parameters:
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
   - template: /eng/pipelines/templates/variables/image.yml
+  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml
+    parameters:
+      environment: ${{ parameters.environment }}
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index'
   - name: PythonIndexUrl
@@ -57,15 +64,19 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
 
+              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                parameters:
+                  environment: ${{ parameters.environment }}
+
               - task: PipAuthenticate@1
                 displayName: 'Authenticate pip to Azure Artifacts'
                 inputs:
                   artifactFeeds: 'public/azure-sdk-for-python'
 
               - task: AzureCLI@2
-                displayName: 'Build wiki pages'
+                displayName: 'Build and index wiki pages'
                 inputs:
-                  azureSubscription: $(SERVICE_CONNECTION)
+                  azureSubscription: $(AZURE_SERVICE_CONNECTION)
                   # DefaultAzureCredential would otherwise pick up the build
                   # agent's own managed identity, which has no access to the
                   # bot's resources; exporting the service connection's
@@ -90,6 +101,9 @@ extends:
 
                     python -m wiki_index.main \
                       --min-docs ${{ parameters.minDocs }}
+
+                    bash "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/run-search-indexer.sh" AI_SEARCH_WIKI_INDEXER
                 env:
+                  APP_CONFIG_NAME: $(APP_CONFIG_NAME)
                   AZURE_CORE_WELCOME_MESSAGE: 'false'
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

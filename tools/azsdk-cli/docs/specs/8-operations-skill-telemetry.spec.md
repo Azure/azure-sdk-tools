@@ -1,4 +1,4 @@
-<!-- cspell:words allowlist allowlists azsdk AZSDKTOOLS contoso deduplicate deduplication finalizer reentrancy revalidate typespec untracked worktree worktrees -->
+<!-- cspell:words azsdk AZSDKTOOLS contoso deduplicate deduplication revalidate typespec untracked worktree worktrees -->
 
 # Spec: 8-Operations - Common Skill Telemetry
 
@@ -16,11 +16,11 @@ Today, [`azsdk_tool_telemetry.ps1`](https://github.com/Azure/azure-sdk-tools/blo
 
 | Category | Already recorded automatically (zero skill-owner work) | Not supported today (gap) |
 | --- | --- | --- |
-| Skill identity & timing | `event_type = skill_invocation`, `skill_name`, and activity timestamp in Application Insights `dependencies` | Whether the skill actually finished, succeeded, failed, or was only read without executing |
-| Host & session metadata | `client_name` (`vscode` if `tool_use_id` contains `_vscode-`, otherwise `copilot-cli`), optional `session_id`, plus CLI `azsdk_tool_version`, `dev_device_id`, `mac_address_hash`, and `event_id` | Verified `copilot-app` surface attribution (currently falls back to `copilot-cli`) and stable per-event retry deduplication |
-| Domain / outcome metrics | Separate MCP tool calls emit their own tool-level telemetry | **Skill-specific customized telemetry** (e.g., [#17228](https://github.com/Azure/azure-sdk-tools/issues/17228): which `.tsp` files and line ranges changed, artifact finding counts, or workflow outcomes) without collecting raw prompts |
+| Skill invocation | `event_type = skill_invocation`, `skill_name`, and timestamp in Application Insights `dependencies` | Whether the skill finished, succeeded, or failed |
+| Client & session info | `client_name` (`vscode` if `tool_use_id` contains `_vscode-`, otherwise `copilot-cli`), optional `session_id`, plus CLI `azsdk_tool_version`, `dev_device_id`, `mac_address_hash`, and `event_id` | Distinguishing `copilot-app` from `copilot-cli` (today both are recorded as `copilot-cli`) |
+| Customized skill metrics | Separate MCP tool calls record their own tool-level telemetry | **Skill-specific customized telemetry** (e.g., [#17228](https://github.com/Azure/azure-sdk-tools/issues/17228): changed `.tsp` files and line ranges, finding counts, or workflow outcomes) without collecting user prompts |
 
-Because Azure SDK has many pure-prompt and script-backed skills across languages and planes, this spec extends the existing hook and Application Insights pipeline so any skill needing **customized outcome telemetry** can emit validated structured data—using `azure-typespec-author` throughout as the running example.
+Because Azure SDK has many pure-prompt and script-backed skills across languages and planes, this spec extends the existing hook and Application Insights pipeline so any skill needing **customized telemetry** can record validated structured fields—using `azure-typespec-author` throughout as the running example.
 
 ## Design Proposal
 
@@ -30,16 +30,16 @@ Because Azure SDK has many pure-prompt and script-backed skills across languages
 
 | Component | Owner | Responsibility |
 | --- | --- | --- |
-| Skill contract & producer | Skill owner | Define a versioned JSON schema (`telemetry/result.schema.json`) and produce a local `.ready.json` event when enabled (no direct upload) |
-| Local ready queue | Shared helper | Untracked per-worktree directory (`<git-dir>/azsdk-skill-telemetry/`) storing atomic `<eventId>.ready.json` files |
-| Common `PostToolUse` hook | Shared framework | Check consent, atomically claim ready files, validate schema and path rules, and call the shared CLI sender |
-| Shared `azsdk` sender | Shared framework | Revalidate against pinned schemas, redact wrapper args, preserve `eventId` for deduplication, and flush to Application Insights |
+| Skill schema & collector | Skill owner | Define a JSON schema (`telemetry/result.schema.json`) and write a local `.ready.json` file when telemetry is enabled (no direct upload) |
+| Local queue folder | Shared helper | Untracked per-worktree folder (`<git-dir>/azsdk-skill-telemetry/`) holding `<eventId>.ready.json` files |
+| Common `PostToolUse` hook | Shared framework | Check opt-out, claim `.ready.json` files, validate schema and relative paths, and call `azsdk ingest-telemetry` |
+| Shared `azsdk` sender | Shared framework | Revalidate schema, keep `eventId` for deduplication, and flush approved fields to Application Insights |
 
-### 1. Event Envelope and Privacy
+### 1. Event Format and Privacy
 
-Each participating skill declares a pinned schema (`schemaId` + `schemaVersion`) covering common fields and skill-specific `data`. Unknown schemas, unapproved versions, or extra properties are rejected.
+Each skill that needs customized telemetry defines a versioned JSON schema (`schemaId` + `schemaVersion`) for its `data` payload. Unknown schemas or unexpected fields are rejected.
 
-Illustrative `skill.result` event (using `azure-typespec-author` as the example):
+Example `skill.result` file written by `azure-typespec-author`:
 
 ```json
 {
@@ -50,7 +50,6 @@ Illustrative `skill.result` event (using `azure-typespec-author` as the example)
   "schemaId": "azure-typespec-author.result",
   "schemaVersion": 1,
   "occurredAtUtc": "2026-11-02T07:00:00Z",
-  "hostContext": { "invocationSurface": "vscode", "verification": "host-adapter" },
   "data": {
     "status": "succeeded",
     "updatedFiles": [
@@ -69,43 +68,42 @@ Illustrative `skill.result` event (using `azure-typespec-author` as the example)
 }
 ```
 
-- **Identifiers & surface**: `invocationId` groups events from one skill run; `eventId` is an immutable UUID reused across retries for KQL deduplication. Host adapters verify `invocationSurface` (`vscode`, `copilot-cli`, `copilot-app`, or `unknown`).
-- **Privacy boundary**: Never collect prompts, source code, free-text findings, absolute paths, or raw tool arguments. Disable `UserPromptSubmit` prompt collection where required, enforce repository-relative path allowlists, honor `AZSDKTOOLS_COLLECT_TELEMETRY=false` and host telemetry consent, and redact `--event-file` from `CommandExecuted` wrapper telemetry.
+- **IDs**: `invocationId` groups events from one skill run; `eventId` is a fixed UUID kept across retries so KQL queries can deduplicate.
+- **Privacy rules**: Never collect user prompts, source code, free-text findings, or local absolute paths. Only allow repo-relative paths, respect `AZSDKTOOLS_COLLECT_TELEMETRY=false`, and do not log raw `--event-file` contents in CLI command telemetry.
 
-### 2. Shared Queue and Hook Delivery
+### 2. Local Queue and Hook Delivery
 
-1. **Publish**: When telemetry is enabled, the producer writes `<eventId>.writing`, closes it, and atomically renames it to `<git-dir>/azsdk-skill-telemetry/<eventId>.ready.json` (resolved via `git rev-parse --git-dir` for worktree isolation, e.g., `azure-rest-api-specs\.git\azsdk-skill-telemetry\`; private OS app-data is an alternative outside Git).
-2. **Claim & validate**: On `PostToolUse`, the common hook checks consent and a reentrancy guard, sweeps bounded ready files (e.g., <= 32 KiB/event, 24h TTL, <= 3 attempts), atomically renames `.ready.json` to `.processing`, and rejects symlinks, traversal, or invalid schemas.
-3. **Export & fail-open**: The hook invokes `azsdk ingest-telemetry --client-type <verified-surface> --event-file <claimed-file>`, which revalidates the pinned schema and exports approved tags to Application Insights (`dependencies.customDimensions`). Errors never block user work; transient failures retry within bounds, and opt-out purges queued files without replay.
+1. **Write ready file**: When telemetry is enabled, the skill writes `<eventId>.writing` and renames it to `<git-dir>/azsdk-skill-telemetry/<eventId>.ready.json` (using `git rev-parse --git-dir`, e.g., `azure-rest-api-specs\.git\azsdk-skill-telemetry\`, so `git status` stays clean and worktrees stay isolated).
+2. **Claim & validate**: On `PostToolUse`, the common hook checks opt-out, renames `.ready.json` to `.processing`, and drops oversized, expired, or invalid files.
+3. **Send & fail-open**: The hook runs `azsdk ingest-telemetry --client-type <client> --event-file <file>`, which validates the schema and exports approved fields to Application Insights (`dependencies.customDimensions`). Failures never block user work; transient send errors retry within a small cap, and opting out deletes queued files.
 
 ## What Skill Owners Do to Add Customized Telemetry
 
-- **If a skill only needs invocation counts**: **No action is needed.** The existing `PostToolUse` hook already records `skill_invocation` automatically.
-- **If a skill needs customized outcome telemetry**: Skill owners never write hook registration, retry, or Application Insights upload code. They only implement three skill-local pieces:
+- **If a skill only needs invocation counts**: **Do nothing.** The existing `PostToolUse` hook already records `skill_invocation` automatically.
+- **If a skill needs customized telemetry**: Skill owners do **not** write hooks, retry logic, or Application Insights upload code. They only add three things in their skill:
 
-| Step | What the skill owner provides | Example: `azure-typespec-author` |
+| Step | What the skill owner does | Example: `azure-typespec-author` |
 | --- | --- | --- |
-| 1. Define & register schema | Add `telemetry/result.schema.json` (`schemaId` + `schemaVersion`, typed `data` fields, value/path bounds) and register it for privacy/CLI validation | Defines `azure-typespec-author.result` v1 allowing repository-relative `.tsp` `updatedFiles` (`modified\|created\|deleted\|renamed`), hunk `changedRanges`, and `totals` (splitting oversized lists into `skill.detail` events) |
-| 2. Compute & publish `.ready.json` | Provide a deterministic collector script (preferred when local files/artifacts exist) or a bounded JSON-write instruction that checks opt-out and atomically publishes `<eventId>.ready.json` | Provides a collector with `begin` (snapshots dirty/staged/untracked pre-edit state rather than assuming `HEAD`) and `complete` (diffs final working tree and writes `<git-dir>/azsdk-skill-telemetry/<eventId>.ready.json`). *(Single-step or artifact-producing skills skip `begin` and only publish at completion.)* |
-| 3. Trigger from `SKILL.md` | Add a brief step in `SKILL.md` (or call from an existing finalizer script) at the exact boundary where the outcome is valid | `SKILL.md` runs `begin` once the target specification directory is selected, and runs `complete` right after TypeSpec validation finishes |
+| 1. Define JSON schema | Add `telemetry/result.schema.json` (`schemaId`, `schemaVersion`, and allowed `data` fields) | Defines `azure-typespec-author.result` v1 with repo-relative `.tsp` `updatedFiles`, line `changedRanges`, and `totals` |
+| 2. Write `.ready.json` | Add a small collector script (preferred when reading local files/diffs) or JSON-write step that checks opt-out and writes `<eventId>.ready.json` | Script provides `begin` (records pre-edit git state before touching `.tsp` files) and `complete` (diffs final changes and writes `.ready.json`). *(Skills that only summarize final outputs skip `begin`.)* |
+| 3. Call from `SKILL.md` | Add a step in `SKILL.md` (or existing script) to run the collector when the skill finishes | `SKILL.md` runs `begin` before editing TypeSpec files and `complete` right after TypeSpec validation |
 
-Once `<eventId>.ready.json` is written, the shared `PostToolUse` hook and `azsdk` sender automatically claim, validate, deduplicate, and export it to Application Insights.
+Once `<eventId>.ready.json` is written, the shared `PostToolUse` hook and `azsdk` CLI automatically validate and send it to Application Insights.
 
 ## Alternatives Considered
 
-| Area | Primary: ready-event queue + common hook/sender | Alternative: per-skill post-hook + direct emission |
+| Area | Primary: local `.ready.json` queue + shared hook/sender | Alternative: custom post-hook per skill + direct send |
 | --- | --- | --- |
-| Skill coverage | Works across pure-prompt, multi-edit, and scripted skills | Fits scripted skills, awkward for pure-prompt skills without custom runners |
-| Privacy & governance | Single reviewed export boundary, consent check, and schema registry | Every skill script must duplicate consent, allowlist, and destination enforcement |
-| Reliability | Atomic local handoff with bounded retries and deduplication | Direct network sends risk hook timeouts or lost events without per-skill buffering |
-| Skill-owner effort | Define schema + write local `.ready.json` only | Own cross-host hook dispatch, retries, and exporter integration per skill |
+| Skill support | Works for both pure-prompt skills and script-backed skills | Easy for scripted skills, awkward for pure-prompt skills |
+| Privacy review | One shared validation and upload point in `azsdk` | Every skill script must implement its own opt-out and field checks |
+| Reliability | Fast local file write; hook handles retries and deduplication | Network sends inside skill scripts can slow down or fail the skill |
+| Skill-owner effort | Only define schema + write local `.ready.json` | Maintain hook scripts, client detection, and App Insights upload per skill |
 
-**Recommendation:** Use the local ready-event queue with the common `PostToolUse` hook and `azsdk` sender by default; keep only domain metric calculation inside each skill.
+**Recommendation:** Use the local `.ready.json` queue with the shared `PostToolUse` hook and `azsdk` sender, keeping only domain metric calculation inside each skill.
 
 ## Open Questions
 
-- [ ] Which host versions support `PostToolUse` reliably and expose verified `copilot-app` attribution?
-- [ ] Should non-Git workspaces fall back to a private OS app-data queue alongside `<git-dir>/azsdk-skill-telemetry/`?
-- [ ] Does privacy review allow plain repository-relative paths (e.g., `specification/...` or SDK package paths), or require partial hashing/redaction?
-- [ ] How should pinned skill schemas be versioned and synced when canonical skills live in external repositories (such as `Azure/azure-rest-api-specs`)?
+- [ ] **How to detect `copilot-app`**: Today `azsdk_tool_telemetry.ps1` only checks whether `tool_use_id` contains `_vscode-` and labels everything else `copilot-cli`. What hook field or environment variable identifies `copilot-app`?
+- [ ] **Where to store schemas across repos**: `azsdk` CLI lives in `azure-sdk-tools`, while some skills (like `azure-typespec-author`) live in `azure-rest-api-specs`. Should `azsdk` keep approved schemas in `azure-sdk-tools`, or read `telemetry/result.schema.json` from the skill folder?
+- [ ] **Are repo-relative paths allowed in private repos**: Can repo-relative paths (e.g., `specification/contoso/.../main.tsp`) always be sent as plain text, or do private repos need path hashing before public release?
 

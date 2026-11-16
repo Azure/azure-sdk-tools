@@ -263,7 +263,7 @@ async def test_provider_bounds_large_single_line_grep_matches():
     assert len(matches) == 1
     assert len(matches[0]["matching_lines"]) == 1
     match = matches[0]["matching_lines"][0]
-    assert len(match["line"]) <= 2_000
+    assert len(match["line"]) <= 500
     assert "exactTargetProperty" in match["line"]
     assert match["start_char"] == 100_001
     assert match["end_char"] == 100_020
@@ -297,8 +297,40 @@ async def test_provider_bounds_greedy_match_and_finds_later_exact_match():
 
     matching_lines = matches[0]["matching_lines"]
     assert matching_lines[0]["match_truncated"] is True
-    assert len(matching_lines[0]["line"]) == 2_000
+    assert len(matching_lines[0]["line"]) == 500
     assert any(match["match"] == "PartnerMirroringUri" for match in matching_lines)
+
+
+@pytest.mark.asyncio
+async def test_provider_preserves_breadth_for_late_single_line_match():
+    store = InMemoryAgentFileStore()
+    provider = ToolOutputStorageProvider(store)
+    session = AgentSession(session_id="test-session")
+    context = SessionContext(session_id="test-session", input_messages=[])
+    file_name = "tool-result-search-test.txt"
+    await store.write(
+        f"test-session/{file_name}",
+        ("url " + "x" * 600) * 22 + "ReadOnlyRoutingUri",
+    )
+
+    await provider.before_run(
+        agent=None,
+        session=session,
+        context=context,
+        state={},
+    )
+
+    tools = {tool.name: tool for tool in context.tools}
+    matches = await tools["tool_result_grep"].func(
+        file_name=file_name,
+        regex_pattern=r"url|Uri",
+        max_matches=50,
+    )
+
+    assert any(
+        "ReadOnlyRoutingUri" in match["line"]
+        for match in matches[0]["matching_lines"]
+    )
 
 
 @pytest.mark.asyncio

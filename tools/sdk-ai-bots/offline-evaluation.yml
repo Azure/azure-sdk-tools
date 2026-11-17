@@ -1,11 +1,3 @@
-schedules:
-  - cron: "0 3 * * *"  # Runs nightly at 03:00 UTC
-    displayName: "Nightly Offline Evaluation"
-    branches:
-      include:
-        - main
-    always: true
-
 trigger: none
 pr: none
 
@@ -23,6 +15,7 @@ parameters:
       - authoring
       - mcpserver
       - sdkagent
+      - apistewardshipboard
 
 #
 # Starts the agent server.py locally, then evaluates via completion mode:

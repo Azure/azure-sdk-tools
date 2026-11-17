@@ -6,31 +6,15 @@ from typing import Annotated
 
 from pydantic import BaseModel
 
-from config.tenant_config import TenantID, get_tenant_config
-from skills.tenant_skills import get_skill_to_tenant_map
 from tools import tool
 
 
 class RouteToChannelResult(BaseModel):
     """Structured result indicating an unresolved question needs another channel's experts."""
 
-    tenant_id: TenantID
+    channel_name: str
+    channel_id: str | None = None
     reason: str = ""
-
-
-def _resolve_target_tenant(raw_tenant: str) -> TenantID:
-    normalized = raw_tenant.strip()
-    try:
-        tenant = TenantID(normalized)
-    except ValueError:
-        skill_tenant = get_skill_to_tenant_map().get(normalized)
-        if skill_tenant is None:
-            raise ValueError(f"Unknown target tenant_id: {raw_tenant!r}")
-        tenant = skill_tenant
-
-    if tenant == TenantID.AZURE_TYPESPEC_AUTHORING or get_tenant_config(tenant) is None:
-        raise ValueError(f"Target tenant_id {tenant.value!r} is not a routable channel.")
-    return tenant
 
 
 class RoutingTools:
@@ -40,20 +24,19 @@ class RoutingTools:
     async def route_to_channel(
         self,
         *,
-        tenant_id: Annotated[
+        channel_name: Annotated[
             str,
-            "Target channel tenant_id for follow-up: "
-            "'typespec_channel_qa_bot', 'api_spec_review_bot', "
-            "'api_stewardship_board_qa_bot', 'azure_sdk_onboarding', "
-            "'azsdk_tools_agent_qa_bot', 'azure_mcp_server', "
-            "'python_channel_qa_bot', 'dotnet_channel_qa_bot', "
-            "'golang_channel_qa_bot', 'java_channel_qa_bot', or "
-            "'javascript_channel_qa_bot'. Do not pass the current channel's own tenant.",
+            "Exact channel_name of the target channel from [routable_channels]. "
+            "Do not pass the current channel.",
         ],
         reason: Annotated[
             str,
             "Brief reason why the question remains unresolved and needs that channel's experts.",
         ],
+        channel_id: Annotated[
+            str | None,
+            "Optional channel_id of the target channel from [routable_channels].",
+        ] = None,
     ) -> RouteToChannelResult:
         """Recommend re-posting in another Teams channel ONLY when the question remains unresolved.
 
@@ -63,5 +46,14 @@ class RoutingTools:
         NEVER call this when you have answered the question, even after calling
         `load_skill` for another domain.
         """
-        target = _resolve_target_tenant(tenant_id)
-        return RouteToChannelResult(tenant_id=target, reason=reason.strip())
+        normalized_name = channel_name.strip()
+        if not normalized_name:
+            raise ValueError("channel_name must not be empty.")
+        normalized_id = (
+            channel_id.strip() if channel_id and channel_id.strip() else None
+        )
+        return RouteToChannelResult(
+            channel_name=normalized_name,
+            channel_id=normalized_id,
+            reason=reason.strip(),
+        )

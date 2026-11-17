@@ -464,5 +464,49 @@ describe('ThinkingHandler', () => {
         conversation: mockContext.activity?.conversation,
       });
     });
+
+    it('renders explicit routed channel footer and suppresses self-routing by channel_id', async () => {
+      (mockTenantConfigManager as any).getChannel = vi.fn().mockImplementation((id?: string, name?: string) => {
+        if (id === '19:onboarding' || name === 'Azure SDK Onboarding') {
+          return {
+            tenant: 'azure_sdk_onboarding',
+            channel_id: '19:onboarding',
+            channel_name: 'Azure SDK Onboarding',
+            channel_link: 'https://teams.microsoft.com/l/channel/19%3Aonboarding/Azure%20SDK%20Onboarding',
+          };
+        }
+        return undefined;
+      });
+
+      const prompt: Prompt = {
+        textWithoutMention: 'Help with onboarding',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      const routedReply: CompletionResponsePayload = {
+        id: 'reply-route',
+        answer: 'Please check with the onboarding team.',
+        has_result: true,
+        route_channel_id: '19:onboarding',
+        route_channel_name: 'Azure SDK Onboarding',
+      };
+
+      await thinkingHandler.stop(new Date(), routedReply, prompt, 'azure_sdk_onboarding', '19:sdk-release-support');
+      expect(mockContext.updateActivity).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining('[Azure SDK Onboarding](https://teams.microsoft.com/l/channel/19%3Aonboarding/Azure%20SDK%20Onboarding)'),
+        })
+      );
+
+      await thinkingHandler.stop(new Date(), routedReply, prompt, 'azure_sdk_onboarding', '19:onboarding');
+      expect(mockContext.updateActivity).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          text: 'Please check with the onboarding team.',
+        })
+      );
+    });
   });
 });

@@ -16,6 +16,7 @@ from azure.core.exceptions import AzureError
 from config.app_config import Settings, get as cfg
 from config.tenant_config import (
     TenantConfig,
+    get_all_tenant_ids,
     get_tenant_config,
     get_tenant_scope_description,
 )
@@ -27,6 +28,7 @@ from models.chat import (
     ChatResponse,
     ConversationItem,
     Role,
+    RoutableChannel,
 )
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
@@ -180,9 +182,23 @@ class ChatService:
                 content=tenant_system_msg,
             ).model_dump(mode="json", exclude_none=True),
         )
+        channel_context_msg = self._build_channel_context_message(req)
+        channel_context_item = (
+            cast(
+                ResponseInputItemParam,
+                ConversationItem(
+                    role=Role.System,
+                    content=channel_context_msg,
+                ).model_dump(mode="json", exclude_none=True),
+            )
+            if channel_context_msg
+            else None
+        )
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             conversation_items.append(tenant_system_item)
+            if channel_context_item is not None:
+                conversation_items.append(channel_context_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -251,6 +267,8 @@ class ChatService:
             )
             # The replacement conversation has no tenant context of its own.
             conversation_items.insert(0, tenant_system_item)
+            if channel_context_item is not None:
+                conversation_items.insert(1, channel_context_item)
             # Additional infos are not persisted in Cosmos; reuse the items already built.
             conversation_items.extend(additional_items)
             # Replace the poisoned mapping before the single recovery attempt.
@@ -629,6 +647,89 @@ class ChatService:
 
         return "\n".join(parts)
 
+    @staticmethod
+    def _is_current_channel(req: ChatRequest, channel: RoutableChannel) -> bool:
+        if req.channel_id and channel.channel_id:
+            return req.channel_id.strip() == channel.channel_id.strip()
+        if req.channel_name and channel.channel_name:
+            return (
+                req.channel_name.strip().casefold()
+                == channel.channel_name.strip().casefold()
+            )
+        return False
+
+    @staticmethod
+    def _describe_channel(channel: RoutableChannel) -> str:
+        if channel.description and channel.description.strip():
+            return channel.description.strip()
+        if channel.tenant_id:
+            mapped_id = (
+                TenantID.TYPESPEC_CHANNEL_QA_BOT.value
+                if channel.tenant_id == TenantID.AZURE_SDK_QA_BOT.value
+                else channel.tenant_id
+            )
+            try:
+                cfg_entry = get_tenant_config(TenantID(mapped_id))
+            except ValueError:
+                cfg_entry = None
+            if cfg_entry and cfg_entry.scope:
+                return cfg_entry.scope
+        return ""
+
+    @classmethod
+    def _resolve_routable_channels(cls, req: ChatRequest) -> list[RoutableChannel]:
+        if req.tenant_id == TenantID.AZURE_TYPESPEC_AUTHORING:
+            return []
+
+        if req.available_channels is not None:
+            return [
+                ch for ch in req.available_channels if not cls._is_current_channel(req, ch)
+            ]
+
+        fallback: list[RoutableChannel] = []
+        excluded = {
+            TenantID.AZURE_TYPESPEC_AUTHORING.value,
+            TenantID.TYPESPEC_EMITTER_QA_BOT.value,
+        }
+        for tid_str in get_all_tenant_ids():
+            if tid_str in excluded or tid_str == req.tenant_id.value:
+                continue
+            tid = TenantID(tid_str)
+            cfg_entry = get_tenant_config(tid)
+            if not cfg_entry or not cfg_entry.display_name:
+                continue
+            ch = RoutableChannel(
+                channel_name=cfg_entry.display_name,
+                tenant_id=tid.value,
+                description=cfg_entry.scope,
+            )
+            if not cls._is_current_channel(req, ch):
+                fallback.append(ch)
+        return fallback
+
+    def _build_channel_context_message(self, req: ChatRequest) -> str | None:
+        """Provide current channel identity and routable target channels."""
+        if req.tenant_id == TenantID.AZURE_TYPESPEC_AUTHORING:
+            return None
+
+        parts: list[str] = []
+        if req.channel_name or req.channel_id:
+            label = req.channel_name or req.channel_id
+            if req.channel_name and req.channel_id:
+                label = f"{req.channel_name} (channel_id={req.channel_id})"
+            parts.append(f"[channel_context] current_channel={label}")
+
+        routable = self._resolve_routable_channels(req)
+        if routable:
+            parts.append("[routable_channels]")
+            for ch in routable:
+                id_part = f" (channel_id={ch.channel_id})" if ch.channel_id else ""
+                desc = self._describe_channel(ch)
+                desc_part = f": {desc}" if desc else ""
+                parts.append(f"- {ch.channel_name}{id_part}{desc_part}")
+
+        return "\n".join(parts) if parts else None
+
     def _resolve_memory_scope(self, req: ChatRequest) -> str | None:
         """Derive user memory scope from user_id. Returns None if disabled or no user_id."""
         if (self._settings("ENABLE_USER_MEMORY_SEARCH", "true") or "true").lower() != "true":
@@ -661,7 +762,9 @@ class ChatService:
             if isinstance(result, SearchKnowledgeBaseResult)
             for ref in result.results
         ]
-        tenant = self._extract_routed_tenant(tool_results)
+        route_channel_id, route_channel_name, route_tenant = (
+            self._extract_routed_channel(tool_results, req)
+        )
 
         output_text = response.output_text or ""
 
@@ -698,12 +801,12 @@ class ChatService:
             full_context=full_context,
             agent_conversation_id=agent_conversation_id,
         )
-        if (
-            tenant is not None
-            and req.tenant_id != tenant
-            and req.tenant_id != TenantID.AZURE_TYPESPEC_AUTHORING
-        ):
-            resp.route_tenant = tenant
+        if route_channel_id:
+            resp.route_channel_id = route_channel_id
+        if route_channel_name:
+            resp.route_channel_name = route_channel_name
+        if route_tenant is not None and req.tenant_id != route_tenant:
+            resp.route_tenant = route_tenant
         if req.conversation_type == ConversationType.teams_channel:
             identities = ResolveGitHubUsersResult()
             for result in tool_results.get("resolve_github_users", []):
@@ -863,23 +966,99 @@ class ChatService:
 
         return results
 
-    @staticmethod
-    def _extract_routed_tenant(
+    @classmethod
+    def _extract_routed_channel(
+        cls,
         tool_results: dict[str, list[object]],
-    ) -> TenantID | None:
+        req: ChatRequest,
+    ) -> tuple[str | None, str | None, TenantID | None]:
         """Extract an explicit channel handoff from ``route_to_channel`` calls.
 
         Loading skills via ``load_skill`` supplies domain guidance to answer the
         question and never implies a channel handoff. Only an explicit
-        ``route_to_channel`` result sets ``route_tenant``.
+        ``route_to_channel`` result sets channel routing fields.
         """
+        if req.tenant_id == TenantID.AZURE_TYPESPEC_AUTHORING:
+            return None, None, None
+
         results = [
             result
             for result in tool_results.get("route_to_channel", [])
             if isinstance(result, RouteToChannelResult)
         ]
         if not results:
-            return None
-        tenant_id = results[-1].tenant_id
-        logger.info("Explicit channel handoff requested → tenant %s", tenant_id)
-        return tenant_id
+            return None, None, None
+
+        choice = results[-1]
+        if req.channel_id and choice.channel_id and req.channel_id.strip() == choice.channel_id.strip():
+            return None, None, None
+        if req.channel_name and choice.channel_name.strip().casefold() == req.channel_name.strip().casefold():
+            return None, None, None
+
+        if req.available_channels is not None:
+            routable = cls._resolve_routable_channels(req)
+            matched: RoutableChannel | None = None
+            if choice.channel_id:
+                matched = next(
+                    (
+                        ch
+                        for ch in routable
+                        if ch.channel_id and ch.channel_id.strip() == choice.channel_id.strip()
+                    ),
+                    None,
+                )
+            if matched is None:
+                target_name = choice.channel_name.strip().casefold()
+                matched = next(
+                    (
+                        ch
+                        for ch in routable
+                        if ch.channel_name.strip().casefold() == target_name
+                    ),
+                    None,
+                )
+            if matched is None:
+                logger.warning(
+                    "Ignoring route_to_channel target not in available_channels: name=%s id=%s",
+                    choice.channel_name,
+                    choice.channel_id,
+                )
+                return None, None, None
+            logger.info(
+                "Explicit channel handoff requested → channel=%s (%s)",
+                matched.channel_name,
+                matched.channel_id,
+            )
+            return matched.channel_id, matched.channel_name, None
+
+        # Fallback for callers without available_channels: match known tenants if any.
+        target_lower = choice.channel_name.strip().casefold()
+        for tid_str in get_all_tenant_ids():
+            tid = TenantID(tid_str)
+            if tid == TenantID.AZURE_TYPESPEC_AUTHORING:
+                continue
+            cfg_entry = get_tenant_config(tid)
+            if not cfg_entry:
+                continue
+            candidates = {tid.value.casefold()}
+            if cfg_entry.display_name:
+                candidates.add(cfg_entry.display_name.casefold())
+            if cfg_entry.skill_name:
+                candidates.add(cfg_entry.skill_name.casefold())
+            if target_lower in candidates:
+                if tid == req.tenant_id:
+                    return None, None, None
+                channel_name = cfg_entry.display_name or choice.channel_name.strip()
+                logger.info(
+                    "Explicit channel handoff requested (fallback) → channel=%s tenant=%s",
+                    channel_name,
+                    tid.value,
+                )
+                return choice.channel_id, channel_name, tid
+
+        logger.info(
+            "Explicit channel handoff requested → channel=%s (%s)",
+            choice.channel_name,
+            choice.channel_id,
+        )
+        return choice.channel_id, choice.channel_name.strip(), None

@@ -858,7 +858,7 @@ async def test_chat_selects_request_version_before_configured_version(
         project.agents.get.assert_not_called()
 
 
-def test_answered_question_with_loaded_skills_returns_no_route_tenant() -> None:
+def test_answered_question_with_loaded_skills_returns_no_route() -> None:
     import json
 
     from openai.types.responses import (
@@ -905,6 +905,8 @@ def test_answered_question_with_loaded_skills_returns_no_route_tenant() -> None:
     response = Response.model_construct(id="reply", output=output)
     request = ChatRequest(
         tenant_id="api_spec_review_bot",
+        channel_id="19:api-spec-review",
+        channel_name="API Spec Review",
         message=ChatMessage(role="user", content="ARM PUT TypeSpec pattern?"),
     )
 
@@ -912,19 +914,73 @@ def test_answered_question_with_loaded_skills_returns_no_route_tenant() -> None:
 
     assert result.has_result is True
     assert result.route_tenant is None
+    assert result.route_channel_id is None
+    assert result.route_channel_name is None
 
 
 @pytest.mark.parametrize("output_type", ["function_call_output", "message"])
 @pytest.mark.parametrize(
-    ("request_tenant", "target_tenant", "expected_route"),
+    (
+        "request_tenant",
+        "current_channel_id",
+        "current_channel_name",
+        "target_channel_id",
+        "target_channel_name",
+        "expected_id",
+        "expected_name",
+    ),
     [
-        ("api_spec_review_bot", "typespec_channel_qa_bot", "typespec_channel_qa_bot"),
-        ("api_spec_review_bot", "api_spec_review_bot", None),
-        ("azure_typespec_authoring", "typespec_channel_qa_bot", None),
+        # Different channels sharing the same tenant (e.g. azure_sdk_onboarding) still route!
+        (
+            "azure_sdk_onboarding",
+            "19:sdk-release-support",
+            "SDK release support",
+            "19:onboarding",
+            "Azure SDK Onboarding",
+            "19:onboarding",
+            "Azure SDK Onboarding",
+        ),
+        # Routing to the same channel is suppressed.
+        (
+            "azure_sdk_onboarding",
+            "19:onboarding",
+            "Azure SDK Onboarding",
+            "19:onboarding",
+            "Azure SDK Onboarding",
+            None,
+            None,
+        ),
+        # Unknown channel outside available_channels is ignored.
+        (
+            "api_spec_review_bot",
+            "19:api-spec-review",
+            "API Spec Review",
+            "19:nonexistent",
+            "Nonexistent Channel",
+            None,
+            None,
+        ),
+        # Authoring tenant lock never routes.
+        (
+            "azure_typespec_authoring",
+            "19:authoring",
+            "TypeSpec Authoring",
+            "19:onboarding",
+            "Azure SDK Onboarding",
+            None,
+            None,
+        ),
     ],
 )
-def test_explicit_route_to_channel_sets_route_tenant(
-    output_type, request_tenant, target_tenant, expected_route
+def test_explicit_route_to_channel_resolves_available_channels(
+    output_type,
+    request_tenant,
+    current_channel_id,
+    current_channel_name,
+    target_channel_id,
+    target_channel_name,
+    expected_id,
+    expected_name,
 ) -> None:
     import json
 
@@ -936,12 +992,14 @@ def test_explicit_route_to_channel_sets_route_tenant(
         ResponseOutputText,
     )
 
+    from models.chat import RoutableChannel
     from tools.routing_tools import RouteToChannelResult
 
     call_id = "route-1"
     payload = RouteToChannelResult(
-        tenant_id=target_tenant,
-        reason="Requires TypeSpec channel experts.",
+        channel_name=target_channel_name,
+        channel_id=target_channel_id,
+        reason="Requires onboarding channel experts.",
     ).model_dump_json()
     tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
     if output_type == "function_call_output":
@@ -968,7 +1026,13 @@ def test_explicit_route_to_channel_sets_route_tenant(
             type="function_call",
             name="route_to_channel",
             call_id=call_id,
-            arguments=json.dumps({"tenant_id": target_tenant, "reason": "Needs experts"}),
+            arguments=json.dumps(
+                {
+                    "channel_name": target_channel_name,
+                    "channel_id": target_channel_id,
+                    "reason": "Needs experts",
+                }
+            ),
         ),
         tool_output,
         ResponseOutputMessage.model_construct(
@@ -979,7 +1043,7 @@ def test_explicit_route_to_channel_sets_route_tenant(
             content=[
                 ResponseOutputText.model_construct(
                     type="output_text",
-                    text="This requires TypeSpec channel experts.",
+                    text="Please follow up with channel experts.",
                     annotations=[],
                 )
             ],
@@ -988,17 +1052,71 @@ def test_explicit_route_to_channel_sets_route_tenant(
     response = Response.model_construct(id="reply", output=output)
     request = ChatRequest(
         tenant_id=request_tenant,
+        channel_id=current_channel_id,
+        channel_name=current_channel_name,
+        available_channels=[
+            RoutableChannel(
+                channel_id="19:onboarding",
+                channel_name="Azure SDK Onboarding",
+                tenant_id="azure_sdk_onboarding",
+            ),
+            RoutableChannel(
+                channel_id="19:sdk-release-support",
+                channel_name="SDK release support",
+                tenant_id="azure_sdk_onboarding",
+            ),
+        ],
         message=ChatMessage(role="user", content="Needs deeper review"),
     )
 
     result = ChatService()._postprocess(request, response, None)
 
-    assert result.route_tenant == expected_route
+    assert result.route_channel_id == expected_id
+    assert result.route_channel_name == expected_name
+    assert result.route_tenant is None
+
+
+def test_channel_context_message_excludes_current_channel_and_enriches_scope() -> None:
+    from models.chat import RoutableChannel
+
+    req = ChatRequest(
+        tenant_id="azure_sdk_onboarding",
+        channel_id="19:sdk-release-support",
+        channel_name="SDK release support",
+        available_channels=[
+            RoutableChannel(
+                channel_id="19:sdk-release-support",
+                channel_name="SDK release support",
+                tenant_id="azure_sdk_onboarding",
+            ),
+            RoutableChannel(
+                channel_id="19:onboarding",
+                channel_name="Azure SDK Onboarding",
+                tenant_id="azure_sdk_onboarding",
+            ),
+            RoutableChannel(
+                channel_id="19:typespec",
+                channel_name="TypeSpec Discussion",
+                tenant_id="azure_sdk_qa_bot",
+                description="TypeSpec authoring and API design.",
+            ),
+        ],
+        message=ChatMessage(role="user", content="Question"),
+    )
+
+    msg = ChatService()._build_channel_context_message(req)
+    assert msg is not None
+    assert "current_channel=SDK release support (channel_id=19:sdk-release-support)" in msg
+    assert "Azure SDK Onboarding (channel_id=19:onboarding)" in msg
+    assert "TypeSpec Discussion (channel_id=19:typespec): TypeSpec authoring and API design." in msg
+    assert "- SDK release support" not in msg
+
+    authoring_req = req.model_copy(update={"tenant_id": "azure_typespec_authoring"})
+    assert ChatService()._build_channel_context_message(authoring_req) is None
 
 
 @pytest.mark.asyncio
-async def test_route_to_channel_tool_validates_target_tenants() -> None:
-    from config.tenant_config import TenantID
+async def test_route_to_channel_tool_validates_inputs() -> None:
     from tools import TOOL_REGISTRY
     from tools.routing_tools import RouteToChannelResult, RoutingTools
 
@@ -1006,14 +1124,15 @@ async def test_route_to_channel_tool_validates_target_tenants() -> None:
 
     tools = RoutingTools()
     result = await tools.route_to_channel(
-        tenant_id="typespec_channel_qa_bot",
-        reason="Needs TypeSpec channel experts.",
+        channel_name=" TypeSpec Discussion ",
+        channel_id=" 19:typespec ",
+        reason=" Needs TypeSpec channel experts. ",
     )
     assert result == RouteToChannelResult(
-        tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT,
+        channel_name="TypeSpec Discussion",
+        channel_id="19:typespec",
         reason="Needs TypeSpec channel experts.",
     )
 
-    for invalid in ("azure_typespec_authoring", "azure_sdk_qa_bot", "unknown_tenant"):
-        with pytest.raises(ValueError):
-            await tools.route_to_channel(tenant_id=invalid, reason="Invalid")
+    with pytest.raises(ValueError):
+        await tools.route_to_channel(channel_name="   ", reason="Invalid")

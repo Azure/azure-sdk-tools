@@ -44,9 +44,10 @@ export class RAGModel implements PromptCompletionModel {
     const token = await getAccessTokenByManagedIdentity(this.credential, config.ragScope);
     const meta = getTurnContextLogMeta(context);
     const { channelId } = parseConversationId(context.activity.conversation.id);
-    const ragTenantId = this.channelConfigManager.getRagTenant(channelId);
-    const ragEndpoint = this.channelConfigManager.getRagEndpoint(channelId);
-    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
+    const channelConfig = this.channelConfigManager.getChannelConfig(channelId);
+    const ragTenantId = channelConfig.tenant;
+    const ragEndpoint = channelConfig.endpoint;
+    logger.info(`Processing request for channel ${channelId} (${channelConfig.name}) on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,
       accessToken: token ? token.token : undefined
@@ -66,7 +67,14 @@ export class RAGModel implements PromptCompletionModel {
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
-    const completionPayload = this.convertFullPromptToCompletionRequestPayload(fullPrompt, ragTenantId);
+    const availableChannels = this.tenantConfigManager.getRoutableChannels(channelId);
+    const completionPayload = this.convertFullPromptToCompletionRequestPayload(
+      fullPrompt,
+      ragTenantId,
+      channelId,
+      channelConfig.name,
+      availableChannels
+    );
 
     logger.info('prompt to RAG', {
       prompt: { ...fullPrompt, additionalInfo: { imageCount: fullPrompt.additionalInfo.images.length } },
@@ -88,14 +96,17 @@ export class RAGModel implements PromptCompletionModel {
     } catch (error: any) {
       logger.warn('safeCancelTimer failed unexpectedly, proceeding to deliver reply', { error: error?.message, meta });
     }
-    await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
+    await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt, ragTenantId, channelId);
 
     return { status: 'success' };
   }
 
   private convertFullPromptToCompletionRequestPayload(
     fullPrompt: MessageWithRemoteContent,
-    tenantId: string
+    tenantId: string,
+    channelId?: string,
+    channelName?: string,
+    availableChannels?: ReturnType<TenantConfigManager['getRoutableChannels']>
   ): CompletionRequestPayload {
     const message: Message = {
       role: 'user',
@@ -111,6 +122,9 @@ export class RAGModel implements PromptCompletionModel {
 
     const payload: CompletionRequestPayload = {
       tenant_id: tenantId,
+      ...(channelId ? { channel_id: channelId } : {}),
+      ...(channelName && channelName !== 'default' ? { channel_name: channelName } : {}),
+      ...(availableChannels && availableChannels.length > 0 ? { available_channels: availableChannels } : {}),
       message: message,
       additional_infos,
       conversation_id: fullPrompt.conversationID,

@@ -70,10 +70,22 @@ class AdditionalInfo(BaseModel):
 # ===== Request/Response Models =====
 
 
+class RoutableChannel(BaseModel):
+    """A target Teams channel available for explicit handoff."""
+
+    channel_id: str | None = None
+    channel_name: str
+    tenant_id: str | None = None
+    description: str | None = None
+
+
 class ChatRequest(BaseModel):
     """Request for chat completion."""
 
     tenant_id: TenantID
+    channel_id: str | None = None
+    channel_name: str | None = None
+    available_channels: list[RoutableChannel] | None = None
     conversation_id: str | None = None
     conversation_type: ConversationType | None = None
     message: Message
@@ -90,6 +102,8 @@ class ChatResponse(BaseModel):
     references: list[Reference] | None = None
     full_context: str | None = None
     route_tenant: TenantID | None = None
+    route_channel_id: str | None = None
+    route_channel_name: str | None = None
     agent_conversation_id: str | None = None
     trace_id: str | None = None
     mentions: list[TeamsMention] | None = None

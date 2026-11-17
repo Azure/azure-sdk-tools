@@ -18,13 +18,37 @@ export enum KnownTenants {
 }
 
 export interface TenantItem {
-  tenant: string;
+  tenant?: string;
+  channel_id?: string;
   channel_name: string;
   channel_link: string;
+  description?: string;
+}
+
+export interface RoutableChannel {
+  channel_id?: string;
+  channel_name: string;
+  tenant_id?: string;
+  description?: string;
 }
 
 export interface TenantConfig {
   tenants: TenantItem[];
+}
+
+export function extractChannelIdFromLink(link?: string): string | undefined {
+  if (!link) return undefined;
+  try {
+    const url = new URL(link);
+    const marker = '/l/channel/';
+    const idx = url.pathname.indexOf(marker);
+    if (idx === -1) return undefined;
+    const rest = url.pathname.slice(idx + marker.length);
+    const encodedId = rest.split('/')[0];
+    return encodedId ? decodeURIComponent(encodedId) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 class TenantConfigManager {
@@ -63,6 +87,61 @@ class TenantConfigManager {
   public getTenant(tenantId: string): TenantItem | undefined {
     const config = this.getConfig();
     return config.tenants.find((t) => t.tenant === tenantId);
+  }
+
+  /**
+   * Resolve the Teams channel ID for a configured item.
+   */
+  public getResolvedChannelId(item: TenantItem): string | undefined {
+    return item.channel_id || extractChannelIdFromLink(item.channel_link);
+  }
+
+  /**
+   * Get channel item by channel ID first, falling back to case-insensitive channel name.
+   */
+  public getChannel(channelId?: string, channelName?: string): TenantItem | undefined {
+    const config = this.getConfig();
+    if (!config?.tenants?.length) {
+      return undefined;
+    }
+    if (channelId) {
+      const byId = config.tenants.find((t) => this.getResolvedChannelId(t) === channelId);
+      if (byId) {
+        return byId;
+      }
+    }
+    if (channelName) {
+      const normalized = channelName.trim().toLowerCase();
+      return config.tenants.find((t) => t.channel_name.trim().toLowerCase() === normalized);
+    }
+    return undefined;
+  }
+
+  /**
+   * List routable channels from tenant configuration, excluding the current channel.
+   */
+  public getRoutableChannels(excludeChannelId?: string): RoutableChannel[] {
+    const tenants = this.config?.tenants ?? [];
+    const seen = new Set<string>();
+    const channels: RoutableChannel[] = [];
+    for (const item of tenants) {
+      const resolvedId = this.getResolvedChannelId(item);
+      if (excludeChannelId && resolvedId === excludeChannelId) {
+        continue;
+      }
+      const key = resolvedId || item.channel_name.trim().toLowerCase();
+      if (!key || seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      channels.push({
+        ...(resolvedId ? { channel_id: resolvedId } : {}),
+        channel_name: item.channel_name,
+        ...(item.tenant ? { tenant_id: item.tenant } : {}),
+        ...(item.description ? { description: item.description } : {}),
+      });
+    }
+    return channels;
   }
 
   /**

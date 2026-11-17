@@ -131,6 +131,35 @@ tenants:
 
       expect(channelName).toBeUndefined();
     });
+
+    it('should resolve channels by channel_id, link, and channel_name even when tenants are shared', () => {
+      const sharedYaml = `
+tenants:
+  - tenant: shared_tenant
+    channel_name: Channel A
+    channel_link: https://teams.microsoft.com/l/channel/19%3Aaaa%40thread.skype/Channel%20A?groupId=g1
+    description: First shared channel
+  - tenant: shared_tenant
+    channel_name: Channel B
+    channel_link: https://teams.microsoft.com/l/channel/19%3Abbb%40thread.skype/Channel%20B?groupId=g1
+    description: Second shared channel
+`;
+      mockBlobClientManager.downloadBlobContent.mockResolvedValueOnce(sharedYaml);
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'));
+
+      return manager.initialize().then(() => {
+        expect(manager.getChannel('19:bbb@thread.skype')?.channel_name).toBe('Channel B');
+        expect(manager.getChannel(undefined, 'channel a')?.channel_name).toBe('Channel A');
+        expect(manager.getRoutableChannels('19:aaa@thread.skype')).toEqual([
+          {
+            channel_id: '19:bbb@thread.skype',
+            channel_name: 'Channel B',
+            tenant_id: 'shared_tenant',
+            description: 'Second shared channel',
+          },
+        ]);
+      });
+    });
   });
 
   describe('Configuration Reload', () => {

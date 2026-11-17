@@ -95,10 +95,16 @@ public class PackageApprovalStatusToolTests
     }
 
     [TestCase(".NET", "csharp")]
+    [TestCase("net", "csharp")]
+    [TestCase("dotnet", "csharp")]
     [TestCase("C#", "csharp")]
-    [TestCase("JavaScript", "js")]
-    [TestCase("TypeScript", "js")]
+    [TestCase("cs", "csharp")]
+    [TestCase("JavaScript", "javascript")]
+    [TestCase("js", "javascript")]
+    [TestCase("TypeScript", "javascript")]
+    [TestCase("ts", "javascript")]
     [TestCase("C++", "cpp")]
+    [TestCase("golang", "go")]
     [TestCase("Py", "python")]
     public async Task GetApprovalStatus_NormalizesLanguageAliases(string language, string expectedLanguage)
     {
@@ -115,7 +121,12 @@ public class PackageApprovalStatusToolTests
             .ReturnsAsync(new PackageReleaseStatusResult());
         var packageTool = new PackageApprovalStatusTool(releaseStatusService.Object, new TestLogger<PackageApprovalStatusTool>());
 
-        await packageTool.GetApprovalStatus(language, "azure-test", "1.0.0");
+        var command = packageTool.GetCommandInstances().Single();
+        var parseResult = command.Parse(
+            $"--language {language} --package-name azure-test --package-version 1.0.0");
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        await packageTool.HandleCommand(parseResult, CancellationToken.None);
 
         releaseStatusService.VerifyAll();
     }

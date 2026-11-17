@@ -6,6 +6,12 @@
 
 - Customize the `azsdk_typespec_retrieve_knowledge` response content specifically for telemetry to ensure it stays within the Application Insights custom-property size limit.
 
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.6.58 (2026-11-10)
 
 ### Features Added

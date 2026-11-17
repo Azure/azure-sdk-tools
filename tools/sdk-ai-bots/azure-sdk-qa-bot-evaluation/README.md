@@ -102,6 +102,17 @@ Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKE
 
 Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`.
 
+### Evaluation input file cleanup
+
+Each scenario uploads the collected answers and grading context as a temporary `{scenario}-eval-input.jsonl` file with purpose `evals`.
+The runner deletes its input file after confirming the Foundry run is completed, failed, or canceled, including when result retrieval fails.
+It also cleans up files when upload processing fails, before any evaluation run is created.
+If the run may still be active, its creation outcome is uncertain, or its status cannot be checked, the runner retains the file and logs the IDs for later cleanup.
+Run creation is not retried because a lost response may leave an active run using the input.
+Cleanup failures are logged without replacing the evaluation result or original error.
+Deleting these inputs does not delete the evaluation or its runs; reusing the input file to start another run requires uploading it again.
+Existing orphaned files are not automatically deleted: review them and their associated runs before removing them through the Files API to release the service-enforced file quota.
+
 Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately. A normal response ID can retrieve the original stored response on demand; synthetic IDs such as `content-filter` have no stored response.
 
 ### Evaluators

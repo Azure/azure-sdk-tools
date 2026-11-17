@@ -25,7 +25,7 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from openai import APIConnectionError, APIStatusError, APITimeoutError
+from openai import APIConnectionError, APIError, APIStatusError, APITimeoutError
 
 from _evals_result import EvalsResult
 from eval.criteria import build_testing_criteria
@@ -57,6 +57,7 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
 # Composite weights
 BOT_EVALS_WEIGHTS = {"similarity": 0.6, "response_completeness": 0.4}
 _JSON_OUTPUT_TOOLS = {"search_knowledge_base", "wiki_search"}
+_TERMINAL_EVAL_STATUSES = ("completed", "failed", "canceled")
 
 # Item schema for the inline eval data: the answer/context are collected from
 # /completion and carried in the item (read via {{item.response}} / {{item.context}}).
@@ -126,6 +127,24 @@ def _retry_foundry_call(
         time.sleep(delay)
 
 
+def _delete_eval_input(openai_client: Any, file_id: str) -> None:
+    """Best-effort cleanup of this invocation's input without masking grading errors."""
+    try:
+        deleted = _retry_foundry_call(
+            lambda: openai_client.files.delete(file_id),
+            "Evaluation input cleanup",
+        )
+        if getattr(deleted, "deleted", None) is not True:
+            raise RuntimeError("The Files API did not confirm deletion")
+        logger.info("Deleted evaluation input file (id=%s)", file_id)
+    except (APIError, RuntimeError):
+        logger.warning(
+            "Could not delete evaluation input file (id=%s); manual cleanup is required",
+            file_id,
+            exc_info=True,
+        )
+
+
 def _upload_eval_items(openai_client: Any, items: list[dict[str, Any]], scenario: str) -> dict[str, Any]:
     """Upload eval inputs as JSONL and return a file-backed run data source."""
     content = "".join(
@@ -139,10 +158,16 @@ def _upload_eval_items(openai_client: Any, items: list[dict[str, Any]], scenario
         ),
         "Evaluation input upload",
     )
-    processed = _retry_foundry_call(
-        lambda: openai_client.files.wait_for_processing(uploaded.id),
-        "Evaluation input processing",
-    )
+    try:
+        processed = _retry_foundry_call(
+            lambda: openai_client.files.wait_for_processing(uploaded.id),
+            "Evaluation input processing",
+        )
+        if processed.status != "processed":
+            raise RuntimeError(f"Evaluation input file {uploaded.id} processing ended with status {processed.status}")
+    except (APIError, TimeoutError, RuntimeError):
+        _delete_eval_input(openai_client, uploaded.id)
+        raise
     logger.info("Uploaded evaluation input file (id=%s, size=%d bytes)", processed.id, len(content))
     return {"type": "jsonl", "source": {"type": "file_id", "id": processed.id}}
 
@@ -531,6 +556,8 @@ class FoundryEvalsRunner:
         scenario: str,
         tool_calls_by_response_id: dict[str, list[dict[str, Any]]],
         extra_failed_rows: list[dict[str, Any]] | None = None,
+        *,
+        input_file_id: str,
     ) -> dict[str, Any]:
         """Shared poll-to-terminal + output_items -> rows -> record step.
 
@@ -539,25 +566,37 @@ class FoundryEvalsRunner:
         as failures in the gate rather than vanishing from the denominator.
         """
         deadline = time.time() + self._poll_timeout
-        run = _retry_foundry_call(
-            lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
-            "Evaluation run status retrieval",
-        )
-        while run.status not in ("completed", "failed"):
-            if time.time() > deadline:
-                raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
-            time.sleep(self._poll_interval)
+        terminal = False
+        try:
             run = _retry_foundry_call(
                 lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
                 "Evaluation run status retrieval",
             )
-            logger.info("  run status: %s", run.status)
+            while run.status not in _TERMINAL_EVAL_STATUSES:
+                if time.time() > deadline:
+                    raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
+                time.sleep(self._poll_interval)
+                run = _retry_foundry_call(
+                    lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
+                    "Evaluation run status retrieval",
+                )
+                logger.info("  run status: %s", run.status)
+            terminal = True
+        finally:
+            if terminal:
+                _delete_eval_input(openai_client, input_file_id)
+            else:
+                logger.warning(
+                    "Retaining evaluation input file (id=%s, eval_id=%s, run_id=%s): "
+                    "run may still be active; clean up after confirming completion",
+                    input_file_id, eval_id, run_id,
+                )
 
         report_url = getattr(run, "report_url", None)
         if report_url:
             logger.info("Report URL: %s", report_url)
-        if run.status == "failed":
-            raise RuntimeError(f"Eval run {run_id} failed")
+        if run.status in ("failed", "canceled"):
+            raise RuntimeError(f"Eval run {run_id} {run.status}")
 
         output_items = _retry_foundry_call(
             lambda: list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id)),
@@ -707,12 +746,19 @@ class FoundryEvalsRunner:
         # 4) Upload and grade the pre-collected answers (no agent target).
         run_name = f"{name}-run"
         data_source = _upload_eval_items(openai_client, items, scenario)
-        run = _retry_foundry_call(
-            lambda: openai_client.evals.runs.create(
-                eval_id=eval_object.id, name=run_name, data_source=data_source  # type: ignore[arg-type]
-            ),
-            "Evaluation run creation",
-        )
+        file_id = data_source["source"]["id"]
+        try:
+            # A lost creation response can leave an active run; do not retry this non-idempotent call.
+            run = openai_client.with_options(max_retries=0).evals.runs.create(
+                eval_id=eval_object.id, name=run_name, data_source=data_source
+            )
+        except APIError:
+            logger.warning(
+                "Retaining evaluation input file (id=%s, eval_id=%s, run_id=unknown): "
+                "run creation outcome is uncertain; clean up after confirming no active runs",
+                file_id, eval_object.id,
+            )
+            raise
         logger.info("Evaluation run created (id=%s)", run.id)
         return self._poll_and_adapt(
             openai_client,
@@ -721,6 +767,7 @@ class FoundryEvalsRunner:
             scenario,
             tool_calls_by_response_id,
             failed_rows,
+            input_file_id=file_id,
         )
 
 

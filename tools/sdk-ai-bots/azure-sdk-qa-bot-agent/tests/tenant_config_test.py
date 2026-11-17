@@ -707,8 +707,16 @@ def test_support_channels_skill_guides_unresolved_handoffs_only() -> None:
     assert support_channels.startswith("---\nname: support-channels\n")
     assert "DO NOT USE FOR:" in support_channels
     assert "SDK release support" in support_channels
-    assert "APIView" in support_channels
+    assert "Language - C++" in support_channels
     assert "ARM Office Hours" in support_channels
+    for removed in (
+        "Language - C]",
+        "Partner Release Pipelines",
+        "APIView]",
+        "Language - Python - Reviews",
+        "Language - JavaScript - Reviews",
+    ):
+        assert removed not in support_channels
     assert "support-channels" in instruction
     assert "Never call `load_skill`." in instruction
 

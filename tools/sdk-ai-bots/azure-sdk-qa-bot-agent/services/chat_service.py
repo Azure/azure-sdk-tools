@@ -181,11 +181,7 @@ class ChatService:
                 content=tenant_system_msg,
             ).model_dump(mode="json", exclude_none=True),
         )
-        support_channels_context = (
-            get_support_channel_context()
-            if req.tenant_id != TenantID.AZURE_TYPESPEC_AUTHORING
-            else ""
-        )
+        support_channels_context = get_support_channel_context()
         support_channels_item = (
             cast(
                 ResponseInputItemParam,
@@ -723,11 +719,7 @@ class ChatService:
             full_context=full_context,
             agent_conversation_id=agent_conversation_id,
         )
-        if (
-            req.tenant_id != TenantID.AZURE_TYPESPEC_AUTHORING
-            and route_channel_name
-            and route_channel_link
-        ):
+        if route_channel_name and route_channel_link:
             resp.route_channel_name = route_channel_name
             resp.route_channel_link = route_channel_link
         if req.conversation_type == ConversationType.teams_channel:

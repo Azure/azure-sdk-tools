@@ -78,6 +78,7 @@ export interface CompletionResponsePayload {
   intension?: IntensionResult;
   Category?: string;
   ReasoningProgress?: string;
+  /** @deprecated Use route_channel_name and route_channel_link instead. */
   route_tenant?: string;
   route_channel_name?: string;
   route_channel_link?: string;

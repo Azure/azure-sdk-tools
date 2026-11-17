@@ -919,15 +919,8 @@ def test_loaded_skills_never_set_route_tenant() -> None:
 
 
 @pytest.mark.parametrize("placeholder_order", ["after_refs", "before_refs"])
-@pytest.mark.parametrize(
-    ("request_tenant", "expected_name"),
-    [
-        ("api_spec_review_bot", "SDK release support"),
-        ("azure_typespec_authoring", None),
-    ],
-)
 def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
-    placeholder_order, request_tenant, expected_name
+    placeholder_order,
 ) -> None:
     from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
 
@@ -964,7 +957,7 @@ def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
         ],
     )
     request = ChatRequest(
-        tenant_id=request_tenant,
+        tenant_id="api_spec_review_bot",
         message=ChatMessage(role="user", content="Release help"),
     )
 
@@ -974,8 +967,8 @@ def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
     assert len(result.references or []) == 1
     assert result.references[0].link == "https://example.test/release"
     assert result.route_tenant is None
-    assert result.route_channel_name == expected_name
-    assert result.route_channel_link == (channel_link if expected_name else None)
+    assert result.route_channel_name == "SDK release support"
+    assert result.route_channel_link == channel_link
 
 
 def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:

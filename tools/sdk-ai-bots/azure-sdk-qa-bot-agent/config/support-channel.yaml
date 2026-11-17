@@ -75,8 +75,3 @@ support_channels:
     name: "Language - Rust"
     description: "Rust SDK support."
     link: "https://teams.microsoft.com/l/channel/19%3A93ad56ee1ff149eb9f233bcf6432399e%40thread.skype/Language%20-%20Rust?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"
-
-  - key: language_mobile
-    name: "Language - Mobile"
-    description: "Mobile SDK support."
-    link: "https://teams.microsoft.com/l/channel/19%3Aae8aa86450294f31872cb9e2b1b13290%40thread.skype/Language%20-%20Mobile?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"

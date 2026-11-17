@@ -143,7 +143,7 @@ model ChatResponse {
   @doc("Whether the agent produced a non-empty answer")
   has_result: boolean;
 
-  @doc("The tenant ID the question is routed to")
+  @doc("Deprecated: use route_channel_name and route_channel_link instead.")
   route_tenant?: string;
 
   @doc("The Teams channel name the question is routed to")

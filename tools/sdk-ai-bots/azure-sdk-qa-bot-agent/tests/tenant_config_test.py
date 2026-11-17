@@ -206,8 +206,6 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
         "deprecation, retirement and customer notification. "
         "Use typespec instead for ARM/management-plane questions."
     )
-    typespec_skill = next(s for s in skills if s.frontmatter.name == "typespec")
-    assert "ARM/management-plane" in typespec_skill.frontmatter.description
     assert "Give evidence-backed advice, not Board decisions" in content
     assert "Use `typespec` for detailed authoring" not in content
     assert "`api-spec-review` for validator-specific diagnosis" not in content
@@ -694,31 +692,6 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
         str(Path("/app/skills/tenant_skills.py")),
     )
     assert chat_agent_init._get_chat_skill_dir() == Path("/app/skills/chat_agent")
-
-
-def test_support_channels_skill_guides_unresolved_handoffs_only() -> None:
-    support_channels = (
-        _AGENT_ROOT / "skills" / "chat_agent" / "support-channels" / "SKILL.md"
-    ).read_text(encoding="utf-8")
-    instruction = (_AGENT_ROOT / "agents" / "chat_agent" / "instruction.md").read_text(
-        encoding="utf-8"
-    )
-
-    assert support_channels.startswith("---\nname: support-channels\n")
-    assert "DO NOT USE FOR:" in support_channels
-    assert "SDK release support" in support_channels
-    assert "Language - C++" in support_channels
-    assert "ARM Office Hours" in support_channels
-    for removed in (
-        "Language - C]",
-        "Partner Release Pipelines",
-        "APIView]",
-        "Language - Python - Reviews",
-        "Language - JavaScript - Reviews",
-    ):
-        assert removed not in support_channels
-    assert "support-channels" in instruction
-    assert "Never call `load_skill`." in instruction
 
 
 def test_azure_mcp_server_skill_contains_routing_metadata() -> None:

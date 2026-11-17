@@ -103,6 +103,7 @@ Once `<eventId>.ready.json` is written, the shared `PostToolUse` hook and `azsdk
 
 ## Open Questions
 
+- [ ] **Does telemetry have to go through MCP (`azsdk`)**: Should telemetry always be sent through the `azsdk` MCP CLI (`azsdk ingest-telemetry`), or can the shared hook script send directly to Application Insights (e.g., when a skill runs in an environment without the `azsdk` MCP server/CLI installed)?
 - [ ] **How to detect `copilot-app`**: Today `azsdk_tool_telemetry.ps1` only checks whether `tool_use_id` contains `_vscode-` and labels everything else `copilot-cli`. What hook field or environment variable identifies `copilot-app`?
 - [ ] **Where to store schemas across repos**: `azsdk` CLI lives in `azure-sdk-tools`, while some skills (like `azure-typespec-author`) live in `azure-rest-api-specs`. Should `azsdk` keep approved schemas in `azure-sdk-tools`, or read `telemetry/result.schema.json` from the skill folder?
 - [ ] **Are repo-relative paths allowed in private repos**: Can repo-relative paths (e.g., `specification/contoso/.../main.tsp`) always be sent as plain text, or do private repos need path hashing before public release?

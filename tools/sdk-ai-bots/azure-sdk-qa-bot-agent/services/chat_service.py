@@ -33,10 +33,10 @@ from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResu
 from models.identity import ResolveGitHubUsersResult
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
+from tools.routing_tools import RouteToChannelResult
 from skills.tenant_skills import (
     build_skill_content,
     get_skill_name_for_tenant,
-    get_skill_to_tenant_map,
 )
 from utils.azure_ai_foundry import (
     get_branch_agent_version,
@@ -661,7 +661,7 @@ class ChatService:
             if isinstance(result, SearchKnowledgeBaseResult)
             for ref in result.results
         ]
-        tenant = self._extract_routed_tenant(response.output)
+        tenant = self._extract_routed_tenant(tool_results)
 
         output_text = response.output_text or ""
 
@@ -698,7 +698,11 @@ class ChatService:
             full_context=full_context,
             agent_conversation_id=agent_conversation_id,
         )
-        if req.tenant_id != tenant:
+        if (
+            tenant is not None
+            and req.tenant_id != tenant
+            and req.tenant_id != TenantID.AZURE_TYPESPEC_AUTHORING
+        ):
             resp.route_tenant = tenant
         if req.conversation_type == ConversationType.teams_channel:
             identities = ResolveGitHubUsersResult()
@@ -860,32 +864,22 @@ class ChatService:
         return results
 
     @staticmethod
-    def _extract_routed_tenant(items: list[ResponseOutputItem]) -> TenantID | None:
-        """Detect the routed tenant from load_skill calls.
+    def _extract_routed_tenant(
+        tool_results: dict[str, list[object]],
+    ) -> TenantID | None:
+        """Extract an explicit channel handoff from ``route_to_channel`` calls.
 
-        When the agent calls ``load_skill("<skill-name>")``, map the skill
-        name back to a tenant ID using the reverse skill→tenant map.
+        Loading skills via ``load_skill`` supplies domain guidance to answer the
+        question and never implies a channel handoff. Only an explicit
+        ``route_to_channel`` result sets ``route_tenant``.
         """
-        if not items:
+        results = [
+            result
+            for result in tool_results.get("route_to_channel", [])
+            if isinstance(result, RouteToChannelResult)
+        ]
+        if not results:
             return None
-
-        skill_to_tenant = get_skill_to_tenant_map()
-
-        for item in items:
-            if isinstance(item, ResponseFunctionToolCall) and item.name == "load_skill":
-                try:
-                    args = (
-                        json.loads(item.arguments)
-                        if isinstance(item.arguments, str)
-                        else item.arguments
-                    )
-                    skill_name = args.get("skill_name", "")
-                    tenant_id = skill_to_tenant.get(skill_name)
-                    if tenant_id:
-                        logger.info(
-                            "Routed via skill %s → tenant %s", skill_name, tenant_id
-                        )
-                        return tenant_id
-                except (json.JSONDecodeError, AttributeError):
-                    pass
-        return None
+        tenant_id = results[-1].tenant_id
+        logger.info("Explicit channel handoff requested → tenant %s", tenant_id)
+        return tenant_id

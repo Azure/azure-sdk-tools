@@ -29,14 +29,16 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     TenantID.API_STEWARDSHIP_BOARD_QA_BOT: (
-        "Data-plane spec-to-SDK lifecycle: API modeling and REST design "
+        "Data-plane only (not ARM/management-plane) spec-to-SDK lifecycle: "
+        "data-plane API modeling and REST design "
         "(endpoints, LROs, service access boundaries); specification validation "
         "and API Stewardship Board review "
         "(readiness, scheduling, async reviews, Office Hours, signoff); "
         "SDK design, clients, library/package naming and approval, "
         "documentation and SDK exposure; preview/GA versioning, compatibility, "
         "breaking changes, "
-        "deprecation, retirement and customer notification."
+        "deprecation, retirement and customer notification. "
+        "Use typespec instead for ARM/management-plane questions."
     ),
     TenantID.API_SPEC_REVIEW_BOT: (
         "Azure REST API specification authoring and PR review: requirements, "
@@ -68,7 +70,8 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "requests, including requests to apply diagnostics or suppressions."
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: (
-        "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
+        "TypeSpec language and Azure API design (ARM/management-plane and data-plane): "
+        "syntax, decorators, patterns, Azure extensions, "
         "migration from OpenAPI, validation, tspconfig, specification service-folder "
         "organization, and RPaaS registration paths coupled to that layout. Do not "
         "replace a preloaded typespec-authoring skill for Authoring tenant requests."

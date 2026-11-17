@@ -195,15 +195,19 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
     assert f"- {SRC_AZURE_AVOCADO_DOCS}:" in content
     assert "[skill_guideline]" in content
     assert skill.frontmatter.description == (
-        "Data-plane spec-to-SDK lifecycle: API modeling and REST design "
+        "Data-plane only (not ARM/management-plane) spec-to-SDK lifecycle: "
+        "data-plane API modeling and REST design "
         "(endpoints, LROs, service access boundaries); specification validation "
         "and API Stewardship Board review "
         "(readiness, scheduling, async reviews, Office Hours, signoff); "
         "SDK design, clients, library/package naming and approval, "
         "documentation and SDK exposure; preview/GA versioning, compatibility, "
         "breaking changes, "
-        "deprecation, retirement and customer notification."
+        "deprecation, retirement and customer notification. "
+        "Use typespec instead for ARM/management-plane questions."
     )
+    typespec_skill = next(s for s in skills if s.frontmatter.name == "typespec")
+    assert "ARM/management-plane" in typespec_skill.frontmatter.description
     assert "Give evidence-backed advice, not Board decisions" in content
     assert "Use `typespec` for detailed authoring" not in content
     assert "`api-spec-review` for validator-specific diagnosis" not in content
@@ -688,27 +692,32 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     assert chat_agent_init._get_chat_skill_dir() == Path("/app/skills/chat_agent")
 
 
-def test_pr_review_skill_does_not_change_tenant_routing() -> None:
-    from openai.types.responses.response_function_tool_call import (
-        ResponseFunctionToolCall,
+def test_load_skill_does_not_change_tenant_routing() -> None:
+    from services.chat_service import ChatService
+    from tools.routing_tools import RouteToChannelResult
+
+    assert ChatService._extract_routed_tenant({}) is None
+    assert (
+        ChatService._extract_routed_tenant(
+            {"route_to_channel": [RouteToChannelResult(tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT)]}
+        )
+        == TenantID.TYPESPEC_CHANNEL_QA_BOT
     )
 
-    from services.chat_service import ChatService
 
-    def load_skill_call(skill_name: str) -> ResponseFunctionToolCall:
-        return ResponseFunctionToolCall(
-            id=f"fc_{skill_name}",
-            call_id=f"call_{skill_name}",
-            name="load_skill",
-            arguments=json.dumps({"skill_name": skill_name}),
-            type="function_call",
-            status="completed",
-        )
+def test_chat_agent_registers_route_to_channel_tool() -> None:
+    from tools import TOOL_REGISTRY
+    from tools.routing_tools import RouteToChannelResult
 
-    assert ChatService._extract_routed_tenant([load_skill_call("pr-review")]) is None
-    assert ChatService._extract_routed_tenant(
-        [load_skill_call("api-spec-review")]
-    ) == TenantID.API_SPEC_REVIEW_BOT
+    init = (_AGENT_ROOT / "agents" / "chat_agent" / "init.py").read_text(encoding="utf-8")
+    instruction = (_AGENT_ROOT / "agents" / "chat_agent" / "instruction.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert TOOL_REGISTRY.get("route_to_channel") is RouteToChannelResult
+    assert "routing_tools.route_to_channel" in init
+    assert "route_to_channel" in instruction
+    assert "Never call `load_skill` or `route_to_channel`" in instruction
 
 
 def test_azure_mcp_server_skill_contains_routing_metadata() -> None:

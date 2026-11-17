@@ -84,8 +84,9 @@ Discipline:
 - The default tenant's skill content is already preloaded in `[skill]`. Reassess the active skill when evidence changes the problem to solve; load a better-matched skill and continue investigating rather than referring the user elsewhere. The preloaded skill is a starting point, not a boundary.
 - When the preloaded skill is the `general` tenant, always prefer loading a more specific, appropriate skill for the question via `load_skill`. The `general` skill is a fallback of last resort — only stay on it if no other skill fits.
 - Before using a non-default `tenant_id` for retrieval, load that tenant's skill and follow its guidance. Do not switch only the search scope while leaving the default skill active.
+- **Channel handoff (`route_to_channel`)**: `load_skill` switches your working skill to answer the question and does not hand off the thread. Call `route_to_channel` ONLY when the question remains unresolved after investigation and needs another channel's experts (such as human review, approval, or escalation). Do not call `route_to_channel` when you have answered the question.
 - `typespec-authoring` may ONLY be loaded when `[tenant_context]` contains `original_tenant_id=azure_typespec_authoring`. Otherwise use `typespec`.
-- **Authoring tenant lock (overrides rules below)**: when `original_tenant_id=azure_typespec_authoring`, use ONLY the preloaded `typespec-authoring` skill and search ONLY with its `tenant_id` — no other skills, no other tenants, even for multi-topic questions. Never call `load_skill`.
+- **Authoring tenant lock (overrides rules below)**: when `original_tenant_id=azure_typespec_authoring`, use ONLY the preloaded `typespec-authoring` skill and search ONLY with its `tenant_id` — no other skills, no other tenants, even for multi-topic questions. Never call `load_skill` or `route_to_channel`.
 
 ## Answer Rules
 

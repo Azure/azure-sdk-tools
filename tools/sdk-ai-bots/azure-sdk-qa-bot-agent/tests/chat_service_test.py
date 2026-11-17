@@ -856,3 +856,164 @@ async def test_chat_selects_request_version_before_configured_version(
     else:
         project.agents.get_version.assert_awaited_once_with("agent", expected)
         project.agents.get.assert_not_called()
+
+
+def test_answered_question_with_loaded_skills_returns_no_route_tenant() -> None:
+    import json
+
+    from openai.types.responses import (
+        Response,
+        ResponseFunctionToolCall,
+        ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage,
+        ResponseOutputText,
+    )
+
+    output = []
+    for index, skill_name in enumerate(("api-stewardship-board", "typespec")):
+        call_id = f"skill-{index}"
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call",
+                name="load_skill",
+                call_id=call_id,
+                arguments=json.dumps({"skill_name": skill_name}),
+            ),
+            ResponseFunctionToolCallOutputItem.model_construct(
+                type="function_call_output",
+                id=call_id,
+                call_id=call_id,
+                output=f"Loaded {skill_name}",
+                status="completed",
+            ),
+        ])
+    output.append(
+        ResponseOutputMessage.model_construct(
+            type="message",
+            id="answer",
+            role="assistant",
+            status="completed",
+            content=[
+                ResponseOutputText.model_construct(
+                    type="output_text",
+                    text="Use Azure.ResourceManager ArmResourceCreateOrReplaceAsync for ARM PUT.",
+                    annotations=[],
+                )
+            ],
+        )
+    )
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id="api_spec_review_bot",
+        message=ChatMessage(role="user", content="ARM PUT TypeSpec pattern?"),
+    )
+
+    result = ChatService()._postprocess(request, response, None)
+
+    assert result.has_result is True
+    assert result.route_tenant is None
+
+
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+@pytest.mark.parametrize(
+    ("request_tenant", "target_tenant", "expected_route"),
+    [
+        ("api_spec_review_bot", "typespec_channel_qa_bot", "typespec_channel_qa_bot"),
+        ("api_spec_review_bot", "api_spec_review_bot", None),
+        ("azure_typespec_authoring", "typespec_channel_qa_bot", None),
+    ],
+)
+def test_explicit_route_to_channel_sets_route_tenant(
+    output_type, request_tenant, target_tenant, expected_route
+) -> None:
+    import json
+
+    from openai.types.responses import (
+        Response,
+        ResponseFunctionToolCall,
+        ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage,
+        ResponseOutputText,
+    )
+
+    from tools.routing_tools import RouteToChannelResult
+
+    call_id = "route-1"
+    payload = RouteToChannelResult(
+        tenant_id=target_tenant,
+        reason="Requires TypeSpec channel experts.",
+    ).model_dump_json()
+    tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
+    if output_type == "function_call_output":
+        tool_output = ResponseFunctionToolCallOutputItem.model_construct(
+            type=output_type,
+            id=call_id,
+            call_id=call_id,
+            output=payload,
+            status="completed",
+        )
+    else:
+        tool_output = ResponseOutputMessage.model_construct(
+            type="message",
+            id=call_id,
+            role="assistant",
+            status="completed",
+            content=[],
+            call_id=call_id,
+            output=json.dumps([payload]),
+        )
+
+    output = [
+        ResponseFunctionToolCall.model_construct(
+            type="function_call",
+            name="route_to_channel",
+            call_id=call_id,
+            arguments=json.dumps({"tenant_id": target_tenant, "reason": "Needs experts"}),
+        ),
+        tool_output,
+        ResponseOutputMessage.model_construct(
+            type="message",
+            id="answer",
+            role="assistant",
+            status="completed",
+            content=[
+                ResponseOutputText.model_construct(
+                    type="output_text",
+                    text="This requires TypeSpec channel experts.",
+                    annotations=[],
+                )
+            ],
+        ),
+    ]
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id=request_tenant,
+        message=ChatMessage(role="user", content="Needs deeper review"),
+    )
+
+    result = ChatService()._postprocess(request, response, None)
+
+    assert result.route_tenant == expected_route
+
+
+@pytest.mark.asyncio
+async def test_route_to_channel_tool_validates_target_tenants() -> None:
+    from config.tenant_config import TenantID
+    from tools import TOOL_REGISTRY
+    from tools.routing_tools import RouteToChannelResult, RoutingTools
+
+    assert TOOL_REGISTRY["route_to_channel"] is RouteToChannelResult
+
+    tools = RoutingTools()
+    result = await tools.route_to_channel(
+        tenant_id="typespec_channel_qa_bot",
+        reason="Needs TypeSpec channel experts.",
+    )
+    assert result == RouteToChannelResult(
+        tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT,
+        reason="Needs TypeSpec channel experts.",
+    )
+
+    for invalid in ("azure_typespec_authoring", "azure_sdk_qa_bot", "unknown_tenant"):
+        with pytest.raises(ValueError):
+            await tools.route_to_channel(tenant_id=invalid, reason="Invalid")

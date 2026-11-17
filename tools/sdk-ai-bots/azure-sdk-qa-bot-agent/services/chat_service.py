@@ -14,6 +14,7 @@ import httpx
 from azure.core.exceptions import AzureError
 
 from config.app_config import Settings, get as cfg
+from config.support_channels import get_support_channel
 from config.tenant_config import (
     TenantConfig,
     get_tenant_config,
@@ -81,6 +82,11 @@ AGENT_ROUTING_ENABLED = "true"
 AGENT_ROUTING_DISABLED = "false"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+
+_SUPPORT_CHANNEL_SECTION_RE = re.compile(
+    r"\n*(?:\*\*Support Channel\*\*|#{1,3}\s*Support Channel)\s*\n+"
+    r"(?:[-*]|\d+\.)?\s*(?:\[([^\]]+)\]\(([^)]+)\)|([^\n]+))\s*"
+)
 
 
 class AgentRoutingError(ValueError):
@@ -666,6 +672,12 @@ class ChatService:
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)
 
+        # Extract any explicit **Support Channel** handoff before **References**
+        # so trailing sections don't get absorbed into the references block.
+        output_text, route_channel_name, route_channel_link = (
+            self._extract_support_channel_from_text(output_text)
+        )
+
         # Extract structured references from the agent's markdown output
         # and strip the references section from the answer text.
         answer, references = self._extract_references_from_text(
@@ -696,6 +708,13 @@ class ChatService:
             full_context=full_context,
             agent_conversation_id=agent_conversation_id,
         )
+        if (
+            req.tenant_id != TenantID.AZURE_TYPESPEC_AUTHORING
+            and route_channel_name
+            and route_channel_link
+        ):
+            resp.route_channel_name = route_channel_name
+            resp.route_channel_link = route_channel_link
         if req.conversation_type == ConversationType.teams_channel:
             identities = ResolveGitHubUsersResult()
             for result in tool_results.get("resolve_github_users", []):
@@ -708,6 +727,31 @@ class ChatService:
                 if mention.text in answer
             ] or None
         return resp
+
+    @staticmethod
+    def _extract_support_channel_from_text(
+        text: str,
+    ) -> tuple[str, str | None, str | None]:
+        """Parse and strip the **Support Channel** handoff block from agent output."""
+        match = _SUPPORT_CHANNEL_SECTION_RE.search(text)
+        if not match:
+            return text, None, None
+
+        before = text[: match.start()].rstrip()
+        after = text[match.end() :].lstrip()
+        cleaned = f"{before}\n\n{after}".strip() if before and after else (before or after)
+
+        raw_name = (match.group(1) or match.group(3) or "").strip()
+        raw_link = (match.group(2) or "").strip() or None
+        channel = get_support_channel(name=raw_name, link=raw_link)
+        if channel is None:
+            logger.warning(
+                "Ignoring unrecognized support channel handoff: name=%s link=%s",
+                raw_name,
+                raw_link,
+            )
+            return cleaned, None, None
+        return cleaned, channel.name, channel.link
 
     @staticmethod
     def _extract_references_from_text(

@@ -90,6 +90,8 @@ class ChatResponse(BaseModel):
     references: list[Reference] | None = None
     full_context: str | None = None
     route_tenant: TenantID | None = None
+    route_channel_name: str | None = None
+    route_channel_link: str | None = None
     agent_conversation_id: str | None = None
     trace_id: str | None = None
     mentions: list[TeamsMention] | None = None

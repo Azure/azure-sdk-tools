@@ -146,6 +146,12 @@ model ChatResponse {
   @doc("The tenant ID the question is routed to")
   route_tenant?: string;
 
+  @doc("The Teams channel name the question is routed to")
+  route_channel_name?: string;
+
+  @doc("The Teams channel link the question is routed to")
+  route_channel_link?: string;
+
   @doc("Verified Teams mention metadata for AT markup already present in the answer")
   mentions?: TeamsMention[];
 }

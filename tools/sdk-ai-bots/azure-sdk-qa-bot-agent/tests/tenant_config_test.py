@@ -26,6 +26,7 @@ from config.tenant_config import (
 )
 from skills.tenant_skills import (
     build_skill_content,
+    create_support_channels_skill,
     create_tenant_skills,
     get_skill_name_for_tenant,
     get_skill_to_tenant_map,
@@ -671,12 +672,9 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     skills = asyncio.run(
         FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
     )
-    assert {skill.frontmatter.name for skill in skills} == {
-        "pr-review",
-        "support-channels",
-    }
+    assert [skill.frontmatter.name for skill in skills] == ["pr-review"]
     assert "pr-review" not in get_skill_to_tenant_map()
-    assert "support-channels" not in get_skill_to_tenant_map()
+    assert create_support_channels_skill().frontmatter.name == "support-channels"
 
     init = (
         _AGENT_ROOT / "agents" / "chat_agent" / "init.py"

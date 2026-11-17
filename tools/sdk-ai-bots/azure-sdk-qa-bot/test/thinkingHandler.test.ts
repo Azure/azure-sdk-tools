@@ -464,5 +464,32 @@ describe('ThinkingHandler', () => {
         conversation: mockContext.activity?.conversation,
       });
     });
+
+    it('renders standardized footer from route_channel_name and route_channel_link', async () => {
+      const prompt: Prompt = {
+        textWithoutMention: 'Release help',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+      const routedReply: CompletionResponsePayload = {
+        id: 'reply-route',
+        answer: 'Please check with release support.',
+        has_result: true,
+        route_channel_name: 'SDK release support',
+        route_channel_link:
+          'https://teams.microsoft.com/l/channel/19%3A084875bb626242ed95f3ac8dddfaa12a%40thread.skype/SDK%20release%20support?groupId=g1&tenantId=t1',
+      };
+
+      await thinkingHandler.stop(new Date(), routedReply, prompt, 'azure_sdk_onboarding');
+      expect(mockContext.updateActivity).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining(
+            '💬 Not resolved? Please re-post in the 👉 [SDK release support](https://teams.microsoft.com/l/channel/19%3A084875bb626242ed95f3ac8dddfaa12a%40thread.skype/SDK%20release%20support?groupId=g1&tenantId=t1) channel where our domain experts can provide a deeper dive.'
+          ),
+        })
+      );
+    });
   });
 });

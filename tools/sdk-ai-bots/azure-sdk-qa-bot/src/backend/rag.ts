@@ -79,6 +79,8 @@ export interface CompletionResponsePayload {
   Category?: string;
   ReasoningProgress?: string;
   route_tenant?: string;
+  route_channel_name?: string;
+  route_channel_link?: string;
   trace_id?: string;
   mentions?: TeamsMention[] | null;
 }

@@ -102,34 +102,10 @@ model Reference {
   content: string;
 }
 
-@doc("A target Teams channel available for explicit handoff")
-model RoutableChannel {
-  @doc("The Teams channel identifier")
-  channel_id?: string;
-
-  @doc("The display name of the Teams channel")
-  channel_name: string;
-
-  @doc("Optional tenant ID associated with the channel")
-  tenant_id?: string;
-
-  @doc("Optional description of when to route to this channel")
-  description?: string;
-}
-
 @doc("Request for chat completion")
 model ChatRequest {
   @doc("The tenant ID")
   tenant_id: string;
-
-  @doc("Current Teams channel identifier")
-  channel_id?: string;
-
-  @doc("Current Teams channel display name")
-  channel_name?: string;
-
-  @doc("Candidate target channels available for explicit handoff")
-  available_channels?: RoutableChannel[];
 
   @doc("Existing conversation identifier, if continuing a conversation")
   conversation_id?: string;
@@ -169,12 +145,6 @@ model ChatResponse {
 
   @doc("The tenant ID the question is routed to")
   route_tenant?: string;
-
-  @doc("The Teams channel ID the question is routed to")
-  route_channel_id?: string;
-
-  @doc("The Teams channel name the question is routed to")
-  route_channel_name?: string;
 
   @doc("Verified Teams mention metadata for AT markup already present in the answer")
   mentions?: TeamsMention[];

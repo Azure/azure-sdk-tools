@@ -3,7 +3,7 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
-import { TenantConfigManager, TenantItem, KnownTenants, extractChannelIdFromLink } from '../config/tenant.js';
+import { TenantConfigManager, KnownTenants } from '../config/tenant.js';
 import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
@@ -69,27 +69,11 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(
-    replyStartTime: Date,
-    reply: CompletionResponsePayload | RagApiError,
-    currentPrompt: Prompt,
-    currentChannelTenant?: string,
-    currentChannelId?: string
-  ) {
+  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
     const { answer, isError } = this.generateAnswer(reply);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
-    const routeChannelId = isCompletionResponsePayload(reply) ? reply.route_channel_id : undefined;
-    const routeChannelName = isCompletionResponsePayload(reply) ? reply.route_channel_name : undefined;
     const traceId = isCompletionResponsePayload(reply) ? reply.trace_id : undefined;
-    const formattedAnswer = await this.formatAnswer(
-      answer,
-      isError,
-      routeTenant,
-      currentChannelTenant,
-      routeChannelId,
-      routeChannelName,
-      currentChannelId
-    );
+    const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant, currentChannelTenant);
     const mentions = getTeamsMentionEntities(
       answer,
       isCompletionResponsePayload(reply) ? reply.mentions : undefined
@@ -141,60 +125,25 @@ export class ThinkingHandler {
   }
 
   /**
-   * Format the answer with conditional footer based on route_channel / route_tenant.
+   * Format the answer with conditional footer based on route_tenant.
    * For error responses, returns the answer as-is without footer.
    */
-  private async formatAnswer(
-    answer: string,
-    isError: boolean,
-    routeTenant?: string,
-    currentChannelTenant?: string,
-    routeChannelId?: string,
-    routeChannelName?: string,
-    currentChannelId?: string
-  ): Promise<string> {
+  private async formatAnswer(answer: string, isError: boolean, routeTenant?: string, currentChannelTenant?: string): Promise<string> {
     // For error responses, return plain text without footer
     if (isError) {
       return answer;
     }
 
     const footerParts: string[] = [];
-    let routedTarget: TenantItem | undefined;
 
-    if (routeChannelId || routeChannelName) {
+    if (routeTenant) {
       try {
-        routedTarget = this.tenantConfigManager.getChannel(routeChannelId, routeChannelName);
-        const resolvedTargetId = routedTarget
-          ? (routedTarget.channel_id || extractChannelIdFromLink(routedTarget.channel_link))
-          : routeChannelId;
-        if (currentChannelId && resolvedTargetId && resolvedTargetId === currentChannelId) {
-          routedTarget = undefined;
-        } else if (!routedTarget) {
-          logger.warn(`Channel not found for route_channel: id=${routeChannelId}, name=${routeChannelName}`, { meta: this.meta });
-          if (routeChannelName) {
-            footerParts.push(`💬 Not resolved? Please re-post in the 👉 ${routeChannelName} channel where our domain experts can provide a deeper dive.`);
-          }
-        } else {
-          const displayName = routedTarget.channel_name || routeChannelName || routeChannelId;
-          const channelLink = routedTarget.channel_link ? `[${displayName}](${routedTarget.channel_link})` : `${displayName}`;
-          footerParts.push(`💬 Not resolved? Please re-post in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`);
-        }
-      } catch (error) {
-        logger.error(`Failed to get channel info for route_channel: id=${routeChannelId}, name=${routeChannelName}`, { error: error.message, meta: this.meta });
-      }
-    } else if (routeTenant) {
-      try {
-        routedTarget = this.tenantConfigManager.getTenant(routeTenant);
-        const resolvedTargetId = routedTarget
-          ? (routedTarget.channel_id || extractChannelIdFromLink(routedTarget.channel_link))
-          : undefined;
-        if (currentChannelId && resolvedTargetId && resolvedTargetId === currentChannelId) {
-          routedTarget = undefined;
-        } else if (!routedTarget) {
+        const tenant = this.tenantConfigManager.getTenant(routeTenant);
+        if (!tenant) {
           logger.warn(`Tenant not found for route_tenant: ${routeTenant}`, { meta: this.meta });
         } else {
-          const displayName = routedTarget.channel_name || routeTenant;
-          const channelLink = routedTarget.channel_link ? `[${displayName}](${routedTarget.channel_link})` : `${displayName}`;
+          const displayName = tenant.channel_name || routeTenant;
+          const channelLink = tenant.channel_link ? `[${displayName}](${tenant.channel_link})` : `${displayName}`;
           footerParts.push(`💬 Not resolved? Please re-post in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`);
         }
       } catch (error) {
@@ -203,7 +152,7 @@ export class ThinkingHandler {
     }
 
     // Show TypeSpec skill promo when the effective tenant is the TypeSpec channel (or the default channel for backward compatibility)
-    const effectiveTenant = routedTarget?.tenant ?? routeTenant ?? currentChannelTenant;
+    const effectiveTenant = routeTenant ?? currentChannelTenant;
     if (effectiveTenant === KnownTenants.TypeSpec || effectiveTenant === KnownTenants.Default) {
       footerParts.push(`🚀 **Try the Azure TypeSpec Author skill** to write API specifications in TypeSpec! Check out the Quick Start and samples [here](https://azure.github.io/typespec-azure/docs/getstarted/typespec-authoring-skill/).`);
     }

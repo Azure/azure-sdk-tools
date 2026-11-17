@@ -673,8 +673,12 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     skills = asyncio.run(
         FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
     )
-    assert [skill.frontmatter.name for skill in skills] == ["pr-review"]
+    assert {skill.frontmatter.name for skill in skills} == {
+        "pr-review",
+        "support-channels",
+    }
     assert "pr-review" not in get_skill_to_tenant_map()
+    assert "support-channels" not in get_skill_to_tenant_map()
 
     init = (
         _AGENT_ROOT / "agents" / "chat_agent" / "init.py"
@@ -692,52 +696,21 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     assert chat_agent_init._get_chat_skill_dir() == Path("/app/skills/chat_agent")
 
 
-def test_load_skill_does_not_change_channel_routing() -> None:
-    from models.chat import ChatRequest, Message as ChatMessage, RoutableChannel
-    from services.chat_service import ChatService
-    from tools.routing_tools import RouteToChannelResult
-
-    req = ChatRequest(
-        tenant_id=TenantID.API_SPEC_REVIEW_BOT,
-        channel_id="19:api-spec-review",
-        channel_name="API Spec Review",
-        available_channels=[
-            RoutableChannel(
-                channel_id="19:typespec",
-                channel_name="TypeSpec Discussion",
-                tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT.value,
-            )
-        ],
-        message=ChatMessage(role="user", content="test"),
-    )
-
-    assert ChatService._extract_routed_channel({}, req) == (None, None, None)
-    assert ChatService._extract_routed_channel(
-        {
-            "route_to_channel": [
-                RouteToChannelResult(
-                    channel_name="TypeSpec Discussion",
-                    channel_id="19:typespec",
-                )
-            ]
-        },
-        req,
-    ) == ("19:typespec", "TypeSpec Discussion", None)
-
-
-def test_chat_agent_registers_route_to_channel_tool() -> None:
-    from tools import TOOL_REGISTRY
-    from tools.routing_tools import RouteToChannelResult
-
-    init = (_AGENT_ROOT / "agents" / "chat_agent" / "init.py").read_text(encoding="utf-8")
+def test_support_channels_skill_guides_unresolved_handoffs_only() -> None:
+    support_channels = (
+        _AGENT_ROOT / "skills" / "chat_agent" / "support-channels" / "SKILL.md"
+    ).read_text(encoding="utf-8")
     instruction = (_AGENT_ROOT / "agents" / "chat_agent" / "instruction.md").read_text(
         encoding="utf-8"
     )
 
-    assert TOOL_REGISTRY.get("route_to_channel") is RouteToChannelResult
-    assert "routing_tools.route_to_channel" in init
-    assert "route_to_channel" in instruction
-    assert "Never call `load_skill` or `route_to_channel`" in instruction
+    assert support_channels.startswith("---\nname: support-channels\n")
+    assert "DO NOT USE FOR:" in support_channels
+    assert "SDK release support" in support_channels
+    assert "APIView" in support_channels
+    assert "ARM Office Hours" in support_channels
+    assert "support-channels" in instruction
+    assert "Never call `load_skill`." in instruction
 
 
 def test_azure_mcp_server_skill_contains_routing_metadata() -> None:

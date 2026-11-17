@@ -50,14 +50,9 @@ export interface AdditionalInfo {
   link: string; // required if type is link
 }
 
-import type { RoutableChannel } from '../config/tenant.js';
-
 // Completion request interface
 export interface CompletionRequestPayload {
   tenant_id: string;
-  channel_id?: string;
-  channel_name?: string;
-  available_channels?: RoutableChannel[];
   message: Message;
   with_full_context?: boolean; // default is false
   additional_infos?: AdditionalInfo[];
@@ -84,8 +79,6 @@ export interface CompletionResponsePayload {
   Category?: string;
   ReasoningProgress?: string;
   route_tenant?: string;
-  route_channel_id?: string;
-  route_channel_name?: string;
   trace_id?: string;
   mentions?: TeamsMention[] | null;
 }

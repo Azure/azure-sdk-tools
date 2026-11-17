@@ -336,8 +336,8 @@ Returns an answer with supporting references and documentation links
                     source = knowledge.Source,
                     title = knowledge.Title,
                     link = knowledge.Link,
-                    content = knowledge.Content.Length > MaxReferenceContentLength
-                        ? knowledge.Content.Substring(0, MaxReferenceContentLength - 3) + "..."
+                    content = knowledge.Content.Length > MaxTelemetryReferenceContentLength
+                        ? knowledge.Content.Substring(0, MaxTelemetryReferenceContentLength - 3) + "..."
                         : knowledge.Content
                 }).ToList()
             });
@@ -357,8 +357,8 @@ Returns an answer with supporting references and documentation links
                 Source = r.Source,
                 Link = r.Link,
                 /* truncate snippet if too long */
-                Snippet = r.Content.Length > MaxTelemetryReferenceContentLength
-                    ? r.Content.Substring(0, MaxTelemetryReferenceContentLength - 3) + "..."
+                Snippet = r.Content.Length > MaxReferenceContentLength
+                    ? r.Content.Substring(0, MaxReferenceContentLength - 3) + "..."
                     : r.Content
             }).ToList();
         }

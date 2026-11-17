@@ -31,7 +31,7 @@ from models.chat import (
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from models.identity import ResolveGitHubUsersResult
-from models.support_channel import get_support_channel, get_support_channel_context
+from models.support_channel import get_support_channel
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
@@ -181,23 +181,9 @@ class ChatService:
                 content=tenant_system_msg,
             ).model_dump(mode="json", exclude_none=True),
         )
-        support_channels_context = get_support_channel_context()
-        support_channels_item = (
-            cast(
-                ResponseInputItemParam,
-                ConversationItem(
-                    role=Role.System,
-                    content=support_channels_context,
-                ).model_dump(mode="json", exclude_none=True),
-            )
-            if support_channels_context
-            else None
-        )
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             conversation_items.append(tenant_system_item)
-            if support_channels_item is not None:
-                conversation_items.append(support_channels_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -266,8 +252,6 @@ class ChatService:
             )
             # The replacement conversation has no tenant context of its own.
             conversation_items.insert(0, tenant_system_item)
-            if support_channels_item is not None:
-                conversation_items.insert(1, support_channels_item)
             # Additional infos are not persisted in Cosmos; reuse the items already built.
             conversation_items.extend(additional_items)
             # Replace the poisoned mapping before the single recovery attempt.

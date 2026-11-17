@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from functools import lru_cache
 from pathlib import Path
@@ -52,23 +51,6 @@ class SupportChannelCatalog(SupportChannelModel):
         if len(names) != len(set(names)):
             raise ValueError("Support-channel names must be unique.")
         return self
-
-    def model_context(self) -> str:
-        payload = {
-            "support_channels": [
-                {
-                    "key": ch.key,
-                    "name": ch.name,
-                    "description": ch.description,
-                }
-                for ch in self.support_channels
-            ]
-        }
-        return "[support_channels]\n" + json.dumps(
-            payload,
-            ensure_ascii=True,
-            separators=(",", ":"),
-        )
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -120,14 +102,6 @@ def get_support_channel_catalog() -> SupportChannelCatalog | None:
         len(catalog.support_channels),
     )
     return catalog
-
-
-def get_support_channel_context() -> str:
-    """Return serialized [support_channels] context, or empty string if disabled."""
-    catalog = get_support_channel_catalog()
-    if catalog is None or not catalog.support_channels:
-        return ""
-    return catalog.model_context()
 
 
 def get_support_channel(target: str | None) -> SupportChannel | None:

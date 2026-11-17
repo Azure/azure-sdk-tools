@@ -1004,13 +1004,16 @@ def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:
     assert result.route_channel_link is None
 
 
-def test_support_channel_catalog_loads_and_excludes_authoring_context() -> None:
-    from models.support_channel import get_support_channel_context, parse_support_channel_catalog
+def test_support_channel_catalog_loads_and_builds_inline_skill() -> None:
+    from models.support_channel import get_support_channel, parse_support_channel_catalog
+    from skills.tenant_skills import create_support_channels_skill
 
-    context = get_support_channel_context()
-    assert context.startswith("[support_channels]\n")
-    assert "sdk_release_support" in context
-    assert "https://teams.microsoft.com" not in context
+    skill = create_support_channels_skill()
+    assert skill is not None
+    assert skill.frontmatter.name == "support-channels"
+    assert "sdk_release_support" in skill.instructions
+    assert "https://teams.microsoft.com" not in skill.instructions
+    assert get_support_channel("language_mobile") is None
 
     empty = parse_support_channel_catalog(b"support_channels: []")
     assert empty.support_channels == []

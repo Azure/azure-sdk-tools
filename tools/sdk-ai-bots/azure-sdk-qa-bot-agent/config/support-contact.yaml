@@ -21,14 +21,6 @@ support_areas:
     description: "Approved-Avocado approval-label review and approval on Azure/azure-rest-api-specs PRs. Excludes ARM sign-off and data-plane-review-signoff approval."
     github_usernames: [markcowl]
 
-  - key: arm_modeling_leases
-    description: "ARM resource-modeling questions, modeling-review routing and missing or existing ARM leases. Excludes general ARM PR sign-off and office-hours coordination; approval belongs to the designated reviewer."
-    github_usernames: [raosuhas]
-
-  - key: arm_office_hours
-    description: "ARM office-hours booking, availability, attendance and coordination questions. Excludes API design decisions, lease approvals and ARM PR sign-off."
-    github_usernames: [vikeshi26]
-
   - key: typespec_toolchain
     description: "TypeSpec compiler and shared toolchain, dependencies, repository CI and TypeSpec implementation issues."
     github_usernames: [timotheeguerin]
@@ -65,6 +57,10 @@ support_areas:
     description: "Go management SDK PR and API review, release triage, breaking-change approvals and compatibility guidance. Excludes data-plane approval."
     github_usernames: [tadelesh, jiaqizhang-dev]
 
+  - key: go_dataplane_sdk
+    description: "Go data-plane SDK PR and API review, code generation, customization and compatibility guidance. Excludes management-plane SDKs."
+    github_usernames: [jhendrixMSFT]
+
   - key: java_management_sdk
     description: "Java management SDK review, code generation, configuration, compatibility and release support."
     github_usernames: [weidongxu-microsoft]
@@ -81,6 +77,6 @@ support_areas:
     description: "JavaScript management SDK review and release triage, breaking-change approvals, generation and validation, TypeSpec customization and compatibility guidance. Excludes data-plane."
     github_usernames: [jialinhuang803, marygao]
 
-  - key: javascript_dataplane_sdk_review
+  - key: javascript_dataplane_sdk
     description: "JavaScript and TypeScript data-plane SDK design and API review, SDK code generation, customization tooling and integration."
     github_usernames: [maorleger]

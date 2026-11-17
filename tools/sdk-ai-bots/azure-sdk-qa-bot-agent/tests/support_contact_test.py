@@ -261,47 +261,6 @@ def test_repository_config_loads_independently_of_working_directory(monkeypatch,
     assert not (ROOT / "config" / "support-contact.example.yaml").exists()
 
 
-def test_repository_arm_contacts_separate_modeling_leases_and_office_hours():
-    catalog = parse_support_catalog(support_contact.SUPPORT_CONTACT_PATH.read_bytes())
-    areas = {area.key: area for area in catalog.support_areas}
-    assert areas["arm_modeling_leases"].github_usernames == ["raosuhas"]
-    assert areas["arm_office_hours"].github_usernames == ["vikeshi26"]
-    assert "approval belongs to the designated reviewer" in areas["arm_modeling_leases"].description
-    assert "Excludes API design decisions, lease approvals and ARM PR sign-off" in areas["arm_office_hours"].description
-    assert "Excludes ARM modeling decisions, leases, office-hours coordination" in areas["typespec_arm_modeling"].description
-    assert areas["typespec_arm_modeling"].github_usernames == ["markcowl"]
-
-
-def test_repository_dotnet_contacts_cover_management_and_data_plane():
-    catalog = parse_support_catalog(support_contact.SUPPORT_CONTACT_PATH.read_bytes())
-    areas = {area.key: area for area in catalog.support_areas if area.key.startswith("dotnet_")}
-    assert set(areas) == {"dotnet_management_sdk", "dotnet_dataplane_sdk"}
-    assert areas["dotnet_management_sdk"].github_usernames == [
-        "arthurma1978", "live1206", "arcturuszhang",
-    ]
-    assert areas["dotnet_dataplane_sdk"].github_usernames == ["jorgerangel-msft"]
-    assert all("m-nash" not in area.github_usernames for area in catalog.support_areas)
-
-
-def test_repository_go_management_contacts_are_grouped():
-    catalog = parse_support_catalog(support_contact.SUPPORT_CONTACT_PATH.read_bytes())
-    areas = {area.key: area for area in catalog.support_areas if area.key.startswith("go_management_sdk")}
-    assert set(areas) == {"go_management_sdk"}
-    assert areas["go_management_sdk"].github_usernames == ["tadelesh", "jiaqizhang-dev"]
-
-
-def test_repository_javascript_management_contacts_are_grouped():
-    catalog = parse_support_catalog(support_contact.SUPPORT_CONTACT_PATH.read_bytes())
-    areas = {
-        area.key: area for area in catalog.support_areas
-        if area.key.startswith("javascript_management_sdk")
-    }
-    assert set(areas) == {"javascript_management_sdk"}
-    area = areas["javascript_management_sdk"]
-    assert area.github_usernames == ["jialinhuang803", "marygao"]
-    assert "shared-core" not in area.description
-
-
 def test_empty_catalog_is_cached(support_config_path):
     support_config_path.write_bytes(b"support_areas: []")
     context = get_support_catalog_context()

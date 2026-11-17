@@ -14,7 +14,6 @@ from functools import lru_cache
 
 from agent_framework import InlineSkill, Skill, SkillFrontmatter
 
-from config.support_channels import SUPPORT_CHANNELS
 from config.tenant_config import (
     TenantID,
     get_tenant_config,
@@ -164,43 +163,6 @@ def create_tenant_skills(agent_name: str) -> list[Skill]:
             tenant_id.value,
         )
     return skills
-
-
-def create_support_channels_skill() -> InlineSkill:
-    """Build the on-demand support-channels skill from ``SUPPORT_CHANNELS``."""
-    lines = [
-        "# Support Channels",
-        "",
-        "Load this skill **only** when a question remains unresolved after investigation "
-        "and needs human review, approval, escalation, or domain experts in another channel.",
-        "",
-        "- Do not refer the user back to the current channel (see `[tenant_context]` / `[tenant_scope]`).",
-        "- For ARM/management-plane reviews, direct to [ARM Office Hours](https://armwiki.azurewebsites.net/introduction/office_hours.html) in your reply instead of routing to the API Stewardship Board channel.",
-        "- For a Teams channel handoff, append this block at the end of your response (using a channel name below) so the bot renders the re-post footer automatically instead of writing the footer text yourself:",
-        "",
-        "```md",
-        "**Support Channel**",
-        "- <channel_name>",
-        "```",
-        "",
-        "## Channels",
-        "",
-    ]
-    for channel in SUPPORT_CHANNELS:
-        lines.append(f"- **{channel.name}** — {channel.description}")
-
-    return InlineSkill(
-        frontmatter=SkillFrontmatter(
-            name="support-channels",
-            description=(
-                "Look up the right Teams support channel ONLY when a question remains "
-                "unresolved and needs another channel's human experts. DO NOT USE FOR: "
-                "questions you can answer directly (even after loading another domain "
-                "skill) or while investigating."
-            ),
-        ),
-        instructions="\n".join(lines),
-    )
 
 
 def get_skill_to_tenant_map() -> dict[str, TenantID]:

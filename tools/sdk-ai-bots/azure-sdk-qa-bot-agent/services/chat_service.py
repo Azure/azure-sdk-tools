@@ -14,7 +14,6 @@ import httpx
 from azure.core.exceptions import AzureError
 
 from config.app_config import Settings, get as cfg
-from config.support_channels import get_support_channel
 from config.tenant_config import (
     TenantConfig,
     get_tenant_config,
@@ -32,6 +31,7 @@ from models.chat import (
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from models.identity import ResolveGitHubUsersResult
+from models.support_channel import get_support_channel, get_support_channel_context
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
@@ -82,11 +82,7 @@ AGENT_ROUTING_ENABLED = "true"
 AGENT_ROUTING_DISABLED = "false"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
-
-_SUPPORT_CHANNEL_SECTION_RE = re.compile(
-    r"\n*(?:\*\*Support Channel\*\*|#{1,3}\s*Support Channel)\s*\n+"
-    r"(?:[-*]|\d+\.)?\s*(?:\[([^\]]+)\]\(([^)]+)\)|([^\n]+))\s*"
-)
+_CHANNEL_PLACEHOLDER_RE = re.compile(r"\{\{channel:([^}\n]+)\}\}")
 
 
 class AgentRoutingError(ValueError):
@@ -185,9 +181,27 @@ class ChatService:
                 content=tenant_system_msg,
             ).model_dump(mode="json", exclude_none=True),
         )
+        support_channels_context = (
+            get_support_channel_context()
+            if req.tenant_id != TenantID.AZURE_TYPESPEC_AUTHORING
+            else ""
+        )
+        support_channels_item = (
+            cast(
+                ResponseInputItemParam,
+                ConversationItem(
+                    role=Role.System,
+                    content=support_channels_context,
+                ).model_dump(mode="json", exclude_none=True),
+            )
+            if support_channels_context
+            else None
+        )
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             conversation_items.append(tenant_system_item)
+            if support_channels_item is not None:
+                conversation_items.append(support_channels_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -256,6 +270,8 @@ class ChatService:
             )
             # The replacement conversation has no tenant context of its own.
             conversation_items.insert(0, tenant_system_item)
+            if support_channels_item is not None:
+                conversation_items.insert(1, support_channels_item)
             # Additional infos are not persisted in Cosmos; reuse the items already built.
             conversation_items.extend(additional_items)
             # Replace the poisoned mapping before the single recovery attempt.
@@ -672,8 +688,7 @@ class ChatService:
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)
 
-        # Extract any explicit **Support Channel** handoff before **References**
-        # so trailing sections don't get absorbed into the references block.
+        # Extract any explicit {{channel:<key>}} handoff before **References**.
         output_text, route_channel_name, route_channel_link = (
             self._extract_support_channel_from_text(output_text)
         )
@@ -732,26 +747,28 @@ class ChatService:
     def _extract_support_channel_from_text(
         text: str,
     ) -> tuple[str, str | None, str | None]:
-        """Parse and strip the **Support Channel** handoff block from agent output."""
-        match = _SUPPORT_CHANNEL_SECTION_RE.search(text)
-        if not match:
+        """Resolve and strip ``{{channel:<key>}}`` handoff placeholders."""
+        matches = list(_CHANNEL_PLACEHOLDER_RE.finditer(text))
+        if not matches:
             return text, None, None
 
-        before = text[: match.start()].rstrip()
-        after = text[match.end() :].lstrip()
-        cleaned = f"{before}\n\n{after}".strip() if before and after else (before or after)
+        resolved_name: str | None = None
+        resolved_link: str | None = None
+        for match in matches:
+            raw_target = match.group(1).strip()
+            channel = get_support_channel(raw_target)
+            if channel is None:
+                logger.warning(
+                    "Ignoring unrecognized support channel placeholder: %s",
+                    raw_target,
+                )
+            else:
+                resolved_name = channel.name
+                resolved_link = channel.link
 
-        raw_name = (match.group(1) or match.group(3) or "").strip()
-        raw_link = (match.group(2) or "").strip() or None
-        channel = get_support_channel(name=raw_name, link=raw_link)
-        if channel is None:
-            logger.warning(
-                "Ignoring unrecognized support channel handoff: name=%s link=%s",
-                raw_name,
-                raw_link,
-            )
-            return cleaned, None, None
-        return cleaned, channel.name, channel.link
+        cleaned = _CHANNEL_PLACEHOLDER_RE.sub("", text)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+        return cleaned, resolved_name, resolved_link
 
     @staticmethod
     def _extract_references_from_text(

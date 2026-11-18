@@ -44,13 +44,14 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "Use typespec instead for ARM/management-plane questions."
     ),
     TenantID.API_SPEC_REVIEW_BOT: (
-        "Azure REST API specification authoring and PR review: requirements, "
-        "validation errors, LintDiff, Avocado, breaking changes, review status, "
-        "scheduling, blockers, and merge process in azure-rest-api-specs repos. "
-        "Prefer this skill whenever a specification PR, validation check, or "
-        "breaking-change comparison is the primary issue. Use typespec instead "
-        "when the primary task is a language-level model or code transformation, "
-        "even if a PR check exposed it."
+        "Azure REST API specification PR review process: requirements, "
+        "validation errors, LintDiff, Avocado, breaking-change approvals, "
+        "review status, scheduling, blockers, and merge process in "
+        "azure-rest-api-specs repos. Prefer this skill when the primary "
+        "issue is PR validation checks, breaking-change approvals, or merge "
+        "blockers. Use typespec instead for TypeSpec authoring, API/resource "
+        "modeling, spec folder layout, or TypeSpec PR design reviews, even if "
+        "a PR link or check exposed it."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "

@@ -5,7 +5,9 @@ description: "Diagnose GitHub PR status, checks, reviews, approval blockers, and
 
 # PR Review
 
-Help move the PR forward from its current state, not produce a standard review report. Follow relevant steps by priority, not as a checklist; continue only for unresolved needs and stop once answered. Lead with the user's next steps and a brief status summary. Keep the status summary to one sentence. Do not enumerate check results unless the user explicitly requests them; mention a specific check only to explain the next action.
+For **design or code review requests** (asking for review, comments, or feedback on PR changes, especially in TypeSpec Discussion), inspect the PR's changed files (`get_files`) and retrieve domain design guidance (such as `typespec` KB for `.tsp` changes) first. Lead with concrete design/code feedback on the changes; if the user also asks about approval or merge readiness, address that separately afterward. Passing checks or sign-off labels (such as `ARMSignedOff`) do not replace a requested design review. If the diff cannot be fetched or is incomplete, state that gap explicitly and keep the design question in its domain rather than substituting merge-readiness advice or routing to `api_spec_review`.
+
+For **status, check-failure, or merge-readiness requests**, help move the PR forward from its current state rather than producing a standard review report. Follow relevant steps by priority, not as a checklist; continue only for unresolved needs and stop once answered. Lead with the user's next steps and a brief status summary. Keep the status summary to one sentence. Do not enumerate check results unless the user explicitly requests them; mention a specific check only to explain the next action.
 
 For PR review, failure troubleshooting or compatibility questions, naming a red check or ruling out approval is only triage. Read failed-check diagnostics (for Actions, `get_job_logs` with `return_content=true`) before `get_files` or comments; give the affected field, actual compared refs/versions and supported remedy, or an evidenced retrieval limit. The report baseline may differ from the PR target.
 

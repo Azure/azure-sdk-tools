@@ -1131,6 +1131,122 @@ def test_without_eval_branch_keeps_message_unchanged():
     assert session.post.call_args.kwargs["json"]["message"]["content"] == "unchanged query"
 
 
+def test_completion_collector_sends_channel_name_and_captures_route_fields():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    session = MagicMock()
+    session.__aenter__ = AsyncMock(return_value=session)
+    session.__aexit__ = AsyncMock(return_value=False)
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200,
+        "json": AsyncMock(return_value={
+            "id": "resp-1",
+            "answer": "Please check with release support.",
+            "route_channel_name": "SDK release support",
+            "route_channel_link": "https://teams.microsoft.com/l/channel/19%3A0848/SDK",
+        }),
+    })())
+
+    collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+    records = [{
+        "testcase": "route-case",
+        "query": "Need manual release",
+        "ground_truth": "Route to SDK release support",
+        "expected_route_channel": "SDK release support",
+    }]
+    with patch("aiohttp.ClientSession", return_value=session):
+        results = collector.collect(records, "general_qa_bot", channel_name="General")
+
+    assert session.post.call_args.kwargs["json"]["channel_name"] == "General"
+    assert results[0]["expected_route_channel"] == "SDK release support"
+    assert results[0]["route_channel_name"] == "SDK release support"
+    assert results[0]["route_channel_link"] == "https://teams.microsoft.com/l/channel/19%3A0848/SDK"
+
+
+def test_output_items_to_rows_grades_route_channel():
+    from _evals_result import EvalsResult
+
+    output_items = [
+        {
+            "datasource_item": {
+                "testcase": "no-route-pass",
+                "query": "q1",
+                "ground_truth": "gt1",
+                "response": "answered",
+                "expected_route_channel": None,
+                "route_channel_name": None,
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "unexpected-route-fail",
+                "query": "q2",
+                "ground_truth": "gt2",
+                "response": "answered",
+                "expected_route_channel": None,
+                "route_channel_name": "Azure API Stewardship Board - General",
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "expected-route-pass",
+                "query": "q3",
+                "ground_truth": "gt3",
+                "response": "escalated",
+                "expected_route_channel": "SDK release support",
+                "route_channel_name": "sdk release support",
+            },
+            "results": [],
+        },
+    ]
+    rows = output_items_to_rows(output_items, ["route_channel"])["rows"]
+    assert [r["outputs.route_channel.route_channel_result"] for r in rows] == ["pass", "fail", "pass"]
+    assert [r["outputs.route_channel.route_channel"] for r in rows] == [1.0, 0.0, 1.0]
+
+    er = EvalsResult(metrics={"route_channel": ["route_channel", "route_channel_result"]}, suppressions=None)
+    recorded = er.record_run_result({"rows": rows})
+    summary = recorded[-1]
+    assert summary["total_evals"] == 3
+    assert summary["route_channel_pass_rate"] == 2
+    assert summary["route_channel_fail_rate"] == 1
+
+
+def test_validate_case_expected_route_channel():
+    validate_case({
+        "testcase": "t",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "apispec",
+        "reviewed": "pass",
+        "expected_route_channel": None,
+    })
+    validate_case({
+        "testcase": "t",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "general",
+        "reviewed": "pass",
+        "expected_route_channel": "SDK release support",
+    })
+    try:
+        validate_case({
+            "testcase": "t",
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "general",
+            "reviewed": "pass",
+            "expected_route_channel": "  ",
+        })
+    except ValidationError as exc:
+        assert "expected_route_channel" in str(exc)
+    else:
+        raise AssertionError("expected ValidationError for blank expected_route_channel")
+
+
 def _run_all() -> int:
     funcs = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

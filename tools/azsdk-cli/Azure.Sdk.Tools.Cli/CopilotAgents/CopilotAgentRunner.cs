@@ -28,6 +28,7 @@ public class CopilotAgentRunner(
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            Console.WriteLine($"The GitHub Copilot CLI could not be found or failed to start. {ex.Message}, error: {ex}");
             throw new CopilotCliUnavailableException(
                 "The GitHub Copilot CLI could not be found or failed to start. This tool requires the Copilot CLI to be installed. " +
                 "For installation instructions, see: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli. " +

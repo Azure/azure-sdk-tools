@@ -72,8 +72,17 @@ export class ThinkingHandler {
   public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
     const { answer, isError } = this.generateAnswer(reply);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
+    const routeChannelName = isCompletionResponsePayload(reply) ? reply.route_channel_name : undefined;
+    const routeChannelLink = isCompletionResponsePayload(reply) ? reply.route_channel_link : undefined;
     const traceId = isCompletionResponsePayload(reply) ? reply.trace_id : undefined;
-    const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant, currentChannelTenant);
+    const formattedAnswer = await this.formatAnswer(
+      answer,
+      isError,
+      routeTenant,
+      currentChannelTenant,
+      routeChannelName,
+      routeChannelLink
+    );
     const mentions = getTeamsMentionEntities(
       answer,
       isCompletionResponsePayload(reply) ? reply.mentions : undefined
@@ -125,10 +134,17 @@ export class ThinkingHandler {
   }
 
   /**
-   * Format the answer with conditional footer based on route_tenant.
+   * Format the answer with conditional footer based on route_channel / route_tenant.
    * For error responses, returns the answer as-is without footer.
    */
-  private async formatAnswer(answer: string, isError: boolean, routeTenant?: string, currentChannelTenant?: string): Promise<string> {
+  private async formatAnswer(
+    answer: string,
+    isError: boolean,
+    routeTenant?: string,
+    currentChannelTenant?: string,
+    routeChannelName?: string,
+    routeChannelLink?: string
+  ): Promise<string> {
     // For error responses, return plain text without footer
     if (isError) {
       return answer;
@@ -136,7 +152,10 @@ export class ThinkingHandler {
 
     const footerParts: string[] = [];
 
-    if (routeTenant) {
+    if (routeChannelName) {
+      const channelLink = routeChannelLink ? `[${routeChannelName}](${routeChannelLink})` : `${routeChannelName}`;
+      footerParts.push(`💬 Not resolved? Please re-post in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`);
+    } else if (routeTenant) {
       try {
         const tenant = this.tenantConfigManager.getTenant(routeTenant);
         if (!tenant) {

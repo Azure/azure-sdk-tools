@@ -47,6 +47,7 @@ ALL_EVALUATORS = [
     "coherence",
     "fluency",
     "bot_evals",
+    "route_channel",
 ]
 
 # Output fields surfaced per evaluator in the result table.
@@ -58,6 +59,7 @@ OUTPUT_FIELDS: dict[str, list[str]] = {
     "coherence": ["coherence"],
     "fluency": ["fluency"],
     "bot_evals": ["bot_evals", "bot_evals_similarity", "bot_evals_response_completeness", "bot_evals_result"],
+    "route_channel": ["route_channel", "route_channel_result"],
 }
 
 

@@ -30,8 +30,9 @@ This updates the shared dev backend for everyone; agent branch tags select an
 agent version, not a separate backend. Server deployment automatically enables
 branch routing in dev and disables it in preview and production.
 
-After deployment, test through a dev channel or run an evaluation pipeline from the same branch.
-Deploy the agents needed by your selected scenarios from that branch when testing branch-specific agent changes.
+After deployment, test through a dev channel or run an evaluation pipeline from
+the same branch. Deploy the agents needed by your selected scenarios from that
+branch before running evaluations.
 
 ## Run an evaluation pipeline
 
@@ -43,9 +44,9 @@ find the pipeline for your goal:
 | **tools - azure-sdk-ai-bot-evaluate-ci** | Check bot regressions against the basic scenarios. |
 | **tools - azure-sdk-ai-bot-perf-ci** | Check bot improvements against the performance scenarios. |
 
-Select **Run pipeline**, choose your working branch, and select the `scenarios` you want to run.
-Both pipelines start a backend using dev configuration and select your branch's deployed agent when available, otherwise the configured default version of the same agent, or Foundry's latest version if no default is configured.
-They do not deploy the agent.
+Select **Run pipeline**, choose the **same branch you deployed**, and select the
+`scenarios` you want to run. Both pipelines start a backend using dev configuration
+and test your branch's deployed agent automatically. They do not deploy the agent.
 
 After the run, inspect the published per-scenario results, including failed cases
 and `server.log`. You can ask Copilot to analyze the failed cases, identify prompt
@@ -80,7 +81,6 @@ message only, skipping failed or provisioning versions. If listing omits readine
 the server checks version details; versions with unknown readiness are not selected.
 Without a tag, the server uses the configured agent version, or latest if none is configured.
 If no active branch deployment exists, the server logs a warning and falls back to the configured default version of the same agent, or Foundry's latest version if no default is configured.
-Other errors still propagate, and requests without a branch tag retain the configured-version behavior described above.
 
 Each branch-tagged request looks up the matching version directly in Foundry.
 

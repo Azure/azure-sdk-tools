@@ -29,8 +29,15 @@ public class CopilotAgentRunner(
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             Console.WriteLine($"The GitHub Copilot CLI could not be found or failed to start. {ex.Message}, error: {ex}");
+            var token = Environment.GetEnvironmentVariable("COPILOT_GITHUB_TOKEN");
+            var tokenstr = "MCP Copilot token present:" + !string.IsNullOrWhiteSpace(token);
+            logger?.LogInformation(
+                "MCP Copilot token present: {Present}; unresolved placeholder: {Unresolved}",
+                !string.IsNullOrWhiteSpace(token),
+                token?.Contains("${", StringComparison.Ordinal) == true ||
+                token?.Contains("$(", StringComparison.Ordinal) == true);
             throw new CopilotCliUnavailableException(
-                "The GitHub Copilot CLI could not be found or failed to start. This tool requires the Copilot CLI to be installed. " +
+                $"The GitHub Copilot CLI could not be found or failed to start. This tool requires the Copilot CLI to be installed. {tokenstr} {ex.Message}, error: {ex}" +
                 "For installation instructions, see: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli. " +
                 "If you already have the Copilot CLI installed elsewhere, set the AZSDK_COPILOT_CLI_PATH environment variable to the path of the Copilot CLI executable (copilot/copilot.exe). " +
                 "Alternatively, set one of the following environment variables with a valid GitHub token: " +
@@ -40,8 +47,10 @@ public class CopilotAgentRunner(
 
         if (!authStatus.IsAuthenticated)
         {
+            var token = Environment.GetEnvironmentVariable("AZSDK_COPILOT_GITHUB_TOKEN");
+            var tokenstr = "MCP Copilot token present:" + !string.IsNullOrWhiteSpace(token);
             throw new CopilotCliUnavailableException(
-                "GitHub Copilot is not authenticated. Please authenticate by one of the following methods: " +
+                $"GitHub Copilot is not authenticated. {tokenstr}.Please authenticate by one of the following methods: " +
                 "(1) Run 'copilot login' to authenticate the Copilot CLI, or " +
                 "(2) Set one of the following environment variables with a valid GitHub token: " +
                 "AZSDK_COPILOT_GITHUB_TOKEN, COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN. " +

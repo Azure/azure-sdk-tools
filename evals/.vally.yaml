@@ -38,6 +38,9 @@ environments:
         env:
           AZSDKTOOLS_AGENT_TESTING: "true"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+          AZSDK_COPILOT_CLI_PATH: "${AZSDK_COPILOT_CLI_PATH:-}"
+          # Copilot filters its own auth variables from MCP expansion; forward through the explicit SDK alias.
+          AZSDK_COPILOT_GITHUB_TOKEN: "${AZSDK_COPILOT_GITHUB_TOKEN:-}"
 
 # Suites group evals for selective execution.
 #

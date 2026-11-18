@@ -1,5 +1,17 @@
 # Release History
 
+## 0.3.0 (2026-11-18)
+
+### Features Added
+
+- Integrate the Microsoft Agent Framework harness for hosted agents (`create_hosted_agent`) with `history_source="agent"`, token-aware context compaction, and OpenTelemetry instrumentation.
+- Offload large external tool results (>20,000 characters) to session-scoped storage with match-centered and reverse grep (`tool_result_grep`), bounded character-range reads (`tool_result_read_chars`), and line-range reads (`tool_result_read`).
+
+### Breaking / Behavioral Changes
+
+- Remove custom `truncating_mcp_parser` callbacks in favor of raw MCP outputs protected by `ToolOutputSecurityMiddleware` and `ToolOutputStorageMiddleware`.
+- Update hosted agent deployment to Responses protocol `2.0.0`.
+
 ## 0.2.1 (2026-10-30)
 
 ### Features Added

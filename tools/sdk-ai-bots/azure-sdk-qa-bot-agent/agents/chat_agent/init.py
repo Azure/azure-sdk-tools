@@ -23,11 +23,12 @@ if _project_root not in sys.path:
 load_dotenv(override=False)
 os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
-from agent_framework import Agent
-from agent_framework import CompactionProvider
-from agent_framework import FileSkillsSource
-from agent_framework import SkillsProvider
-from agent_framework import ToolResultCompactionStrategy
+from agent_framework import (
+    AggregatingSkillsSource,
+    FileSkillsSource,
+    InMemorySkillsSource,
+    SkillsProvider,
+)
 from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
@@ -40,15 +41,13 @@ from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
-from utils.azure_ai_foundry import (
-    get_agent_client,
-    get_project_client,
-)
+from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import (
     ensure_user_memory_store,
 )
+from utils.agent_harness import create_hosted_agent
 from utils.memory_context_provider import MemoryContextProvider
-from utils.tool_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_security import ToolOutputSecurityMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +85,11 @@ async def main() -> None:
         MAX_TOOL_CALL_ITERATIONS
     )
     agent_dir = Path(__file__).parent
+    harness_instructions = _load_instructions(
+        Path(app_config.__file__).resolve().parent.parent
+        / "prompts"
+        / "harness_instruction.md"
+    )
     instructions = _load_instructions(agent_dir / "instruction.md")
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
         agent_config = yaml.safe_load(f)
@@ -100,9 +104,7 @@ async def main() -> None:
     knowledge_tools = KnowledgeTools()
     identity_tools = IdentityTools()
     web_tools = WebTools()
-    web_search_tool = agent_client.get_web_search_tool(
-        search_context_size="medium",
-    )
+    web_search_tool = agent_client.get_web_search_tool(search_context_size="medium")
 
     tools = [
         knowledge_tools.search_knowledge_base,
@@ -147,27 +149,34 @@ async def main() -> None:
     # Memory context provider (memory store initializes in background; may not be ready yet)
     memory_provider = MemoryContextProvider(project_client)
 
-    # Compaction provider — compact history before and after each turn
-    compaction_provider = CompactionProvider(
-        before_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=2),
-        after_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=1),
-    )
-
     # Init Skills
     skills = create_tenant_skills(agent_name)
     skills_dir = _get_chat_skill_dir()
-    skills.extend(await FileSkillsSource(skills_dir).get_skills())
-    skills_provider = SkillsProvider(skills)
+    skills_provider = SkillsProvider(
+        AggregatingSkillsSource(
+            [
+                InMemorySkillsSource(skills),
+                FileSkillsSource(skill_paths=skills_dir),
+            ]
+        ),
+        disable_load_skill_approval=True,  # pyright: ignore[reportCallIssue]
+        disable_read_skill_resource_approval=True,  # pyright: ignore[reportCallIssue]
+        disable_run_skill_script_approval=True,  # pyright: ignore[reportCallIssue]
+    )
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
-    agent = Agent(
+    agent = create_hosted_agent(
         agent_client,
         name=agent_name,
-        id=agent_id,
+        agent_id=agent_id,
+        harness_instructions=harness_instructions,
         instructions=instructions,
         tools=tools,
-        context_providers=[skills_provider, memory_provider, compaction_provider],
-        middleware=[ToolOutputSecurityMiddleware()],
+        skills_provider=skills_provider,
+        context_providers=[memory_provider],
+        middleware=[
+            ToolOutputSecurityMiddleware(),
+        ],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
@@ -175,7 +184,10 @@ async def main() -> None:
         },
     )
 
-    server = ResponsesHostServer(agent)
+    server = ResponsesHostServer(
+        agent,
+        history_source="agent",
+    )
     await server.run_async()
 
 

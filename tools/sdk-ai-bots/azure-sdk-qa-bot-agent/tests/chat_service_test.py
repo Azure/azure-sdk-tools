@@ -1023,7 +1023,7 @@ async def test_support_channel_catalog_loads_and_injects_into_skill() -> None:
     from agent_framework import InlineSkill, SkillFrontmatter
 
     from models.support_channel import get_support_channel, parse_support_channel_catalog
-    from skills.tenant_skills import inject_support_channels
+    from skills.support_channels import inject_support_channels
 
     skill_text = (
         Path(__file__).resolve().parents[1]

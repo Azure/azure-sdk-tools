@@ -33,7 +33,8 @@ from agent_framework_foundry_hosting import ResponsesHostServer
 import config.app_config as app_config
 from config.app_config import get as cfg
 from skills import tenant_skills
-from skills.tenant_skills import create_tenant_skills, inject_support_channels
+from skills.support_channels import inject_support_channels
+from skills.tenant_skills import create_tenant_skills
 from tools.knowledge_tools import KnowledgeTools
 from tools.identity_tools import IdentityTools
 from tools.web_tools import WebTools

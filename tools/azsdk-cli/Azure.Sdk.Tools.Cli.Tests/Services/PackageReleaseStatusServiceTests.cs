@@ -162,6 +162,22 @@ public class PackageReleaseStatusServiceTests
     }
 
     [Test]
+    public async Task GetApprovalStatusAsync_FallsBackToApiView_ForJavascript()
+    {
+        reviewHubServiceMock
+            .Setup(x => x.GetReleaseGateStatusAsync("https://endpoint", "javascript", "pkg", "1.0.0", "hash", "", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiReviewHubReleaseGateResult { IsReleaseApproved = false, Reason = "repositoryNotSupported" });
+        apiViewServiceMock
+            .Setup(x => x.GetApprovalStatusAsync("javascript", "pkg", "1.0.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ApiViewReleaseStatusResult { IsApproved = true, StatusCode = 200, Reason = "approved" });
+
+        var result = await service.GetApprovalStatusAsync("https://endpoint", "javascript", "pkg", "1.0.0", "hash", "", CancellationToken.None);
+
+        Assert.That(result.IsApproved, Is.True);
+        Assert.That(result.FinalSource, Is.EqualTo("APIView"));
+    }
+
+    [Test]
     public async Task GetApprovalStatusAsync_SkipsApiViewFallback_WhenLanguageIsNotSupportedByApiView()
     {
         reviewHubServiceMock

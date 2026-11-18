@@ -20,7 +20,7 @@ public class ApiReviewHubTool(
         ["python"] = "azure-sdk-for-python",
         ["java"] = "azure-sdk-for-java",
         ["csharp"] = "azure-sdk-for-net",
-        ["js"] = "azure-sdk-for-js",
+        ["javascript"] = "azure-sdk-for-js",
         ["go"] = "azure-sdk-for-go",
         ["cpp"] = "azure-sdk-for-cpp",
         ["rust"] = "azure-sdk-for-rust"
@@ -33,15 +33,15 @@ public class ApiReviewHubTool(
         ["c#"] = "csharp",
         ["cs"] = "csharp",
         ["c++"] = "cpp",
-        ["javascript"] = "js",
-        ["typescript"] = "js",
-        ["ts"] = "js",
+        ["js"] = "javascript",
+        ["typescript"] = "javascript",
+        ["ts"] = "javascript",
         ["golang"] = "go",
         ["py"] = "python"
     };
 
     private static readonly string[] SupportedLanguages = [.. DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
-    private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
+    private static readonly string SupportedLanguagesDescription = $"{string.Join(", ", SupportedLanguages)} (aliases such as js, ts, dotnet, and py are accepted)";
 
     private const string CreateCommandName = "create";
     private const string RequestReviewPullRequestToolName = "azsdk_apireviewhub_request_review_pr";
@@ -131,7 +131,7 @@ public class ApiReviewHubTool(
                 parseResult.GetValue(languageOption) ?? string.Empty,
                 packageName,
                 parseResult.GetValue(targetOwnerOption) ?? string.Empty,
-                ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
+                parseResult.GetValue(targetRepoOption),
                 parseResult.GetValue(targetBranchOption) ?? string.Empty,
                 parseResult.GetValue(packageTypeOption),
                 parseResult.GetValue(baseTagOption),
@@ -188,7 +188,7 @@ public class ApiReviewHubTool(
         string language,
         string packageName,
         string targetOwner,
-        string targetRepo,
+        string? targetRepo,
         string targetBranch,
         string? packageType,
         string? baseTag,
@@ -199,7 +199,7 @@ public class ApiReviewHubTool(
         string? languageToolsRef,
         CancellationToken ct)
     {
-        if (!SupportedLanguages.Contains(language, StringComparer.OrdinalIgnoreCase))
+        if (!TryResolveLanguage(language, out var reviewHubLanguage, out var defaultTargetRepo))
         {
             throw new ArgumentException(
                 $"Unsupported language '{language}'. Supported values: {SupportedLanguagesDescription}.",
@@ -208,14 +208,14 @@ public class ApiReviewHubTool(
 
         var request = new ReviewPullRequestCreationRequest
         {
-            Language = language,
+            Language = reviewHubLanguage,
             PackageName = packageName,
             PackageType = string.IsNullOrWhiteSpace(packageType) ? null : ApiReviewPackageType.Normalize(packageType),
             BaseTag = baseTag ?? string.Empty,
             TargetBranch = new GitBranchReference
             {
                 Owner = targetOwner,
-                Repo = targetRepo,
+                Repo = string.IsNullOrWhiteSpace(targetRepo) ? defaultTargetRepo : targetRepo,
                 Name = targetBranch
             },
             PipelineRef = pipelineRef,
@@ -251,22 +251,7 @@ public class ApiReviewHubTool(
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
-    private static string ResolveTargetRepo(string? language, string? targetRepo)
-    {
-        if (!string.IsNullOrWhiteSpace(targetRepo))
-        {
-            return targetRepo;
-        }
-
-        if (!string.IsNullOrWhiteSpace(language) && DefaultTargetRepos.TryGetValue(language, out var repo))
-        {
-            return repo;
-        }
-
-        throw new ArgumentException($"Unsupported language '{language}'. Supported values: {string.Join(", ", SupportedLanguages)}.", nameof(language));
-    }
-
-    private static Option<string> CreateLanguageOption()
+    internal static Option<string> CreateLanguageOption()
     {
         var option = new Option<string>("--language")
         {
@@ -282,7 +267,7 @@ public class ApiReviewHubTool(
                 return;
             }
 
-            if (!SupportedLanguages.Contains(value, StringComparer.OrdinalIgnoreCase))
+            if (ResolveLanguage(value) is null)
             {
                 result.AddError($"Invalid language '{value}'. Supported values: {SupportedLanguagesDescription}.");
             }
@@ -310,11 +295,31 @@ public class ApiReviewHubTool(
         return option;
     }
 
-    internal static string? ResolveLanguage(string language)
+    /// <summary>Resolves a language or alias to its API Review Hub language name, or null if unsupported.</summary>
+    internal static string? ResolveLanguage(string language) =>
+        TryResolveLanguage(language, out var reviewHubLanguage, out _) ? reviewHubLanguage : null;
+
+    /// <summary>Resolves a language or alias to its API Review Hub language name and default SDK repository.</summary>
+    internal static bool TryResolveLanguage(string? language, out string reviewHubLanguage, out string defaultTargetRepo)
     {
+        reviewHubLanguage = string.Empty;
+        defaultTargetRepo = string.Empty;
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return false;
+        }
+
         string? canonical = DefaultTargetRepos.Keys.FirstOrDefault(
-            value => value.Equals(language, StringComparison.OrdinalIgnoreCase));
-        return canonical ?? LanguageAliases.GetValueOrDefault(language);
+            value => value.Equals(language, StringComparison.OrdinalIgnoreCase))
+            ?? LanguageAliases.GetValueOrDefault(language);
+        if (canonical is null)
+        {
+            return false;
+        }
+
+        reviewHubLanguage = canonical;
+        defaultTargetRepo = DefaultTargetRepos[canonical];
+        return true;
     }
 
 }

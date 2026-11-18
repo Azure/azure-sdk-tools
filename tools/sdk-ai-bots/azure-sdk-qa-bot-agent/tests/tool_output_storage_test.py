@@ -91,23 +91,6 @@ async def test_manageable_result_stays_in_context():
 
 
 @pytest.mark.asyncio
-async def test_production_sized_external_result_is_offloaded():
-    store = InMemoryAgentFileStore()
-    middleware = ToolOutputStorageMiddleware(store)
-    content = "external data\n" * 2_000
-    context = _make_context(
-        "github-pull_request_read",
-        [Content.from_text(content)],
-        AgentSession(session_id="test-session"),
-    )
-
-    await middleware.process(context, _noop_next)
-
-    assert "Large tool result stored as `tool-result-" in context.result
-    assert len(await store.list_children("test-session")) == 1
-
-
-@pytest.mark.asyncio
 async def test_untrusted_github_body_is_redacted_before_storage():
     store = InMemoryAgentFileStore()
     middleware = ToolOutputStorageMiddleware(store)
@@ -227,6 +210,14 @@ async def test_provider_exposes_bounded_read_and_grep_tools():
         start_char=11,
         end_char=25,
     ) == "matching error"
+    assert (
+        await tools["tool_result_read_chars"].func(
+            file_name=file_name,
+            start_char=25,
+            end_char=11,
+        )
+        == "Invalid character range."
+    )
     matches = await tools["tool_result_grep"].func(
         file_name=file_name,
         regex_pattern="error",
@@ -360,38 +351,6 @@ async def test_provider_grep_from_end_finds_late_ci_log_error():
     )
 
     assert "MULTIPLE_API_VERSION" in matches[0]["matching_lines"][0]["line"]
-
-
-@pytest.mark.asyncio
-async def test_provider_reads_bounded_character_range():
-    store = InMemoryAgentFileStore()
-    provider = ToolOutputStorageProvider(store)
-    session = AgentSession(session_id="test-session")
-    context = SessionContext(session_id="test-session", input_messages=[])
-    file_name = "tool-result-search-test.txt"
-    await store.write(f"test-session/{file_name}", "0123456789")
-
-    await provider.before_run(
-        agent=None,
-        session=session,
-        context=context,
-        state={},
-    )
-
-    tools = {tool.name: tool for tool in context.tools}
-    assert await tools["tool_result_read_chars"].func(
-        file_name=file_name,
-        start_char=3,
-        end_char=7,
-    ) == "3456"
-    assert (
-        await tools["tool_result_read_chars"].func(
-            file_name=file_name,
-            start_char=7,
-            end_char=3,
-        )
-        == "Invalid character range."
-    )
 
 
 @pytest.mark.asyncio

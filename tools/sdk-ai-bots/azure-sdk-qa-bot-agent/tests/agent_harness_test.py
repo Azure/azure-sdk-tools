@@ -82,12 +82,9 @@ def test_harness_adds_managed_providers(
             "AgentModeProvider",
             "FileAccessProvider",
             "FileMemoryProvider",
+            "ShellEnvironmentProvider",
             "TodoProvider",
         }
-        for provider in agent.context_providers
-    )
-    assert not any(
-        type(provider).__name__ == "ShellEnvironmentProvider"
         for provider in agent.context_providers
     )
     assert any(

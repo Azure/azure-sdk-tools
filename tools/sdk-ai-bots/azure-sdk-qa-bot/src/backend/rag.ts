@@ -53,6 +53,7 @@ export interface AdditionalInfo {
 // Completion request interface
 export interface CompletionRequestPayload {
   tenant_id: string;
+  channel_name?: string;
   message: Message;
   with_full_context?: boolean; // default is false
   additional_infos?: AdditionalInfo[];

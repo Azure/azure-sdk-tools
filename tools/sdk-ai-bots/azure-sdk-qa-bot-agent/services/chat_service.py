@@ -173,7 +173,9 @@ class ChatService:
                 openai_client, req
             )
             agent_session_id = None
-        tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
+        tenant_system_msg = self._build_tenant_system_message(
+            req.tenant_id, req.channel_name
+        )
         tenant_system_item = cast(
             ResponseInputItemParam,
             ConversationItem(
@@ -612,9 +614,14 @@ class ChatService:
             )
         return items
 
-    def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
+    def _build_tenant_system_message(
+        self, tenant_id: TenantID, channel_name: str | None = None
+    ) -> str:
         """Inject tenant context + the default skill so the agent can route itself."""
-        parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id.value}"]
+        context_line = f"[tenant_context] original_tenant_id={tenant_id.value}"
+        if channel_name and channel_name.strip():
+            context_line += f" current_channel={channel_name.strip()}"
+        parts: list[str] = [context_line]
 
         scope_desc = get_tenant_scope_description(tenant_id)
         if scope_desc:
@@ -703,7 +710,15 @@ class ChatService:
             full_context=full_context,
             agent_conversation_id=agent_conversation_id,
         )
-        if route_channel_name and route_channel_link:
+        if (
+            route_channel_name
+            and route_channel_link
+            and (
+                not req.channel_name
+                or route_channel_name.strip().casefold()
+                != req.channel_name.strip().casefold()
+            )
+        ):
             resp.route_channel_name = route_channel_name
             resp.route_channel_link = route_channel_link
         if req.conversation_type == ConversationType.teams_channel:

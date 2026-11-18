@@ -74,6 +74,7 @@ class ChatRequest(BaseModel):
     """Request for chat completion."""
 
     tenant_id: TenantID
+    channel_name: str | None = None
     conversation_id: str | None = None
     conversation_type: ConversationType | None = None
     message: Message

@@ -107,6 +107,9 @@ model ChatRequest {
   @doc("The tenant ID")
   tenant_id: string;
 
+  @doc("Current Teams channel display name")
+  channel_name?: string;
+
   @doc("Existing conversation identifier, if continuing a conversation")
   conversation_id?: string;
 

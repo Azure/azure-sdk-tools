@@ -919,8 +919,15 @@ def test_loaded_skills_never_set_route_tenant() -> None:
 
 
 @pytest.mark.parametrize("placeholder_order", ["after_refs", "before_refs"])
+@pytest.mark.parametrize(
+    ("current_channel", "expected_name"),
+    [
+        ("Azure SDK Onboarding", "SDK release support"),
+        ("SDK release support", None),
+    ],
+)
 def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
-    placeholder_order,
+    placeholder_order, current_channel, expected_name
 ) -> None:
     from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
 
@@ -957,18 +964,24 @@ def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
         ],
     )
     request = ChatRequest(
-        tenant_id="api_spec_review_bot",
+        tenant_id="azure_sdk_onboarding",
+        channel_name=current_channel,
         message=ChatMessage(role="user", content="Release help"),
     )
 
-    result = ChatService()._postprocess(request, response, None)
+    service = ChatService()
+    assert f"current_channel={current_channel}" in service._build_tenant_system_message(
+        request.tenant_id, request.channel_name
+    )
+
+    result = service._postprocess(request, response, None)
 
     assert result.answer == "Please follow up with release support."
     assert len(result.references or []) == 1
     assert result.references[0].link == "https://example.test/release"
     assert result.route_tenant is None
-    assert result.route_channel_name == "SDK release support"
-    assert result.route_channel_link == channel_link
+    assert result.route_channel_name == expected_name
+    assert result.route_channel_link == (channel_link if expected_name else None)
 
 
 def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:

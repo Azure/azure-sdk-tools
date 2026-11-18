@@ -85,7 +85,7 @@ Discipline:
 - The default tenant's skill content is already preloaded in `[skill]`. Reassess the active skill when evidence changes the problem to solve; load any better-matched or helper skills via `load_skill` freely to answer the question.
 - When the preloaded skill is the `general` tenant, always prefer loading a more specific, appropriate skill for the question via `load_skill`. The `general` skill is a fallback of last resort — only stay on it if no other skill fits.
 - Before using a non-default `tenant_id` for retrieval, load that tenant's skill and follow its guidance. Do not switch only the search scope while leaving the default skill active.
-- **Channel handoff (`support-channels`)**: When the user's core question belongs to another channel's domain, call `load_skill("support-channels")` (batchable with retrieval) and emit `{{channel:<key>}}` at the end of your answer (never for the current channel).
+- **Channel handoff (`support-channels`)**: When the user's core question belongs to another channel's domain (for example, when you switch to a different domain skill to answer it), you **must** call `load_skill("support-channels")` (batchable with retrieval) and emit `{{channel:<key>}}` at the end of your answer (never for the current channel).
 - `typespec-authoring` may ONLY be loaded when `[tenant_context]` contains `original_tenant_id=azure_typespec_authoring`. Otherwise use `typespec`.
 - **Authoring tenant lock (overrides rules below)**: when `original_tenant_id=azure_typespec_authoring`, use ONLY the preloaded `typespec-authoring` skill and search ONLY with its `tenant_id` — no other skills, no other tenants, even for multi-topic questions. Never call `load_skill`.
 

@@ -85,7 +85,7 @@ These are point-in-time checks; they do not lock GitHub PRs against later activi
 | `azsdk release-plan list-overdue`                                          | Read-only list of all scoped overdue plans, including protected plans and those still in their grace month. No emails. |
 | `azsdk release-plan abandon-overdue --dry-run`                             | Read-only preview of eligible plans using the same checks as cleanup. No updates or emails.                            |
 | `azsdk release-plan abandon-overdue`                                       | Marks eligible plans `Abandoned` and attempts confirmation emails. **Performs writes.**                                |
-| `azsdk release-plan list-overdue --notify-owners true --emailer-uri <uri>` | Attempts overdue reminders without changing plan states.                                                               |
+| `azsdk release-plan list-overdue --notify-owners true --emailer-uri <uri>` | Sends overdue reminders and records accepted sends without changing plan states. **Performs writes.**                |
 
 Preview and actual cleanup show plan IDs, dashboard links, statuses, target
 months, and reasons. Preview preserves the current statuses; actual cleanup
@@ -140,7 +140,20 @@ allow reads of linked repositories, including private specs. The CLI supports
 `GITHUB_TOKEN` or an existing GitHub CLI login.
 
 Reminders require `--notify-owners true`, a valid `--emailer-uri`, and a valid
-submitter email address. They report lookup and send failures to the caller.
+submitter email address. After the emailer returns HTTP success (acceptance,
+not proof of delivery), the CLI records the current UTC time on the release-plan
+work item. Each accepted reminder replaces the previous value. Skipped,
+failed, and unconfirmed sends leave the field untouched.
+
+Before deploying, provision or confirm the optional Azure DevOps Date/Time field
+`Custom.PastDueNotificationSentDate` on the release-plan work item type. Grant
+the automation write access and confirm the dashboard can read the field. If
+the emailer accepts a reminder but the timestamp write fails, the command
+reports both facts and does not resend the email. Do not rerun notifications
+just to repair that timestamp. Reminder writes are work-item updates; if
+Azure DevOps advances `System.ChangedDate`, the existing recent-activity rule
+can defer cleanup. Verify this effect against the deployed schedule before rollout.
+
 Reminder and abandonment subjects are distinct. Both emails use the assessment's
 exact reason; missing PRs, closed PRs, unapproved open PRs, merged or approved PRs,
 and released SDKs are not conflated. Unrecognized release types and verification

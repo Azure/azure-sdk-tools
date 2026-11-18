@@ -280,6 +280,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         };
 
         private const string sdkApexEmail = "azsdkapex@microsoft.com";
+        private const string PastDueNotificationSentDateField = "Custom.PastDueNotificationSentDate";
         private static readonly string DEFAULT_BRANCH = "main";
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string PRIVATE_SPECS_REPO = "azure-rest-api-specs-pr";
@@ -2618,6 +2619,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ct.ThrowIfCancellationRequested();
                     logger.LogError(ex, "Failed to notify owner of overdue release plan {WorkItemId}", releasePlan.WorkItemId);
                     errors.Add($"Failed to notify owner of overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                    continue;
+                }
+
+                var sentAtUtc = _timeProvider.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
+                try
+                {
+                    var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                    {
+                        [PastDueNotificationSentDateField] = sentAtUtc
+                    }, ct);
+                    if (updatedWorkItem is null)
+                    {
+                        throw new InvalidOperationException("Azure DevOps did not confirm the update.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex,
+                        "Overdue reminder accepted for release-plan work item {WorkItemId} at {SentAtUtc}, but its send time could not be recorded",
+                        releasePlan.WorkItemId, sentAtUtc);
+                    ct.ThrowIfCancellationRequested();
+                    errors.Add($"Overdue reminder accepted for release-plan work item {releasePlan.WorkItemId} at {sentAtUtc}, but its send time could not be recorded: {ex.Message}");
                 }
             }
             return errors;
@@ -2639,10 +2662,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogInformation("Sending Email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
 
-                var response = await httpClient.PostAsync(emailerUri, httpContent, ct);
+                using var response = await httpClient.PostAsync(emailerUri, httpContent, ct);
                 response.EnsureSuccessStatusCode();
 
-                logger.LogInformation("Successfully sent email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
+                logger.LogInformation("Emailer accepted email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
             }
         }
 

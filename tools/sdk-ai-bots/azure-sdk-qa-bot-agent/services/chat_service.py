@@ -11,7 +11,7 @@ import re
 from urllib.parse import urlparse
 
 import httpx
-from azure.core.exceptions import AzureError
+from azure.core.exceptions import AzureError, ResourceNotFoundError
 
 from config.app_config import Settings, get as cfg
 from config.tenant_config import (
@@ -86,7 +86,7 @@ _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
 class AgentRoutingError(ValueError):
     # Default to 422 for invalid routing input, consistent with FastAPI validation;
-    # disabled routing and missing deployments explicitly use 403 and 404.
+    # disabled routing explicitly uses 403.
     def __init__(self, message: str, status_code: int = 422) -> None:
         super().__init__(message)
         self.status_code = status_code
@@ -149,11 +149,20 @@ class ChatService:
         )
         if request_agent_version is not None:
             agent_version = request_agent_version
-        agent = await self._get_agent(project_client, agent_name, agent_version)
+        try:
+            agent = await self._get_agent(project_client, agent_name, agent_version)
+        except ResourceNotFoundError:
+            if request_agent_version is None:
+                raise
+            logger.warning(
+                "Requested agent=%s version=%s was not found; falling back to latest.",
+                agent_name, agent_version,
+            )
+            agent = await self._get_agent(project_client, agent_name, None)
         logger.info(
             "Resolved agent=%s version=%s source=%s tenant=%s.",
             agent.name, agent.version,
-            "branch" if request_agent_version is not None else (
+            "request" if request_agent_version is not None else (
                 "configured" if configured_agent_version else "latest"
             ),
             req.tenant_id,
@@ -375,7 +384,12 @@ class ChatService:
                 self._get_project_client(), agent_name, target
             )
             if version is None:
-                raise AgentRoutingError(f"No active deployment of '{agent_name}' for '{target}'.", 404)
+                logger.warning(
+                    "No active version of agent=%s for branch=%s; falling back to latest.",
+                    agent_name, target,
+                )
+                latest = await self._get_agent(self._get_project_client(), agent_name, None)
+                return latest.version
             return version
         return None
 

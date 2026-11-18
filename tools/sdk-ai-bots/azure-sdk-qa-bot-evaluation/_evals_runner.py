@@ -57,7 +57,7 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
 # Composite weights
 BOT_EVALS_WEIGHTS = {"similarity": 0.6, "response_completeness": 0.4}
 _JSON_OUTPUT_TOOLS = {"search_knowledge_base", "wiki_search"}
-_TERMINAL_EVAL_STATUSES = ("completed", "failed", "canceled")
+_TERMINAL_EVAL_STATUSES = ("completed", "failed")
 
 # Item schema for the inline eval data: the answer/context are collected from
 # /completion and carried in the item (read via {{item.response}} / {{item.context}}).
@@ -583,8 +583,8 @@ class FoundryEvalsRunner:
         report_url = getattr(run, "report_url", None)
         if report_url:
             logger.info("Report URL: %s", report_url)
-        if run.status in ("failed", "canceled"):
-            raise RuntimeError(f"Eval run {run_id} {run.status}")
+        if run.status == "failed":
+            raise RuntimeError(f"Eval run {run_id} failed")
 
         output_items = _retry_foundry_call(
             lambda: list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id)),

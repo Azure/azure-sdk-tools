@@ -165,7 +165,7 @@ def test_eval_input_cleanup_requires_confirmed_deletion(caplog, deleted):
 @pytest.mark.parametrize(
     "outcome,delete_expected",
     [
-        ("completed", True), ("failed", True), ("canceled", True),
+        ("completed", True), ("failed", True), ("canceled", False),
         ("timeout", False), ("status_error", False),
         ("output_error", True), ("creation_rejected", False),
         ("creation_unknown", False), ("cleanup_error", True),
@@ -198,7 +198,7 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
     results.record_run_result.return_value = {"saved": True}
     runner = FoundryEvalsRunner(
         ["relevance"], results, model="test-model",
-        poll_timeout=60 if outcome in ("eventual_completed", "poll_error_after_active") else -1,
+        poll_timeout=60 if outcome in ("eventual_completed", "poll_error_after_active", "canceled") else -1,
     )
     collector = MagicMock()
     collector.collect.return_value = [{"testcase": "case", "query": "q", "response": "a"}]
@@ -206,6 +206,9 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
     monkeypatch.setattr(module, "build_testing_criteria", lambda *args, **kwargs: [{"name": "relevance"}])
     monkeypatch.setattr(runner, "_retrieve_tool_calls", lambda *args: {})
     monkeypatch.setattr(module.time, "sleep", lambda _: None)
+    if outcome == "canceled":
+        times = iter([0, 0, 61])
+        monkeypatch.setattr(module.time, "time", lambda: next(times))
     if outcome in ("timeout", "unknown_status"):
         client.evals.runs.retrieve.return_value = SimpleNamespace(
             status="in_progress" if outcome == "timeout" else "unknown",
@@ -242,8 +245,8 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
         results.record_run_result.assert_called_once()
     else:
         expected = (
-            TimeoutError if outcome in ("timeout", "unknown_status")
-            else RuntimeError if outcome in ("failed", "canceled")
+            TimeoutError if outcome in ("timeout", "unknown_status", "canceled")
+            else RuntimeError if outcome == "failed"
             else APIConnectionError if outcome == "creation_unknown"
             else APIStatusError
         )
@@ -268,6 +271,8 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
         assert "manual cleanup is required" in caplog.text
     if outcome == "terminal_no_recheck":
         assert client.evals.runs.retrieve.call_count == 1
+    if outcome == "canceled":
+        assert client.evals.runs.retrieve.call_count == 2
 
 
 def test_retry_foundry_call_retries_transient_status_errors():

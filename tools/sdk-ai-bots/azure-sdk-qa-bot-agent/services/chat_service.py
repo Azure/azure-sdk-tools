@@ -30,7 +30,6 @@ from models.chat import (
 )
 from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
-from models.support_contact import get_support_catalog_context
 from services.conversation_service import ConversationService
 from services.teams_mention_service import resolve_answer_mentions
 from tools import TOOL_REGISTRY
@@ -143,7 +142,6 @@ class ChatService:
         """Process one chat turn and return API response shape."""
         project_client = self._get_project_client()
         tenant_config = get_tenant_config(req.tenant_id)
-        support_context = get_support_catalog_context()
         agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
         agent_version = configured_agent_version or None
         request_agent_version = await self._resolve_request_version(
@@ -182,17 +180,9 @@ class ChatService:
                 content=tenant_system_msg,
             ).model_dump(mode="json", exclude_none=True),
         )
-        support_context_item = cast(
-            ResponseInputItemParam,
-            ConversationItem(
-                role=Role.System,
-                content=support_context,
-            ).model_dump(mode="json", exclude_none=True),
-        )
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             conversation_items.append(tenant_system_item)
-            conversation_items.append(support_context_item)
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -261,7 +251,6 @@ class ChatService:
             )
             # The replacement conversation has no tenant context of its own.
             conversation_items.insert(0, tenant_system_item)
-            conversation_items.insert(1, support_context_item)
             # Additional infos are not persisted in Cosmos; reuse the items already built.
             conversation_items.extend(additional_items)
             # Replace the poisoned mapping before the single recovery attempt.

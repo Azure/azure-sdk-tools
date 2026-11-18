@@ -1,5 +1,5 @@
 # Each support area lists one or more verified individual GitHub usernames.
-# An empty support_areas list disables catalog referrals, not normal replies or clarification.
+# An empty support_areas list disables configured referrals, not evidence-based ownership lookup.
 support_areas:
   - key: release_plan_operations
     description: "SDK end-to-end onboarding and release automation, release-plan tooling and state management, SDK generation orchestration and KPI integration. Excludes release-policy exceptions."

@@ -346,7 +346,8 @@ class ToolOutputStorageMiddleware(FunctionMiddleware):
         )
         context.result = (
             f"Large tool result stored as `{file_name}` "
-            f"({len(result):,} characters). Use `tool_result_grep` to search it "
-            "and `tool_result_read` to read a relevant line range.\n\n"
+            f"({len(result):,} characters). Use `tool_result_grep` (`from_end=True` "
+            "for CI logs) to search it, and `tool_result_read_chars` or "
+            "`tool_result_read` for bounded ranges.\n\n"
             f"Preview:\n{result[:_LARGE_RESULT_PREVIEW_CHARS]}"
         )

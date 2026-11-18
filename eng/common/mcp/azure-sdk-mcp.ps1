@@ -9,8 +9,7 @@ param(
     [string]$Repository = 'Azure/azure-sdk-tools',
     [string]$RunDirectory = (Resolve-Path (Join-Path $PSScriptRoot .. .. ..)),
     [switch]$Run,
-    [Alias('UpdateVsCodeConfig')]
-    [switch]$UpdateMcpConfig,
+    [switch]$UpdateVsCodeConfig,
     [switch]$UpdatePathInProfile
 )
 
@@ -70,14 +69,13 @@ function log([object]$message, [switch]$warn, [switch]$err) {
     Write-Host ($messageObject | ConvertTo-Json -Depth 100 -Compress)
 }
 
-if ($UpdateMcpConfig) {
-    # Repo-root .mcp.json is read by both Copilot CLI and VS Code
-    $mcpConfigPath = Join-Path $PSScriptRoot ".." ".." ".." ".mcp.json"
-    if (Test-Path $mcpConfigPath) {
-        $mcpConfig = Get-Content -Raw $mcpConfigPath | ConvertFrom-Json -AsHashtable
+if ($UpdateVsCodeConfig) {
+    $vscodeConfigPath = Join-Path $PSScriptRoot ".." ".." ".." ".vscode" "mcp.json"
+    if (Test-Path $vscodeConfigPath) {
+        $vscodeConfig = Get-Content -Raw $vscodeConfigPath | ConvertFrom-Json -AsHashtable
     }
     else {
-        $mcpConfig = @{}
+        $vscodeConfig = @{}
     }
     $serverKey = "azure-sdk-mcp"
     $serverConfig = @{
@@ -87,17 +85,17 @@ if ($UpdateMcpConfig) {
     $orderedServers = [ordered]@{
         $serverKey = $serverConfig
     }
-    if (-not $mcpConfig.ContainsKey('mcpServers')) {
-        $mcpConfig['mcpServers'] = @{}
+    if (-not $vscodeConfig.ContainsKey('servers')) {
+        $vscodeConfig['servers'] = @{}
     }
-    foreach ($key in $mcpConfig.mcpServers.Keys) {
+    foreach ($key in $vscodeConfig.servers.Keys) {
         if ($key -ne $serverKey) {
-            $orderedServers[$key] = $mcpConfig.mcpServers[$key]
+            $orderedServers[$key] = $vscodeConfig.servers[$key]
         }
     }
-    $mcpConfig.mcpServers = $orderedServers
-    log "Updating mcp config at $mcpConfigPath"
-    $mcpConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $mcpConfigPath -Force
+    $vscodeConfig.servers = $orderedServers
+    log "Updating vscode mcp config at $vscodeConfigPath"
+    $vscodeConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $vscodeConfigPath -Force
 }
 
 # Install to a temp directory first so we don't dump out all the other

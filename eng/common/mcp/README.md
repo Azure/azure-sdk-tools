@@ -10,13 +10,13 @@ Run the below command to download and run the azure sdk engsys mcp server manual
 <repo root>/eng/common/mcp/azure-sdk-mcp.ps1 -Run
 ```
 
-To install the mcp server for use with GitHub Copilot (CLI or VS Code), run the following. It writes the repo-root `.mcp.json`, which both clients read.
+To install the mcp server for use within vscode copilot agent mode, run the following then launch vscode from the repository root.
 
 ```
-<repo root>/eng/common/mcp/azure-sdk-mcp.ps1 -UpdateMcpConfig
+<repo root>/eng/common/mcp/azure-sdk-mcp.ps1 -UpdateVsCodeConfig
 ```
 
-*When updating the config the script will not overwrite any other server configs. `-UpdateVsCodeConfig` is still accepted as an alias.*
+*When updating the config the script will not overwrite any other server configs.*
 
 The script will install the latest version of the azsdk cli executable from [tools releases](https://github.com/Azure/azure-sdk-tools/releases) and install it to `$HOME/.azure-sdk-mcp/azsdk`.
 

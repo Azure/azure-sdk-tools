@@ -735,8 +735,7 @@ class FoundryEvalsRunner:
         data_source = _upload_eval_items(openai_client, items, scenario)
         file_id = data_source["source"]["id"]
         try:
-            # A lost creation response can leave an active run; do not retry this non-idempotent call.
-            run = openai_client.with_options(max_retries=0).evals.runs.create(
+            run = openai_client.evals.runs.create(
                 eval_id=eval_object.id, name=run_name, data_source=data_source
             )
         except APIError:

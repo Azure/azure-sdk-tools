@@ -185,7 +185,6 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
     request = httpx.Request("POST", "https://example.test/evals")
     error = APIStatusError("rejected", response=httpx.Response(400, request=request), body=None)
     client = MagicMock()
-    client.with_options.return_value = client
     client.files.create.return_value = SimpleNamespace(id="file-input")
     client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="processed")
     client.files.delete.return_value = SimpleNamespace(deleted=True)
@@ -256,7 +255,6 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
             )
         if outcome in ("output_error", "output_cleanup_error", "creation_server_error"):
             assert raised.value is error
-    client.with_options.assert_called_once_with(max_retries=0)
     client.evals.runs.create.assert_called_once()
     if delete_expected:
         expected_attempts = 3 if outcome == "output_cleanup_error" else 1
@@ -886,7 +884,6 @@ def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, stat
     project.__enter__.return_value = project
     client = MagicMock()
     project.get_openai_client.return_value.__enter__.return_value = client
-    client.with_options.return_value = client
     client.files.create.return_value = SimpleNamespace(id="file-local")
     client.files.wait_for_processing.return_value = SimpleNamespace(id="file-local", status="processed")
     client.evals.create.return_value = SimpleNamespace(id="eval-local")

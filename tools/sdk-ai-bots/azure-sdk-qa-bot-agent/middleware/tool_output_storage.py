@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections import deque
 from collections.abc import Awaitable, Callable
 from typing import Any
 from uuid import uuid4
@@ -39,12 +40,14 @@ _RESULT_FILE_PATTERN = re.compile(r"tool-result-[A-Za-z0-9._-]+\.txt")
 _PROVIDER_INSTRUCTIONS = (
     "Large external tool results may be stored outside the conversation. "
     "Only when a tool response gives a `tool-result-*.txt` file name, start with "
-    "`tool_result_grep` using specific identifiers or error text. Its results include "
-    "match-centered context and absolute character offsets; use `tool_result_read_chars` "
-    "for additional surrounding text, or `tool_result_read` for a relevant line range. "
-    "Do not read the entire file. For an exact code or PR-review question, do not stop "
-    "at generic guidance: make one targeted follow-up when the requested property, file, "
-    "or concrete failure evidence has not yet been retrieved."
+    "`tool_result_grep` using specific identifiers or error text; for CI or job logs, "
+    "set `from_end=True` so matches near the end of the log are returned first. "
+    "Its results include match-centered context and absolute character offsets; use "
+    "`tool_result_read_chars` for additional surrounding text, or `tool_result_read` "
+    "for a relevant line range. Do not read the entire file. For an exact code or "
+    "PR-review question, do not stop at generic guidance: make one targeted follow-up "
+    "when the requested property, file, or concrete failure evidence has not yet been "
+    "retrieved."
 )
 
 
@@ -165,6 +168,7 @@ class ToolOutputStorageProvider(ContextProvider):
             file_name: str,
             regex_pattern: str,
             max_matches: int = 20,
+            from_end: bool = False,
         ) -> list[dict[str, Any]] | str:
             """Search one offloaded tool-result file with a case-insensitive regular expression."""
             normalized = _validate_file_name(file_name)
@@ -184,43 +188,72 @@ class ToolOutputStorageProvider(ContextProvider):
             if content is None:
                 return f"Tool-result file '{file_name}' not found."
 
-            matching_lines: list[dict[str, Any]] = []
-            remaining_chars = _MAX_GREP_OUTPUT_CHARS
-            search_start = 0
-            oversized_matches_skipped = 0
-            while (
-                len(matching_lines) < max_matches
-                and remaining_chars > 0
-                and (match := pattern.search(content, search_start)) is not None
-            ):
-                if len(match.group(0)) > _MAX_GREP_LINE_CHARS:
-                    oversized_matches_skipped += 1
-                    search_start = match.start() + 1
-                    continue
-
+            def _build_match_entry(
+                match_start: int,
+                match_end: int,
+                match_text: str,
+                remaining_chars: int,
+            ) -> dict[str, Any]:
                 context_chars = min(_MAX_GREP_LINE_CHARS, remaining_chars)
-                match_chars = len(match.group(0))
+                match_chars = len(match_text)
                 surrounding_chars = context_chars - match_chars
-                start_char = max(0, match.start() - surrounding_chars // 2)
+                start_char = max(0, match_start - surrounding_chars // 2)
                 end_char = min(len(content), start_char + context_chars)
                 if end_char - start_char < context_chars:
                     start_char = max(0, end_char - context_chars)
 
                 context_text = content[start_char:end_char]
-                previous_newline = content.rfind("\n", 0, match.start())
-                matching_lines.append(
-                    {
-                        "line_number": content.count("\n", 0, match.start()) + 1,
-                        "column_number": match.start() - previous_newline,
-                        "start_char": match.start(),
-                        "end_char": match.end(),
-                        "match": match.group(0),
-                        "match_truncated": False,
-                        "line": context_text,
-                    }
-                )
-                remaining_chars -= len(context_text)
-                search_start = max(match.end(), match.start() + 1)
+                previous_newline = content.rfind("\n", 0, match_start)
+                return {
+                    "line_number": content.count("\n", 0, match_start) + 1,
+                    "column_number": match_start - previous_newline,
+                    "start_char": match_start,
+                    "end_char": match_end,
+                    "match": match_text,
+                    "match_truncated": False,
+                    "line": context_text,
+                }
+
+            matching_lines: list[dict[str, Any]] = []
+            remaining_chars = _MAX_GREP_OUTPUT_CHARS
+            search_start = 0
+            oversized_matches_skipped = 0
+
+            if from_end:
+                tail_matches: deque[tuple[int, int, str]] = deque(maxlen=max_matches)
+                while (match := pattern.search(content, search_start)) is not None:
+                    if len(match.group(0)) > _MAX_GREP_LINE_CHARS:
+                        oversized_matches_skipped += 1
+                        search_start = match.start() + 1
+                        continue
+                    tail_matches.append((match.start(), match.end(), match.group(0)))
+                    search_start = max(match.end(), match.start() + 1)
+
+                for match_start, match_end, match_text in reversed(tail_matches):
+                    if remaining_chars == 0:
+                        break
+                    entry = _build_match_entry(
+                        match_start, match_end, match_text, remaining_chars
+                    )
+                    matching_lines.append(entry)
+                    remaining_chars -= len(entry["line"])
+            else:
+                while (
+                    len(matching_lines) < max_matches
+                    and remaining_chars > 0
+                    and (match := pattern.search(content, search_start)) is not None
+                ):
+                    if len(match.group(0)) > _MAX_GREP_LINE_CHARS:
+                        oversized_matches_skipped += 1
+                        search_start = match.start() + 1
+                        continue
+
+                    entry = _build_match_entry(
+                        match.start(), match.end(), match.group(0), remaining_chars
+                    )
+                    matching_lines.append(entry)
+                    remaining_chars -= len(entry["line"])
+                    search_start = max(match.end(), match.start() + 1)
 
             matches = (
                 [

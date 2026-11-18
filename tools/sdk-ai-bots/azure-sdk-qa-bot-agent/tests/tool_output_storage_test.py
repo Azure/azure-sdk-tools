@@ -333,6 +333,36 @@ async def test_provider_preserves_breadth_for_late_single_line_match():
 
 
 @pytest.mark.asyncio
+async def test_provider_grep_from_end_finds_late_ci_log_error():
+    store = InMemoryAgentFileStore()
+    provider = ToolOutputStorageProvider(store)
+    session = AgentSession(session_id="test-session")
+    context = SessionContext(session_id="test-session", input_messages=[])
+    file_name = "tool-result-get_job_logs-test.txt"
+    await store.write(
+        f"test-session/{file_name}",
+        ("setup error noise\n" * 200) + "fatal error: MULTIPLE_API_VERSION\n",
+    )
+
+    await provider.before_run(
+        agent=None,
+        session=session,
+        context=context,
+        state={},
+    )
+
+    tools = {tool.name: tool for tool in context.tools}
+    matches = await tools["tool_result_grep"].func(
+        file_name=file_name,
+        regex_pattern="error",
+        max_matches=5,
+        from_end=True,
+    )
+
+    assert "MULTIPLE_API_VERSION" in matches[0]["matching_lines"][0]["line"]
+
+
+@pytest.mark.asyncio
 async def test_provider_reads_bounded_character_range():
     store = InMemoryAgentFileStore()
     provider = ToolOutputStorageProvider(store)

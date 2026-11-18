@@ -564,13 +564,13 @@ async def test_branch_tag_in_channel_title(monkeypatch, trailing):
 
 
 @pytest.mark.asyncio
-async def test_missing_deployment_uses_latest(monkeypatch, caplog):
+async def test_missing_deployment_returns_none(monkeypatch, caplog):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([_version("42")])
     service = ChatService(project_client=project)
-    assert await service._resolve_request_version("[branch:missing] q", "agent") == "99"
-    project.agents.get.assert_awaited_once_with("agent")
-    assert "branch=missing; falling back to latest" in caplog.text
+    assert await service._resolve_request_version("[branch:missing] q", "agent") is None
+    project.agents.get.assert_not_called()
+    assert "branch=missing; falling back to the configured default" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -584,7 +584,6 @@ async def test_metadata_selects_matching_branch_and_agent_across_pages(monkeypat
     project.agents.list_versions.side_effect = lambda agent, **kwargs: (
         chat_project if agent == "chat-agent" else mcp_project
     ).agents.list_versions(agent, **kwargs)
-    project.agents.get = chat_project.agents.get
     service = ChatService(project_client=project)
     assert await service._resolve_request_version(
         "[branch:feature/Case/path] question", "chat-agent"
@@ -596,8 +595,8 @@ async def test_metadata_selects_matching_branch_and_agent_across_pages(monkeypat
         "[branch:other-branch] question", "chat-agent"
     ) == "43"
     for branch, agent in [("missing", "chat-agent"), ("other-branch", "mcp-agent")]:
-        assert await service._resolve_request_version(f"[branch:{branch}] question", agent) == "99"
-        project.agents.get.assert_awaited_with(agent)
+        assert await service._resolve_request_version(f"[branch:{branch}] question", agent) is None
+    project.agents.get.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -645,18 +644,18 @@ async def test_untagged_versions_do_not_match_branch(monkeypatch):
         "version": "43", "metadata": {}, "status": "active",
     })])
     service = ChatService(project_client=project)
-    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") == "99"
+    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
     project.agents.get_version.assert_not_called()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status", ["creating", "failed", None])
-async def test_no_active_branch_version_uses_latest(monkeypatch, status):
+async def test_no_active_branch_version_returns_none(monkeypatch, status):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([_version("43", status=status)])
     project.agents.get_version = AsyncMock(return_value=_version("43", status=status))
     service = ChatService(project_client=project)
-    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") == "99"
+    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
 
 
 @pytest.mark.asyncio
@@ -669,7 +668,7 @@ async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present
     results = await asyncio.gather(*(
         service._resolve_request_version("[branch:feature/foo] q", "agent") for _ in range(5)
     ), return_exceptions=True)
-    assert results == (["42"] if present else ["99"]) * 5
+    assert results == (["42"] if present else [None]) * 5
     assert project.agents.list_versions.call_count == 5
     project.agents.list_versions.assert_called_with("agent", order="desc")
     versions.insert(0, _version("43"))
@@ -687,12 +686,13 @@ async def test_foundry_errors_are_not_cached(monkeypatch, missing_agent):
     project.agents.list_versions.side_effect = (
         ResourceNotFoundError("missing") if missing_agent else ServiceRequestError("unavailable")
     )
-    if missing_agent:
-        project.agents.get.side_effect = ResourceNotFoundError("missing")
     service = ChatService(project_client=project)
     for _ in range(2):
-        with pytest.raises(ResourceNotFoundError if missing_agent else ServiceRequestError):
-            await service._resolve_request_version("[branch:feature/foo] q", "agent")
+        if missing_agent:
+            assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
+        else:
+            with pytest.raises(ServiceRequestError):
+                await service._resolve_request_version("[branch:feature/foo] q", "agent")
     assert project.agents.list_versions.call_count == 2
 
 
@@ -848,18 +848,19 @@ async def test_chat_selects_request_version_before_configured_version(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("missing_match", [True, False])
-async def test_chat_branch_fallback_ignores_configured_version(monkeypatch, missing_match):
+@pytest.mark.parametrize("configured_version", ["17", None])
+async def test_chat_branch_fallback_uses_default(monkeypatch, missing_match, configured_version):
     from azure.core.exceptions import ResourceNotFoundError
 
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([] if missing_match else [_version("42")])
     latest = project.agents.get.return_value.versions.latest
     project.agents.get_version.side_effect = (
-        [latest] if missing_match else [ResourceNotFoundError("deleted")]
+        [latest] if missing_match else [ResourceNotFoundError("deleted"), latest]
     )
     service = ChatService(
         project_client=project,
-        settings={"AI_FOUNDRY_AGENT_NAME": "agent", "AI_FOUNDRY_AGENT_VERSION": "17"}.get,
+        settings={"AI_FOUNDRY_AGENT_NAME": "agent", "AI_FOUNDRY_AGENT_VERSION": configured_version}.get,
     )
     service._get_openai_client = MagicMock(side_effect=RuntimeError("stop after agent selection"))
     request = ChatRequest(
@@ -869,6 +870,11 @@ async def test_chat_branch_fallback_ignores_configured_version(monkeypatch, miss
     with pytest.raises(RuntimeError, match="stop after agent selection"):
         await service.chat(request)
 
-    project.agents.get.assert_awaited_once_with("agent")
-    project.agents.get_version.assert_awaited_once_with("agent", "99" if missing_match else "42")
+    if configured_version is None:
+        project.agents.get.assert_awaited_once_with("agent")
+    else:
+        project.agents.get.assert_not_called()
+        project.agents.get_version.assert_awaited_with("agent", configured_version)
+    if not missing_match:
+        assert project.agents.get_version.await_args_list[0].args == ("agent", "42")
     service._get_openai_client.assert_called_once_with("agent")

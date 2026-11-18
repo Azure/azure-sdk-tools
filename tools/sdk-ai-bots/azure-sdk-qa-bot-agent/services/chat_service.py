@@ -155,14 +155,15 @@ class ChatService:
             if request_agent_version is None:
                 raise
             logger.warning(
-                "Requested agent=%s version=%s was not found; falling back to latest.",
+                "Requested agent=%s version=%s was not found; falling back to the configured default.",
                 agent_name, agent_version,
             )
-            agent = await self._get_agent(project_client, agent_name, None)
+            request_agent_version = None
+            agent = await self._get_agent(project_client, agent_name, configured_agent_version or None)
         logger.info(
             "Resolved agent=%s version=%s source=%s tenant=%s.",
             agent.name, agent.version,
-            "request" if request_agent_version is not None else (
+            "branch" if request_agent_version is not None else (
                 "configured" if configured_agent_version else "latest"
             ),
             req.tenant_id,
@@ -385,11 +386,9 @@ class ChatService:
             )
             if version is None:
                 logger.warning(
-                    "No active version of agent=%s for branch=%s; falling back to latest.",
+                    "No active version of agent=%s for branch=%s; falling back to the configured default.",
                     agent_name, target,
                 )
-                latest = await self._get_agent(self._get_project_client(), agent_name, None)
-                return latest.version
             return version
         return None
 

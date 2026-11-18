@@ -44,7 +44,7 @@ find the pipeline for your goal:
 | **tools - azure-sdk-ai-bot-perf-ci** | Check bot improvements against the performance scenarios. |
 
 Select **Run pipeline**, choose your working branch, and select the `scenarios` you want to run.
-Both pipelines start a backend using dev configuration and select your branch's deployed agent when available, otherwise Foundry's latest version of the same agent.
+Both pipelines start a backend using dev configuration and select your branch's deployed agent when available, otherwise the configured default version of the same agent, or Foundry's latest version if no default is configured.
 They do not deploy the agent.
 
 After the run, inspect the published per-scenario results, including failed cases
@@ -79,7 +79,7 @@ The tag selects your branch's newest active Foundry version for that agent and
 message only, skipping failed or provisioning versions. If listing omits readiness,
 the server checks version details; versions with unknown readiness are not selected.
 Without a tag, the server uses the configured agent version, or latest if none is configured.
-If no active branch deployment exists, or loading the selected version returns 404, the server logs a warning and falls back to Foundry's latest version of the same agent, even if a different default version is configured.
+If no active branch deployment exists, or loading the selected version returns 404, the server logs a warning and falls back to the configured default version of the same agent, or Foundry's latest version if no default is configured.
 Other errors still propagate, and requests without a branch tag retain the configured-version behavior described above.
 
 Each branch-tagged request looks up the matching version directly in Foundry.

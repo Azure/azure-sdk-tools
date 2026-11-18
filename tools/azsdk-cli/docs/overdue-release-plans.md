@@ -64,7 +64,11 @@ Use the positive `--inactivity-days` option to set a different window. An activi
 timestamp exactly at the cutoff still protects the plan. Both preview and actual
 cleanup use the same checks:
 
-- A recent Azure DevOps release-plan update protects the plan.
+- A recent Azure DevOps release-plan update protects the plan. Revisions that
+  only set `Custom.OverdueLastNotifiedDate` (overdue reminders) are ignored,
+  so a reminder alone does not reset the clock. Any other field or link change
+  in the same revision still counts. If work-item history cannot be read, the
+  last update is treated as recent activity.
 - Recent activity on any linked SDK PR protects the plan, even when approval
   is pending or changes have been requested. Activity includes commit timestamps,
   submitted reviews, and human comments, including inline review comments and edits.
@@ -85,7 +89,7 @@ These are point-in-time checks; they do not lock GitHub PRs against later activi
 | `azsdk release-plan list-overdue`                                          | Read-only list of all scoped overdue plans, including protected plans and those still in their grace month. No emails. |
 | `azsdk release-plan abandon-overdue --dry-run`                             | Read-only preview of eligible plans using the same checks as cleanup. No updates or emails.                            |
 | `azsdk release-plan abandon-overdue`                                       | Marks eligible plans `Abandoned` and attempts confirmation emails. **Performs writes.**                                |
-| `azsdk release-plan list-overdue --notify-owners true --emailer-uri <uri>` | Attempts overdue reminders without changing plan states.                                                               |
+| `azsdk release-plan list-overdue --notify-owners true --emailer-uri <uri>` | Sends overdue reminders and records accepted sends without changing plan states. **Performs writes.**                |
 
 Preview and actual cleanup show plan IDs, dashboard links, statuses, target
 months, and reasons. Preview preserves the current statuses; actual cleanup
@@ -140,7 +144,21 @@ allow reads of linked repositories, including private specs. The CLI supports
 `GITHUB_TOKEN` or an existing GitHub CLI login.
 
 Reminders require `--notify-owners true`, a valid `--emailer-uri`, and a valid
-submitter email address. They report lookup and send failures to the caller.
+submitter email address. After the emailer returns HTTP success (acceptance,
+not proof of delivery), the CLI records the current UTC time in the release-plan
+work item's `Custom.OverdueLastNotifiedDate` field, but only if that field is empty. An
+existing value is never overwritten. Skipped, failed, and unconfirmed sends
+leave the field untouched.
+
+Before deploying, confirm the Azure DevOps Date/Time field
+`Custom.OverdueLastNotifiedDate` on the release-plan work item type. Grant
+the automation write access and confirm the dashboard can read the field. If
+the emailer accepts a reminder but the timestamp write fails, the command
+reports both facts and does not resend the email; the next accepted reminder
+fills the empty field. Do not rerun notifications just to repair that timestamp.
+Reminder writes advance `System.ChangedDate`, but
+cleanup ignores them when measuring inactivity (see Recent activity protection).
+
 Reminder and abandonment subjects are distinct. Both emails use the assessment's
 exact reason; missing PRs, closed PRs, unapproved open PRs, merged or approved PRs,
 and released SDKs are not conflated. Unrecognized release types and verification

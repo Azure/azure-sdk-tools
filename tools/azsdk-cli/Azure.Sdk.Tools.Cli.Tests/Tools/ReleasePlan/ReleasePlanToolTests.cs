@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
+using AdoModels = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
@@ -2202,6 +2203,135 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }
         }
 
+        // February 1 reminder followed by March 1 cleanup: only 28 days apart in a non-leap year.
+        [TestCase("old-edit-then-reminder", false)]
+        [TestCase("recent-edit-then-reminder", true)]
+        [TestCase("reminder-then-recent-edit", true)]
+        [TestCase("reminder-with-other-field", true)]
+        [TestCase("reminder-with-relation-change", true)]
+        [TestCase("history-unavailable", true)]
+        [TestCase("history-empty", true)]
+        [TestCase("two-reminders-after-old-edit", false)]
+        [TestCase("edit-at-cutoff-then-reminder", true)]
+        [TestCase("edit-just-before-cutoff-then-reminder", false)]
+        [TestCase("reminder-with-comment", true)]
+        [TestCase("edit-missing-changed-date", true)]
+        public async Task Test_abandon_overdue_release_plans_ignores_reminder_only_updates_for_inactivity(
+            string scenario, bool expectedProtection)
+        {
+            const string reminderField = "Custom.OverdueLastNotifiedDate";
+            var now = new DateTimeOffset(2027, 3, 1, 0, 0, 0, TimeSpan.Zero);
+            var created = new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc);
+            var oldEdit = new DateTime(2027, 1, 15, 0, 0, 0, DateTimeKind.Utc);
+            var recentEditBeforeReminder = new DateTime(2027, 1, 31, 12, 0, 0, DateTimeKind.Utc);
+            var reminder = new DateTime(2027, 2, 1, 0, 0, 5, DateTimeKind.Utc);
+            var recentEditAfterReminder = new DateTime(2027, 2, 10, 0, 0, 0, DateTimeKind.Utc);
+
+            var reminderUpdate = CreateWorkItemUpdate(3, reminder, reminderField);
+            List<AdoModels.WorkItemUpdate> history = scenario switch
+            {
+                "old-edit-then-reminder" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"), reminderUpdate],
+                "recent-edit-then-reminder" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, recentEditBeforeReminder, "System.Tags"), reminderUpdate],
+                "reminder-then-recent-edit" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"), reminderUpdate,
+                    CreateWorkItemUpdate(4, recentEditAfterReminder, "System.Tags")],
+                "reminder-with-other-field" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"),
+                    CreateWorkItemUpdate(3, reminder, reminderField, "System.Tags")],
+                "reminder-with-relation-change" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"),
+                    CreateWorkItemUpdate(3, reminder, reminderField)],
+                "two-reminders-after-old-edit" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"),
+                    CreateWorkItemUpdate(3, new DateTime(2027, 1, 20, 0, 0, 5, DateTimeKind.Utc), reminderField), CreateWorkItemUpdate(4, reminder, reminderField)],
+                // Cutoff is 2027-01-30T00:00:00Z (30 days before March 1).
+                "edit-at-cutoff-then-reminder" => [CreateWorkItemUpdate(1, created, "System.Title"),
+                    CreateWorkItemUpdate(2, new DateTime(2027, 1, 30, 0, 0, 0, DateTimeKind.Utc), "System.Tags"), reminderUpdate],
+                "edit-just-before-cutoff-then-reminder" => [CreateWorkItemUpdate(1, created, "System.Title"),
+                    CreateWorkItemUpdate(2, new DateTime(2027, 1, 29, 23, 59, 59, DateTimeKind.Utc), "System.Tags"), reminderUpdate],
+                "reminder-with-comment" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"),
+                    CreateWorkItemUpdate(3, reminder, reminderField, "System.History")],
+                "edit-missing-changed-date" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"), reminderUpdate,
+                    CreateWorkItemUpdate(4, recentEditAfterReminder, "System.Tags")],
+                _ => []
+            };
+            if (scenario == "edit-missing-changed-date")
+            {
+                history[3].Fields.Remove("System.ChangedDate");
+            }
+            if (scenario == "reminder-with-relation-change")
+            {
+                history[2].Relations = new AdoModels.WorkItemRelationUpdates
+                {
+                    Added = [new AdoModels.WorkItemRelation { Rel = "System.LinkTypes.Related", Url = "https://dev.azure.com/azure-sdk/_apis/wit/workItems/1" }]
+                };
+            }
+
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 720,
+                Revision = history.Count == 0 ? 3 : history[^1].Rev,
+                ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "December 2026",
+                ChangedDate = scenario == "reminder-then-recent-edit" ? recentEditAfterReminder : reminder
+            };
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(service => service.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync([plan]);
+            if (scenario == "history-unavailable")
+            {
+                mockDevOps.Setup(service => service.GetWorkItemUpdatesAsync(plan.WorkItemId, It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new InvalidOperationException("history unavailable"));
+            }
+            else
+            {
+                mockDevOps.Setup(service => service.GetWorkItemUpdatesAsync(plan.WorkItemId, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(history);
+            }
+            mockDevOps.Setup(service => service.UpdateWorkItemAsync(plan.WorkItemId,
+                    It.IsAny<Dictionary<string, string>>(), plan.Revision, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new AdoModels.WorkItem());
+            var notification = new Mock<INotificationService>();
+            var tool = CreateOverdueMaintenanceTool(mockDevOps.Object, notification: notification.Object, now: now);
+
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ExitCode, Is.Zero);
+            Assert.That(preview.ResponseErrors, Is.Null);
+            Assert.That(preview.ReleasePlanDetailsList, Has.Count.EqualTo(expectedProtection ? 0 : 1));
+            AssertDryRunHasNoSideEffects(mockDevOps, notification);
+            if (expectedProtection)
+            {
+                Assert.That(preview.PreviewSummary!.SkippedByReason["recent_plan_activity"], Is.EqualTo(1));
+            }
+
+            var actual = await tool.AbandonOverdueReleasePlans();
+
+            Assert.That(actual.ExitCode, Is.Zero);
+            Assert.That(actual.ResponseErrors, Is.Null);
+            Assert.That(actual.ReleasePlanDetailsList, Has.Count.EqualTo(expectedProtection ? 0 : 1));
+            mockDevOps.Verify(service => service.UpdateWorkItemAsync(plan.WorkItemId,
+                    It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Abandoned"), plan.Revision, It.IsAny<CancellationToken>()),
+                Times.Exactly(expectedProtection ? 0 : 1));
+            notification.Verify(service => service.SendEmailNotificationAsync(
+                    It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(expectedProtection ? 0 : 1));
+        }
+
+        private static AdoModels.WorkItemUpdate CreateWorkItemUpdate(int rev, DateTime changedDate, params string[] changedFields)
+        {
+            var fields = new Dictionary<string, AdoModels.WorkItemFieldUpdate>
+            {
+                ["System.Rev"] = new() { OldValue = rev - 1, NewValue = rev },
+                ["System.ChangedDate"] = new() { NewValue = changedDate },
+                ["System.ChangedBy"] = new() { NewValue = "Azure SDK Automation" },
+                ["System.AuthorizedDate"] = new() { NewValue = changedDate },
+                ["System.RevisedDate"] = new() { NewValue = new DateTime(9999, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                ["System.Watermark"] = new() { NewValue = rev + 100 }
+            };
+            foreach (var field in changedFields)
+            {
+                fields[field] = new AdoModels.WorkItemFieldUpdate { NewValue = changedDate.ToString("O", CultureInfo.InvariantCulture) };
+            }
+            return new AdoModels.WorkItemUpdate { Rev = rev, Fields = fields };
+        }
+
         [TestCase(0, true)]
         [TestCase(43199, true)]
         [TestCase(43200, true)]
@@ -3154,6 +3284,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var captured = new List<JsonElement>();
             using var client = CreateMaintenanceEmailClient(captured);
 
+            AllowReminderTimestampUpdate(service, plan.WorkItemId);
             var response = await CreateOverdueMaintenanceTool(service.Object, notification: notification.Object, client: client)
                 .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
 
@@ -3162,7 +3293,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var body = captured.Single().GetProperty("Body").GetString();
             Assert.That(body, Does.Contain("Abandon Release Plan 380").And.Contain("the inactivity checks also pass"));
             Assert.That(body, Does.Not.Contain("eligible for automatic abandonment now"));
-            AssertDryRunHasNoSideEffects(service, notification);
+            notification.VerifyNoOtherCalls();
         }
 
         [TestCase(ApiReleaseType.GA, "error", false)]
@@ -3213,6 +3344,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var captured = new List<JsonElement>();
             using var client = CreateMaintenanceEmailClient(captured, failFirst: failFirstSend);
 
+            AllowReminderTimestampUpdate(service, unknown.WorkItemId);
+            AllowReminderTimestampUpdate(service, next.WorkItemId);
             var response = await CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object, client: client)
                 .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
 
@@ -3228,7 +3361,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(genericBody, Does.Not.Contain("Complete remaining SDK release activities").And.Not.Contain("GitHub unavailable"));
             Assert.That(captured[1].GetProperty("EmailTo").GetString(), Is.EqualTo("next@microsoft.com"));
             Assert.That(JsonSerializer.Serialize(plans), Is.EqualTo(snapshot));
-            AssertDryRunHasNoSideEffects(service, notification);
+            notification.VerifyNoOtherCalls();
             github.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), 42, It.IsAny<CancellationToken>()),
                 Times.Exactly(failure == "invalid" ? 0 : 1));
         }
@@ -3281,6 +3414,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             using var cts = new CancellationTokenSource();
             var service = new Mock<IDevOpsService>(MockBehavior.Strict);
             service.Setup(x => x.ListOverdueReleasePlansAsync(cts.Token)).ReturnsAsync([unknown, next]);
+            AllowReminderTimestampUpdate(service, next.WorkItemId);
             var github = new Mock<IGitHubService>(MockBehavior.Strict);
             github.Setup(x => x.GetPullRequestAsync("Azure", "azure-sdk-for-python", 42, cts.Token))
                 .ThrowsAsync(new HttpRequestException("GitHub unavailable"));
@@ -3324,7 +3458,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Assert.That(captured[1].GetProperty("EmailTo").GetString(), Is.EqualTo("next@microsoft.com"));
             }
             Assert.That(captured[0].GetProperty("Body").GetString(), Does.Contain("This is a verification issue, not confirmation that your release is inactive"));
-            AssertDryRunHasNoSideEffects(service, notification);
+            if (cancelCaller)
+            {
+                AssertDryRunHasNoSideEffects(service, notification);
+            }
+            else
+            {
+                notification.VerifyNoOtherCalls();
+            }
         }
 
         [TestCase("all_open", -1, -1, false, true)]
@@ -3392,6 +3533,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Assert.That(preview.PreviewSummary!.SkippedByReason[category], Is.EqualTo(1));
             }
 
+            AllowReminderTimestampUpdate(service, plan.WorkItemId);
             var reminder = await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
 
             Assert.That(reminder.ExitCode, Is.Zero);
@@ -3467,8 +3609,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(blocked.Status, Is.EqualTo("In Progress"));
             service.Verify(x => x.UpdateWorkItemAsync(601, It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
 
+            AllowReminderTimestampUpdate(service, blocked.WorkItemId);
             var reminder = await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
             Assert.That(reminder.ExitCode, Is.EqualTo(1));
+            Assert.That(reminder.ResponseErrors!.Single(), Does.Contain("Could not determine release activity"));
             Assert.That(captured.Single().GetProperty("Body").GetString(), Does.Contain("verification issue").And.Not.Contain("eligible for automatic abandonment now"));
         }
 
@@ -3541,12 +3685,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private static void AssertDryRunHasNoSideEffects(Mock<IDevOpsService> service, Mock<INotificationService> notification)
         {
             service.Verify(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()), Times.Once);
+            service.Verify(x => x.GetWorkItemUpdatesAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.AtMost(int.MaxValue));
             service.VerifyNoOtherCalls();
             notification.VerifyNoOtherCalls();
         }
 
         private ReleasePlanTool CreateOverdueMaintenanceTool(IDevOpsService service, IGitHubService? github = null,
-            INotificationService? notification = null, DateTimeOffset? now = null, HttpClient? client = null)
+            INotificationService? notification = null, DateTimeOffset? now = null, HttpClient? client = null, TimeProvider? clock = null)
         {
             if (github is IMocked<IGitHubService> mockedGitHub)
             {
@@ -3557,12 +3702,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }
             return new ReleasePlanTool(service, gitHelper, typeSpecHelper, logger, userHelper, github ?? gitHubService,
                 environmentHelper, inputSanitizer, client ?? httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(),
-                notification ?? Mock.Of<INotificationService>(), new MaintenanceTimeProvider(now ?? new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.Zero)));
+                notification ?? Mock.Of<INotificationService>(), clock ?? new MaintenanceTimeProvider(now ?? new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.Zero)));
         }
 
         private sealed class MaintenanceTimeProvider(DateTimeOffset now) : TimeProvider
         {
-            public override DateTimeOffset GetUtcNow() => now;
+            public DateTimeOffset UtcNow { get; set; } = now;
+            public override DateTimeOffset GetUtcNow() => UtcNow;
         }
 
         private static Octokit.PullRequest CreateMaintenancePullRequest(string state, bool merged, bool draft = false)
@@ -3612,6 +3758,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }
             var mockDevOps = new Mock<IDevOpsService>();
             mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            AllowReminderTimestampUpdate(mockDevOps, plan.WorkItemId);
             var mockGitHub = new Mock<IGitHubService>();
             mockGitHub.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), 42, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMaintenancePullRequest(state == "merged" ? "closed" : state, state == "merged"));
@@ -3626,7 +3773,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(response.ExitCode, Is.Zero);
             Assert.That(captured, Has.Count.EqualTo(expectEmail ? 1 : 0));
-            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(plan.WorkItemId,
+                It.Is<Dictionary<string, string>>(fields => fields.Count == 1 && fields.ContainsKey("Custom.OverdueLastNotifiedDate")),
+                It.IsAny<CancellationToken>()), Times.Exactly(expectEmail ? 1 : 0));
             if (expectEmail)
             {
                 var body = captured.Single().GetProperty("Body").GetString()!;
@@ -3663,6 +3812,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }).ToList();
             var mockDevOps = new Mock<IDevOpsService>();
             mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync(plans);
+            AllowReminderTimestampUpdate(mockDevOps, 312);
             var captured = new List<JsonElement>();
             using var client = CreateMaintenanceEmailClient(captured, failFirst: true);
 
@@ -3670,8 +3820,162 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
 
             Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(response.ResponseErrors, Has.Count.EqualTo(1));
             Assert.That(response.ResponseErrors, Has.Some.Contains("311"));
             Assert.That(captured, Has.Count.EqualTo(2));
+        }
+
+        private static void AllowReminderTimestampUpdate(Mock<IDevOpsService> service, int workItemId)
+        {
+            service.Setup(x => x.UpdateWorkItemAsync(workItemId,
+                    It.Is<Dictionary<string, string>>(fields => fields.Count == 1 && fields.ContainsKey("Custom.OverdueLastNotifiedDate")),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = workItemId });
+        }
+
+        [Test]
+        public async Task Test_overdue_reminder_last_notified_date_is_recorded_once_and_kept_on_later_sends()
+        {
+            const string field = "Custom.OverdueLastNotifiedDate";
+            var plan = new ReleasePlanWorkItem { WorkItemId = 451, ReleasePlanId = 45, ReleasePlanSubmittedByEmail = "owner@example.com" };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var clock = new MaintenanceTimeProvider(new DateTimeOffset(2026, 11, 1, 7, 0, 0, TimeSpan.Zero));
+            var storedFields = new Dictionary<string, string>();
+            service.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) =>
+                {
+                    Assert.That(fields.Keys, Is.EqualTo(new[] { field }));
+                    storedFields[field] = fields[field];
+                    plan.OverdueLastNotifiedDate = DateTime.Parse(fields[field], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                })
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = plan.WorkItemId });
+            var sends = 0;
+            using var client = CreateReminderClient(() =>
+            {
+                sends++;
+                clock.UtcNow = clock.UtcNow.AddSeconds(3);
+                return sends == 1 ? System.Net.HttpStatusCode.Accepted : System.Net.HttpStatusCode.OK;
+            });
+            var tool = CreateOverdueMaintenanceTool(service.Object, client: client, clock: clock);
+
+            var first = await tool.ListOverdueReleasePlans(true, "https://notifications.example.com/send");
+            Assert.That(first.ExitCode, Is.Zero);
+            Assert.That(storedFields[field], Is.EqualTo("2026-11-01T07:00:03.0000000Z"));
+
+            clock.UtcNow = clock.UtcNow.AddDays(30);
+            var next = await tool.ListOverdueReleasePlans(true, "https://notifications.example.com/send");
+            Assert.That(next.ExitCode, Is.Zero);
+            Assert.That(next.ResponseErrors, Is.Null.Or.Empty);
+            Assert.That(storedFields[field], Is.EqualTo("2026-11-01T07:00:03.0000000Z"));
+            Assert.That(sends, Is.EqualTo(2));
+            service.Verify(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task Test_overdue_reminder_does_not_overwrite_existing_overdue_last_notified_date()
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 452,
+                ReleasePlanId = 46,
+                ReleasePlanSubmittedByEmail = "owner@example.com",
+                OverdueLastNotifiedDate = new DateTime(2026, 10, 1, 7, 0, 0, DateTimeKind.Utc)
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var sends = 0;
+            using var client = CreateReminderClient(() =>
+            {
+                sends++;
+                return System.Net.HttpStatusCode.OK;
+            });
+            var tool = CreateOverdueMaintenanceTool(service.Object, client: client);
+
+            var result = await tool.ListOverdueReleasePlans(true, "https://notifications.example.com/send");
+
+            Assert.That(result.ExitCode, Is.Zero);
+            Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
+            Assert.That(sends, Is.EqualTo(1));
+            service.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [TestCase("rejected")]
+        [TestCase("timeout")]
+        [TestCase("invalid recipient")]
+        [TestCase("listing only")]
+        public async Task Test_overdue_reminder_timestamp_does_not_patch_blank_or_populated_fields_without_acceptance(string outcome)
+        {
+            // Both work items are in the batch; no PATCH means either existing field state is preserved.
+            var plans = new List<ReleasePlanWorkItem>
+            {
+                new() { WorkItemId = 451, ReleasePlanSubmittedByEmail = outcome == "invalid recipient" ? "invalid" : "one@example.com" },
+                new() { WorkItemId = 452, ReleasePlanSubmittedByEmail = outcome == "invalid recipient" ? "" : "two@example.com" }
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync(plans);
+            var sends = 0;
+            using var client = CreateReminderClient(() =>
+            {
+                sends++;
+                return outcome == "timeout" ? throw new TaskCanceledException("Unconfirmed acceptance") : System.Net.HttpStatusCode.ServiceUnavailable;
+            });
+            var tool = CreateOverdueMaintenanceTool(service.Object, client: client);
+
+            var response = await tool.ListOverdueReleasePlans(outcome != "listing only", "https://notifications.example.com/send");
+
+            var attempted = outcome is "rejected" or "timeout";
+            Assert.That(sends, Is.EqualTo(attempted ? 2 : 0));
+            Assert.That(response.ExitCode, Is.EqualTo(attempted ? 1 : 0));
+            if (attempted)
+            {
+                Assert.That(response.ResponseErrors, Has.Count.EqualTo(2).And.All.Contains("Failed to notify"));
+            }
+            service.Verify(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()), Times.Once);
+            service.VerifyNoOtherCalls();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task Test_overdue_reminder_timestamp_write_failure_is_distinct_and_does_not_resend(bool unconfirmedWrite)
+        {
+            var plan = new ReleasePlanWorkItem { WorkItemId = 451, ReleasePlanId = 45, ReleasePlanSubmittedByEmail = "owner@example.com" };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var update = service.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()));
+            if (unconfirmedWrite)
+            {
+                update.ReturnsAsync((Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem)null!);
+            }
+            else
+            {
+                update.ThrowsAsync(new InvalidOperationException("Field unavailable"));
+            }
+            var sends = 0;
+            using var client = CreateReminderClient(() =>
+            {
+                sends++;
+                return System.Net.HttpStatusCode.Accepted;
+            });
+            var tool = CreateOverdueMaintenanceTool(service.Object, client: client);
+
+            var response = await tool.ListOverdueReleasePlans(true, "https://notifications.example.com/send");
+
+            Assert.That(sends, Is.EqualTo(1));
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(response.ResponseErrors!.Single(), Does.Contain("Overdue reminder accepted for release-plan work item 451")
+                .And.Contain("2026-11-01T00:00:00.0000000Z").And.Contain("could not be recorded")
+                .And.Contain(unconfirmedWrite ? "did not confirm the update" : "Field unavailable"));
+            service.Verify(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        private static HttpClient CreateReminderClient(Func<System.Net.HttpStatusCode> send)
+        {
+            var handler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .Returns(() => Task.FromResult(new HttpResponseMessage(send())));
+            handler.Protected().Setup("Dispose", ItExpr.IsAny<bool>());
+            return new HttpClient(handler.Object);
         }
 
         private static HttpClient CreateMaintenanceEmailClient(List<JsonElement> captured, bool failFirst = false)

@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- After the emailer accepts an overdue release-plan reminder, the CLI records the UTC send time in the release plan's `Custom.OverdueLastNotifiedDate` field when that field is empty; an existing date is never overwritten. If the email is accepted but the date cannot be saved, the error is reported separately and the email is not resent. Changes that only set this field do not reset the abandonment inactivity clock.
+
 ### Breaking Changes
 
 ### Bugs Fixed

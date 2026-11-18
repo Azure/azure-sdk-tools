@@ -280,6 +280,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         };
 
         private const string sdkApexEmail = "azsdkapex@microsoft.com";
+        private const string OverdueLastNotifiedDateField = ReleasePlanWorkItem.OverdueLastNotifiedDateField;
+        // Fields Azure DevOps stamps on every revision; they do not indicate a meaningful change by themselves.
+        private static readonly HashSet<string> RevisionBookkeepingFields =
+        [
+            "System.Rev", "System.ChangedDate", "System.ChangedBy", "System.AuthorizedDate", "System.AuthorizedAs",
+            "System.RevisedDate", "System.Watermark", "System.PersonId"
+        ];
         private static readonly string DEFAULT_BRANCH = "main";
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string PRIVATE_SPECS_REPO = "azure-rest-api-specs-pr";
@@ -2320,9 +2327,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                         if (releasePlan.ChangedDate >= recentActivityCutoff.UtcDateTime)
                         {
-                            var activityReason = $"Release plan work item {releasePlan.WorkItemId} was updated at {releasePlan.ChangedDate:O}, within the last {inactivityDays} days.";
-                            RecordSkippedPlan(releasePlan, "recent_plan_activity", activityReason);
-                            continue;
+                            var latestActivity = await GetLatestNonReminderActivityAsync(releasePlan, ct);
+                            if (latestActivity == null || latestActivity >= recentActivityCutoff.UtcDateTime)
+                            {
+                                var activityDate = latestActivity ?? releasePlan.ChangedDate;
+                                var activityReason = $"Release plan work item {releasePlan.WorkItemId} was updated at {activityDate:O}, within the last {inactivityDays} days.";
+                                RecordSkippedPlan(releasePlan, "recent_plan_activity", activityReason);
+                                continue;
+                            }
                         }
 
                         var assessment = await EvaluateReleasePlanWorkAsync(releasePlan, ct);
@@ -2488,6 +2500,46 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     : "No SDKs are recorded as released, and all linked SDK pull requests are closed without being merged.");
         }
 
+        /// <summary>
+        /// Returns the latest work-item change time, ignoring revisions that only recorded an overdue reminder.
+        /// Returns null when history cannot be verified so callers stay conservative.
+        /// </summary>
+        private async Task<DateTime?> GetLatestNonReminderActivityAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
+        {
+            List<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItemUpdate> updates;
+            try
+            {
+                updates = await devOpsService.GetWorkItemUpdatesAsync(releasePlan.WorkItemId, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "Could not read history for release plan work item {WorkItemId}; treating its last update as recent activity.", releasePlan.WorkItemId);
+                return null;
+            }
+
+            DateTime? latest = null;
+            foreach (var update in updates ?? [])
+            {
+                var fields = update.Fields;
+                // Azure DevOps includes Relations only when the revision changed links.
+                var isReminderOnly = update.Relations == null && fields != null && fields.ContainsKey(OverdueLastNotifiedDateField) &&
+                    fields.Keys.All(key => key == OverdueLastNotifiedDateField || RevisionBookkeepingFields.Contains(key));
+                if (isReminderOnly)
+                {
+                    continue;
+                }
+                if (fields == null || !fields.TryGetValue("System.ChangedDate", out var changedDate) || changedDate?.NewValue is not DateTime changedAt)
+                {
+                    return null;
+                }
+                if (latest == null || changedAt > latest)
+                {
+                    latest = changedAt;
+                }
+            }
+            return latest;
+        }
+
         private async Task<string?> GetRecentSdkPullRequestActivityAsync(ReleasePlanWorkItem releasePlan, DateTimeOffset cutoff, int inactivityDays, CancellationToken ct)
         {
             foreach (var url in releasePlan.SDKInfo.Select(sdk => sdk.SdkPullRequestUrl)
@@ -2618,6 +2670,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ct.ThrowIfCancellationRequested();
                     logger.LogError(ex, "Failed to notify owner of overdue release plan {WorkItemId}", releasePlan.WorkItemId);
                     errors.Add($"Failed to notify owner of overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                    continue;
+                }
+
+                // Keep the first recorded notification date; only fill the field when it is empty.
+                if (releasePlan.OverdueLastNotifiedDate != null)
+                {
+                    continue;
+                }
+
+                var sentAtUtc = _timeProvider.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
+                try
+                {
+                    var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                    {
+                        [OverdueLastNotifiedDateField] = sentAtUtc
+                    }, ct);
+                    if (updatedWorkItem is null)
+                    {
+                        throw new InvalidOperationException("Azure DevOps did not confirm the update.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex,
+                        "Overdue reminder accepted for release-plan work item {WorkItemId} at {SentAtUtc}, but its send time could not be recorded",
+                        releasePlan.WorkItemId, sentAtUtc);
+                    ct.ThrowIfCancellationRequested();
+                    errors.Add($"Overdue reminder accepted for release-plan work item {releasePlan.WorkItemId} at {sentAtUtc}, but its send time could not be recorded: {ex.Message}");
                 }
             }
             return errors;
@@ -2639,10 +2719,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogInformation("Sending Email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
 
-                var response = await httpClient.PostAsync(emailerUri, httpContent, ct);
+                using var response = await httpClient.PostAsync(emailerUri, httpContent, ct);
                 response.EnsureSuccessStatusCode();
 
-                logger.LogInformation("Successfully sent email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
+                logger.LogInformation("Emailer accepted email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
             }
         }
 

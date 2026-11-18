@@ -33,7 +33,7 @@ from agent_framework_foundry_hosting import ResponsesHostServer
 import config.app_config as app_config
 from config.app_config import get as cfg
 from skills import tenant_skills
-from skills.tenant_skills import create_support_channels_skill, create_tenant_skills
+from skills.tenant_skills import create_tenant_skills, inject_support_channels
 from tools.knowledge_tools import KnowledgeTools
 from tools.identity_tools import IdentityTools
 from tools.web_tools import WebTools
@@ -155,11 +155,8 @@ async def main() -> None:
 
     # Init Skills
     skills = create_tenant_skills(agent_name)
-    support_channels_skill = create_support_channels_skill()
-    if support_channels_skill is not None:
-        skills.append(support_channels_skill)
     skills_dir = _get_chat_skill_dir()
-    skills.extend(await FileSkillsSource(skills_dir).get_skills())
+    skills.extend(inject_support_channels(await FileSkillsSource(skills_dir).get_skills()))
     skills_provider = SkillsProvider(skills)
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")

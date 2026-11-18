@@ -671,8 +671,12 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     skills = asyncio.run(
         FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
     )
-    assert [skill.frontmatter.name for skill in skills] == ["pr-review"]
+    assert {skill.frontmatter.name for skill in skills} == {
+        "pr-review",
+        "support-channels",
+    }
     assert "pr-review" not in get_skill_to_tenant_map()
+    assert "support-channels" not in get_skill_to_tenant_map()
 
     init = (
         _AGENT_ROOT / "agents" / "chat_agent" / "init.py"

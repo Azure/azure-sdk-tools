@@ -52,6 +52,12 @@ class SupportChannelCatalog(SupportChannelModel):
             raise ValueError("Support-channel names must be unique.")
         return self
 
+    def format_markdown(self) -> str:
+        return "\n".join(
+            f"- `{ch.key}` (**{ch.name}**) — {ch.description}"
+            for ch in self.support_channels
+        )
+
 
 class _UniqueKeyLoader(yaml.SafeLoader):
     pass

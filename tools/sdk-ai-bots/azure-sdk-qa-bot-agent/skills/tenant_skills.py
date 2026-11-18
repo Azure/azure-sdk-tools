@@ -9,6 +9,7 @@ Each tenant becomes a Skill with:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import logging
 from functools import lru_cache
 
@@ -166,40 +167,52 @@ def create_tenant_skills(agent_name: str) -> list[Skill]:
     return skills
 
 
-def create_support_channels_skill() -> InlineSkill | None:
-    """Build the on-demand support-channels skill from ``config/support-channel.yaml``."""
+_SUPPORT_CHANNELS_SKILL_NAME = "support-channels"
+_SUPPORT_CHANNELS_PLACEHOLDER = "{{support_channels}}"
+
+
+class _SupportChannelsSkill(Skill):
+    """Wraps the file-based support-channels skill with configured channel entries."""
+
+    def __init__(self, base_skill: Skill, channels_markdown: str) -> None:
+        self._base_skill = base_skill
+        self._channels_markdown = channels_markdown
+        self._cached_content: str | None = None
+
+    @property
+    def frontmatter(self) -> SkillFrontmatter:
+        return self._base_skill.frontmatter
+
+    async def get_content(self) -> str:
+        if self._cached_content is None:
+            content = await self._base_skill.get_content()
+            if _SUPPORT_CHANNELS_PLACEHOLDER in content:
+                content = content.replace(
+                    _SUPPORT_CHANNELS_PLACEHOLDER, self._channels_markdown
+                )
+            else:
+                content = f"{content}\n\n{self._channels_markdown}"
+            self._cached_content = content
+        return self._cached_content
+
+
+def inject_support_channels(skills: Sequence[Skill]) -> list[Skill]:
+    """Inject configured support channels into the file-based ``support-channels`` skill."""
     catalog = get_support_channel_catalog()
-    if catalog is None or not catalog.support_channels:
-        return None
-
-    lines = [
-        "# Support Channels",
-        "",
-        "Load this skill **only** when a question remains unresolved after investigation "
-        "and needs human review, approval, escalation, or domain experts in another channel.",
-        "",
-        "- Do not refer the user back to the current channel (see `[tenant_context]` / `[tenant_scope]`).",
-        "- For ARM/management-plane reviews, direct to [ARM Office Hours](https://armwiki.azurewebsites.net/introduction/office_hours.html) in your reply instead of routing to `api_stewardship_board`.",
-        "- For a Teams channel handoff, append `{{channel:<key>}}` at the end of your response using a key below, and do not write a \"Not resolved? Please re-post...\" footer yourself. Keep keys internal.",
-        "",
-        "## Channels",
-        "",
-    ]
-    for channel in catalog.support_channels:
-        lines.append(f"- `{channel.key}` (**{channel.name}**) — {channel.description}")
-
-    return InlineSkill(
-        frontmatter=SkillFrontmatter(
-            name="support-channels",
-            description=(
-                "Look up the right Teams support channel key ONLY when a question remains "
-                "unresolved and needs another channel's human experts. DO NOT USE FOR: "
-                "questions you can answer directly (even after loading another domain "
-                "skill) or while investigating."
-            ),
-        ),
-        instructions="\n".join(lines),
+    channels_markdown = (
+        catalog.format_markdown() if catalog and catalog.support_channels else ""
     )
+
+    result: list[Skill] = []
+    for skill in skills:
+        if skill.frontmatter.name == _SUPPORT_CHANNELS_SKILL_NAME:
+            if not channels_markdown:
+                logger.info("Skipping support-channels skill: catalog is empty or unavailable")
+                continue
+            result.append(_SupportChannelsSkill(skill, channels_markdown))
+        else:
+            result.append(skill)
+    return result
 
 
 def get_skill_to_tenant_map() -> dict[str, TenantID]:

@@ -1004,15 +1004,37 @@ def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:
     assert result.route_channel_link is None
 
 
-def test_support_channel_catalog_loads_and_builds_inline_skill() -> None:
-    from models.support_channel import get_support_channel, parse_support_channel_catalog
-    from skills.tenant_skills import create_support_channels_skill
+@pytest.mark.asyncio
+async def test_support_channel_catalog_loads_and_injects_into_skill() -> None:
+    from pathlib import Path
+    from agent_framework import InlineSkill, SkillFrontmatter
 
-    skill = create_support_channels_skill()
-    assert skill is not None
-    assert skill.frontmatter.name == "support-channels"
-    assert "sdk_release_support" in skill.instructions
-    assert "https://teams.microsoft.com" not in skill.instructions
+    from models.support_channel import get_support_channel, parse_support_channel_catalog
+    from skills.tenant_skills import inject_support_channels
+
+    skill_text = (
+        Path(__file__).resolve().parents[1]
+        / "skills"
+        / "chat_agent"
+        / "support-channels"
+        / "SKILL.md"
+    ).read_text(encoding="utf-8")
+    assert "{{support_channels}}" in skill_text
+
+    base_skill = InlineSkill(
+        frontmatter=SkillFrontmatter(name="support-channels", description="Support channels"),
+        instructions=skill_text,
+    )
+    other_skill = InlineSkill(
+        frontmatter=SkillFrontmatter(name="pr-review", description="PR review"),
+        instructions="PR review instructions",
+    )
+    injected = inject_support_channels([other_skill, base_skill])
+    assert [s.frontmatter.name for s in injected] == ["pr-review", "support-channels"]
+    content = await injected[1].get_content()
+    assert "{{support_channels}}" not in content
+    assert "sdk_release_support" in content
+    assert "https://teams.microsoft.com" not in content
     assert get_support_channel("language_mobile") is None
 
     empty = parse_support_channel_catalog(b"support_channels: []")

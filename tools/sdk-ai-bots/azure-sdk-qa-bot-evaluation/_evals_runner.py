@@ -555,9 +555,8 @@ class FoundryEvalsRunner:
         run_id: str,
         scenario: str,
         tool_calls_by_response_id: dict[str, list[dict[str, Any]]],
-        extra_failed_rows: list[dict[str, Any]] | None = None,
-        *,
         input_file_id: str,
+        extra_failed_rows: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Shared poll-to-terminal + output_items -> rows -> record step.
 
@@ -766,8 +765,8 @@ class FoundryEvalsRunner:
             run.id,
             scenario,
             tool_calls_by_response_id,
+            file_id,
             failed_rows,
-            input_file_id=file_id,
         )
 
 

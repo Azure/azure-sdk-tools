@@ -203,8 +203,7 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
         "SDK design, clients, library/package naming and approval, "
         "documentation and SDK exposure; preview/GA versioning, compatibility, "
         "breaking changes, "
-        "deprecation, retirement and customer notification. "
-        "Use typespec instead for ARM/management-plane questions."
+        "deprecation, retirement and customer notification."
     )
     assert "Give evidence-backed advice, not Board decisions" in content
     assert "Use `typespec` for detailed authoring" not in content

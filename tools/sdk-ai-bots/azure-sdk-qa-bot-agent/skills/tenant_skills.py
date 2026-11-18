@@ -40,8 +40,7 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "SDK design, clients, library/package naming and approval, "
         "documentation and SDK exposure; preview/GA versioning, compatibility, "
         "breaking changes, "
-        "deprecation, retirement and customer notification. "
-        "Use typespec instead for ARM/management-plane questions."
+        "deprecation, retirement and customer notification."
     ),
     TenantID.API_SPEC_REVIEW_BOT: (
         "Azure REST API specification PR review process: requirements, "

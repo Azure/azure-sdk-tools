@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 import logging
 from functools import lru_cache
+from pathlib import Path
 
 from agent_framework import InlineSkill, Skill, SkillFrontmatter
 
@@ -171,29 +172,19 @@ _SUPPORT_CHANNELS_SKILL_NAME = "support-channels"
 _SUPPORT_CHANNELS_PLACEHOLDER = "{{support_channels}}"
 
 
-class _SupportChannelsSkill(Skill):
-    """Wraps the file-based support-channels skill with configured channel entries."""
-
-    def __init__(self, base_skill: Skill, channels_markdown: str) -> None:
-        self._base_skill = base_skill
-        self._channels_markdown = channels_markdown
-        self._cached_content: str | None = None
-
-    @property
-    def frontmatter(self) -> SkillFrontmatter:
-        return self._base_skill.frontmatter
-
-    async def get_content(self) -> str:
-        if self._cached_content is None:
-            content = await self._base_skill.get_content()
-            if _SUPPORT_CHANNELS_PLACEHOLDER in content:
-                content = content.replace(
-                    _SUPPORT_CHANNELS_PLACEHOLDER, self._channels_markdown
-                )
-            else:
-                content = f"{content}\n\n{self._channels_markdown}"
-            self._cached_content = content
-        return self._cached_content
+def _extract_skill_body(skill: Skill) -> str:
+    if isinstance(skill, InlineSkill):
+        return skill.instructions
+    skill_path = getattr(skill, "path", None)
+    if skill_path:
+        raw = (Path(skill_path) / "SKILL.md").read_text(encoding="utf-8")
+        if raw.startswith("---"):
+            parts = raw.split("---", 2)
+            if len(parts) == 3:
+                return parts[2].lstrip("\r\n")
+        return raw
+    content = getattr(skill, "content", "")
+    return content if isinstance(content, str) else ""
 
 
 def inject_support_channels(skills: Sequence[Skill]) -> list[Skill]:
@@ -209,7 +200,17 @@ def inject_support_channels(skills: Sequence[Skill]) -> list[Skill]:
             if not channels_markdown:
                 logger.info("Skipping support-channels skill: catalog is empty or unavailable")
                 continue
-            result.append(_SupportChannelsSkill(skill, channels_markdown))
+            body = _extract_skill_body(skill)
+            if _SUPPORT_CHANNELS_PLACEHOLDER in body:
+                rendered = body.replace(_SUPPORT_CHANNELS_PLACEHOLDER, channels_markdown)
+            else:
+                rendered = f"{body}\n\n{channels_markdown}"
+            result.append(
+                InlineSkill(
+                    frontmatter=skill.frontmatter,
+                    instructions=rendered,
+                )
+            )
         else:
             result.append(skill)
     return result

@@ -1044,7 +1044,12 @@ async def test_support_channel_catalog_loads_and_injects_into_skill() -> None:
     )
     injected = inject_support_channels([other_skill, base_skill])
     assert [s.frontmatter.name for s in injected] == ["pr-review", "support-channels"]
-    content = await injected[1].get_content()
+    skill = injected[1]
+    content = (
+        await skill.get_content()
+        if hasattr(skill, "get_content")
+        else skill.content
+    )
     assert "{{support_channels}}" not in content
     assert "sdk_release_support" in content
     assert "https://teams.microsoft.com" not in content

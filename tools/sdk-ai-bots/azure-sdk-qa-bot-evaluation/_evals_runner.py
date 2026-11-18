@@ -565,11 +565,6 @@ class FoundryEvalsRunner:
         as failures in the gate rather than vanishing from the denominator.
         """
         deadline = time.time() + self._poll_timeout
-        logger.info(
-            "Retaining evaluation input file (id=%s, eval_id=%s, run_id=%s) "
-            "until completion is confirmed; if polling fails, confirm completion before manual cleanup",
-            input_file_id, eval_id, run_id,
-        )
         run = _retry_foundry_call(
             lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
             "Evaluation run status retrieval",

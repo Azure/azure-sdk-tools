@@ -175,7 +175,6 @@ def test_eval_input_cleanup_requires_confirmed_deletion(caplog, deleted):
     ],
 )
 def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, caplog, outcome, delete_expected):
-    import logging
     from types import SimpleNamespace
     from unittest.mock import MagicMock
 
@@ -183,7 +182,6 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
     from openai import APIConnectionError, APIStatusError
     import _evals_runner as module
 
-    caplog.set_level(logging.INFO, logger=module.__name__)
     request = httpx.Request("POST", "https://example.test/evals")
     error = APIStatusError("rejected", response=httpx.Response(400, request=request), body=None)
     client = MagicMock()
@@ -263,6 +261,7 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
         client.files.delete.assert_called_with("file-input")
     else:
         client.files.delete.assert_not_called()
+    if outcome in ("creation_rejected", "creation_unknown", "creation_server_error"):
         assert "Retaining evaluation input file" in caplog.text
         assert "id=file-input, eval_id=eval-id, run_id=" in caplog.text
     if outcome in ("cleanup_error", "output_cleanup_error"):

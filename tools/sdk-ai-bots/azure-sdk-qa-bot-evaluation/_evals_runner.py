@@ -57,7 +57,6 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
 # Composite weights
 BOT_EVALS_WEIGHTS = {"similarity": 0.6, "response_completeness": 0.4}
 _JSON_OUTPUT_TOOLS = {"search_knowledge_base", "wiki_search"}
-_TERMINAL_EVAL_STATUSES = ("completed", "failed")
 
 # Item schema for the inline eval data: the answer/context are collected from
 # /completion and carried in the item (read via {{item.response}} / {{item.context}}).
@@ -569,7 +568,7 @@ class FoundryEvalsRunner:
             lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
             "Evaluation run status retrieval",
         )
-        while run.status not in _TERMINAL_EVAL_STATUSES:
+        while run.status not in ("completed", "failed"):
             if time.time() > deadline:
                 raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
             time.sleep(self._poll_interval)

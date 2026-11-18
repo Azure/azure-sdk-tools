@@ -263,7 +263,8 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
     else:
         client.files.delete.assert_not_called()
     if outcome in ("creation_rejected", "creation_unknown", "creation_server_error"):
-        assert "Retaining evaluation input file" in caplog.text
+        assert "Skipping automatic input cleanup" in caplog.text
+        assert "The file is retained; manual cleanup is required" in caplog.text
         assert "id=file-input, eval_id=eval-id, run_id=" in caplog.text
     if outcome in ("cleanup_error", "output_cleanup_error"):
         assert "manual cleanup is required" in caplog.text

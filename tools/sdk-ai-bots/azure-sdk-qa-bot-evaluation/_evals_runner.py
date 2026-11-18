@@ -740,8 +740,9 @@ class FoundryEvalsRunner:
             )
         except APIError:
             logger.warning(
-                "Retaining evaluation input file (id=%s, eval_id=%s, run_id=unknown): "
-                "run creation outcome is uncertain; clean up after confirming no active runs",
+                "Skipping automatic input cleanup (id=%s, eval_id=%s, run_id=unknown): "
+                "run creation raised an error and a run may still be active. "
+                "The file is retained; manual cleanup is required after confirming no active runs use it.",
                 file_id, eval_object.id,
             )
             raise

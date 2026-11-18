@@ -821,21 +821,21 @@ async def test_chat_returns_the_invoked_agent_name(monkeypatch, tenant_id):
 async def test_chat_selects_request_version_before_configured_version(
     monkeypatch, branch_version, configured_version, expected,
 ):
-    from azure.core.exceptions import ServiceRequestError
+    from azure.core.exceptions import ResourceNotFoundError
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     settings = {"AI_FOUNDRY_AGENT_NAME": "agent", "AI_FOUNDRY_AGENT_VERSION": configured_version}
     content = "question"
     if branch_version is not None:
         content = "[branch:feature/foo] question"
     project = _project_with_versions([_version(branch_version)])
-    failure = ServiceRequestError("Foundry unavailable")
+    failure = ResourceNotFoundError("Foundry unavailable")
     project.agents.get_version = AsyncMock(side_effect=failure)
     project.agents.get = AsyncMock(side_effect=failure)
     service = ChatService(project_client=project, settings=settings.get)
     request = ChatRequest(
         tenant_id="general_qa_bot", message=ChatMessage(role="user", content=content),
     )
-    with pytest.raises(ServiceRequestError) as exc:
+    with pytest.raises(ResourceNotFoundError) as exc:
         await service.chat(request)
     assert exc.value is failure
     if expected is None:
@@ -847,17 +847,10 @@ async def test_chat_selects_request_version_before_configured_version(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("missing_match", [True, False])
 @pytest.mark.parametrize("configured_version", ["17", None])
-async def test_chat_branch_fallback_uses_default(monkeypatch, missing_match, configured_version):
-    from azure.core.exceptions import ResourceNotFoundError
-
+async def test_chat_branch_fallback_uses_default(monkeypatch, configured_version):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
-    project = _project_with_versions([] if missing_match else [_version("42")])
-    latest = project.agents.get.return_value.versions.latest
-    project.agents.get_version.side_effect = (
-        [latest] if missing_match else [ResourceNotFoundError("deleted"), latest]
-    )
+    project = _project_with_versions([])
     service = ChatService(
         project_client=project,
         settings={"AI_FOUNDRY_AGENT_NAME": "agent", "AI_FOUNDRY_AGENT_VERSION": configured_version}.get,
@@ -875,6 +868,4 @@ async def test_chat_branch_fallback_uses_default(monkeypatch, missing_match, con
     else:
         project.agents.get.assert_not_called()
         project.agents.get_version.assert_awaited_with("agent", configured_version)
-    if not missing_match:
-        assert project.agents.get_version.await_args_list[0].args == ("agent", "42")
     service._get_openai_client.assert_called_once_with("agent")

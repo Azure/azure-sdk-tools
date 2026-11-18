@@ -11,7 +11,7 @@ import re
 from urllib.parse import urlparse
 
 import httpx
-from azure.core.exceptions import AzureError, ResourceNotFoundError
+from azure.core.exceptions import AzureError
 
 from config.app_config import Settings, get as cfg
 from config.tenant_config import (
@@ -149,17 +149,7 @@ class ChatService:
         )
         if request_agent_version is not None:
             agent_version = request_agent_version
-        try:
-            agent = await self._get_agent(project_client, agent_name, agent_version)
-        except ResourceNotFoundError:
-            if request_agent_version is None:
-                raise
-            logger.warning(
-                "Requested agent=%s version=%s was not found; falling back to the configured default.",
-                agent_name, agent_version,
-            )
-            request_agent_version = None
-            agent = await self._get_agent(project_client, agent_name, configured_agent_version or None)
+        agent = await self._get_agent(project_client, agent_name, agent_version)
         logger.info(
             "Resolved agent=%s version=%s source=%s tenant=%s.",
             agent.name, agent.version,

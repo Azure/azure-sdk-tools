@@ -64,7 +64,11 @@ Use the positive `--inactivity-days` option to set a different window. An activi
 timestamp exactly at the cutoff still protects the plan. Both preview and actual
 cleanup use the same checks:
 
-- A recent Azure DevOps release-plan update protects the plan.
+- A recent Azure DevOps release-plan update protects the plan. Revisions that
+  only set `Custom.PastDueNotificationSentDate` (overdue reminders) are ignored,
+  so a reminder alone does not reset the clock. Any other field or link change
+  in the same revision still counts. If work-item history cannot be read, the
+  last update is treated as recent activity.
 - Recent activity on any linked SDK PR protects the plan, even when approval
   is pending or changes have been requested. Activity includes commit timestamps,
   submitted reviews, and human comments, including inline review comments and edits.
@@ -150,9 +154,8 @@ Before deploying, provision or confirm the optional Azure DevOps Date/Time field
 the automation write access and confirm the dashboard can read the field. If
 the emailer accepts a reminder but the timestamp write fails, the command
 reports both facts and does not resend the email. Do not rerun notifications
-just to repair that timestamp. Reminder writes are work-item updates; if
-Azure DevOps advances `System.ChangedDate`, the existing recent-activity rule
-can defer cleanup. Verify this effect against the deployed schedule before rollout.
+just to repair that timestamp. Reminder writes advance `System.ChangedDate`, but
+cleanup ignores them when measuring inactivity (see Recent activity protection).
 
 Reminder and abandonment subjects are distinct. Both emails use the assessment's
 exact reason; missing PRs, closed PRs, unapproved open PRs, merged or approved PRs,

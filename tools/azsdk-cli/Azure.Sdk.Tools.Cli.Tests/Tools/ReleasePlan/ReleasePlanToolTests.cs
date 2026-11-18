@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
+using AdoModels = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
@@ -2202,6 +2203,135 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             }
         }
 
+        // February 1 reminder followed by March 1 cleanup: only 28 days apart in a non-leap year.
+        [TestCase("old-edit-then-reminder", false)]
+        [TestCase("recent-edit-then-reminder", true)]
+        [TestCase("reminder-then-recent-edit", true)]
+        [TestCase("reminder-with-other-field", true)]
+        [TestCase("reminder-with-relation-change", true)]
+        [TestCase("history-unavailable", true)]
+        [TestCase("history-empty", true)]
+        [TestCase("two-reminders-after-old-edit", false)]
+        [TestCase("edit-at-cutoff-then-reminder", true)]
+        [TestCase("edit-just-before-cutoff-then-reminder", false)]
+        [TestCase("reminder-with-comment", true)]
+        [TestCase("edit-missing-changed-date", true)]
+        public async Task Test_abandon_overdue_release_plans_ignores_reminder_only_updates_for_inactivity(
+            string scenario, bool expectedProtection)
+        {
+            const string reminderField = "Custom.PastDueNotificationSentDate";
+            var now = new DateTimeOffset(2027, 3, 1, 0, 0, 0, TimeSpan.Zero);
+            var created = new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc);
+            var oldEdit = new DateTime(2027, 1, 15, 0, 0, 0, DateTimeKind.Utc);
+            var recentEditBeforeReminder = new DateTime(2027, 1, 31, 12, 0, 0, DateTimeKind.Utc);
+            var reminder = new DateTime(2027, 2, 1, 0, 0, 5, DateTimeKind.Utc);
+            var recentEditAfterReminder = new DateTime(2027, 2, 10, 0, 0, 0, DateTimeKind.Utc);
+
+            var reminderUpdate = CreateWorkItemUpdate(3, reminder, reminderField);
+            List<AdoModels.WorkItemUpdate> history = scenario switch
+            {
+                "old-edit-then-reminder" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"), reminderUpdate],
+                "recent-edit-then-reminder" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, recentEditBeforeReminder, "System.Tags"), reminderUpdate],
+                "reminder-then-recent-edit" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"), reminderUpdate,
+                    CreateWorkItemUpdate(4, recentEditAfterReminder, "System.Tags")],
+                "reminder-with-other-field" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"),
+                    CreateWorkItemUpdate(3, reminder, reminderField, "System.Tags")],
+                "reminder-with-relation-change" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"),
+                    CreateWorkItemUpdate(3, reminder, reminderField)],
+                "two-reminders-after-old-edit" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"),
+                    CreateWorkItemUpdate(3, new DateTime(2027, 1, 20, 0, 0, 5, DateTimeKind.Utc), reminderField), CreateWorkItemUpdate(4, reminder, reminderField)],
+                // Cutoff is 2027-01-30T00:00:00Z (30 days before March 1).
+                "edit-at-cutoff-then-reminder" => [CreateWorkItemUpdate(1, created, "System.Title"),
+                    CreateWorkItemUpdate(2, new DateTime(2027, 1, 30, 0, 0, 0, DateTimeKind.Utc), "System.Tags"), reminderUpdate],
+                "edit-just-before-cutoff-then-reminder" => [CreateWorkItemUpdate(1, created, "System.Title"),
+                    CreateWorkItemUpdate(2, new DateTime(2027, 1, 29, 23, 59, 59, DateTimeKind.Utc), "System.Tags"), reminderUpdate],
+                "reminder-with-comment" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"),
+                    CreateWorkItemUpdate(3, reminder, reminderField, "System.History")],
+                "edit-missing-changed-date" => [CreateWorkItemUpdate(1, created, "System.Title"), CreateWorkItemUpdate(2, oldEdit, "System.Tags"), reminderUpdate,
+                    CreateWorkItemUpdate(4, recentEditAfterReminder, "System.Tags")],
+                _ => []
+            };
+            if (scenario == "edit-missing-changed-date")
+            {
+                history[3].Fields.Remove("System.ChangedDate");
+            }
+            if (scenario == "reminder-with-relation-change")
+            {
+                history[2].Relations = new AdoModels.WorkItemRelationUpdates
+                {
+                    Added = [new AdoModels.WorkItemRelation { Rel = "System.LinkTypes.Related", Url = "https://dev.azure.com/azure-sdk/_apis/wit/workItems/1" }]
+                };
+            }
+
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 720,
+                Revision = history.Count == 0 ? 3 : history[^1].Rev,
+                ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "December 2026",
+                ChangedDate = scenario == "reminder-then-recent-edit" ? recentEditAfterReminder : reminder
+            };
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(service => service.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync([plan]);
+            if (scenario == "history-unavailable")
+            {
+                mockDevOps.Setup(service => service.GetWorkItemUpdatesAsync(plan.WorkItemId, It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new InvalidOperationException("history unavailable"));
+            }
+            else
+            {
+                mockDevOps.Setup(service => service.GetWorkItemUpdatesAsync(plan.WorkItemId, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(history);
+            }
+            mockDevOps.Setup(service => service.UpdateWorkItemAsync(plan.WorkItemId,
+                    It.IsAny<Dictionary<string, string>>(), plan.Revision, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new AdoModels.WorkItem());
+            var notification = new Mock<INotificationService>();
+            var tool = CreateOverdueMaintenanceTool(mockDevOps.Object, notification: notification.Object, now: now);
+
+            var preview = await tool.AbandonOverdueReleasePlans(dryRun: true);
+
+            Assert.That(preview.ExitCode, Is.Zero);
+            Assert.That(preview.ResponseErrors, Is.Null);
+            Assert.That(preview.ReleasePlanDetailsList, Has.Count.EqualTo(expectedProtection ? 0 : 1));
+            AssertDryRunHasNoSideEffects(mockDevOps, notification);
+            if (expectedProtection)
+            {
+                Assert.That(preview.PreviewSummary!.SkippedByReason["recent_plan_activity"], Is.EqualTo(1));
+            }
+
+            var actual = await tool.AbandonOverdueReleasePlans();
+
+            Assert.That(actual.ExitCode, Is.Zero);
+            Assert.That(actual.ResponseErrors, Is.Null);
+            Assert.That(actual.ReleasePlanDetailsList, Has.Count.EqualTo(expectedProtection ? 0 : 1));
+            mockDevOps.Verify(service => service.UpdateWorkItemAsync(plan.WorkItemId,
+                    It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Abandoned"), plan.Revision, It.IsAny<CancellationToken>()),
+                Times.Exactly(expectedProtection ? 0 : 1));
+            notification.Verify(service => service.SendEmailNotificationAsync(
+                    It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(expectedProtection ? 0 : 1));
+        }
+
+        private static AdoModels.WorkItemUpdate CreateWorkItemUpdate(int rev, DateTime changedDate, params string[] changedFields)
+        {
+            var fields = new Dictionary<string, AdoModels.WorkItemFieldUpdate>
+            {
+                ["System.Rev"] = new() { OldValue = rev - 1, NewValue = rev },
+                ["System.ChangedDate"] = new() { NewValue = changedDate },
+                ["System.ChangedBy"] = new() { NewValue = "Azure SDK Automation" },
+                ["System.AuthorizedDate"] = new() { NewValue = changedDate },
+                ["System.RevisedDate"] = new() { NewValue = new DateTime(9999, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                ["System.Watermark"] = new() { NewValue = rev + 100 }
+            };
+            foreach (var field in changedFields)
+            {
+                fields[field] = new AdoModels.WorkItemFieldUpdate { NewValue = changedDate.ToString("O", CultureInfo.InvariantCulture) };
+            }
+            return new AdoModels.WorkItemUpdate { Rev = rev, Fields = fields };
+        }
+
         [TestCase(0, true)]
         [TestCase(43199, true)]
         [TestCase(43200, true)]
@@ -3555,6 +3685,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private static void AssertDryRunHasNoSideEffects(Mock<IDevOpsService> service, Mock<INotificationService> notification)
         {
             service.Verify(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()), Times.Once);
+            service.Verify(x => x.GetWorkItemUpdatesAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.AtMost(int.MaxValue));
             service.VerifyNoOtherCalls();
             notification.VerifyNoOtherCalls();
         }

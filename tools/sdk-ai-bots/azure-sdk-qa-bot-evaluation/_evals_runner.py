@@ -734,18 +734,12 @@ class FoundryEvalsRunner:
         run_name = f"{name}-run"
         data_source = _upload_eval_items(openai_client, items, scenario)
         file_id = data_source["source"]["id"]
-        try:
-            run = openai_client.evals.runs.create(
+        run = _retry_foundry_call(
+            lambda: openai_client.evals.runs.create(
                 eval_id=eval_object.id, name=run_name, data_source=data_source
-            )
-        except APIError:
-            logger.warning(
-                "Skipping automatic input cleanup (id=%s, eval_id=%s, run_id=unknown): "
-                "run creation raised an error and a run may still be active. "
-                "The file is retained; manual cleanup is required after confirming no active runs use it.",
-                file_id, eval_object.id,
-            )
-            raise
+            ),
+            "Evaluation run creation",
+        )
         logger.info("Evaluation run created (id=%s)", run.id)
         return self._poll_and_adapt(
             openai_client,

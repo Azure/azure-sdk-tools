@@ -253,19 +253,16 @@ def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, capl
             runner.evaluate_run_completion(
                 client, [{"testcase": "case", "query": "q"}], "typespec", project_client=MagicMock(),
             )
-        if outcome in ("output_error", "output_cleanup_error", "creation_server_error"):
+        if outcome in ("output_error", "output_cleanup_error", "creation_server_error", "creation_rejected"):
             assert raised.value is error
-    client.evals.runs.create.assert_called_once()
+    expected_creation_attempts = 3 if outcome in ("creation_unknown", "creation_server_error") else 1
+    assert client.evals.runs.create.call_count == expected_creation_attempts
     if delete_expected:
         expected_attempts = 3 if outcome == "output_cleanup_error" else 1
         assert client.files.delete.call_count == expected_attempts
         client.files.delete.assert_called_with("file-input")
     else:
         client.files.delete.assert_not_called()
-    if outcome in ("creation_rejected", "creation_unknown", "creation_server_error"):
-        assert "Skipping automatic input cleanup" in caplog.text
-        assert "The file is retained; manual cleanup is required" in caplog.text
-        assert "id=file-input, eval_id=eval-id, run_id=" in caplog.text
     if outcome in ("cleanup_error", "output_cleanup_error"):
         assert "manual cleanup is required" in caplog.text
     if outcome == "terminal_no_recheck":

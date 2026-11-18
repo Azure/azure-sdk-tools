@@ -565,31 +565,25 @@ class FoundryEvalsRunner:
         as failures in the gate rather than vanishing from the denominator.
         """
         deadline = time.time() + self._poll_timeout
-        terminal = False
-        try:
+        logger.info(
+            "Retaining evaluation input file (id=%s, eval_id=%s, run_id=%s) "
+            "until completion is confirmed; if polling fails, confirm completion before manual cleanup",
+            input_file_id, eval_id, run_id,
+        )
+        run = _retry_foundry_call(
+            lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
+            "Evaluation run status retrieval",
+        )
+        while run.status not in _TERMINAL_EVAL_STATUSES:
+            if time.time() > deadline:
+                raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
+            time.sleep(self._poll_interval)
             run = _retry_foundry_call(
                 lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
                 "Evaluation run status retrieval",
             )
-            while run.status not in _TERMINAL_EVAL_STATUSES:
-                if time.time() > deadline:
-                    raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
-                time.sleep(self._poll_interval)
-                run = _retry_foundry_call(
-                    lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
-                    "Evaluation run status retrieval",
-                )
-                logger.info("  run status: %s", run.status)
-            terminal = True
-        finally:
-            if terminal:
-                _delete_eval_input(openai_client, input_file_id)
-            else:
-                logger.warning(
-                    "Retaining evaluation input file (id=%s, eval_id=%s, run_id=%s): "
-                    "run may still be active; clean up after confirming completion",
-                    input_file_id, eval_id, run_id,
-                )
+            logger.info("  run status: %s", run.status)
+        _delete_eval_input(openai_client, input_file_id)
 
         report_url = getattr(run, "report_url", None)
         if report_url:

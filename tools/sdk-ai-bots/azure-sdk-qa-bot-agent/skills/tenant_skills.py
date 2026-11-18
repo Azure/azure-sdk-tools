@@ -75,7 +75,7 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: (
         "TypeSpec language and Azure API design (ARM/management-plane and data-plane): "
-        "syntax, decorators, patterns, Azure extensions, "
+        "syntax, decorators, patterns, Azure extensions, TypeSpec PR design reviews, "
         "migration from OpenAPI, validation, tspconfig, specification service-folder "
         "organization, and RPaaS registration paths coupled to that layout. Do not "
         "replace a preloaded typespec-authoring skill for Authoring tenant requests."

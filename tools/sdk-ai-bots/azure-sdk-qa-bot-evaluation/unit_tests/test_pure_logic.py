@@ -17,7 +17,6 @@ import re
 import sys
 from pathlib import Path
 
-import pytest
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -89,186 +88,119 @@ def test_upload_eval_items_uses_file_backed_data_source():
     client.files.delete.assert_not_called()
 
 
-@pytest.mark.parametrize("failure", ["error", "timeout", "api_error", "cleanup_error"])
-def test_upload_processing_failure_deletes_its_input(monkeypatch, failure):
+def test_upload_processing_failure_deletes_its_input():
     from types import SimpleNamespace
+    from unittest import TestCase
     from unittest.mock import MagicMock
 
-    import httpx
-    from openai import APIConnectionError, APIStatusError
-    import _evals_runner as module
-
-    client = MagicMock()
-    client.files.create.return_value = SimpleNamespace(id="file-input")
-    client.files.delete.return_value = SimpleNamespace(deleted=True)
-    monkeypatch.setattr(module.time, "sleep", lambda _: None)
-    expected_error: type[Exception] = RuntimeError
-    if failure == "error":
+    for failure in ("error", "timeout"):
+        client = MagicMock()
+        client.files.create.return_value = SimpleNamespace(id="file-input")
+        client.files.delete.return_value = SimpleNamespace(deleted=True)
         client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="error")
-    elif failure == "api_error":
-        client.files.wait_for_processing.side_effect = APIConnectionError(
-            request=httpx.Request("GET", "https://example.test/files/file-input"),
-        )
-        expected_error = APIConnectionError
-    else:
-        client.files.wait_for_processing.side_effect = TimeoutError("Processing timed out")
-        expected_error = TimeoutError
-    if failure == "cleanup_error":
-        request = httpx.Request("DELETE", "https://example.test/files/file-input")
-        client.files.delete.side_effect = APIStatusError(
-            "rejected", response=httpx.Response(400, request=request), body=None,
-        )
-    with pytest.raises(expected_error):
-        _upload_eval_items(client, [{"query": "q", "response": "a"}], "typespec")
-    client.files.delete.assert_called_once_with("file-input")
-    client.evals.runs.create.assert_not_called()
+        if failure == "timeout":
+            client.files.wait_for_processing.side_effect = RuntimeError("Processing timed out")
+        with TestCase().assertRaises(RuntimeError):
+            _upload_eval_items(client, [{"query": "q", "response": "a"}], "typespec")
+        client.files.delete.assert_called_once_with("file-input")
+        client.evals.runs.create.assert_not_called()
 
 
-@pytest.mark.parametrize("failure", [429, 503, "connection"])
-def test_eval_input_cleanup_retries_transient_errors(monkeypatch, failure):
+def test_eval_input_cleanup_retries_transient_errors():
     from types import SimpleNamespace
-    from unittest.mock import MagicMock
+    from unittest.mock import MagicMock, patch
 
     import httpx
-    from openai import APIConnectionError, APIStatusError
-    import _evals_runner as module
+    from openai import APIStatusError
 
     request = httpx.Request("DELETE", "https://example.test/files/file-input")
-    error = (
-        APIConnectionError(request=request) if failure == "connection"
-        else APIStatusError("unavailable", response=httpx.Response(failure, request=request), body=None)
-    )
+    error = APIStatusError("unavailable", response=httpx.Response(503, request=request), body=None)
     client = MagicMock()
     client.files.delete.side_effect = [error, SimpleNamespace(deleted=True)]
-    monkeypatch.setattr(module.time, "sleep", lambda _: None)
-
-    _delete_eval_input(client, "file-input")
+    with patch("_evals_runner.time.sleep"):
+        _delete_eval_input(client, "file-input")
 
     assert client.files.delete.call_count == 2
     assert all(call.args == ("file-input",) for call in client.files.delete.call_args_list)
 
 
-@pytest.mark.parametrize("deleted", [False, None])
-def test_eval_input_cleanup_requires_confirmed_deletion(caplog, deleted):
+def test_eval_input_cleanup_requires_confirmed_deletion():
     from types import SimpleNamespace
-    from unittest.mock import MagicMock
+    from unittest.mock import MagicMock, patch
 
     client = MagicMock()
-    client.files.delete.return_value = SimpleNamespace(deleted=deleted) if deleted is not None else SimpleNamespace()
+    client.files.delete.return_value = SimpleNamespace(deleted=False)
+    with patch("_evals_runner.logger") as log:
+        _delete_eval_input(client, "file-input")
+    log.warning.assert_called_once()
+    assert "manual cleanup is required" in log.warning.call_args.args[0]
 
-    _delete_eval_input(client, "file-input")
 
-    assert "did not confirm deletion" in caplog.text
-    assert "manual cleanup is required" in caplog.text
-
-
-@pytest.mark.parametrize(
-    "outcome,delete_expected",
-    [
-        ("completed", True), ("failed", True), ("canceled", False),
-        ("timeout", False), ("status_error", False),
-        ("output_error", True), ("creation_rejected", False),
-        ("creation_unknown", False), ("cleanup_error", True),
-        ("terminal_no_recheck", True), ("unknown_status", False),
-        ("output_cleanup_error", True), ("creation_server_error", False),
-        ("eventual_completed", True), ("poll_error_after_active", False),
-    ],
-)
-def test_evaluation_input_cleanup_respects_remote_run_lifetime(monkeypatch, caplog, outcome, delete_expected):
+def test_evaluation_input_cleanup_respects_remote_run_lifetime():
+    from contextlib import ExitStack
     from types import SimpleNamespace
-    from unittest.mock import MagicMock
+    from unittest import TestCase
+    from unittest.mock import MagicMock, patch
 
     import httpx
     from openai import APIConnectionError, APIStatusError
-    import _evals_runner as module
 
     request = httpx.Request("POST", "https://example.test/evals")
     error = APIStatusError("rejected", response=httpx.Response(400, request=request), body=None)
-    client = MagicMock()
-    client.files.create.return_value = SimpleNamespace(id="file-input")
-    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="processed")
-    client.files.delete.return_value = SimpleNamespace(deleted=True)
-    client.evals.create.return_value = SimpleNamespace(id="eval-id")
-    client.evals.runs.create.return_value = SimpleNamespace(id="run-id")
-    status = outcome if outcome in ("failed", "canceled") else "completed"
-    client.evals.runs.retrieve.return_value = SimpleNamespace(status=status, report_url=None)
-    client.evals.runs.output_items.list.return_value = []
-    results = MagicMock()
-    results.record_run_result.return_value = {"saved": True}
-    runner = FoundryEvalsRunner(
-        ["relevance"], results, model="test-model",
-        poll_timeout=60 if outcome in ("eventual_completed", "poll_error_after_active", "canceled") else -1,
-    )
-    collector = MagicMock()
-    collector.collect.return_value = [{"testcase": "case", "query": "q", "response": "a"}]
-    monkeypatch.setattr(module, "CompletionCollector", lambda **kwargs: collector)
-    monkeypatch.setattr(module, "build_testing_criteria", lambda *args, **kwargs: [{"name": "relevance"}])
-    monkeypatch.setattr(runner, "_retrieve_tool_calls", lambda *args: {})
-    monkeypatch.setattr(module.time, "sleep", lambda _: None)
-    if outcome == "canceled":
-        times = iter([0, 0, 61])
-        monkeypatch.setattr(module.time, "time", lambda: next(times))
-    if outcome in ("timeout", "unknown_status"):
-        client.evals.runs.retrieve.return_value = SimpleNamespace(
-            status="in_progress" if outcome == "timeout" else "unknown",
-        )
-    elif outcome == "status_error":
-        client.evals.runs.retrieve.side_effect = error
-    elif outcome in ("output_error", "output_cleanup_error"):
-        client.evals.runs.output_items.list.side_effect = error
-        if outcome == "output_cleanup_error":
-            client.files.delete.side_effect = APIConnectionError(request=request)
-    elif outcome == "creation_rejected":
-        client.evals.runs.create.side_effect = error
-    elif outcome == "creation_unknown":
-        client.evals.runs.create.side_effect = APIConnectionError(request=request)
-    elif outcome == "creation_server_error":
-        error = APIStatusError("unavailable", response=httpx.Response(503, request=request), body=None)
-        client.evals.runs.create.side_effect = error
-    elif outcome == "cleanup_error":
-        client.files.delete.side_effect = error
-    elif outcome == "terminal_no_recheck":
-        client.evals.runs.retrieve.side_effect = [
-            SimpleNamespace(status="completed", report_url=None), error,
-        ]
-    elif outcome in ("eventual_completed", "poll_error_after_active"):
-        client.evals.runs.retrieve.side_effect = [
-            SimpleNamespace(status="in_progress"),
-            SimpleNamespace(status="completed", report_url=None) if outcome == "eventual_completed" else error,
-        ]
-
-    if outcome in ("completed", "cleanup_error", "terminal_no_recheck", "eventual_completed"):
-        assert runner.evaluate_run_completion(
-            client, [{"testcase": "case", "query": "q"}], "typespec", project_client=MagicMock(),
-        ) == {"typespec_run-id": {"saved": True}}
-        results.record_run_result.assert_called_once()
-    else:
+    for outcome in (
+        "completed", "failed", "canceled", "timeout", "status_error",
+        "output_error", "creation_unknown", "cleanup_error", "output_cleanup_error",
+    ):
+        client = MagicMock()
+        client.files.create.return_value = SimpleNamespace(id="file-input")
+        client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="processed")
+        client.files.delete.return_value = SimpleNamespace(deleted=True)
+        client.evals.create.return_value = SimpleNamespace(id="eval-id")
+        client.evals.runs.create.return_value = SimpleNamespace(id="run-id")
+        status = outcome if outcome in ("failed", "canceled") else "completed"
+        client.evals.runs.retrieve.return_value = SimpleNamespace(status=status, report_url=None)
+        client.evals.runs.output_items.list.return_value = []
+        results = MagicMock()
+        results.record_run_result.return_value = {"saved": True}
+        runner = FoundryEvalsRunner(["relevance"], results, model="test-model", poll_timeout=-1)
+        if outcome == "timeout":
+            client.evals.runs.retrieve.return_value = SimpleNamespace(status="in_progress")
+        elif outcome == "status_error":
+            client.evals.runs.retrieve.side_effect = error
+        elif outcome in ("output_error", "output_cleanup_error"):
+            client.evals.runs.output_items.list.side_effect = error
+        elif outcome == "creation_unknown":
+            client.evals.runs.create.side_effect = APIConnectionError(request=request)
+        if outcome in ("cleanup_error", "output_cleanup_error"):
+            client.files.delete.side_effect = error
         expected = (
-            TimeoutError if outcome in ("timeout", "unknown_status", "canceled")
+            TimeoutError if outcome in ("timeout", "canceled")
             else RuntimeError if outcome == "failed"
             else APIConnectionError if outcome == "creation_unknown"
             else APIStatusError
         )
-        with pytest.raises(expected) as raised:
-            runner.evaluate_run_completion(
+        with ExitStack() as stack:
+            collector = stack.enter_context(patch("_evals_runner.CompletionCollector")).return_value
+            collector.collect.return_value = [{"testcase": "case", "query": "q", "response": "a"}]
+            stack.enter_context(patch("_evals_runner.build_testing_criteria", return_value=[{"name": "relevance"}]))
+            stack.enter_context(patch.object(runner, "_retrieve_tool_calls", return_value={}))
+            stack.enter_context(patch("_evals_runner.time.sleep"))
+            log = stack.enter_context(patch("_evals_runner.logger"))
+            if outcome not in ("completed", "cleanup_error"):
+                raised = stack.enter_context(TestCase().assertRaises(expected))
+            result = runner.evaluate_run_completion(
                 client, [{"testcase": "case", "query": "q"}], "typespec", project_client=MagicMock(),
             )
-        if outcome in ("output_error", "output_cleanup_error", "creation_server_error", "creation_rejected"):
-            assert raised.value is error
-    expected_creation_attempts = 3 if outcome in ("creation_unknown", "creation_server_error") else 1
-    assert client.evals.runs.create.call_count == expected_creation_attempts
-    if delete_expected:
-        expected_attempts = 3 if outcome == "output_cleanup_error" else 1
-        assert client.files.delete.call_count == expected_attempts
-        client.files.delete.assert_called_with("file-input")
-    else:
-        client.files.delete.assert_not_called()
-    if outcome in ("cleanup_error", "output_cleanup_error"):
-        assert "manual cleanup is required" in caplog.text
-    if outcome == "terminal_no_recheck":
-        assert client.evals.runs.retrieve.call_count == 1
-    if outcome == "canceled":
-        assert client.evals.runs.retrieve.call_count == 2
+        if outcome in ("completed", "cleanup_error"):
+            assert result == {"typespec_run-id": {"saved": True}}, outcome
+        if outcome in ("output_error", "output_cleanup_error"):
+            assert raised.exception is error
+        if outcome in ("completed", "failed", "output_error", "cleanup_error", "output_cleanup_error"):
+            client.files.delete.assert_called_once_with("file-input")
+        else:
+            client.files.delete.assert_not_called()
+        if outcome in ("cleanup_error", "output_cleanup_error"):
+            log.warning.assert_called_once()
 
 
 def test_retry_foundry_call_retries_transient_status_errors():

@@ -149,15 +149,17 @@ Reminders require `--notify-owners true`, a valid `--emailer-uri`, and a valid
 submitter email address. After the emailer returns HTTP success (acceptance,
 not proof of delivery), the CLI records the current UTC time in the release-plan
 work item's `Custom.OverdueLastNotifiedDate` field, but only if that field is empty. An
-existing value is never overwritten. Skipped, failed, and unconfirmed sends
-leave the field untouched.
+existing value is never overwritten. The save is tied to the work item revision
+the run read, so if the work item changed after that read (for example, an
+overlapping run already saved the date), Azure DevOps refuses the save. Skipped,
+failed, and unconfirmed sends leave the field untouched.
 
 Before deploying, confirm the Azure DevOps Date/Time field
 `Custom.OverdueLastNotifiedDate` on the release-plan work item type. Grant
 the automation write access and confirm the dashboard can read the field. If
-the emailer accepts a reminder but the timestamp write fails, the command
-reports both facts and does not resend the email; the next accepted reminder
-fills the empty field. Do not rerun notifications just to repair that timestamp.
+the emailer accepts a reminder but the timestamp write fails or is refused, the
+command reports both facts and does not resend the email; the next accepted
+reminder fills the empty field. Do not rerun notifications just to repair that timestamp.
 The write advances `System.ChangedDate`; cleanup does not count it as
 activity while it is the latest change (see Recent activity protection).
 

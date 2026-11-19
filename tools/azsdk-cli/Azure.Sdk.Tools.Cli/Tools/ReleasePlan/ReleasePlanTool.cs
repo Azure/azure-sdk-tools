@@ -2635,10 +2635,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var sentAtUtc = _timeProvider.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
                 try
                 {
+                    // The revision check stops a run with a stale read from replacing a date another run just saved.
                     var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
                     {
                         [ReleasePlanWorkItem.OverdueLastNotifiedDateField] = sentAtUtc
-                    }, ct);
+                    }, releasePlan.Revision, ct);
                     if (updatedWorkItem is null)
                     {
                         throw new InvalidOperationException("Azure DevOps did not confirm the update.");

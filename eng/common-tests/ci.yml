@@ -25,9 +25,65 @@ pr:
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
+
   parameters:
     TargetDirectory: eng/common-tests
     TargetTags: UnitTest,IntegrationTest
     PreTestSteps:
       - template: /eng/pipelines/templates/steps/install-dotnet.yml
+      # We install .NET 9.0.102 SDK in addition to .NET coming from global.json because the current SHA in
+      # /eng/common-tests/matrix-generator/pr-matrix-samples/pr-matrix-generation-acceptance.tests.ps1 for NET_REPO points to a specific SHA
+      # where global.json has '9.0.102'. Given that when running Pester tests, 'git clone' happens after the global.json (in the root of this repo)
+      # is read, it does NOT end up installing 9.0.102 from the cloned repo's global.json, and we end up with more recent (10.0+) version only,
+      # so the test fails to build. In the future, we should update NET_REPO_REF to more recent SHA that specifies a newer .NET version
+      # in its global.json, but then we also should update the baseline files for the tests.
+      # That will work until we update global.json in the root of this repo once again. Alternatively, we can refactor the Pester test helpers,
+      # so that cloning the repos and building the tests are two separate steps, so then we could tell the tooling to install the version
+      # that is required per cloned repo's global.json, if it is not present on the machine by that moment.
+      # Alternatively, given that it took about two years for this issue to manifest with 9.0.102,
+      # we could keep updating the version below next time it fails for the next couple of years.
+      - task: UseDotNet@2
+        displayName: "Use .NET SDK 9.0.102"
+        retryCountOnTaskFailure: 3
+        inputs:
+          packageType: sdk
+          version: 9.0.102
+          performMultiLevelLookup: true
+
       - template: /eng/common/pipelines/templates/steps/enable-long-path-support.yml
+      - task: UseNode@1
+        displayName: Use Node.js for eval result unit tests
+        inputs:
+          version: 24.x
+      - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+        parameters:
+          npmrcPath: $(Agent.TempDirectory)/eval-unit-tests.npmrc
+      # Shared eval tests use Node built-ins; only the archive's locked fflate is needed.
+      # No Vally CLI install, evaluation, model call, or publishing service connection.
+      - pwsh: |
+          $ErrorActionPreference = 'Stop'
+          npm install --prefix "$(Agent.TempDirectory)/eval-pnpm" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund pnpm@12.6.0
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned pnpm bootstrap failed.' }
+          node "$(Agent.TempDirectory)/eval-pnpm/node_modules/pnpm/bin/pnpm.mjs" --dir publisher --ignore-workspace install --pm-on-fail=ignore --frozen-lockfile --prod --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { throw 'Archive dependency restore failed.' }
+          node --experimental-strip-types --test test/*.test.ts publisher/test/*.test.ts
+          if ($LASTEXITCODE -ne 0) { throw 'Eval result unit tests failed.' }
+        workingDirectory: $(Build.SourcesDirectory)/eng/common/scripts/eval
+        displayName: Run eval result unit tests (no evaluations)
+        env:
+          NPM_CONFIG_USERCONFIG: $(Agent.TempDirectory)/eval-unit-tests.npmrc
+    # Keep the common runner's tags/reports/coverage, and make failed tests fail this job.
+    # The shared template still installs Pester and publishes the generated reports.
+    CustomTestSteps:
+      - pwsh: |
+          $ErrorActionPreference = 'Stop'
+          $config = New-PesterConfiguration
+          $config.CodeCoverage.Enabled = $true
+          $config.TestResult.Enabled = $true
+          $config.Run.PassThru = $true
+          $config.Filter.Tag = @('UnitTest', 'IntegrationTest')
+          $env:PESTER_TEST_RUN = 'true'
+          $result = Invoke-Pester -Configuration $config
+          if ($result.FailedCount -gt 0) { throw 'Common PowerShell tests failed.' }
+        workingDirectory: $(Build.SourcesDirectory)/eng/common-tests
+        displayName: Run Pester Tests

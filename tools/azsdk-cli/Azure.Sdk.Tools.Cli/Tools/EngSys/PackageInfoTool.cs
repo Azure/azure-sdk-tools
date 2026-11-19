@@ -13,7 +13,7 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
-[Description("Generate PackageInfo JSON files used by CI pipelines.")]
+[Description("Inspect an SDK package or generate PackageInfo JSON files used by CI pipelines.")]
 public class PackageInfoTool(
     IGitHelper gitHelper,
     ILogger<PackageInfoTool> _logger,
@@ -26,7 +26,13 @@ public class PackageInfoTool(
     private readonly Option<string> outDirOpt = new("--out-dir")
     {
         Description = "Output directory for PackageInfo JSON files",
-        Required = true,
+        Required = false,
+    };
+
+    private readonly Option<string> packagePathOpt = new("--package-path", "-p")
+    {
+        Description = "Inspect one package. Without --out-dir, return its PackageInfo directly.",
+        Required = false,
     };
 
     private readonly Option<string> serviceDirectoryOpt = new("--service-directory")
@@ -62,8 +68,9 @@ public class PackageInfoTool(
         AllowMultipleArgumentsPerToken = true,
     };
 
-    protected override Command GetCommand() => new("package-info", "Generate PackageInfo JSON files for CI pipelines")
+    protected override Command GetCommand() => new("package-info", "Inspect an SDK package or generate PackageInfo JSON files for CI pipelines")
     {
+        packagePathOpt,
         outDirOpt,
         serviceDirectoryOpt,
         ciOpt,
@@ -77,6 +84,24 @@ public class PackageInfoTool(
         try
         {
             var options = ParseOptions(parseResult);
+            var packagePath = parseResult.GetValue(packagePathOpt);
+            if (packagePath != null)
+            {
+                if (string.IsNullOrWhiteSpace(packagePath))
+                {
+                    throw new ArgumentException("--package-path cannot be empty.");
+                }
+                if (parseResult.GetValue(serviceDirectoryOpt) != null ||
+                    options.CiMode || options.ArtifactList.Length > 0 || options.RepoRootOverride != null)
+                {
+                    throw new ArgumentException("--package-path cannot be combined with --service-directory, --artifact, --ci, or --repo-root.");
+                }
+                return await ExecuteSinglePackage(packagePath, options, ct);
+            }
+            if (string.IsNullOrWhiteSpace(options.OutDir))
+            {
+                throw new ArgumentException("--out-dir is required when --package-path is not supplied.");
+            }
             if (options.CiMode && !string.IsNullOrWhiteSpace(options.ServiceDirectory))
             {
                 logger.LogWarning("Ignoring --service-directory because --ci is set.");
@@ -84,11 +109,44 @@ public class PackageInfoTool(
             }
             return await Execute(options, ct);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to generate PackageInfo output.");
             return new DefaultCommandResponse { ResponseError = ex.Message };
         }
+    }
+
+    private async Task<CommandResponse> ExecuteSinglePackage(string packagePath, PackageInfoOptions options, CancellationToken ct)
+    {
+        var fullPath = Path.GetFullPath(packagePath);
+        if (!Directory.Exists(fullPath))
+        {
+            throw new DirectoryNotFoundException($"Package directory does not exist: {fullPath}");
+        }
+
+        var languageService = await GetLanguageServiceAsync(fullPath, ct)
+            ?? throw new InvalidOperationException("Unable to resolve language service for package. Ensure repository name matches azure-sdk-for-<lang>.");
+        var packageInfo = await languageService.GetPackageInfo(fullPath, ct);
+        if (string.IsNullOrWhiteSpace(packageInfo.PackageName))
+        {
+            throw new InvalidOperationException("Cannot retrieve PackageInfo because the package name could not be determined.");
+        }
+
+        if (options.AddDevVersion)
+        {
+            packageInfo.DevVersion = packageInfo.PackageVersion;
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.OutDir))
+        {
+            return new DefaultCommandResponse
+            {
+                Message = $"Files written to {options.OutDir}:",
+                Result = WritePackageInfoFiles([packageInfo], options.OutDir, options.AddDevVersion)
+            };
+        }
+
+        return new DefaultCommandResponse { Result = packageInfo };
     }
 
     private PackageInfoOptions ParseOptions(ParseResult parseResult)

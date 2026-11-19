@@ -4,7 +4,7 @@
   "type": "completion",
   "completion": {
     "completion_type": "chat",
-    "include_history": true,
+    "include_history": false,
     "include_input": true,
     "max_input_tokens": 2800,
     "max_tokens": 1000,

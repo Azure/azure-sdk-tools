@@ -69,7 +69,7 @@ export async function discoverEntrypointFile(
       );
     }
   } else {
-    entryTsp = findEntrypoint("client.tsp") ?? findEntrypoint("main.tsp");
+    entryTsp = findEntrypoint("main.tsp") ?? findEntrypoint("client.tsp");
     if (!entryTsp) {
       throw new Error(`No main.tsp or client.tsp found`);
     }

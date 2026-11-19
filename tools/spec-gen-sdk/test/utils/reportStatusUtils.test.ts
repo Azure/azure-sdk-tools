@@ -28,10 +28,6 @@ vi.mock('../../src/automation/sdkAutomationState', () => ({
     }
 }));
 
-vi.mock('../../src/utils/reportFormat', () => ({
-    formatSuppressionLine: (lines: string[]) => lines.map(l => `formatted:${l}`)
-}));
-
 vi.mock('../../src/utils/utils', () => ({
     removeAnsiEscapeCodes: (msg: any) => msg
 }));
@@ -211,8 +207,7 @@ describe('reportStatusUtils', () => {
             it('should render absent suppression lines with formatting', () => {
                 const html = handleBarHelpers.renderAbsentSuppressionLines(['line1', 'line2']);
                 expect(html).toContain('Absent SDK breaking changes suppressions');
-                expect(html).toContain('formatted:line1');
-                expect(html).toContain('formatted:line2');
+                expect(html).toContain('- "line1"<BR>- "line2"');
             });
 
             it('should handle empty array', () => {

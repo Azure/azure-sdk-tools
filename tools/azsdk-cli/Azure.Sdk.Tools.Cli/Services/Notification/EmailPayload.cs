@@ -33,5 +33,9 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
         /// The email body.
         /// </summary>
         public abstract string Body { get; }
+
+        public const string ManagementSdkOwnerAlias = "sdkreleaseowners@microsoft.com";
+
+        public const string AzSdkSupportAlias = "azsdkexp@microsoft.com";
     }
 }

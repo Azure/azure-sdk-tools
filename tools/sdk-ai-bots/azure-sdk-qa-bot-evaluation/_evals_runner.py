@@ -8,7 +8,7 @@ Driving the slow answer-generation step ourselves is the main lever for evaluati
 speed.
 
 Flow: concurrent ``/completion`` collection -> ``responses.retrieve`` -> ``evals.create``
-(inline item source) -> ``evals.runs.create`` -> poll -> ``output_items.list`` ->
+-> upload JSONL input -> ``evals.runs.create`` -> poll -> ``output_items.list`` ->
 ``output_items_to_rows`` -> the existing ``EvalsResult`` gate/baseline logic.
 
 """
@@ -21,8 +21,11 @@ import logging
 import os
 import subprocess
 import time
+from contextlib import ExitStack
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
+
+from openai import APIConnectionError, APIError, APIStatusError, APITimeoutError
 
 from _evals_result import EvalsResult
 from eval.criteria import build_testing_criteria
@@ -41,13 +44,14 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
     "onboarding": "Azure SDK Onboarding",
     "go": "Language - Go",
     "java": "Language - Java",
-    "net": "Language - DotNet",
-    "javascript": "Language - JavaScript",
+    "dotnet": "Language - DotNet",
+    "javascript": "Language – JS ＆ TS 🥷",
     "general": "General",
     "releasesupport": "SDK release support",
     "authoring": "Authoring Test",
     "mcpserver": "Azure MCP Server - General",
     "sdkagent": "AzSDK Tools Agent",
+    "apistewardshipboard": "API Stewardship Board - General",
 }
 
 # Composite weights
@@ -88,6 +92,83 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "references": it.get("references", []),
         "knowledges": it.get("knowledges", []),
     }
+
+
+def _retry_foundry_call(
+    operation: Callable[[], Any],
+    description: str,
+    *,
+    max_attempts: int = 3,
+    base_delay: float = 2.0,
+) -> Any:
+    """Retry transient Foundry operations without repeating answer collection."""
+    for attempt in range(1, max_attempts + 1):
+        error: Exception
+        try:
+            return operation()
+        except (APIConnectionError, APITimeoutError) as exc:
+            retryable = True
+            error = exc
+        except APIStatusError as exc:
+            retryable = exc.status_code == 429 or exc.status_code >= 500
+            error = exc
+        if not retryable or attempt == max_attempts:
+            raise error
+        delay = base_delay * (2 ** (attempt - 1))
+        logger.warning(
+            "%s failed transiently (attempt %d/%d): %s; retrying in %.1fs",
+            description,
+            attempt,
+            max_attempts,
+            error,
+            delay,
+        )
+        time.sleep(delay)
+
+
+def _delete_eval_input(openai_client: Any, file_id: str) -> None:
+    """Best-effort cleanup of this invocation's input without masking grading errors."""
+    try:
+        deleted = _retry_foundry_call(
+            lambda: openai_client.files.delete(file_id),
+            "Evaluation input cleanup",
+        )
+        if getattr(deleted, "deleted", None) is not True:
+            raise RuntimeError("The Files API did not confirm deletion")
+        logger.info("Deleted evaluation input file (id=%s)", file_id)
+    except (APIError, RuntimeError):
+        logger.warning(
+            "Could not delete evaluation input file (id=%s); manual cleanup is required",
+            file_id,
+            exc_info=True,
+        )
+
+
+def _upload_eval_items(openai_client: Any, items: list[dict[str, Any]], scenario: str) -> dict[str, Any]:
+    """Upload eval inputs as JSONL and return a file-backed run data source."""
+    content = "".join(
+        json.dumps(_completion_item(item), ensure_ascii=False) + "\n"
+        for item in items
+    ).encode("utf-8")
+    uploaded = _retry_foundry_call(
+        lambda: openai_client.files.create(
+            file=(f"{scenario}-eval-input.jsonl", content, "application/jsonl"),
+            purpose="evals",
+        ),
+        "Evaluation input upload",
+    )
+    try:
+        processed = _retry_foundry_call(
+            lambda: openai_client.files.wait_for_processing(uploaded.id),
+            "Evaluation input processing",
+        )
+        if processed.status != "processed":
+            raise RuntimeError(f"Evaluation input file {uploaded.id} processing ended with status {processed.status}")
+    except (APIError, TimeoutError, RuntimeError):
+        _delete_eval_input(openai_client, uploaded.id)
+        raise
+    logger.info("Uploaded evaluation input file (id=%s, size=%d bytes)", processed.id, len(content))
+    return {"type": "jsonl", "source": {"type": "file_id", "id": processed.id}}
 
 
 def extract_title_and_link_from_references(references: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -145,6 +226,9 @@ class CompletionCollector:
         self._max_concurrency = max(1, max_concurrency)
         self._timeout_seconds = timeout_seconds
         self._max_retries = max_retries
+        self._agent_branch = os.environ.get("EVAL_AGENT_BRANCH")
+        if self._agent_branch is not None:
+            self._agent_branch = self._agent_branch.removeprefix("refs/heads/")
 
     def collect(self, records: list[dict[str, Any]], tenant_id: str | None) -> list[dict[str, Any]]:
         """Return enriched items (one per input record) in original order.
@@ -182,6 +266,7 @@ class CompletionCollector:
                     "ground_truth": record.get("ground_truth", ""),
                     "response": answer,
                     "response_id": api_response.get("id", ""),
+                    "agent_name": api_response.get("agent_name"),
                     "context": full_context,
                     "latency": time.time() - start,
                     "response_length": len(answer),
@@ -205,6 +290,8 @@ class CompletionCollector:
         headers = {"Content-Type": "application/json; charset=utf8"}
         if self._access_token:
             headers["Authorization"] = f"Bearer {self._access_token}"
+        if self._agent_branch is not None:
+            question = f"[branch:{self._agent_branch}] {question}"
         payload = {
             "tenant_id": tenant_id if tenant_id is not None else "general_qa_bot",
             "message": {"role": "user", "content": question},
@@ -374,6 +461,9 @@ def output_items_to_rows(
 
     for oi in output_items:
         item = _get(oi, "datasource_item", {}) or {}
+        nested_item = item.get("item")
+        if isinstance(nested_item, dict):
+            item = nested_item
         results = _get(oi, "results", []) or []
         context = item.get("context", "") or ""
         response_id = item.get("response_id", "") or ""
@@ -397,6 +487,11 @@ def output_items_to_rows(
         per_metric: dict[str, float] = {}
         for r in results:
             name = _get(r, "name", None)
+            if _get(r, "status", None) == "error":
+                sample = _get(r, "sample", {}) or {}
+                error = _get(sample, "error", {}) or {}
+                message = _get(error, "message", "Unknown grader error")
+                raise RuntimeError(f"Eval grader {name or 'unknown'} failed: {message}")
             if not name:
                 continue
             score = _coerce_score(_get(r, "score", 0.0))
@@ -459,6 +554,7 @@ class FoundryEvalsRunner:
         run_id: str,
         scenario: str,
         tool_calls_by_response_id: dict[str, list[dict[str, Any]]],
+        input_file_id: str,
         extra_failed_rows: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Shared poll-to-terminal + output_items -> rows -> record step.
@@ -468,13 +564,20 @@ class FoundryEvalsRunner:
         as failures in the gate rather than vanishing from the denominator.
         """
         deadline = time.time() + self._poll_timeout
-        run = openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id)
+        run = _retry_foundry_call(
+            lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
+            "Evaluation run status retrieval",
+        )
         while run.status not in ("completed", "failed"):
             if time.time() > deadline:
                 raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
             time.sleep(self._poll_interval)
-            run = openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id)
+            run = _retry_foundry_call(
+                lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
+                "Evaluation run status retrieval",
+            )
             logger.info("  run status: %s", run.status)
+        _delete_eval_input(openai_client, input_file_id)
 
         report_url = getattr(run, "report_url", None)
         if report_url:
@@ -482,7 +585,10 @@ class FoundryEvalsRunner:
         if run.status == "failed":
             raise RuntimeError(f"Eval run {run_id} failed")
 
-        output_items = list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id))
+        output_items = _retry_foundry_call(
+            lambda: list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id)),
+            "Evaluation output retrieval",
+        )
         raw = output_items_to_rows(
             output_items,
             self._evaluators,
@@ -495,28 +601,37 @@ class FoundryEvalsRunner:
 
     @staticmethod
     def _retrieve_tool_calls(
-        response_client: Any,
+        project_client: Any,
         items: list[dict[str, Any]],
     ) -> dict[str, list[dict[str, Any]]]:
         """Retrieve and normalize tool calls from stored responses."""
         tool_calls_by_response_id: dict[str, list[dict[str, Any]]] = {}
-        for item in items:
-            response_id = item.get("response_id", "") or ""
-            testcase = item.get("testcase", "unknown")
-            if not response_id:
-                raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
-            if response_id == "content-filter":
-                tool_calls_by_response_id[response_id] = []
-                continue
-            response = response_client.responses.retrieve(
-                response_id,
-                include=["web_search_call.action.sources"],
-            )
-            output_items = [
-                _serialize_response_item(output_item)
-                for output_item in (_get(response, "output", []) or [])
-            ]
-            tool_calls_by_response_id[response_id] = _extract_tool_calls(output_items)
+        with ExitStack() as stack:
+            response_clients: dict[str, Any] = {}
+            for item in items:
+                response_id = item.get("response_id", "") or ""
+                testcase = item.get("testcase", "unknown")
+                if not response_id:
+                    raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
+                if response_id == "content-filter":
+                    tool_calls_by_response_id[response_id] = []
+                    continue
+                agent_name = item.get("agent_name")
+                if not isinstance(agent_name, str) or not agent_name.strip():
+                    raise ValueError(f"Bot response for testcase {testcase!r} has no agent name")
+                if agent_name not in response_clients:
+                    response_clients[agent_name] = stack.enter_context(
+                        project_client.get_openai_client(agent_name=agent_name)
+                    )
+                response = response_clients[agent_name].responses.retrieve(
+                    response_id,
+                    include=["web_search_call.action.sources"],
+                )
+                output_items = [
+                    _serialize_response_item(output_item)
+                    for output_item in (_get(response, "output", []) or [])
+                ]
+                tool_calls_by_response_id[response_id] = _extract_tool_calls(output_items)
         logger.info("Retrieved %d stored Agent responses.", len(tool_calls_by_response_id))
         return tool_calls_by_response_id
 
@@ -545,18 +660,12 @@ class FoundryEvalsRunner:
         records: list[dict[str, Any]],
         scenario: str,
         *,
-        response_client: Any,
+        project_client: Any,
         tenant_id: str | None = None,
         evaluation_name: Optional[str] = None,
     ) -> dict[str, Any]:
         """Completion mode: concurrently collect bot answers, then grade them inline."""
         from openai.types.eval_create_params import DataSourceConfigCustom
-        from openai.types.evals.create_eval_jsonl_run_data_source_param import (
-            CreateEvalJSONLRunDataSourceParam,
-            SourceFileContent,
-            SourceFileContentContent,
-        )
-
         # 1) Collect bot answers concurrently (the slow, now-parallelized step).
         collector = CompletionCollector(
             api_url=self._completion_url or resolve_completion_url(),
@@ -605,27 +714,31 @@ class FoundryEvalsRunner:
 
         # 3) Retrieve the exact stored Agent responses. Tool history remains local
         # and is joined back into cached results after Foundry grading.
-        tool_calls_by_response_id = self._retrieve_tool_calls(response_client, items)
+        tool_calls_by_response_id = self._retrieve_tool_calls(project_client, items)
 
         data_source_config = DataSourceConfigCustom(
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False
         )
         name = evaluation_name or f"qa-bot-{scenario}"
-        eval_object = openai_client.evals.create(
-            name=name,
-            data_source_config=data_source_config,
-            testing_criteria=testing_criteria,  # type: ignore[arg-type]
+        eval_object = _retry_foundry_call(
+            lambda: openai_client.evals.create(
+                name=name,
+                data_source_config=data_source_config,
+                testing_criteria=testing_criteria,  # type: ignore[arg-type]
+            ),
+            "Evaluation creation",
         )
         logger.info("Evaluation created (id=%s, name=%s)", eval_object.id, name)
 
-        # 4) Grade the pre-collected answers as inline data (no agent target).
+        # 4) Upload and grade the pre-collected answers (no agent target).
         run_name = f"{name}-run"
-        content = [SourceFileContentContent(item=_completion_item(it)) for it in items]
-        data_source = CreateEvalJSONLRunDataSourceParam(
-            type="jsonl", source=SourceFileContent(type="file_content", content=content)
-        )
-        run = openai_client.evals.runs.create(
-            eval_id=eval_object.id, name=run_name, data_source=data_source  # type: ignore[arg-type]
+        data_source = _upload_eval_items(openai_client, items, scenario)
+        file_id = data_source["source"]["id"]
+        run = _retry_foundry_call(
+            lambda: openai_client.evals.runs.create(
+                eval_id=eval_object.id, name=run_name, data_source=data_source
+            ),
+            "Evaluation run creation",
         )
         logger.info("Evaluation run created (id=%s)", run.id)
         return self._poll_and_adapt(
@@ -634,6 +747,7 @@ class FoundryEvalsRunner:
             run.id,
             scenario,
             tool_calls_by_response_id,
+            file_id,
             failed_rows,
         )
 

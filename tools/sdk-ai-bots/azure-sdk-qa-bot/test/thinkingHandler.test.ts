@@ -310,6 +310,48 @@ describe('ThinkingHandler', () => {
   });
 
   describe('Integration tests for error scenarios', () => {
+    it('delivers verified mentions alongside the existing AI and trace entities', async () => {
+      const reply: CompletionResponsePayload = {
+        id: 'reply',
+        answer: 'Please ping <at>linked.person@microsoft.com</at> and @unlinked.',
+        has_result: true,
+        trace_id: 'trace-123',
+        mentions: [{
+          text: '<at>linked.person@microsoft.com</at>',
+          mentioned: {
+            id: '11111111-2222-3333-4444-555555555555',
+            name: 'Linked Person',
+          },
+        }],
+      };
+      const prompt: Prompt = {
+        textWithoutMention: 'Who can review?',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      await thinkingHandler.stop(new Date(), reply, prompt);
+
+      expect(mockContext.updateActivity).toHaveBeenCalledWith(expect.objectContaining({
+        text: reply.answer,
+        entities: [
+          expect.objectContaining({ additionalType: ['AIGeneratedContent'], usageInfo: expect.objectContaining({ description: 'Trace ID: trace-123' }) }),
+          {
+            type: 'mention',
+            text: '<at>linked.person@microsoft.com</at>',
+            mentioned: reply.mentions[0].mentioned,
+          },
+        ],
+      }));
+      // Stored history preserves the agent-authored answer.
+      expect(mockConversationHandler.saveMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ reply: expect.objectContaining({ answer: reply.answer }) }),
+        expect.anything()
+      );
+    });
+
     it('should handle complete flow with validation error', async () => {
       const ragError: RagApiError = {
         code: 'EMPTY_CONTENT' as ErrorCode,

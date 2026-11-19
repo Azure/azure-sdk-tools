@@ -76,6 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 "client" => SdkType.Dataplane,
                 "mgmt" => SdkType.Management,
                 "spring" => SdkType.Spring,
+                "functions" => SdkType.Functions,
                 _ => SdkType.Unknown,
             };
         }

@@ -1,4 +1,5 @@
 import { TeamsAdapter } from '@microsoft/teams-ai';
+import { Entity as EntityMapper } from 'botframework-connector/lib/connectorApi/models/mappers.js';
 
 // This bot's main dialog.
 import config from './config/config.js';
@@ -7,6 +8,9 @@ import { logger } from './logging/logger.js';
 import { getTurnContextLogMeta } from './logging/utils.js';
 import { isAzureAppService } from './common/shared.js';
 import { sendActivityWithRetry } from './activityUtils.js';
+
+// @azure/core-client serializes activity.entities with the bare Entity mapper, which drops the AI and sensitivity label fields.
+EntityMapper.type.additionalProperties ??= { type: { name: 'Object' } };
 
 // For Teams App Test Tool, don't require authentication
 const adapterConfig = config.isLocal && !config.MicrosoftAppId

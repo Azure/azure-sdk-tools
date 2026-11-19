@@ -38,10 +38,23 @@ export interface Repository {
     url: string;
     path?: string;
     branch: string;
-    authType: 'public' | 'ssh' | 'token';
+    authType: 'public' | 'ssh' | 'token' | 'local' | 'azure-devops';
     sshHost?: string;
     tokenEnvVar?: string;
     localPathEnv?: string;
+    issueTracker?: GitHubIssueTracker | AzureDevOpsIssueTracker;
+}
+
+export interface GitHubIssueTracker {
+    provider: 'github';
+    repository: string;
+}
+
+export interface AzureDevOpsIssueTracker {
+    provider: 'azure-devops';
+    organization: string;
+    project: string;
+    areaPath: string;
 }
 
 export interface Source {
@@ -61,6 +74,7 @@ export interface KnowledgeConfig {
  */
 export interface DocumentationSource {
     path: string;
+    citationRoot?: string;
     folder: string;
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
@@ -75,10 +89,9 @@ export interface RepositoryConfig {
     path: string;
     branch: string;
     sparseCheckout?: string[];
-    authType?: 'public' | 'token' | 'ssh' | 'local';
+    authType?: 'public' | 'token' | 'ssh' | 'local' | 'azure-devops';
     sshHost?: string;
     token?: string;
-    localPath?: string;
 }
 
 /**
@@ -123,10 +136,14 @@ export class ConfigurationLoader {
 
         for (const source of config.sources) {
             const repoPath = source.repository.path || this.getRepoPathFromUrl(source.repository.url);
+            const repositoryRoot = `docs/${repoPath}`;
             
             for (const docPath of source.paths) {
                 sources.push({
-                    path: (docPath.relativeByRepoPath || docPath.path === undefined) ? `docs/${repoPath}` : `docs/${repoPath}/${docPath.path}`,
+                    path: docPath.path === undefined
+                        ? repositoryRoot
+                        : `${repositoryRoot}/${docPath.path.replace(/^[/\\]+/, '')}`,
+                    citationRoot: docPath.relativeByRepoPath ? repositoryRoot : undefined,
                     folder: docPath.folder,
                     fileNameLowerCase: docPath.fileNameLowerCase,
                     ignoredPaths: docPath.ignoredPaths,
@@ -166,8 +183,7 @@ export class ConfigurationLoader {
                 sparseCheckout: sparseCheckout.length > 0 ? sparseCheckout : undefined,
                 authType: repo.authType,
                 sshHost: repo.sshHost,
-                token: repo.tokenEnvVar ? process.env[repo.tokenEnvVar] : undefined,
-                localPath: repo.localPathEnv ? process.env[repo.localPathEnv] : undefined
+                token: repo.tokenEnvVar ? process.env[repo.tokenEnvVar] : undefined
             });
         }
 

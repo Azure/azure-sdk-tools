@@ -1,11 +1,3 @@
-schedules:
-  - cron: "0 3 * * *"  # Runs nightly at 03:00 UTC
-    displayName: "Nightly Offline Evaluation"
-    branches:
-      include:
-        - main
-    always: true
-
 trigger: none
 pr: none
 
@@ -16,10 +8,14 @@ parameters:
       - typespec
       - onboarding
       - python
+      - dotnet
+      - javascript
+      - go
       - apispec
       - authoring
       - mcpserver
       - sdkagent
+      - apistewardshipboard
 
 #
 # Starts the agent server.py locally, then evaluates via completion mode:
@@ -75,6 +71,7 @@ extends:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                       AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
                       AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                      ENABLE_AI_FOUNDRY_AGENT_ROUTING: 'true'
                   - script: |
                       pip install -r requirements.txt
                     displayName: 'install requirements'
@@ -101,6 +98,7 @@ extends:
                       BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                       BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                       EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
+                      EVAL_AGENT_BRANCH: $(Build.SourceBranch)
                 templateContext:
                   outputs:
                     - output: pipelineArtifact

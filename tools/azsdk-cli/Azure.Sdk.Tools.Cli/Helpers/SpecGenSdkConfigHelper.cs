@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private const string UpdateVersionScriptPathJsonPath = "packageOptions/updateVersionScript/path";
         private const string UpdateMetadataCommandJsonPath = "packageOptions/updateMetadataScript/command";
         private const string UpdateMetadataScriptPathJsonPath = "packageOptions/updateMetadataScript/path";
-        private const string SdkBreakingChangePatternFilePath = "packageOptions/sdkBreakingChangePatternFile";
+        private const string SdkBreakingChangePatternFileJsonPath = "packageOptions/sdkBreakingChangePatternFile";
         private const string SpecToSdkConfigPath = "eng/swagger_to_sdk_config.json";
 
         private readonly ILogger<SpecGenSdkConfigHelper> _logger;
@@ -87,16 +87,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             _logger.LogInformation("Reading configuration from: {specToSdkConfigFilePath} at path: {jsonPath}", specToSdkConfigFilePath, jsonPath);
 
-            if (!File.Exists(specToSdkConfigFilePath))
-            {
-                throw new FileNotFoundException($"Configuration file not found at: {specToSdkConfigFilePath}");
-            }
-
             try
             {
-                // Read and parse the configuration file
-                var configContent = await File.ReadAllTextAsync(specToSdkConfigFilePath, ct);
-                using var configJson = JsonDocument.Parse(configContent);
+                using var configJson = await ReadConfigurationAsync(repositoryRoot, ct);
 
                 // Use helper method to navigate JSON path
                 var (found, element) = TryGetJsonElementByPath(configJson.RootElement, jsonPath);
@@ -125,59 +118,65 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public async Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType, CancellationToken ct)
         {
             var (commandPath, scriptPath) = GetConfigPaths(configType);
-            
-            // Try command first
-            try
+            using var config = await ReadConfigurationAsync(repositoryRoot, ct);
+            var scriptObjectPath = commandPath[..commandPath.LastIndexOf('/')];
+            var (found, _) = TryGetJsonElementByPath(config.RootElement, scriptObjectPath);
+            if (!found)
             {
-                var command = await GetConfigValueFromRepoAsync<string>(repositoryRoot, commandPath, ct);
-                if (!string.IsNullOrEmpty(command))
-                {
-                    _logger.LogDebug("Found {ConfigType} command configuration", configType);
-                    return (SpecGenSdkConfigContentType.Command, command);
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Command not found, continue to try path
-                _logger.LogDebug("No {configType} configuration found, trying script path. Error: {errorMessage}", configType, ex.Message);
+                _logger.LogDebug("No {ConfigType} configuration found at {JsonPath}", configType, scriptObjectPath);
+                return (SpecGenSdkConfigContentType.Unknown, string.Empty);
             }
 
-            // Try path
-            try
+            var command = GetOptionalNonemptyString(config.RootElement, commandPath, allowBlank: true);
+            if (command != null)
             {
-                var path = await GetConfigValueFromRepoAsync<string>(repositoryRoot, scriptPath, ct);
-                if (!string.IsNullOrEmpty(path))
-                {
-                    _logger.LogDebug("Found {ConfigType} script path configuration", configType);
-                    return (SpecGenSdkConfigContentType.ScriptPath, path);
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Path not found either
-                _logger.LogDebug("No {configType} configuration found. Error: {errorMessage}", configType, ex.Message);
+                _logger.LogDebug("Found {ConfigType} command configuration", configType);
+                return (SpecGenSdkConfigContentType.Command, command);
             }
 
-            _logger.LogWarning("Neither '{commandPath}' nor '{scriptPath}' found in configuration for {configType}", commandPath, scriptPath, configType);
-            return (SpecGenSdkConfigContentType.Unknown, string.Empty);
+            var path = GetOptionalNonemptyString(config.RootElement, scriptPath, allowBlank: true);
+            if (path != null)
+            {
+                _logger.LogDebug("Found {ConfigType} script path configuration", configType);
+                return (SpecGenSdkConfigContentType.ScriptPath, path);
+            }
+
+            throw new JsonException($"Configuration property '{scriptObjectPath}' must contain a nonempty command or path.");
         }
 
         public async Task<string> GetSdkBreakingChangePatternFileConfigurationAsync(string repositoryRoot, CancellationToken ct)
         {
+            using var config = await ReadConfigurationAsync(repositoryRoot, ct);
+            return GetOptionalNonemptyString(config.RootElement, SdkBreakingChangePatternFileJsonPath) ?? string.Empty;
+        }
+
+        private static async Task<JsonDocument> ReadConfigurationAsync(string repositoryRoot, CancellationToken ct)
+        {
+            var path = Path.Combine(repositoryRoot, SpecToSdkConfigPath);
             try
             {
-                return await GetConfigValueFromRepoAsync<string>(repositoryRoot, SdkBreakingChangePatternFilePath, ct);
+                var content = await File.ReadAllTextAsync(path, ct);
+                return JsonDocument.Parse(content);
             }
-            catch (InvalidOperationException ex)
+            catch (IOException ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
             {
-                _logger.LogDebug("No {configOption} configuration found. Error: {errorMessage}", SdkBreakingChangePatternFilePath, ex.Message);
+                throw new FileNotFoundException($"Configuration file not found at: {path}", path, ex);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while retrieving SDK breaking change pattern file path.");
-            }
+        }
 
-            return string.Empty;
+        private static string? GetOptionalNonemptyString(JsonElement root, string jsonPath, bool allowBlank = false)
+        {
+            var (found, value) = TryGetJsonElementByPath(root, jsonPath);
+            if (!found)
+            {
+                return null;
+            }
+            if (value.ValueKind != JsonValueKind.String ||
+                (!allowBlank && string.IsNullOrWhiteSpace(value.GetString())))
+            {
+                throw new JsonException($"Configuration property '{jsonPath}' must be a nonempty string.");
+            }
+            return string.IsNullOrWhiteSpace(value.GetString()) ? null : value.GetString();
         }
         // Substitute template variables in command strings
         public string SubstituteCommandVariables(string command, Dictionary<string, string> variables)
@@ -260,7 +259,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         // Try to get a JSON element by its path
-        private (bool found, JsonElement element) TryGetJsonElementByPath(JsonElement root, string path)
+        private static (bool found, JsonElement element) TryGetJsonElementByPath(JsonElement root, string path)
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -272,6 +271,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             foreach (var part in pathParts)
             {
+                if (current.ValueKind != JsonValueKind.Object)
+                {
+                    throw new JsonException($"The configuration containing '{part}' at JSON path '{path}' must be an object.");
+                }
                 if (!current.TryGetProperty(part, out current))
                 {
                     return (false, default);

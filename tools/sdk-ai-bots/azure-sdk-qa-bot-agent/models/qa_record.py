@@ -6,13 +6,14 @@ A ``QARecord`` is the durable status row for **one conversation thread**
 
 * **Layer 1 — QA lifecycle** (:class:`QAStatus`): ``ongoing`` while the
   thread is still open, ``finished`` once it concluded with a correct bot
-  answer, or ``failed`` once it concluded with an incorrect/unknown bot
+  answer or was marked correct by the inactivity policy, or ``failed``
+  once it concluded with an incorrect/unknown bot
   answer (i.e. a case worth a feedback analysis).
 * **Layer 2 — Evolution lifecycle** (:class:`FeedbackStatus`, embedded in
   :class:`FeedbackState`): tracks analysis, issue remediation, and validation.
     An issue moves to ``pending_validation``; completed validation moves to
-    ``validation_passed`` or ``validation_failed``, and processing errors move
-    to retryable ``failed``.
+    ``validation_passed``, ``validation_failed``, or terminal
+    ``validation_skipped``; processing errors move to retryable ``failed``.
 
 Partition key is ``/tenant_id`` (matches the episode and conversation
 conventions). The ``id`` is the thread key
@@ -38,7 +39,7 @@ class QAStatus(str, Enum):
     #: The thread is still open — either unanswered follow-ups remain or no
     #: human has confirmed/corrected the bot yet.
     ongoing = "ongoing"
-    #: The thread concluded and the bot answered correctly (archived).
+    #: The answer was judged correct or auto-marked correct after inactivity.
     finished = "finished"
     #: The thread concluded but the bot answer was wrong or unconfirmed;
     #: a feedback analysis is warranted.
@@ -58,6 +59,8 @@ class FeedbackStatus(str, Enum):
     validation_passed = "validation_passed"
     #: Validation completed but rejected the remediation.
     validation_failed = "validation_failed"
+    #: Validation was not applicable; no further validation is scheduled.
+    validation_skipped = "validation_skipped"
     #: The agent errored, timed out, or the run was cancelled; retry next run.
     failed = "failed"
 
@@ -102,6 +105,10 @@ class QARecord(BaseModel):
     reasoning: str | None = None
     confidence: float | None = None
     has_expert_reply: bool = False
+    # Semantic assessment from the existing evolution agent, NOT the heuristic.
+    # Missing legacy values are unknown; validation never rewrites this history.
+    has_expert_interaction: bool | None = None
+    expert_interaction_reason: str | None = None
     message_count: int = 0
 
     # -- Layer 2: evolution lifecycle -------------------------------------
@@ -119,6 +126,8 @@ class QARecord(BaseModel):
     first_seen_at: datetime
     #: When the thread was last evaluated by the LLM judge.
     evaluated_at: datetime | None = None
+    #: Inactivity-policy closure time; None for Agent-assessed conclusions.
+    auto_closed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

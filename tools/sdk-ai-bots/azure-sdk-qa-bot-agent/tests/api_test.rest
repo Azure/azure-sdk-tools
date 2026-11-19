@@ -41,6 +41,33 @@ Content-type: application/json; charset=utf-8
     "conversation_type": "teams_channel"
 }
 
+    ### Local test - activity conversion
+    POST http://localhost:8089/activity/convert HTTP/1.1
+    Content-type: application/json; charset=utf-8
+
+    {
+        "id": "test_message_id",
+        "subject": "SDK question",
+        "createdDateTime": "2026-09-23T12:34:56Z",
+        "webUrl": "https://teams.microsoft.com/l/message/thread/123?tenantId=test_tenant_id",
+        "locale": "en-US",
+        "replyToId": "root_message_id",
+        "body": {
+            "contentType": "html",
+            "content": "<p>How do I generate an SDK?</p>"
+        },
+        "from": {
+            "user": {
+                "id": "test_user_id",
+                "displayName": "Test User"
+            }
+        },
+        "channelIdentity": {
+            "teamId": "test_team_id",
+            "channelId": "test_channel_id"
+        }
+    }
+
 ### Local test - channel config
 GET http://localhost:8089/config/channel?channel_id=test_channel_id HTTP/1.1
 

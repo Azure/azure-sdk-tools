@@ -1,4 +1,4 @@
-import { CardFactory, MessageFactory, TurnContext } from 'botbuilder';
+import { Activity, CardFactory, MessageFactory, TurnContext } from 'botbuilder';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
@@ -9,6 +9,7 @@ import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
 import { sendActivityWithRetry, updateActivityWithRetry } from '../activityUtils.js';
 import type { AIEntity } from '@microsoft/teams-ai/lib/types/AIEntity.js';
+import { getTeamsMentionEntities } from '../common/mentions.js';
 
 export class ThinkingHandler {
   private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
@@ -73,6 +74,10 @@ export class ThinkingHandler {
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
     const traceId = isCompletionResponsePayload(reply) ? reply.trace_id : undefined;
     const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant, currentChannelTenant);
+    const mentions = getTeamsMentionEntities(
+      answer,
+      isCompletionResponsePayload(reply) ? reply.mentions : undefined
+    );
     const entity: AIEntity = {
       ...this.aiGeneratedEntity,
     };
@@ -84,13 +89,13 @@ export class ThinkingHandler {
         description: `Trace ID: ${traceId}`,
       };
     }
-    const updated: Partial<TurnContext> = {
+    const updated: Partial<Activity> = {
       type: 'message',
       id: this.resourceId,
       text: formattedAnswer,
-      entities: [entity],
+      entities: [entity, ...mentions],
       conversation: this.context.activity.conversation,
-    } as any;
+    };
 
     const response = await updateActivityWithRetry(this.context, updated);
     if (response) {

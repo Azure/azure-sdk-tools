@@ -52,6 +52,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(pr);
         }
 
+        public Task<PullRequest> GetPullRequestAsync(string url, CancellationToken ct)
+        {
+            var parts = new Uri(url).AbsolutePath.Trim('/').Split('/');
+            return GetPullRequestAsync(parts[0], parts[1], int.Parse(parts[3], System.Globalization.CultureInfo.InvariantCulture), ct);
+        }
+
+        public Task<bool> IsPullRequestApprovedAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<(DateTimeOffset Timestamp, string Source)> GetPullRequestLatestActivityAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.FromResult((new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero), "commit"));
+        }
+
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName, CancellationToken ct)
         {
             return Task.FromResult($"https://github.com/{owner}/{repoName}");
@@ -414,6 +431,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<IReadOnlyList<IssueComment>> GetPullRequestIssueCommentsAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct)
         {
             return Task.FromResult<IReadOnlyList<IssueComment>>([]);
+        }
+
+        public Task<PullRequest> ClosePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct, string? comment = null)
+        {
+            ct.ThrowIfCancellationRequested();
+            return Task.FromResult(new PullRequest());
         }
 
         public Task<IReadOnlyList<GitHubCommitFile>> GetCommitFilesAsync(string repoOwner, string repoName, string sha, CancellationToken ct)

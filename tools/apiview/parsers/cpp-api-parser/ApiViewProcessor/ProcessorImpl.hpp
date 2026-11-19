@@ -16,6 +16,7 @@
 #include <clang/Tooling/Tooling.h>
 #include <filesystem>
 #include <llvm/Support/CommandLine.h>
+#include <unordered_set>
 
 class ApiViewProcessorImpl {
   std::unique_ptr<AzureClassesDatabase> m_classDatabase;
@@ -37,8 +38,11 @@ class ApiViewProcessorImpl {
 
   class CollectCppClassesVisitor : public clang::RecursiveASTVisitor<CollectCppClassesVisitor> {
     ApiViewProcessorImpl* m_processorImpl;
+    bool m_discoverExposedDetailTypes{false};
+    std::unordered_set<clang::Decl const*> m_exposedDetailTypes;
 
     bool ShouldCollectNamedDecl(clang::NamedDecl* declarator);
+    void AddExposedDetailType(clang::NamedDecl* target);
 
   public:
     explicit CollectCppClassesVisitor(ApiViewProcessorImpl* processorImpl)
@@ -50,14 +54,8 @@ class ApiViewProcessorImpl {
     // The RecursiveASTVisitor visits every node in the AST, so we can use this to collect all the
     // named nodes which should be collected.
 
-    bool VisitNamedDecl(clang::NamedDecl* namedDecl)
-    {
-      if (ShouldCollectNamedDecl(namedDecl))
-      {
-        m_processorImpl->m_classDatabase->CreateAstNode(namedDecl);
-      }
-      return true;
-    }
+    bool VisitNamedDecl(clang::NamedDecl* namedDecl);
+    void CollectClasses(clang::TranslationUnitDecl* translationUnit);
   };
 
   class ExtractCppClassConsumer : public clang::ASTConsumer {
@@ -69,7 +67,7 @@ class ApiViewProcessorImpl {
 
     virtual void HandleTranslationUnit(clang::ASTContext& context) override
     {
-      m_visitor.TraverseDecl(context.getTranslationUnitDecl());
+      m_visitor.CollectClasses(context.getTranslationUnitDecl());
     }
 
   private:

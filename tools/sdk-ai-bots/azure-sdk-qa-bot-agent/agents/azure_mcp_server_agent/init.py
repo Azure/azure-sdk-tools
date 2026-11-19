@@ -18,12 +18,14 @@ os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
 from agent_framework import Agent
 from agent_framework import CompactionProvider
+from agent_framework import FileSkillsSource
 from agent_framework import SkillsProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
 from config.app_config import get as cfg
+from skills import tenant_skills
 from skills.tenant_skills import create_tenant_skills
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
@@ -38,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 MAX_TOOL_CALL_ITERATIONS = 5
 MAX_TOOL_CALLS_PER_TURN = 10
+GITHUB_APP_INSTALLATION_OWNER = "Microsoft"
 _background_tasks: set[asyncio.Task] = set()
 
 
@@ -85,15 +88,17 @@ async def main() -> None:
     _background_tasks.add(memory_init_task)
     memory_init_task.add_done_callback(_background_tasks.discard)
 
-    async def _init_mcp(factory):
+    async def _init_mcp(factory, **kwargs):
         try:
-            return await factory()
+            return await factory(**kwargs)
         except Exception:
             logger.exception("%s failed to initialize, skipped", factory.__name__)
             return None
 
     mcp_tools = await asyncio.gather(
-        _init_mcp(create_github_mcp_tool),
+        _init_mcp(
+            create_github_mcp_tool, installation_owner=GITHUB_APP_INSTALLATION_OWNER
+        ),
         _init_mcp(create_mslearn_mcp_tool),
     )
     tools.extend(tool for tool in mcp_tools if tool is not None)
@@ -101,6 +106,8 @@ async def main() -> None:
     skills = create_tenant_skills(agent_name)
     if not skills:
         raise RuntimeError(f"No tenant skills configured for agent {agent_name!r}")
+    skills_dir = Path(tenant_skills.__file__).parent / "azure_mcp_server"
+    skills.extend(await FileSkillsSource(skills_dir).get_skills())
 
     memory_provider = MemoryContextProvider(project_client)
     compaction_provider = CompactionProvider(

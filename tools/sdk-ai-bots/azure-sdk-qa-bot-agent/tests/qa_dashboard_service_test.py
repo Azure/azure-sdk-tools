@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
+from models.feedback import RootCauseClassification
 from models.conversation import (
     ConversationMessageItem,
     ConversationType,
@@ -41,8 +42,8 @@ class _FakeContainer:
         if "COUNT(1)" in query:
             yield self.count
         elif "DISTINCT VALUE c.channel_id" in query:
-            yield "channel-b"
-            yield "channel-a"
+            yield "19:channel-b@thread.tacv2"
+            yield "19:channel-a@thread.tacv2"
         else:
             yield self.document
 
@@ -54,7 +55,7 @@ def _record() -> QARecord:
         tenant_id="tenant-a",
         conversation_id="conversation-1",
         conversation_type=ConversationType.teams_channel,
-        channel_id="channel-a",
+        channel_id="19:channel-a@thread.tacv2",
         qa_status=QAStatus.failed,
         conversation_created_at=now,
         feedback=FeedbackState(
@@ -140,8 +141,12 @@ def test_dashboard_identity_falls_back_to_local_development(
 
 
 @pytest.mark.asyncio
-async def test_list_records_applies_filters_and_pagination() -> None:
-    container = _FakeContainer(_record().to_cosmos(), count=101)
+@pytest.mark.parametrize("feedback_status", ["pending_validation", "validation_skipped"])
+async def test_list_records_applies_filters_and_pagination(feedback_status) -> None:
+    record = _record()
+    assert record.feedback is not None
+    record.feedback.status = FeedbackStatus(feedback_status)
+    container = _FakeContainer(record.to_cosmos(), count=101)
     service = QADashboardService()
     start = datetime(2026, 8, 1, tzinfo=timezone.utc)
     end = datetime(2026, 8, 8, tzinfo=timezone.utc)
@@ -152,11 +157,11 @@ async def test_list_records_applies_filters_and_pagination() -> None:
             new=AsyncMock(return_value=container),
         ),
         patch(
-            "services.qa_dashboard_service._load_channel_names",
+            "services.qa_dashboard_service._bot_config_service.get_channels",
             new=AsyncMock(
                 return_value={
-                    "channel-a": "Channel A",
-                    "channel-b": "Channel B",
+                    "19:channel-a@thread.tacv2": "Channel A",
+                    "19:channel-b@thread.tacv2": "Channel B",
                 }
             ),
         ),
@@ -172,9 +177,10 @@ async def test_list_records_applies_filters_and_pagination() -> None:
         result = await service.list_records(
             page=2,
             tenant_id="tenant-a",
-            channel_id="channel-a",
+            channel_id="19:channel-a@thread.tacv2",
             qa_status=QAStatus.failed,
-            feedback_status=FeedbackStatusFilter.pending_validation,
+            feedback_status=FeedbackStatusFilter(feedback_status),
+            classification=RootCauseClassification.insufficient_content,
             updated_from=start,
             updated_to=end,
             conversation_id="conversation",
@@ -184,12 +190,14 @@ async def test_list_records_applies_filters_and_pagination() -> None:
     assert result.page == 2
     assert result.page_size == 50
     assert result.channels == [
-        DashboardChannel(id="channel-a", name="Channel A"),
-        DashboardChannel(id="channel-b", name="Channel B"),
+        DashboardChannel(id="19:channel-a@thread.tacv2", name="Channel A"),
+        DashboardChannel(id="19:channel-b@thread.tacv2", name="Channel B"),
     ]
     assert result.items[0].id == "teams_channel:conversation-1"
     assert result.items[0].conversation_title == "How do I fix this?"
     assert result.items[0].channel_name == "Channel A"
+    assert result.items[0].feedback is not None
+    assert result.items[0].feedback.status.value == feedback_status
 
     records_call = container.calls[1]
     assert records_call["partition_key"] == "tenant-a"
@@ -201,10 +209,163 @@ async def test_list_records_applies_filters_and_pagination() -> None:
         item["name"]: item["value"] for item in records_call["parameters"]
     }
     assert parameters["@qa_status"] == "failed"
-    assert parameters["@channel_id"] == "channel-a"
-    assert parameters["@feedback_status"] == "pending_validation"
+    assert parameters["@channel_id"] == "19:channel-a@thread.tacv2"
+    assert parameters["@feedback_status"] == feedback_status
     assert parameters["@offset"] == 50
     assert parameters["@limit"] == 50
+    for call in container.calls[:2]:
+        assert "c.feedback.classification = @classification" in call["query"]
+        assert {p["name"]: p["value"] for p in call["parameters"]}["@classification"] == "insufficient_content"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("channel_id", [
+    "19:channel-a@thread.tacv2",
+    "configured-channel-without-prefix",
+])
+@pytest.mark.parametrize("channel_fields", [
+    {},
+    {"channel_id": None},
+    {"channel_id": ""},
+    {"channel_id": "19:channel-a@thread.tacv2"},
+])
+async def test_list_records_only_includes_configured_channels_before_pagination(
+    channel_id, channel_fields,
+) -> None:
+    if channel_fields.get("channel_id"):
+        channel_fields = {"channel_id": channel_id}
+    excluded_ids = (
+        "a:personal-chat", "copilot-sydney-test",
+        "19:group-chat@thread.skype", "19:unconfigured-channel@thread.tacv2",
+        f"{channel_id}-unconfigured",
+    )
+    documents = []
+    for index in range(51):
+        document = _record().to_cosmos()
+        document.pop("channel_id")
+        document.update(channel_fields)
+        document.update(
+            id=f"teams_channel:{channel_id};messageid={index}",
+            conversation_id=f"{channel_id};messageid={index}",
+        )
+        documents.append(document)
+    for conversation_id in excluded_ids:
+        for metadata in ({}, {"channel_id": conversation_id}):
+            document = _record().to_cosmos()
+            document.pop("channel_id")
+            document.update(metadata)
+            document.update(
+                id=f"teams_channel:{conversation_id}",
+                conversation_id=conversation_id,
+            )
+            documents.insert(0, document)
+        # Explicit non-channel metadata takes precedence over the fallback ID.
+        documents.insert(0, {
+            **_record().to_cosmos(),
+            "channel_id": conversation_id,
+            "conversation_id": f"{channel_id};messageid=invalid",
+        })
+
+    class Container:
+        def __init__(self):
+            self.calls = []
+
+        async def query_items(self, **kwargs):
+            self.calls.append(kwargs)
+            query = kwargs["query"]
+            if "DISTINCT VALUE c.channel_id" in query:
+                assert "ARRAY_CONTAINS(@enabled_channel_ids, c.channel_id)" in query
+                assert kwargs["parameters"] == [
+                    {"name": "@enabled_channel_ids", "value": [channel_id]}
+                ]
+                # Also exercise the dropdown's defensive filtering.
+                for value in (channel_id, *excluded_ids):
+                    yield value
+                return
+
+            assert (
+                "ARRAY_CONTAINS(@enabled_channel_ids, "
+                "IIF(IS_STRING(c.channel_id) AND c.channel_id != '', c.channel_id, "
+                "IIF(CONTAINS(c.conversation_id, ';messageid='), "
+                "SUBSTRING(c.conversation_id, 0, INDEX_OF(c.conversation_id, ';messageid=')), "
+                "c.conversation_id)))"
+            ) in query
+            parameters = {item["name"]: item["value"] for item in kwargs["parameters"]}
+            assert parameters["@enabled_channel_ids"] == [channel_id]
+            eligible = [
+                document for document in documents
+                if (
+                    document.get("channel_id")
+                    or document["conversation_id"].split(";messageid=", 1)[0]
+                ) in parameters["@enabled_channel_ids"]
+            ]
+            if "@conversation_id" in parameters:
+                eligible = [
+                    document for document in eligible
+                    if parameters["@conversation_id"] in document["conversation_id"]
+                ]
+            if "COUNT(1)" in query:
+                yield len(eligible)
+            else:
+                offset, limit = parameters["@offset"], parameters["@limit"]
+                for document in eligible[offset:offset + limit]:
+                    yield document
+
+    container = Container()
+    with (
+        patch("services.qa_dashboard_service.get_qa_records_container",
+              new=AsyncMock(return_value=container)),
+        patch("services.qa_dashboard_service._bot_config_service.get_channels",
+              new=AsyncMock(return_value={channel_id: "Channel A"})),
+        patch("services.qa_dashboard_service._load_conversation_titles",
+              new=AsyncMock(return_value={})),
+    ):
+        service = QADashboardService()
+        first = await service.list_records(page=1)
+        second = await service.list_records(page=2)
+        for conversation_id in excluded_ids:
+            excluded = await service.list_records(page=2, conversation_id=conversation_id)
+            assert excluded.total == 0
+            assert excluded.page == 1
+            assert excluded.items == []
+
+    assert first.total == second.total == 51
+    assert first.page == 1 and second.page == 2
+    assert len(first.items) == 50 and len(second.items) == 1
+    assert all(
+        item.conversation_id.startswith(f"{channel_id};messageid=")
+        for item in [*first.items, *second.items]
+    )
+    assert first.channels == second.channels == [
+        DashboardChannel(id=channel_id, name="Channel A"),
+    ]
+    assert container.calls[0]["query"].split(" WHERE ", 1)[1] == (
+        container.calls[1]["query"].split(" WHERE ", 1)[1].split(" ORDER BY ", 1)[0]
+    )
+    assert len(documents) == 51 + 3 * len(excluded_ids)
+
+
+@pytest.mark.asyncio
+async def test_list_records_with_no_configured_channels_is_empty() -> None:
+    class Container:
+        async def query_items(self, **kwargs):
+            assert "ARRAY_CONTAINS(@enabled_channel_ids," in kwargs["query"]
+            parameters = {item["name"]: item["value"] for item in kwargs["parameters"]}
+            assert parameters["@enabled_channel_ids"] == []
+            if "COUNT(1)" in kwargs["query"]:
+                yield 0
+
+    with (
+        patch("services.qa_dashboard_service.get_qa_records_container",
+              new=AsyncMock(return_value=Container())),
+        patch("services.qa_dashboard_service._bot_config_service.get_channels",
+              new=AsyncMock(return_value={})),
+    ):
+        result = await QADashboardService().list_records(page=2)
+
+    assert result.total == 0
+    assert result.page == 1
+    assert result.items == result.channels == []
 
 
 @pytest.mark.asyncio
@@ -218,8 +379,8 @@ async def test_list_records_clamps_page_after_total_shrinks() -> None:
             new=AsyncMock(return_value=container),
         ),
         patch(
-            "services.qa_dashboard_service._load_channel_names",
-            new=AsyncMock(return_value={"channel-a": "Channel A"}),
+            "services.qa_dashboard_service._bot_config_service.get_channels",
+            new=AsyncMock(return_value={"19:channel-a@thread.tacv2": "Channel A"}),
         ),
         patch(
             "services.qa_dashboard_service._load_conversation_titles",
@@ -234,6 +395,7 @@ async def test_list_records_clamps_page_after_total_shrinks() -> None:
         for item in container.calls[1]["parameters"]
     }
     assert records_parameters["@offset"] == 0
+    assert all("@classification" not in call["query"] for call in container.calls)
 
 
 @pytest.mark.asyncio
@@ -247,7 +409,7 @@ async def test_list_records_filters_not_started_feedback() -> None:
             new=AsyncMock(return_value=container),
         ),
         patch(
-            "services.qa_dashboard_service._load_channel_names",
+            "services.qa_dashboard_service._bot_config_service.get_channels",
             new=AsyncMock(return_value={}),
         ),
         patch(
@@ -270,6 +432,7 @@ async def test_list_records_filters_not_started_feedback() -> None:
 
 def test_validation_passed_filter_includes_legacy_done_with_issue() -> None:
     conditions, parameters = QADashboardService._build_filters(
+        enabled_channel_ids=[],
         tenant_id=None,
         channel_id=None,
         qa_status=None,
@@ -283,7 +446,8 @@ def test_validation_passed_filter_includes_legacy_done_with_issue() -> None:
     assert "c.feedback.status = 'done'" in query
     assert "IS_STRING(c.feedback.issue_url)" in query
     assert {item["name"]: item["value"] for item in parameters} == {
-        "@feedback_status": "validation_passed"
+        "@feedback_status": "validation_passed",
+        "@enabled_channel_ids": [],
     }
 
 
@@ -314,8 +478,8 @@ async def test_get_record_detail_builds_timeline() -> None:
             new=AsyncMock(return_value=_record().to_cosmos()),
         ),
         patch(
-            "services.qa_dashboard_service._load_channel_names",
-            new=AsyncMock(return_value={"channel-a": "Channel A"}),
+            "services.qa_dashboard_service._bot_config_service.get_channels",
+            new=AsyncMock(return_value={"19:channel-a@thread.tacv2": "Channel A"}),
         ),
     ):
         detail = await QADashboardService(
@@ -347,7 +511,8 @@ async def test_list_records_rejects_reversed_time_range() -> None:
 
 
 @pytest.mark.asyncio
-async def test_dashboard_routes() -> None:
+@pytest.mark.parametrize("feedback_status", ["pending_validation", "validation_skipped"])
+async def test_dashboard_routes(feedback_status) -> None:
     import server
 
     page = QARecordPage(
@@ -355,7 +520,7 @@ async def test_dashboard_routes() -> None:
         total=1,
         page=1,
         page_size=50,
-        channels=[DashboardChannel(id="channel-a", name="Channel A")],
+        channels=[DashboardChannel(id="19:channel-a@thread.tacv2", name="Channel A")],
     )
     detail = QADashboardDetail(
         record=_dashboard_record(),
@@ -375,9 +540,10 @@ async def test_dashboard_routes() -> None:
                 "/api/dashboard/qa-records",
                 params={
                     "tenant_id": "tenant-a",
-                    "channel_id": "channel-a",
+                    "channel_id": "19:channel-a@thread.tacv2",
                     "qa_status": "failed",
-                    "feedback_status": "pending_validation",
+                    "feedback_status": feedback_status,
+                    "classification": "insufficient_content",
                 },
             )
             detail_response = await client.get(
@@ -397,6 +563,10 @@ async def test_dashboard_routes() -> None:
                 },
             )
             page_response = await client.get("/dashboard/qa-records")
+            overview_page_response = await client.get("/dashboard/overview")
+            invalid_response = await client.get(
+                "/api/dashboard/qa-records", params={"classification": "invalid"}
+            )
 
     assert api_response.status_code == 200
     assert api_response.json()["total"] == 1
@@ -412,7 +582,14 @@ async def test_dashboard_routes() -> None:
     }
     assert page_response.status_code == 200
     assert "Chatbot Evolution Dashboard" in page_response.text
+    assert overview_page_response.status_code == 200
+    assert "text/html" in overview_page_response.headers["content-type"]
+    assert 'href="/dashboard/overview"' in page_response.text
+    assert 'href="/dashboard/qa-records"' in overview_page_response.text
     service.list_records.assert_awaited_once()
+    assert service.list_records.await_args.kwargs["feedback_status"] == FeedbackStatusFilter(feedback_status)
+    assert service.list_records.await_args.kwargs["classification"] == RootCauseClassification.insufficient_content
+    assert invalid_response.status_code == 422
     service.get_record_detail.assert_awaited_once()
 
 
@@ -427,7 +604,16 @@ def test_dashboard_html_uses_text_content_for_record_data() -> None:
     assert "Conversation status" in html
     assert "Evolution status" in html
     assert "<th>Answer assessment</th>" not in html
-    assert "<th>Root cause</th>" not in html
+    assert "<th>Root cause</th>" in html
+    assert 'id="classification"' in html
+    assert "All root causes" in html
+    assert "Insufficient documentation" in html
+    assert 'addParameter(parameters, "classification", elements.classification.value)' in html
+    assert "rootCause.replaceChildren(statusBadge(classification, classificationLabel(classification)))" in html
+    assert 'rootCause.title = "No root cause recorded"' in html
+    for classification in RootCauseClassification:
+        assert f".status-{classification.value} {{" in html
+    assert "empty.colSpan = 8" in html
     assert "Bot answered correctly" in html
     assert "Needs evolution" in html
     assert "Bot answered incorrectly" not in html

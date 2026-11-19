@@ -1,12 +1,14 @@
-using Microsoft.TeamFoundation.Build.WebApi;
+using System.CommandLine;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Models.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models;
 
@@ -17,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         private TestLogger<SdkReleaseTool> logger;
         private MockDevOpsService devOpsService;
         private Mock<IAPIViewService> mockApiViewService;
+        private Mock<IPackageReleaseStatusService> mockPackageReleaseStatusService;
         private SdkReleaseTool sdkReleaseTool;
 
         [SetUp]
@@ -26,9 +29,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             logger = new TestLogger<SdkReleaseTool>();
             devOpsService = new MockDevOpsService();
             mockApiViewService = new Mock<IAPIViewService>();
+            mockPackageReleaseStatusService = new Mock<IPackageReleaseStatusService>();
+            mockPackageReleaseStatusService
+                .Setup(x => x.GetApprovalStatusAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageReleaseStatusResult
+                {
+                    IsApproved = true,
+                    FinalSource = "ApiReviewHub",
+                    Reason = "approved"
+                });
             sdkReleaseTool = new SdkReleaseTool(
                 devOpsService,
                 mockApiViewService.Object,
+                mockPackageReleaseStatusService.Object,
                 logger,
                 new InputSanitizer(),
                 new Mock<IEnvironmentHelper>().Object);
@@ -49,6 +69,129 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 Assert.That(result.ReleasePipelineRunUrl, Is.EqualTo("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1"));
             });
 
+        }
+
+        [Test]
+        public async Task ReleasePlanId_CliForwardsProvidedId()
+        {
+            var command = sdkReleaseTool.GetCommandInstances().First();
+            var parsed = command.Parse("--package-name azure-template --language Python --branch release/test --release-plan-id 35307");
+            Assert.That(parsed.Errors, Is.Empty);
+
+            var response = (SdkReleaseResponse)await sdkReleaseTool.HandleCommand(parsed, CancellationToken.None);
+
+            Assert.That(response.ReleasePipelineStatus, Is.Not.EqualTo("Failed"));
+            Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Not.Null);
+            Assert.That(devOpsService.LastRunPipelineTemplateParams!["ReleasePlanId"], Is.EqualTo("35307"));
+        }
+
+        [TestCase(".NET")]
+        [TestCase("Java")]
+        [TestCase("JavaScript")]
+        [TestCase("Python")]
+        [TestCase("Go")]
+        public async Task ReleasePlanId_AllLanguagesForwardOnlyTheSuppliedId(string language)
+        {
+            var result = await sdkReleaseTool.ReleasePackageAsync("azure-template", language, releasePlanId: 35307);
+
+            Assert.That(result.ReleasePipelineStatus, Is.Not.EqualTo("Failed"));
+            var parameters = devOpsService.LastRunPipelineTemplateParams!;
+            Assert.That(parameters["ReleasePlanId"], Is.EqualTo("35307"));
+            Assert.That(parameters.Keys, Is.EquivalentTo(language == "Java"
+                ? new[] { "ReleasePlanId", "release_azuretemplate" }
+                : new[] { "ReleasePlanId" }));
+            if (language == "Java")
+            {
+                Assert.That(parameters["release_azuretemplate"], Is.EqualTo("true"));
+            }
+        }
+
+        [TestCase(".NET")]
+        [TestCase("Java")]
+        [TestCase("JavaScript")]
+        [TestCase("Python")]
+        [TestCase("Go")]
+        public async Task ReleasePlanId_ZeroPreservesExistingQueuePayload(string language)
+        {
+            await sdkReleaseTool.ReleasePackageAsync("azure-template", language, releasePlanId: 0);
+
+            var parameters = devOpsService.LastRunPipelineTemplateParams!;
+            Assert.That(parameters, Does.Not.ContainKey("ReleasePlanId"));
+            Assert.That(parameters.Count, Is.EqualTo(language == "Java" ? 1 : 0));
+        }
+
+        [TestCase("Pipeline access denied")]
+        [TestCase("Unexpected parameter 'AnotherParameter'")]
+        [TestCase("Unexpected parameter 'ReleasePlanId'")]
+        public async Task ReleasePlanId_QueueFailurePreservesOriginalError(string error)
+        {
+            var devOps = new Mock<IDevOpsService>();
+            devOps.Setup(s => s.GetPackageWorkItemAsync("azure-template", "Python", "", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(await devOpsService.GetPackageWorkItemAsync("azure-template", "Python"));
+            devOps.Setup(s => s.RunPipelineAsync(1, It.IsAny<Dictionary<string, string>>(), "release/test", It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException(error));
+            var tool = new SdkReleaseTool(devOps.Object, mockApiViewService.Object, mockPackageReleaseStatusService.Object,
+                logger, new InputSanitizer(), new Mock<IEnvironmentHelper>().Object);
+
+            var result = await tool.ReleasePackageAsync("azure-template", "Python", "release/test", releasePlanId: 35307);
+
+            Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Failed"));
+            Assert.That(result.ResponseError, Is.EqualTo($"Error: {error}"));
+            Assert.That(result.PipelineBuildId, Is.Zero);
+            Assert.That(result.ReleasePipelineRunUrl, Is.Null.Or.Empty);
+            devOps.Verify(s => s.RunPipelineAsync(1,
+                It.Is<Dictionary<string, string>>(p => p.Count == 1 && p["ReleasePlanId"] == "35307"),
+                "release/test", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase(-1)]
+        [TestCase(int.MinValue)]
+        public async Task ReleasePlanId_NegativeRejectsBeforeAnyServiceCalls(int releasePlanId)
+        {
+            var strictDevOps = new Mock<IDevOpsService>(MockBehavior.Strict);
+            var strictEnvironment = new Mock<IEnvironmentHelper>(MockBehavior.Strict);
+            var strictPackageReleaseStatus = new Mock<IPackageReleaseStatusService>(MockBehavior.Strict);
+            var tool = new SdkReleaseTool(strictDevOps.Object, mockApiViewService.Object, strictPackageReleaseStatus.Object,
+                logger, new InputSanitizer(), strictEnvironment.Object);
+
+            var result = await tool.ReleasePackageAsync("azure-template", "Python", releasePlanId: releasePlanId);
+
+            Assert.That(result.ResponseError, Does.Contain("positive integer"));
+            Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Failed"));
+            strictDevOps.VerifyNoOtherCalls();
+            strictEnvironment.VerifyNoOtherCalls();
+            mockApiViewService.VerifyNoOtherCalls();
+            strictPackageReleaseStatus.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task ReleasePlanId_CheckReadyNeverQueuesRelease()
+        {
+            var result = await sdkReleaseTool.ReleasePackageAsync("azure-template", "Python", checkReady: true, releasePlanId: 35307);
+
+            Assert.That(result.ReleaseStatusDetails, Does.Contain("ready for release"));
+            Assert.That(result.PipelineBuildId, Is.Zero);
+            Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Null);
+        }
+
+        [Test]
+        public async Task ReleasePlanId_DoesNotBypassReadinessFailure()
+        {
+            devOpsService.ConfiguredPlannedReleases = [];
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("azure-template", "Python", releasePlanId: 35307);
+
+            Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Failed"));
+            Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Null);
+        }
+
+        [TestCase("not-an-id")]
+        [TestCase("2147483648")]
+        public void ReleasePlanId_CliRejectsMalformedValue(string value)
+        {
+            var parsed = sdkReleaseTool.GetCommandInstances().First().Parse($"--package-name azure-template --language Python --release-plan-id {value}");
+            Assert.That(parsed.Errors, Is.Not.Empty);
+            Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Null);
         }
 
         [Test]
@@ -99,8 +242,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Dataplane));
             result.SetPackageType("spring");
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Spring));
+            result.SetPackageType("functions");
+            Assert.That(result.PackageType, Is.EqualTo(SdkType.Functions));
             result.SetPackageType("data");
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Unknown));
+        }
+
+        [TestCase(SdkType.Dataplane)]
+        [TestCase(SdkType.Spring)]
+        [TestCase(SdkType.Functions)]
+        public void IsDataPlane_RecognizesDataPlaneSdkTypes(SdkType sdkType)
+        {
+            Assert.That(sdkType.IsDataPlane(), Is.True);
         }
 
         [Test]
@@ -110,7 +263,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var language = ".NET";
             var expectedUrl = "https://apiview.dev/review/abc123";
 
-            devOpsService.ConfiguredAPIViewStatus = "Pending";
+            devOpsService.ConfiguredAPIViewStatus = "Approved";
+            ConfigurePackageApproval(isApproved: false);
             mockApiViewService
                 .Setup(x => x.GetReviewUrlByPackageAsync(packageName, "C#", "1.0.0", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedUrl);
@@ -123,6 +277,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("not ready for release"));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain(expectedUrl));
             });
+            mockPackageReleaseStatusService.Verify(x => x.GetApprovalStatusAsync(
+                "https://api-review-hub.azurewebsites.net",
+                "csharp",
+                packageName,
+                "1.0.0",
+                "",
+                "",
+                It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -131,7 +293,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var packageName = "Azure.Security.KeyVault.Secrets";
             var language = ".NET";
 
-            devOpsService.ConfiguredAPIViewStatus = "Pending";
+            ConfigurePackageApproval(isApproved: false);
             mockApiViewService
                 .Setup(x => x.GetReviewUrlByPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((string?)null);
@@ -143,6 +305,51 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         }
 
         [Test]
+        public async Task TestCheckReadyWithMissingApiHash_PassesWithoutWarning()
+        {
+            ConfigureMissingApiHashApproval();
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("is ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("API hash"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("not ready for release"));
+            });
+        }
+
+        [Test]
+        public async Task TestCheckReadyWithReviewNotRequired_Passes()
+        {
+            ConfigurePackageApproval(isApproved: true, reason: "reviewNotRequired");
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("is ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("not ready for release"));
+            });
+        }
+
+        [Test]
+        public async Task TestCheckReadyWithMissingApiHash_PreservesEarlierFailure()
+        {
+            devOpsService.ConfiguredPlannedReleases = [];
+            ConfigureMissingApiHashApproval();
+
+            var result = await sdkReleaseTool.ReleasePackageAsync("Azure.Security.KeyVault.Secrets", ".NET", "main", checkReady: true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("No planned release date found"));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("not ready for release"));
+                Assert.That(result.ReleaseStatusDetails, Does.Not.Contain("API hash"));
+            });
+        }
+
+        [Test]
         public async Task TestCheckReadyTreatsPythonPep440PrereleaseAsPreview()
         {
             var packageName = "azure-template";
@@ -150,7 +357,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
 
             devOpsService.ConfiguredPackageVersion = "1.0.0b1";
             devOpsService.ConfiguredPackageType = SdkType.Dataplane;
-            devOpsService.ConfiguredAPIViewStatus = "Pending";
+            ConfigurePackageApproval(isApproved: false);
 
             var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language, "main", checkReady: true);
 
@@ -200,7 +407,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var nameCheck = await sdkReleaseTool.ReleasePackageAsync(packageName, language, checkReady: true);
 
             devOpsService.ConfiguredPackageNameStatus = "Approved";
-            devOpsService.ConfiguredAPIViewStatus = "Pending";
+            ConfigurePackageApproval(isApproved: false);
 
             var apiCheck = await sdkReleaseTool.ReleasePackageAsync(packageName, language, checkReady: true);
 
@@ -284,6 +491,50 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
         public void TestGetJavaSafeName(string packageName, string expected)
         {
             Assert.That(SdkReleaseTool.GetJavaSafeName(packageName), Is.EqualTo(expected));
+        }
+
+        private void ConfigurePackageApproval(bool isApproved, string? reason = null)
+        {
+            mockPackageReleaseStatusService
+                .Setup(x => x.GetApprovalStatusAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageReleaseStatusResult
+                {
+                    IsApproved = isApproved,
+                    FinalSource = "ApiReviewHub",
+                    Reason = reason ?? (isApproved ? "approved" : "notApproved")
+                });
+        }
+
+        private void ConfigureMissingApiHashApproval()
+        {
+            mockPackageReleaseStatusService
+                .Setup(x => x.GetApprovalStatusAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    "",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageReleaseStatusResult
+                {
+                    IsApproved = false,
+                    FinalSource = "ApiReviewHub",
+                    Reason = "missingApiHash",
+                    ApiView = new ApiViewReleaseStatusResult
+                    {
+                        IsApproved = false,
+                        PackageNameApproved = false,
+                        Reason = "packageNamePending"
+                    }
+                });
         }
     }
 }

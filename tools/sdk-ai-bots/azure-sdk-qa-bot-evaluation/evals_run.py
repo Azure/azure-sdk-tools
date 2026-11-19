@@ -128,7 +128,6 @@ def main(argv: list[str] | None = None) -> int:
     try:
         endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
         model = os.environ["AZURE_EVALUATION_MODEL_NAME"]
-        agent_name = os.environ.get("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
         threshold = int(os.environ.get("EVALUATE_THRESHOLD", "3"))
     except KeyError as exc:
         logging.error("Missing required environment variable: %s", exc)
@@ -154,30 +153,29 @@ def main(argv: list[str] | None = None) -> int:
     all_results: dict[str, Any] = {}
 
     try:
+        records, scenario = resolve_records(args.dataset, script_dir=script_dir)
+        logging.info("Resolved %d records for scenario=%s", len(records), scenario)
+        tenant_map = None
+        try:
+            tenant_map = retrieve_channel_tenant_map(credential)
+        except Exception as exc:  # noqa: BLE001
+            logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
+        tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
         with (
             AIProjectClient(endpoint=endpoint, credential=credential, allow_preview=True) as project_client,
             project_client.get_openai_client() as evals_client,
-            project_client.get_openai_client(agent_name=agent_name) as response_client,
         ):
-            records, scenario = resolve_records(args.dataset, script_dir=script_dir)
-            logging.info("Resolved %d records for scenario=%s", len(records), scenario)
             # Stable evaluation name = dataset identity + run context (local / pipeline),
             # so the Foundry list is not flooded with date/build/random-suffixed entries.
             dataset_label = _dataset_label(args.dataset, scenario)
             name = f"{dataset_label}-{args.run_context}"
-            tenant_map = None
-            try:
-                tenant_map = retrieve_channel_tenant_map(credential)
-            except Exception as exc:  # noqa: BLE001
-                logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
-            tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
             all_results = runner.evaluate_run_completion(
                 evals_client,
                 records,
                 scenario,
                 tenant_id=tenant_id,
                 evaluation_name=name,
-                response_client=response_client,
+                project_client=project_client,
             )
 
         _cache_results(args.cache_result, script_dir, all_results, metrics, suppression, evals_result)

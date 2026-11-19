@@ -64,13 +64,12 @@ Use the positive `--inactivity-days` option to set a different window. An activi
 timestamp exactly at the cutoff still protects the plan. Both preview and actual
 cleanup use the same checks:
 
-- A recent Azure DevOps release-plan update protects the plan. The first
-  reminder's `Custom.OverdueLastNotifiedDate` write does not count while it is
-  still the latest change (within one minute of `System.ChangedDate`), so a
-  reminder alone does not reset the clock; any later change does. Only the
-  latest change time is read, so an edit inside the window but before that
-  reminder is not seen. On the monthly schedule with 30 days, that blind spot
-  is at most about two days; manual reminder runs or a longer window widen it.
+- A recent Azure DevOps release-plan update protects the plan. When a recent
+  first-reminder timestamp might be the latest change, cleanup reads work-item
+  updates and uses the previous `System.ChangedDate` if the latest update only
+  recorded the reminder. This preserves the existing `System.ChangedDate`-based
+  activity rule; link-only changes before a reminder do not reset the clock.
+  Unreadable or ambiguous update history prevents cleanup and reports an error.
 - Recent activity on any linked SDK PR protects the plan, even when approval
   is pending or changes have been requested. Activity includes commit timestamps,
   submitted reviews, and human comments, including inline review comments and edits.
@@ -123,6 +122,8 @@ can change or its update can fail after the preview.
 - **Initial scan failure:** failure to retrieve the plans, including an unreadable
   linked Private Preview API-spec work item, stops that command before processing
   plans. Unreadable spec data is not treated as a missing spec PR.
+- **Activity lookup failure:** unreadable or ambiguous work-item update history
+  skips that plan and reports an error.
 - **GitHub lookup failure:** an invalid, inaccessible, or failed PR lookup skips
   that plan for cleanup, including a failed approval lookup. The reminder command instead attempts a generic overdue
   email asking the owner to update the target month or review the dashboard,

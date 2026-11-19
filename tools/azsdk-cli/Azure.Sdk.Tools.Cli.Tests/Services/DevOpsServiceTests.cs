@@ -1471,6 +1471,78 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(patch.RootElement[1].GetProperty("value").GetString(), Is.EqualTo("Abandoned"));
         }
 
+        [Test]
+        public async Task GetWorkItemUpdatesAsync_RealClientDeserializesChangedDate()
+        {
+            using var handler = new WorkItemUpdateTransport();
+            using var client = new WorkItemTrackingHttpClient(new Uri("https://dev.azure.com/offline"), handler, disposeHandler: false);
+            var connection = new Mock<IDevOpsConnection>(MockBehavior.Strict);
+            connection.Setup(c => c.GetWorkItemClient(It.IsAny<CancellationToken>())).Returns(client);
+            var service = new DevOpsService(_logger, connection.Object);
+
+            var updates = await service.GetWorkItemUpdatesAsync(720, CancellationToken.None);
+            var update = updates.Single();
+
+            Assert.That(handler.UpdatePath, Does.EndWith("/workitems/720/updates").IgnoreCase);
+            Assert.That(update.Rev, Is.EqualTo(7));
+            Assert.That(update.Fields["System.ChangedDate"].OldValue, Is.EqualTo(new DateTime(2027, 1, 31, 0, 0, 0, DateTimeKind.Utc)));
+            Assert.That(update.Fields["System.ChangedDate"].OldValue, Is.TypeOf<DateTime>());
+        }
+
+        [Test]
+        public async Task GetWorkItemUpdatesAsync_ReadsAllPages()
+        {
+            using var handler = new WorkItemUpdateTransport(paged: true);
+            using var client = new WorkItemTrackingHttpClient(new Uri("https://dev.azure.com/offline"), handler, disposeHandler: false);
+            var connection = new Mock<IDevOpsConnection>(MockBehavior.Strict);
+            connection.Setup(c => c.GetWorkItemClient(It.IsAny<CancellationToken>())).Returns(client);
+            var service = new DevOpsService(_logger, connection.Object);
+
+            var updates = await service.GetWorkItemUpdatesAsync(720, CancellationToken.None);
+
+            Assert.That(updates, Has.Count.EqualTo(201));
+            Assert.That(updates[^1].Id, Is.EqualTo(201));
+            Assert.That(handler.Queries, Has.Count.EqualTo(2));
+            Assert.That(handler.Queries[0], Does.Contain("%24skip=0"));
+            Assert.That(handler.Queries[1], Does.Contain("%24skip=200"));
+        }
+
+        private sealed class WorkItemUpdateTransport : HttpMessageHandler
+        {
+            private readonly bool _paged;
+            public string? UpdatePath { get; private set; }
+            public List<string> Queries { get; } = [];
+
+            public WorkItemUpdateTransport(bool paged = false) => _paged = paged;
+
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+            {
+                var json = request.Method == HttpMethod.Options
+                    ? """{"count":1,"value":[{"id":"6570bf97-d02c-4a91-8d93-3abe9895b1a9","area":"wit","resourceName":"updates","routeTemplate":"{project}/_apis/wit/workItems/{id}/updates/{updateNumber}","resourceVersion":1,"minVersion":"1.0","maxVersion":"7.1","releasedVersion":"7.0"}]}"""
+                    : """{"count":1,"value":[{"id":7,"workItemId":720,"rev":7,"fields":{"Custom.OverdueLastNotifiedDate":{"newValue":"2027-02-01T00:00:00Z"},"System.ChangedDate":{"oldValue":"2027-01-31T00:00:00Z","newValue":"2027-02-01T00:00:00Z"}}}]}""";
+                if (request.Method != HttpMethod.Options)
+                {
+                    UpdatePath = request.RequestUri!.AbsolutePath;
+                    Queries.Add(request.RequestUri.Query);
+                    if (_paged)
+                    {
+                        var start = Queries.Count == 1 ? 1 : 201;
+                        var count = Queries.Count == 1 ? 200 : 1;
+                        json = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            count,
+                            value = Enumerable.Range(start, count).Select(id => new { id, workItemId = 720, rev = id })
+                        });
+                    }
+                }
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    RequestMessage = request,
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            }
+        }
+
         private sealed class AbandonmentTransport : HttpMessageHandler
         {
             public string? Query { get; private set; }

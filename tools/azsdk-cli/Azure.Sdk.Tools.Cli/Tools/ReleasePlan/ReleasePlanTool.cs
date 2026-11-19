@@ -280,8 +280,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         };
 
         private const string sdkApexEmail = "azsdkapex@microsoft.com";
-        // The reminder record holds the agent's clock just before Azure DevOps stamps System.ChangedDate.
-        private static readonly TimeSpan OverdueReminderRecordTolerance = TimeSpan.FromMinutes(1);
+        private static readonly HashSet<string> RevisionBookkeepingFields =
+        [
+            "System.Rev", "System.ChangedDate", "System.ChangedBy", "System.AuthorizedDate", "System.AuthorizedAs",
+            "System.RevisedDate", "System.Watermark", "System.PersonId"
+        ];
         private static readonly string DEFAULT_BRANCH = "main";
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string PRIVATE_SPECS_REPO = "azure-rest-api-specs-pr";
@@ -2320,12 +2323,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             continue;
                         }
 
-                        // The one-time OverdueLastNotifiedDate write is not plan activity while it is still the latest change.
-                        var lastChangeIsReminderRecord = releasePlan.OverdueLastNotifiedDate is DateTime notifiedAt
-                            && (releasePlan.ChangedDate - notifiedAt).Duration() <= OverdueReminderRecordTolerance;
-                        if (releasePlan.ChangedDate >= recentActivityCutoff.UtcDateTime && !lastChangeIsReminderRecord)
+                        var latestActivity = releasePlan.ChangedDate;
+                        if (latestActivity >= recentActivityCutoff.UtcDateTime
+                            && releasePlan.OverdueLastNotifiedDate >= recentActivityCutoff.UtcDateTime)
                         {
-                            var activityReason = $"Release plan work item {releasePlan.WorkItemId} was updated at {releasePlan.ChangedDate:O}, within the last {inactivityDays} days.";
+                            latestActivity = await GetLatestReleasePlanActivityAsync(releasePlan, ct);
+                        }
+                        if (latestActivity >= recentActivityCutoff.UtcDateTime)
+                        {
+                            var activityReason = $"Release plan work item {releasePlan.WorkItemId} was updated at {latestActivity:O}, within the last {inactivityDays} days.";
                             RecordSkippedPlan(releasePlan, "recent_plan_activity", activityReason);
                             continue;
                         }
@@ -2435,6 +2441,54 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 return response;
             }
+        }
+
+        private async Task<DateTime> GetLatestReleasePlanActivityAsync(ReleasePlanWorkItem plan, CancellationToken ct)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(plan.Revision);
+            List<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItemUpdate> updates;
+            try
+            {
+                updates = await devOpsService.GetWorkItemUpdatesAsync(plan.WorkItemId, ct).WaitAsync(ct);
+            }
+            catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                throw new InvalidOperationException($"Work item update lookup did not complete for {plan.WorkItemId}.", ex);
+            }
+
+            if (updates == null || updates.Count == 0
+                || updates.Any(update => update == null || update.Id <= 0)
+                || updates.Zip(updates.Skip(1), (left, right) => left.Id >= right.Id).Any(outOfOrder => outOfOrder)
+                || updates[^1].Rev != plan.Revision)
+            {
+                throw new InvalidOperationException($"Could not verify the latest update for work item {plan.WorkItemId}.");
+            }
+            var update = updates[^1];
+            if (update.Relations != null)
+            {
+                return plan.ChangedDate;
+            }
+            if (update.Fields == null || update.Fields.Count == 0)
+            {
+                throw new InvalidOperationException($"Could not verify the latest update for work item {plan.WorkItemId}.");
+            }
+            if (!update.Fields.TryGetValue(ReleasePlanWorkItem.OverdueLastNotifiedDateField, out var reminder)
+                || update.Fields.Keys.Any(key => key != ReleasePlanWorkItem.OverdueLastNotifiedDateField && !RevisionBookkeepingFields.Contains(key)))
+            {
+                return plan.ChangedDate;
+            }
+            if (reminder?.OldValue != null)
+            {
+                return plan.ChangedDate;
+            }
+            if (!update.Fields.TryGetValue("System.ChangedDate", out var changedDate) || changedDate?.OldValue is not DateTime previous
+                || changedDate.NewValue is not DateTime current || current != plan.ChangedDate
+                || reminder?.NewValue is not DateTime notified || notified != plan.OverdueLastNotifiedDate
+                || previous == default || previous > plan.ChangedDate)
+            {
+                throw new InvalidOperationException($"Could not verify the previous update time for work item {plan.WorkItemId}.");
+            }
+            return previous;
         }
 
         /// <summary>

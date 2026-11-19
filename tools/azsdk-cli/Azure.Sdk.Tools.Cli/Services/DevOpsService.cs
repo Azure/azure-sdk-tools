@@ -173,6 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, int expectedRevision, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct);
+        public Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct);
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync(CancellationToken ct);
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label, CancellationToken ct);
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct);
@@ -197,6 +198,26 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
+        public async Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct)
+        {
+            const int pageSize = 200;
+            var client = connection.GetWorkItemClient(ct);
+            var updates = new List<WorkItemUpdate>();
+            while (true)
+            {
+                var page = await client.GetUpdatesAsync(workItemId, top: pageSize, skip: updates.Count, cancellationToken: ct);
+                if (page == null)
+                {
+                    throw new InvalidOperationException($"Could not read updates for work item {workItemId}.");
+                }
+                updates.AddRange(page);
+                if (page.Count < pageSize)
+                {
+                    return updates;
+                }
+            }
+        }
+
         private static readonly HttpClient _noRedirectClient = new(new HttpClientHandler { AllowAutoRedirect = false });
         private static readonly HttpClient _downloadClient = new();
 

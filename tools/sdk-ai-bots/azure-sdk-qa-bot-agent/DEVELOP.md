@@ -80,7 +80,7 @@ The tag selects your branch's newest active Foundry version for that agent and
 message only, skipping failed or provisioning versions. If listing omits readiness,
 the server checks version details; versions with unknown readiness are not selected.
 Without a tag, the server uses the configured agent version, or latest if none is configured.
-A missing branch deployment returns an error instead of using a different version.
+If no active branch deployment exists, the server logs a warning and falls back to the configured default version of the same agent, or Foundry's latest version if no default is configured.
 
 Each branch-tagged request looks up the matching version directly in Foundry.
 

@@ -2,7 +2,7 @@ import YAML from "yaml";
 import { SpecConfig } from '../types/SpecConfig';
 import { configError } from "./messageUtils";
 
-export const findSDKToGenerateFromTypeSpecProject = (content: string | undefined, specConfig: SpecConfig) => {
+export const findSDKToGenerateFromTypeSpecProject = (content: string | undefined, specConfig: SpecConfig, typespecEmitter?: string) => {
   if (!specConfig?.typespecEmitterToSdkRepositoryMapping || !content) {
     return [];
   }
@@ -26,6 +26,6 @@ export const findSDKToGenerateFromTypeSpecProject = (content: string | undefined
       emitters.add(emitter);
     }
   }
-  return [...emitters].filter(e => !!specConfig.typespecEmitterToSdkRepositoryMapping[e])
+  return [...emitters].filter(e => (!typespecEmitter || e === typespecEmitter) && !!specConfig.typespecEmitterToSdkRepositoryMapping[e])
     .map(e => specConfig.typespecEmitterToSdkRepositoryMapping[e]);
 };

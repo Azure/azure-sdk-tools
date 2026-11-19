@@ -153,7 +153,9 @@ func NewModule(dir string) (*Module, error) {
 	for _, p := range m.Packages {
 		for _, alias := range p.TypeAliases {
 			if def, ok := recursiveFindTypeDef(alias.Name, p, m.Packages); ok {
-				alias.Resolve(def)
+				if err := alias.Resolve(def); err != nil {
+					return nil, fmt.Errorf("resolving alias %s.%s: %w", p.Name(), alias.Name, err)
+				}
 				continue
 			}
 			// The definition is in another module. Add the alias to
@@ -168,7 +170,9 @@ func NewModule(dir string) (*Module, error) {
 				// The exporting module doesn't require the source module, so this must be a standard library type.
 				// We want this to appear in the API like "type AzureTime time.Time" and don't want to hoist the
 				// definition into the review. Resolving with a zero typeDef adds a SimpleType to the review.
-				alias.Resolve(typeDef{})
+				if err := alias.Resolve(typeDef{}); err != nil {
+					return nil, fmt.Errorf("resolving alias %s.%s: %w", p.Name(), alias.Name, err)
+				}
 			} else {
 				m.ExternalAliases = append(m.ExternalAliases, alias)
 			}
@@ -216,10 +220,11 @@ func unwrapStructFieldTypeName(field *ast.Field) string {
 	return ident.Name
 }
 
-func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg) {
+func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg, aliasName string) {
 	methods := pkg.c.findMethods(typeName)
-	for sig, fn := range methods {
-		target.c.Funcs[sig] = fn.ForAlias(target.Name())
+	for _, fn := range methods {
+		alias := fn.ForAlias(target.Name(), typeName, aliasName)
+		target.c.Funcs[alias.signature()] = alias
 	}
 }
 
@@ -256,7 +261,12 @@ func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg
 			pkgPath := a.QualifiedName[:dot]      // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
 			sourceName := a.QualifiedName[dot+1:] // DeleteOptions
 			if p, ok := packages[pkgPath]; ok {
-				return recursiveFindTypeDef(sourceName, p, packages)
+				def, found := recursiveFindTypeDef(sourceName, p, packages)
+				if found && !a.isAlias {
+					def.methodPackage = source
+					def.methodName = a.Name
+				}
+				return def, found
 			}
 			break
 		}

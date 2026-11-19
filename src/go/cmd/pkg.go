@@ -190,6 +190,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.MapType:
 				// "type opValues map[reflect.Type]interface{}"
 				txt := p.getText(t.Pos(), t.End())
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
@@ -206,6 +207,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 							Name:          x.Name.Name,
 							Package:       p,
 							QualifiedName: impPath + "." + t.Sel.Name,
+							isAlias:       x.Assign.IsValid(),
 						}
 						p.TypeAliases = append(p.TypeAliases, &ta)
 					} else {
@@ -335,6 +337,8 @@ type TypeAlias struct {
 	// SourceMod is the module defining the type
 	SourceMod module.Version
 
+	// isAlias distinguishes an alias from a new type with the same underlying type.
+	isAlias bool
 	// resolved indicates whether the alias has been resolved
 	resolved bool
 }
@@ -348,7 +352,12 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 		return fmt.Errorf("alias %s already resolved", a.Name)
 	}
 	if def != (typeDef{}) {
-		a.Package.types[a.Name] = def
+		exportedDef := def
+		if !a.isAlias {
+			exportedDef.methodPackage = a.Package
+			exportedDef.methodName = a.Name
+		}
+		a.Package.types[a.Name] = exportedDef
 	}
 	level := CodeDiagnosticLevelInfo
 	originalName := a.QualifiedName
@@ -371,7 +380,7 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 			t = a.Package.c.addInterface(*def.p, a.Name, a.Package.Name(), n, nil)
 		case *ast.StructType:
 			t = a.Package.c.addStruct(*def.p, a.Name, a.Package.Name(), def.n, nil)
-			hoistMethodsForType(def.p, a.Name, a.Package)
+			a.hoistMethods(def)
 			// ensure that all struct field types that are structs are also aliased from this package
 			for _, field := range n.Fields.List {
 				fieldTypeName := unwrapStructFieldTypeName(field)
@@ -401,10 +410,13 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 			}
 		case *ast.Ident:
 			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), def.n.Type.(*ast.Ident).Name, nil)
-			hoistMethodsForType(def.p, a.Name, a.Package)
+			a.hoistMethods(def)
+		case *ast.ArrayType, *ast.FuncType, *ast.IndexExpr, *ast.IndexListExpr, *ast.MapType:
+			underlying := def.p.getText(def.n.Type.Pos(), def.n.Type.End())
+			t = a.Package.c.addSimpleType(*def.p, a.Name, a.Package.Name(), underlying, nil)
+			a.hoistMethods(def)
 		default:
-			fmt.Printf("unexpected node type %T\n", def.n.Type)
-			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), originalName, nil)
+			return fmt.Errorf("unsupported type %T for alias %s.%s", def.n.Type, a.Package.Name(), a.Name)
 		}
 	}
 
@@ -419,10 +431,24 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	return nil
 }
 
+func (a *TypeAlias) hoistMethods(def typeDef) {
+	if !a.isAlias {
+		return
+	}
+	pkg, name := def.p, def.n.Name.Name
+	if def.methodPackage != nil {
+		pkg, name = def.methodPackage, def.methodName
+	}
+	hoistMethodsForType(pkg, name, a.Package, a.Name)
+}
+
 // TODO: could be replaced by TokenMaker
 type typeDef struct {
 	// n is the AST node defining the type
 	n *ast.TypeSpec
 	// p is the package defining the type
 	p *Pkg
+	// methodPackage and methodName identify a defined type whose underlying type is n.
+	methodPackage *Pkg
+	methodName    string
 }

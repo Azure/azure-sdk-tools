@@ -151,21 +151,14 @@ type Func struct {
 func NewFunc(pkg Pkg, f *ast.FuncDecl, imports map[string]string) Func {
 	fn := newFunc(pkg, f.Type, imports)
 	fn.name = f.Name.Name
-	sig := ""
 	if f.Recv != nil {
 		fn.ReceiverType = pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
 		if len(f.Recv.List[0].Names) != 0 {
 			fn.ReceiverName = f.Recv.List[0].Names[0].Name
 		}
-		if fn.ReceiverName != "" {
-			sig = fmt.Sprintf("(%s %s) ", fn.ReceiverName, fn.ReceiverType)
-		} else {
-			sig = fmt.Sprintf("(%s) ", fn.ReceiverType)
-		}
 	}
-	fn.exported = !isOnUnexportedMember(sig) && unicode.IsUpper(rune(fn.name[0]))
-	sig += f.Name.Name
-	fn.id = pkg.Name() + "-" + sig
+	fn.exported = !isOnUnexportedMember(fn.signature()) && unicode.IsUpper(rune(fn.name[0]))
+	fn.id = pkg.Name() + "-" + fn.signature()
 	return fn
 }
 
@@ -217,14 +210,26 @@ func (f Func) ID() string {
 	return f.id
 }
 
-func (f Func) ForAlias(pkg string) Func {
-	clone := f
-	// replace everything to the left of - with the new package name
-	i := strings.Index(clone.id, "-")
-	if i < 0 {
-		panic("missing sig separator in id")
+func (f Func) signature() string {
+	if f.ReceiverType == "" {
+		return f.name
 	}
-	clone.id = pkg + clone.id[i:]
+	if f.ReceiverName == "" {
+		return fmt.Sprintf("(%s) %s", f.ReceiverType, f.name)
+	}
+	return fmt.Sprintf("(%s %s) %s", f.ReceiverName, f.ReceiverType, f.name)
+}
+
+func (f Func) ForAlias(pkg, typeName, aliasName string) Func {
+	clone := f
+	prefix := ""
+	receiver := clone.ReceiverType
+	if strings.HasPrefix(receiver, "*") {
+		prefix = "*"
+		receiver = strings.TrimPrefix(receiver, "*")
+	}
+	clone.ReceiverType = prefix + aliasName + strings.TrimPrefix(receiver, typeName)
+	clone.id = pkg + "-" + clone.signature()
 	return clone
 }
 

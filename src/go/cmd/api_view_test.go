@@ -6,8 +6,10 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"go/ast"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -222,6 +224,120 @@ func TestAliasDefinitions(t *testing.T) {
 			require.True(t, found, "review doesn't contain the aliased struct's definition")
 		})
 	}
+}
+
+func TestAliasCompositeDefinitions(t *testing.T) {
+	dir := t.TempDir()
+	files := map[string]string{
+		"go.mod": "module example.com/aliastest\n\ngo 1.21\n",
+		"alias.go": `package aliastest
+import (
+	"example.com/aliastest/internal/bridge"
+	"example.com/aliastest/internal/types"
+)
+type Slice = types.Data
+type AnotherSlice = types.Data
+type Map = types.StringMap
+type Handler = types.Callback
+type Status = types.Code
+type Record = types.Entry
+type Defined types.Data
+func (Defined) Local() {}
+type Indirect = bridge.Defined
+`,
+		"internal/bridge/bridge.go": `package bridge
+import "example.com/aliastest/internal/types"
+type Defined types.Data
+func (Defined) BridgeOnly() {}
+`,
+		"internal/types/types.go": `package types
+type Data []byte
+func (Data) Len() int { return 0 }
+func (*Data) Reset() {}
+type StringMap map[string]int
+func (StringMap) Size() int { return 0 }
+type Callback func(int) string
+func (Callback) Call() string { return "" }
+type Code string
+func (Code) Label() string { return "" }
+type Entry struct{}
+func (Entry) Valid() bool { return true }
+`,
+	}
+	for name, content := range files {
+		p := filepath.Join(dir, filepath.FromSlash(name))
+		require.NoError(t, os.MkdirAll(filepath.Dir(p), 0755))
+		require.NoError(t, os.WriteFile(p, []byte(content), 0644))
+	}
+
+	typeText := func(line ReviewLine) string {
+		var b strings.Builder
+		for _, token := range line.Tokens {
+			b.WriteString(token.Value)
+		}
+		return b.String()
+	}
+	findLine := func(t *testing.T, review CodeFile, id string) ReviewLine {
+		t.Helper()
+		var found ReviewLine
+		forAll(review.ReviewLines, func(line ReviewLine) {
+			if line.LineID == id {
+				found = line
+			}
+		})
+		require.Equal(t, id, found.LineID, "missing definition")
+		return found
+	}
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	for _, test := range []struct {
+		name, definition string
+		methods          []string
+		absent           []string
+	}{
+		{"Slice", "[]byte", []string{"Len", "Reset"}, nil},
+		{"AnotherSlice", "[]byte", []string{"Len", "Reset"}, nil},
+		{"Map", "map[string]int", []string{"Size"}, nil},
+		{"Handler", "func(int)string", []string{"Call"}, nil},
+		{"Status", "string", []string{"Label"}, nil},
+		{"Record", "", []string{"Valid"}, nil},
+		{"Defined", "[]byte", []string{"Local"}, []string{"Len", "Reset"}},
+		{"Indirect", "[]byte", []string{"BridgeOnly"}, []string{"Len", "Reset"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			line := findLine(t, review, "aliastest."+test.name)
+			if test.definition != "" {
+				require.Equal(t, "type"+test.name+test.definition, typeText(line))
+			}
+			for _, method := range test.methods {
+				require.True(t, searchLines(line.Children, func(child ReviewLine) bool {
+					return strings.Contains(child.LineID, "aliastest-(") &&
+						strings.Contains(typeText(child), test.name+")"+method+"(")
+				}), "missing method %s on %s", method, test.name)
+			}
+			for _, method := range test.absent {
+				require.False(t, searchLines(line.Children, func(child ReviewLine) bool {
+					return strings.Contains(typeText(child), test.name+")"+method+"(")
+				}), "unexpected method %s on %s", method, test.name)
+			}
+		})
+	}
+
+	sourcePath := filepath.Join(dir, "internal", "types", "types.go")
+	changed := strings.Replace(files["internal/types/types.go"], "[]byte", "[]rune", 1)
+	changed = strings.Replace(changed, "map[string]int", "map[string]int64", 1)
+	require.NoError(t, os.WriteFile(sourcePath, []byte(changed), 0644))
+	changedReview, err := createReview(dir)
+	require.NoError(t, err)
+	require.Equal(t, "typeSlice[]rune", typeText(findLine(t, changedReview, "aliastest.Slice")))
+	require.Equal(t, "typeMapmap[string]int64", typeText(findLine(t, changedReview, "aliastest.Map")))
+}
+
+func TestAliasUnsupportedDefinition(t *testing.T) {
+	p := &Pkg{modulePath: "example.com/aliastest", relName: "aliastest", c: newContent(), types: map[string]typeDef{}}
+	alias := TypeAlias{Name: "Alias", Package: p, QualifiedName: "example.com/aliastest/internal.Channel", isAlias: true}
+	def := typeDef{n: &ast.TypeSpec{Name: ast.NewIdent("Channel"), Type: &ast.ChanType{}}, p: p}
+	require.ErrorContains(t, alias.Resolve(def), "unsupported type *ast.ChanType")
 }
 
 func TestRecursiveAliasDefinitions(t *testing.T) {

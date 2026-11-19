@@ -10,6 +10,7 @@ export type GenerateInput = {
   apiVersion?: string;
   runMode: string;
   sdkReleaseType?: string;
+  typespecEmitter?: string;
   changedFiles: string[];
   relatedReadmeMdFiles?: string[];
   relatedTypeSpecProjectFolder?: string[];

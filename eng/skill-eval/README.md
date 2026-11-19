@@ -14,6 +14,10 @@ This folder exists solely to give the [Skill Evaluations GitHub Actions workflow
 
 ## Local skill linting
 
+Use Node.js 24 to match the lint, coverage-check and trusted-reporting jobs. The
+coverage checker requires Node 24.14.1 or later. Dependency `engines` entries state
+minimum supported versions; they do not select the runtime used by these jobs.
+
 Reproduce exactly what CI does by installing from the same lockfile and invoking the local binary:
 
 ```sh
@@ -26,3 +30,16 @@ cd ../..
 This matches the CI job step-for-step, so a green local run on the current lockfile means a green CI run.
 
 A global install (`npm install -g @microsoft/vally-cli@<version>`) still works for ad-hoc iteration, but it won't match the transitive dependency tree CI uses and isn't a substitute for the steps above when validating a version bump.
+
+## Skill Eval coverage warnings
+
+The same workflow also runs the separate
+[skill Eval coverage checker](../common/scripts/skill-eval-coverage/README.md).
+It reports whether changed skills have associated Evals in their own folders,
+without reading pipeline configuration; it does not run those
+Evals. Missing coverage is warning-only, and the existing lint job remains blocking.
+A trusted follow-up workflow updates one PR comment for either outcome, including
+the Eval dashboard and authoring-guide links. See the checker guide for local
+commands, folder conventions, fork safety and rollout limits. Script tests run in
+a separate workflow, and the checker package uses a frozen pnpm install. Semantic
+coverage is a separate advisory follow-up, not part of this presence check.

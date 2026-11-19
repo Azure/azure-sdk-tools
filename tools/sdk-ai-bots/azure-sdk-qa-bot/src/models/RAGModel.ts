@@ -51,7 +51,11 @@ export class RAGModel implements PromptCompletionModel {
       endpoint: ragEndpoint,
       accessToken: token ? token.token : undefined
     };
-    logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
+    logger.info('Received activity', {
+      activityId: context.activity.id,
+      attachmentCount: context.activity.attachments?.length ?? 0,
+      meta,
+    });
 
     const thinkingHandler = new ThinkingHandler(context, this.conversationHandler, this.tenantConfigManager);
 
@@ -64,7 +68,10 @@ export class RAGModel implements PromptCompletionModel {
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
     const completionPayload = this.convertFullPromptToCompletionRequestPayload(fullPrompt, ragTenantId);
 
-    logger.info('prompt to RAG', { prompt: fullPrompt, meta });
+    logger.info('prompt to RAG', {
+      prompt: { ...fullPrompt, additionalInfo: { imageCount: fullPrompt.additionalInfo.images.length } },
+      meta,
+    });
     let ragReply = await getRAGReply(completionPayload, ragOptions, meta);
     if (!ragReply) {
       ragReply = {

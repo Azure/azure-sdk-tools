@@ -8,6 +8,7 @@
 
 ### Bugs Fixed
 
+- Overdue release-plan maintenance now reports per-plan cleanup, notification, skip, and failure outcomes with release-plan and work-item IDs, summary counts, and warnings in text and JSON. Successful generic reminders and best-effort abandonment confirmation failures no longer fail the command. Cleanup evaluation, update, and reminder-send failures remain errors.
 - `api-review create`, `package get-approval-status`, and `package mark-released` now accept the same language aliases and normalize them for API Review Hub and APIView. Both `js` and `javascript` are sent to API Review Hub as `javascript`, to APIView as `JavaScript`, and default to `azure-sdk-for-js` when creating a review.
 
 ### Other Changes

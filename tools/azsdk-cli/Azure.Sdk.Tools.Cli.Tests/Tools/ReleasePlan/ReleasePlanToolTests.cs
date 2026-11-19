@@ -3216,9 +3216,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var response = await CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object, client: client)
                 .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
 
-            Assert.That(response.ExitCode, Is.EqualTo(1), "The lookup failure must remain visible even when a reminder is sent.");
-            Assert.That(response.ResponseErrors, Has.Count.EqualTo(failFirstSend ? 2 : 1));
-            Assert.That(response.ResponseErrors, Has.Some.Contains("381"));
+            Assert.That(response.ExitCode, Is.EqualTo(failFirstSend ? 1 : 0));
+            Assert.That(response.ResponseErrors ?? [], Has.Count.EqualTo(failFirstSend ? 1 : 0));
+            Assert.That(response.Warnings, Has.Some.Contains("381"));
+            Assert.That(response.MaintenanceResults!.Single(result => result.WorkItemId == 381).Outcome,
+                Is.EqualTo(failFirstSend ? ReleasePlanMaintenanceOutcome.Failed : ReleasePlanMaintenanceOutcome.Delivered));
             Assert.That(captured, Has.Count.EqualTo(2));
             var genericBody = captured[0].GetProperty("Body").GetString()!;
             Assert.That(genericBody, Does.Contain("This is a verification issue, not confirmation that your release is inactive"));
@@ -3317,8 +3319,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     notifyOwners: true, emailerUri: "https://notifications.example.com/send", ct: cts.Token);
 
                 Assert.That(response.ExitCode, Is.EqualTo(1));
-                Assert.That(response.ResponseErrors, Has.Count.EqualTo(2));
-                Assert.That(response.ResponseErrors, Has.Some.Contains("384").And.Contains("GitHub unavailable"));
+                Assert.That(response.ResponseErrors, Has.Count.EqualTo(1));
+                Assert.That(response.Warnings, Has.Some.Contains("384").And.Contains("GitHub unavailable"));
                 Assert.That(response.ResponseErrors, Has.Some.Contains("384").And.Contains("Email request timed out"));
                 Assert.That(captured, Has.Count.EqualTo(2));
                 Assert.That(captured[1].GetProperty("EmailTo").GetString(), Is.EqualTo("next@microsoft.com"));
@@ -3468,7 +3470,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             service.Verify(x => x.UpdateWorkItemAsync(601, It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
 
             var reminder = await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
-            Assert.That(reminder.ExitCode, Is.EqualTo(1));
+            Assert.That(reminder.ExitCode, Is.Zero);
+            Assert.That(reminder.Warnings, Has.Some.Contains("601"));
+            Assert.That(reminder.MaintenanceResults!.Single(result => result.WorkItemId == 601).Outcome,
+                Is.EqualTo(ReleasePlanMaintenanceOutcome.Delivered));
             Assert.That(captured.Single().GetProperty("Body").GetString(), Does.Contain("verification issue").And.Not.Contain("eligible for automatic abandonment now"));
         }
 
@@ -3735,13 +3740,147 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var response = await CreateOverdueMaintenanceTool(service.Object, notification: notifications.Object)
                 .AbandonOverdueReleasePlans();
 
-            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(response.ExitCode, Is.Zero);
             Assert.That(plan.Status, Is.EqualTo("Abandoned"));
             Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { plan }));
             Assert.That(response.EligibilityReasons![plan.WorkItemId], Does.Contain("no SDK pull requests are linked"));
             Assert.That(response.ToString(), Does.Contain("Abandoned 1").And.Contain("Status: Abandoned"));
             Assert.That(response.ToString(), Does.Contain(plan.ReleasePlanLink).And.Contain("Abandonment Reason:"));
-            Assert.That(response.ToString(), Does.Contain("Some plans could not be fully processed").And.Contain("Notification failed."));
+            Assert.That(response.Warnings, Has.One.Contains("404").And.Contains("Notification failed."));
+            Assert.That(response.ToString(), Does.Contain("Confirmation: Delivered: 0; Skipped: 0; Failed: 1").And.Contain("[WARNING]"));
+        }
+
+        [TestCase(NotificationStatus.Sent, ReleasePlanMaintenanceOutcome.Delivered)]
+        [TestCase(NotificationStatus.Disabled, ReleasePlanMaintenanceOutcome.Skipped)]
+        [TestCase(NotificationStatus.SkippedNoRecipients, ReleasePlanMaintenanceOutcome.Skipped)]
+        [TestCase(NotificationStatus.Failed, ReleasePlanMaintenanceOutcome.Failed)]
+        public async Task Test_abandon_overdue_reports_returned_confirmation_outcome_without_reversing_cleanup(
+            NotificationStatus status, ReleasePlanMaintenanceOutcome expectedOutcome)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 405, ReleasePlanId = 45, Revision = 7, Status = "In Progress",
+                ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026", ChangedDate = _inactiveMaintenanceDate
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            service.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+            var notifications = new Mock<INotificationService>(MockBehavior.Strict);
+            notifications.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new NotificationResult(status, status == NotificationStatus.Failed ? "HTTP 503" : null));
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notifications.Object)
+                .AbandonOverdueReleasePlans();
+
+            Assert.That(response.ExitCode, Is.Zero);
+            Assert.That(plan.Status, Is.EqualTo("Abandoned"));
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { plan }));
+            Assert.That(response.MaintenanceResults, Has.Count.EqualTo(2));
+            var cleanup = response.MaintenanceResults!.Single(result => result.Operation == ReleasePlanMaintenanceOperation.Cleanup);
+            var confirmation = response.MaintenanceResults.Single(result => result.Operation == ReleasePlanMaintenanceOperation.Confirmation);
+            Assert.That(cleanup.Outcome, Is.EqualTo(ReleasePlanMaintenanceOutcome.Abandoned));
+            Assert.That(confirmation.Outcome, Is.EqualTo(expectedOutcome));
+            Assert.That(confirmation.ReleasePlanId, Is.EqualTo(45));
+            Assert.That(confirmation.WorkItemId, Is.EqualTo(405));
+            Assert.That(confirmation.ReleasePlanLink, Is.EqualTo(plan.ReleasePlanLink));
+            Assert.That(response.Warnings ?? [], Has.Count.EqualTo(status == NotificationStatus.Sent ? 0 : 1));
+            if (status != NotificationStatus.Sent)
+            {
+                Assert.That(response.Warnings, Has.One.Contains("45").And.Contains("405").And.Contains("remains Abandoned"));
+            }
+            service.Verify(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task Test_abandon_overdue_reports_every_processed_plan_with_identifiers(bool dryRun)
+        {
+            var eligible = new ReleasePlanWorkItem
+            {
+                WorkItemId = 801, ReleasePlanId = 81, Revision = 7, ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "September 2026", ChangedDate = _inactiveMaintenanceDate
+            };
+            var grace = new ReleasePlanWorkItem
+            {
+                WorkItemId = 802, ReleasePlanId = 82, Revision = 7, ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "October 2026", ChangedDate = _inactiveMaintenanceDate
+            };
+            var invalid = new ReleasePlanWorkItem
+            {
+                WorkItemId = 803, ReleasePlanId = 83, Revision = 0, ApiReleaseType = ApiReleaseType.GA,
+                SDKReleaseMonth = "September 2026", ChangedDate = _inactiveMaintenanceDate
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([eligible, grace, invalid]);
+            service.Setup(x => x.UpdateWorkItemAsync(801, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+            var notifications = new Mock<INotificationService>(MockBehavior.Strict);
+            notifications.Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(NotificationResult.Sent);
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notifications.Object)
+                .AbandonOverdueReleasePlans(dryRun);
+
+            var operation = dryRun ? ReleasePlanMaintenanceOperation.Preview : ReleasePlanMaintenanceOperation.Cleanup;
+            var outcomes = response.MaintenanceResults!.Where(result => result.Operation == operation).ToList();
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(outcomes.Select(result => result.WorkItemId), Is.EquivalentTo(new[] { 801, 802, 803 }));
+            Assert.That(outcomes.Select(result => result.ReleasePlanId), Is.EquivalentTo(new[] { 81, 82, 83 }));
+            Assert.That(outcomes.Single(result => result.WorkItemId == 801).Outcome,
+                Is.EqualTo(dryRun ? ReleasePlanMaintenanceOutcome.Eligible : ReleasePlanMaintenanceOutcome.Abandoned));
+            Assert.That(outcomes.Single(result => result.WorkItemId == 802).Outcome, Is.EqualTo(ReleasePlanMaintenanceOutcome.Skipped));
+            Assert.That(outcomes.Single(result => result.WorkItemId == 802).Reason, Does.Contain("grace period"));
+            Assert.That(outcomes.Single(result => result.WorkItemId == 803).Outcome, Is.EqualTo(ReleasePlanMaintenanceOutcome.Failed));
+            Assert.That(outcomes.All(result => !string.IsNullOrWhiteSpace(result.Reason) && !string.IsNullOrWhiteSpace(result.ReleasePlanLink)), Is.True);
+            Assert.That(response.MaintenanceSummary![operation.ToString()]["Failed"], Is.EqualTo(1));
+            service.Verify(x => x.UpdateWorkItemAsync(801, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()),
+                Times.Exactly(dryRun ? 0 : 1));
+            notifications.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(dryRun ? 0 : 1));
+        }
+
+        [Test]
+        public async Task Test_overdue_reminders_summarize_delivered_failed_and_intentionally_skipped_plans()
+        {
+            var failed = new ReleasePlanWorkItem
+            {
+                WorkItemId = 901, ReleasePlanId = 91, ApiReleaseType = ApiReleaseType.GA, ReleasePlanSubmittedByEmail = "first@microsoft.com"
+            };
+            var missingEmail = new ReleasePlanWorkItem { WorkItemId = 902, ReleasePlanId = 92, ApiReleaseType = ApiReleaseType.GA };
+            var completedSpec = new ReleasePlanWorkItem
+            {
+                WorkItemId = 903, ReleasePlanId = 93, ApiReleaseType = ApiReleaseType.PrivatePreview,
+                ReleasePlanSubmittedByEmail = "private@microsoft.com", ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs/pull/42"
+            };
+            var delivered = new ReleasePlanWorkItem
+            {
+                WorkItemId = 904, ReleasePlanId = 94, ApiReleaseType = ApiReleaseType.GA, ReleasePlanSubmittedByEmail = "last@microsoft.com"
+            };
+            var service = new Mock<IDevOpsService>(MockBehavior.Strict);
+            service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync([failed, missingEmail, completedSpec, delivered]);
+            var github = new Mock<IGitHubService>(MockBehavior.Strict);
+            github.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs", 42, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMaintenancePullRequest("closed", true));
+            var captured = new List<JsonElement>();
+            using var client = CreateMaintenanceEmailClient(captured, failFirst: true);
+
+            var response = await CreateOverdueMaintenanceTool(service.Object, github.Object, client: client)
+                .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
+
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(captured, Has.Count.EqualTo(2));
+            Assert.That(response.ResponseErrors, Has.One.Contains("901"));
+            Assert.That(response.Warnings, Has.One.Contains("92").And.Contains("902").And.Contains("missing or invalid"));
+            Assert.That(response.MaintenanceResults, Has.Count.EqualTo(4));
+            Assert.That(response.MaintenanceResults!.Single(result => result.WorkItemId == 901).Outcome, Is.EqualTo(ReleasePlanMaintenanceOutcome.Failed));
+            Assert.That(response.MaintenanceResults.Single(result => result.WorkItemId == 902).Outcome, Is.EqualTo(ReleasePlanMaintenanceOutcome.Skipped));
+            Assert.That(response.MaintenanceResults.Single(result => result.WorkItemId == 903).Outcome, Is.EqualTo(ReleasePlanMaintenanceOutcome.Skipped));
+            Assert.That(response.MaintenanceResults.Single(result => result.WorkItemId == 904).Outcome, Is.EqualTo(ReleasePlanMaintenanceOutcome.Delivered));
+            Assert.That(response.ToString(), Does.Contain("Reminder: Delivered: 1; Skipped: 2; Failed: 1"));
+            Assert.That(response.ToString(), Does.Contain("Release Plan ID: 93 | Work Item ID: 903").And.Contain("has been merged"));
+            AssertDryRunHasNoSideEffects(service, new Mock<INotificationService>(MockBehavior.Strict));
         }
 
         [Test]

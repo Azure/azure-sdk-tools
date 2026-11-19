@@ -39,10 +39,39 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Dictionary<int, string>? SkippedPlans { get; set; }
 
+        [JsonPropertyName("maintenance_results")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<ReleasePlanMaintenanceResult>? MaintenanceResults { get; set; }
+
+        [JsonPropertyName("maintenance_summary")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, Dictionary<string, int>>? MaintenanceSummary => MaintenanceResults?
+            .GroupBy(result => result.Operation)
+            .ToDictionary(operation => operation.Key.ToString(), operation => (operation.Key switch
+            {
+                ReleasePlanMaintenanceOperation.Preview => new[]
+                {
+                    ReleasePlanMaintenanceOutcome.Eligible, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                },
+                ReleasePlanMaintenanceOperation.Cleanup => new[]
+                {
+                    ReleasePlanMaintenanceOutcome.Abandoned, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                },
+                _ => new[]
+                {
+                    ReleasePlanMaintenanceOutcome.Delivered, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                }
+            }).ToDictionary(outcome => outcome.ToString(), outcome => operation.Count(result => result.Outcome == outcome)));
+
+        [JsonPropertyName("warnings")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? Warnings { get; set; }
+
         public override string ToString()
         {
             // Preserve partial results and summaries alongside errors in either mode.
-            return OperationStatus == Status.Failed && (ReleasePlanDetailsList != null || !string.IsNullOrWhiteSpace(Message))
+            return OperationStatus == Status.Failed && (ReleasePlanDetailsList != null || !string.IsNullOrWhiteSpace(Message)
+                || MaintenanceResults?.Count > 0 || Warnings?.Count > 0)
                 ? Format() + Environment.NewLine + base.ToString()
                 : base.ToString();
         }
@@ -53,6 +82,30 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
             if (!string.IsNullOrWhiteSpace(Message))
             {
                 result.AppendLine(Message);
+            }
+            if (MaintenanceSummary != null)
+            {
+                result.AppendLine("Maintenance summary:");
+                if (MaintenanceSummary.Count == 0)
+                {
+                    result.AppendLine("No maintenance actions were performed.");
+                }
+                foreach (var (operation, outcomes) in MaintenanceSummary)
+                {
+                    result.AppendLine($"{operation}: {string.Join("; ", outcomes.Select(outcome => $"{outcome.Key}: {outcome.Value}"))}");
+                }
+            }
+            if (MaintenanceResults?.Count > 0)
+            {
+                result.AppendLine("Per-plan maintenance outcomes:");
+                foreach (var outcome in MaintenanceResults)
+                {
+                    result.AppendLine($"[{outcome.Outcome.ToString().ToUpperInvariant()}] {outcome.Operation} | Release Plan ID: {outcome.ReleasePlanId} | Work Item ID: {outcome.WorkItemId} | {outcome.Reason} | {outcome.ReleasePlanLink}");
+                }
+            }
+            foreach (var warning in Warnings ?? [])
+            {
+                result.AppendLine($"[WARNING] {warning}");
             }
             if (PreviewSummary != null)
             {

@@ -2234,7 +2234,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 };
                 if (notifyOwners)
                 {
-                    var errors = await NotifyOwnersOfOverdueReleasePlans(releasePlans, emailerUri, ct);
+                    response.MaintenanceResults = [];
+                    response.Message = $"Overdue reminder results for {releasePlans.Count} release plan(s). Delivered means accepted by the notification service; inbox delivery is not verified.";
+                    var errors = await NotifyOwnersOfOverdueReleasePlans(releasePlans, emailerUri, response, ct);
                     if (errors.Count > 0)
                     {
                         response.ResponseErrors = errors;
@@ -2260,10 +2262,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 DryRun = dryRun,
                 EligibilityReasons = new Dictionary<int, string>(),
+                MaintenanceResults = [],
                 NextSteps = dryRun
                     ? ["This is a point-in-time preview. A later run re-evaluates eligibility and may skip plans that changed."]
                     : null
             };
+            var operation = dryRun ? ReleasePlanMaintenanceOperation.Preview : ReleasePlanMaintenanceOperation.Cleanup;
             try
             {
                 ct.ThrowIfCancellationRequested();
@@ -2282,12 +2286,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var skippedPlans = dryRun ? new Dictionary<int, string>() : null;
                 var skippedByReason = new Dictionary<string, int>();
 
-                void RecordSkippedPlan(ReleasePlanWorkItem plan, string category, string? reason = null)
+                void RecordSkippedPlan(ReleasePlanWorkItem plan, string category, string? reason = null, string? outcomeReason = null)
                 {
+                    var explanation = outcomeReason ?? reason ?? category switch
+                    {
+                        "invalid_target_month" => "The target release month is missing or invalid.",
+                        "grace_period" => "The plan is in its reminder-only calendar-month grace period.",
+                        "not_overdue" => "The target release month is not overdue.",
+                        _ => category.Replace('_', ' ')
+                    };
+                    RecordMaintenanceResult(response, plan, operation, ReleasePlanMaintenanceOutcome.Skipped, explanation);
                     if (reason != null)
                     {
                         response.EligibilityReasons[plan.WorkItemId] = reason;
-                        logger.LogInformation("Skipped overdue release plan {WorkItemId}: {Reason}", plan.WorkItemId, reason);
                     }
                     if (skippedPlans == null)
                     {
@@ -2328,7 +2339,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         var assessment = await EvaluateReleasePlanWorkAsync(releasePlan, ct);
                         if (!assessment.IsInactive)
                         {
-                            RecordSkippedPlan(releasePlan, assessment.Category);
+                            RecordSkippedPlan(releasePlan, assessment.Category, outcomeReason: assessment.Reason);
                             continue;
                         }
 
@@ -2351,6 +2362,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         {
                             resultPlans.Add(releasePlan);
                             response.EligibilityReasons[releasePlan.WorkItemId] = reason;
+                            RecordMaintenanceResult(response, releasePlan, operation, ReleasePlanMaintenanceOutcome.Eligible, reason);
                             continue;
                         }
 
@@ -2365,16 +2377,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             var error = $"Failed to abandon overdue release plan {releasePlan.WorkItemId}: work item update returned null.";
                             logger.LogError("{Error}", error);
                             responseErrors.Add(error);
+                            RecordMaintenanceResult(response, releasePlan, operation, ReleasePlanMaintenanceOutcome.Failed, error);
                             continue;
                         }
 
                         releasePlan.Status = "Abandoned";
                         resultPlans.Add(releasePlan);
                         response.EligibilityReasons[releasePlan.WorkItemId] = reason;
-                        await notificationService.SendEmailNotificationAsync(
-                            new PastDueReleasePlanEmail(releasePlan, assessment.Reason, _timeProvider.GetUtcNow()), ct);
+                        RecordMaintenanceResult(response, releasePlan, operation, ReleasePlanMaintenanceOutcome.Abandoned, reason);
                         ct.ThrowIfCancellationRequested();
-                        logger.LogInformation("Abandoned overdue release plan {WorkItemId}", releasePlan.WorkItemId);
+                        await SendAbandonmentConfirmationAsync(response, releasePlan, assessment.Reason, ct);
+                        ct.ThrowIfCancellationRequested();
                     }
                     catch (OperationCanceledException)
                     {
@@ -2386,6 +2399,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         var action = dryRun ? "evaluate" : "abandon";
                         logger.LogError(ex, "Failed to {Action} overdue release plan {WorkItemId}", action, releasePlan.WorkItemId);
                         responseErrors.Add($"Failed to {action} overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                        RecordMaintenanceResult(response, releasePlan, operation, ReleasePlanMaintenanceOutcome.Failed, ex.Message);
                     }
                 }
 
@@ -2558,7 +2572,74 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private async Task<List<string>> NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri, CancellationToken ct)
+        private void RecordMaintenanceResult(ReleasePlanListResponse response, ReleasePlanWorkItem plan,
+            ReleasePlanMaintenanceOperation operation, ReleasePlanMaintenanceOutcome outcome, string reason)
+        {
+            var result = new ReleasePlanMaintenanceResult
+            {
+                ReleasePlanId = plan.ReleasePlanId > 0 ? plan.ReleasePlanId : plan.WorkItemId,
+                WorkItemId = plan.WorkItemId,
+                ReleasePlanLink = plan.ReleasePlanLink,
+                Operation = operation,
+                Outcome = outcome,
+                Reason = reason
+            };
+            (response.MaintenanceResults ??= []).Add(result);
+            var level = outcome == ReleasePlanMaintenanceOutcome.Failed
+                ? operation == ReleasePlanMaintenanceOperation.Confirmation ? LogLevel.Warning : LogLevel.Error
+                : LogLevel.Information;
+            logger.Log(level, "{Operation} {Outcome}: Release Plan ID {ReleasePlanId}, work item {WorkItemId}. {Reason} Dashboard: {ReleasePlanLink}",
+                operation, outcome, result.ReleasePlanId, result.WorkItemId, reason, result.ReleasePlanLink);
+        }
+
+        private void RecordMaintenanceWarning(ReleasePlanListResponse response, ReleasePlanWorkItem plan, string message, Exception? exception = null)
+        {
+            var planId = plan.ReleasePlanId > 0 ? plan.ReleasePlanId : plan.WorkItemId;
+            var warning = $"Release Plan ID {planId}, work item {plan.WorkItemId}: {message}";
+            (response.Warnings ??= []).Add(warning);
+            logger.LogWarning(exception, "{Warning}", warning);
+        }
+
+        private async Task SendAbandonmentConfirmationAsync(ReleasePlanListResponse response, ReleasePlanWorkItem plan,
+            string reason, CancellationToken ct)
+        {
+            try
+            {
+                var delivery = await notificationService.SendEmailNotificationAsync(
+                    new PastDueReleasePlanEmail(plan, reason, _timeProvider.GetUtcNow()), ct);
+                var outcome = delivery?.Status switch
+                {
+                    NotificationStatus.Sent => ReleasePlanMaintenanceOutcome.Delivered,
+                    NotificationStatus.Disabled or NotificationStatus.SkippedNoRecipients => ReleasePlanMaintenanceOutcome.Skipped,
+                    _ => ReleasePlanMaintenanceOutcome.Failed
+                };
+                var explanation = delivery?.Status switch
+                {
+                    NotificationStatus.Sent => "Abandonment confirmation accepted by the notification service; inbox delivery is not verified.",
+                    NotificationStatus.Disabled => "Abandonment confirmation skipped because the notification service URL is not configured.",
+                    NotificationStatus.SkippedNoRecipients => "Abandonment confirmation skipped because no valid recipients were available.",
+                    _ => delivery?.ErrorMessage ?? "The notification service did not return a successful delivery outcome."
+                };
+                RecordMaintenanceResult(response, plan, ReleasePlanMaintenanceOperation.Confirmation, outcome, explanation);
+                if (outcome != ReleasePlanMaintenanceOutcome.Delivered)
+                {
+                    RecordMaintenanceWarning(response, plan, $"The plan remains Abandoned. {explanation}");
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                ct.ThrowIfCancellationRequested();
+                RecordMaintenanceResult(response, plan, ReleasePlanMaintenanceOperation.Confirmation, ReleasePlanMaintenanceOutcome.Failed, ex.Message);
+                RecordMaintenanceWarning(response, plan, $"The plan remains Abandoned, but its confirmation failed: {ex.Message}", ex);
+            }
+        }
+
+        private async Task<List<string>> NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri,
+            ReleasePlanListResponse response, CancellationToken ct)
         {
             var errors = new List<string>();
 
@@ -2570,8 +2651,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Validate email address
                 if (string.IsNullOrWhiteSpace(releaseOwnerEmail) || !Regex.IsMatch(releaseOwnerEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase))
                 {
-                    logger.LogWarning("Skipped notification for Release Plan ID {WorkItemId}: invalid email '{Email}'",
-                        releasePlan.WorkItemId, releaseOwnerEmail);
+                    const string reason = "Reminder skipped because the owner email is missing or invalid.";
+                    RecordMaintenanceResult(response, releasePlan, ReleasePlanMaintenanceOperation.Reminder, ReleasePlanMaintenanceOutcome.Skipped, reason);
+                    RecordMaintenanceWarning(response, releasePlan, reason);
                     continue;
                 }
 
@@ -2587,6 +2669,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             hasInactiveWork = assessment.IsInactive;
                             workReason = assessment.Reason;
                         }
+                        else
+                        {
+                            RecordMaintenanceWarning(response, releasePlan, "The release type is unknown; a generic reminder will be attempted.");
+                        }
                     }
                     catch (OperationCanceledException) when (ct.IsCancellationRequested)
                     {
@@ -2595,19 +2681,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     catch (Exception ex)
                     {
                         ct.ThrowIfCancellationRequested();
-                        logger.LogWarning(ex, "Could not determine release activity for overdue release plan {WorkItemId}; using a generic reminder",
-                            releasePlan.WorkItemId);
-                        errors.Add($"Could not determine release activity for overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                        RecordMaintenanceWarning(response, releasePlan,
+                            $"Could not determine release activity; a generic reminder will be attempted. {ex.Message}", ex);
                     }
 
                     ct.ThrowIfCancellationRequested();
                     if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview && hasInactiveWork == false)
                     {
                         // Private Preview completes at spec merge; do not request SDK publication.
+                        RecordMaintenanceResult(response, releasePlan, ReleasePlanMaintenanceOperation.Reminder,
+                            ReleasePlanMaintenanceOutcome.Skipped, workReason!);
                         continue;
                     }
                     var email = new OverdueReleasePlanEmail(releasePlan, hasInactiveWork, workReason, _timeProvider.GetUtcNow());
                     await SendEmailNotification(emailerUri, releaseOwnerEmail, sdkApexEmail, email.Subject, email.Body, ct);
+                    RecordMaintenanceResult(response, releasePlan, ReleasePlanMaintenanceOperation.Reminder,
+                        ReleasePlanMaintenanceOutcome.Delivered, hasInactiveWork.HasValue
+                            ? "Overdue reminder accepted by the notification service; inbox delivery is not verified."
+                            : "Generic reminder accepted by the notification service; inbox delivery is not verified.");
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
@@ -2618,6 +2709,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ct.ThrowIfCancellationRequested();
                     logger.LogError(ex, "Failed to notify owner of overdue release plan {WorkItemId}", releasePlan.WorkItemId);
                     errors.Add($"Failed to notify owner of overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                    RecordMaintenanceResult(response, releasePlan, ReleasePlanMaintenanceOperation.Reminder, ReleasePlanMaintenanceOutcome.Failed, ex.Message);
                 }
             }
             return errors;

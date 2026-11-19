@@ -112,6 +112,42 @@ A successful empty preview means no scanned plans qualify. It is a point-in-time
 assessment, not a reservation: an actual run re-evaluates eligibility, and a plan
 can change or its update can fail after the preview.
 
+## Per-plan maintenance results
+
+Cleanup, preview, and reminder responses include `maintenance_results`. Each entry
+identifies the release-plan ID (falling back to the work-item ID), the backing
+`work_item_id`, the dashboard link, the operation, its outcome, and a reason.
+Release-plan and work-item IDs can differ; both are printed in the logs.
+
+`maintenance_summary` groups counts by operation. The text summary includes zero
+counts so a missing failure count cannot be mistaken for an unknown result:
+
+```text
+Maintenance summary:
+Cleanup: Abandoned: 2; Skipped: 1; Failed: 0
+Confirmation: Delivered: 1; Skipped: 0; Failed: 1
+```
+
+- `Preview` reports `Eligible`, `Skipped`, and `Failed` without changing states or
+  sending notifications.
+- `Cleanup` reports `Abandoned`, `Skipped`, and `Failed`. Every scanned plan has
+  a result, including protected plans and plans with evaluation or update errors.
+- `Reminder` and `Confirmation` report `Delivered`, `Skipped`, and `Failed`.
+  `Delivered` means the notification service accepted the request; it does not
+  verify inbox delivery.
+- Cleanup and confirmation are independent outcomes. A successfully abandoned
+  plan remains `Abandoned` even if its confirmation is skipped or fails.
+- Missing reminder recipients are counted as skipped results with warnings.
+  A Private Preview plan whose spec PR is merged is an intentional skip.
+- `warnings` contains plan-specific follow-up details without changing the exit
+  code. Actual evaluation, update, and reminder-send errors remain in
+  `response_errors` and produce a nonzero exit code.
+
+Per-plan results are logged as work completes and repeated in the final response.
+Do not treat the number of listed plans as the number of delivered emails. Check
+the operation's summary and individual outcomes before retrying; rerunning the
+whole reminder batch can resend emails that were already accepted.
+
 ## Safety and failures
 
 - **Initial scan failure:** failure to retrieve the plans, including an unreadable
@@ -124,11 +160,15 @@ can change or its update can fail after the preview.
 - **Concurrent updates:** both modes require a valid work-item revision. Actual
   cleanup atomically checks that revision when changing the state. A revision
   conflict skips the plan with an error, without retry or confirmation email.
-- **Partial failures:** reported lookup, update, or reminder errors produce a
-  nonzero exit code while other plans continue. Preview identifies an incomplete
-  eligible list; actual cleanup retains only successful state changes. A fallback
-  reminder does not hide the lookup error. Confirmation delivery is best effort,
-  as described below.
+- **Partial failures:** cleanup evaluation or update errors and reminder-send
+  errors produce a nonzero exit code while other plans continue. Preview
+  identifies an incomplete eligible list; actual cleanup retains only successful
+  state changes.
+- **Warnings:** when a generic reminder is successfully sent after an assessment
+  failure, the lookup problem is reported as a warning, not a failed send.
+  Missing reminder recipients and skipped or failed abandonment confirmations
+  also produce warnings. Unknown approval or activity still prevents cleanup;
+  warning-only reminder results do not authorize abandonment.
 - **Cancellation:** stops further processing and the wait for a stalled GitHub
   read. It does not trigger a fallback email or undo completed state changes.
 
@@ -140,7 +180,8 @@ allow reads of linked repositories, including private specs. The CLI supports
 `GITHUB_TOKEN` or an existing GitHub CLI login.
 
 Reminders require `--notify-owners true`, a valid `--emailer-uri`, and a valid
-submitter email address. They report lookup and send failures to the caller.
+submitter email address. They report assessment warnings, skipped recipients,
+and actual send failures separately to the caller.
 Reminder and abandonment subjects are distinct. Both emails use the assessment's
 exact reason; missing PRs, closed PRs, unapproved open PRs, merged or approved PRs,
 and released SDKs are not conflated. Unrecognized release types and verification
@@ -156,8 +197,9 @@ HTML encoding, dashboard ID fallback, documentation and support links.
 Confirmation emails use `AZSDKTOOLS_NOTIFICATION_SERVICE_URL` and the shared
 notification service, which currently accepts only `@microsoft.com` recipients.
 A missing URL or unsupported recipient skips confirmation; delivery failures are
-logged and do not roll back abandonment. **A successful cleanup exit code does
-not guarantee email delivery.**
+logged, included in the per-plan confirmation result and warnings, and do not
+roll back abandonment. **A successful cleanup exit code does not guarantee email
+delivery.**
 
 The [unreleased-SDK pipeline](https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/report-unreleased-sdks.yml)
 is configured to run on `main` on the first day of each month at 00:00 UTC:
@@ -167,7 +209,8 @@ is configured to run on `main` on the first day of each month at 00:00 UTC:
 - Manual pipeline runs attempt reminders only; **they are not read-only previews**.
 - The cleanup step allows errors so reminders can still be attempted. Earlier
   setup failures or pipeline cancellation prevent subsequent steps from running;
-  a later reminder failure can still fail the job.
+  a later reminder-send failure can still fail the job. A successful generic
+  reminder with an assessment warning does not fail the reminder step.
 - Authorize the pipeline's service connections and configure its existing
   emailer secret. The pipeline installs the latest released CLI, not the checked-out
   source, so publish a version containing these commands before enabling the schedule.

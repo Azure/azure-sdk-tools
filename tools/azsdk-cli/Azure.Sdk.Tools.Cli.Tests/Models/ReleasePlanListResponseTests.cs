@@ -79,6 +79,55 @@ public class ReleasePlanListResponseTests
         Assert.That(json.RootElement.TryGetProperty("eligibility_reasons", out _), Is.False);
         Assert.That(json.RootElement.TryGetProperty("preview_summary", out _), Is.False);
         Assert.That(json.RootElement.TryGetProperty("skipped_plans", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("maintenance_results", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("maintenance_summary", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("warnings", out _), Is.False);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void MaintenanceResults_PreserveIndependentOutcomesAndWarnings(bool hasError)
+    {
+        var plan = new ReleasePlanWorkItem { WorkItemId = 400, ReleasePlanId = 42 };
+        var response = new ReleasePlanListResponse
+        {
+            ReleasePlanDetailsList = [plan],
+            MaintenanceResults =
+            [
+                new ReleasePlanMaintenanceResult
+                {
+                    ReleasePlanId = 42, WorkItemId = 400, ReleasePlanLink = plan.ReleasePlanLink,
+                    Operation = ReleasePlanMaintenanceOperation.Cleanup,
+                    Outcome = ReleasePlanMaintenanceOutcome.Abandoned, Reason = "State updated."
+                },
+                new ReleasePlanMaintenanceResult
+                {
+                    ReleasePlanId = 42, WorkItemId = 400, ReleasePlanLink = plan.ReleasePlanLink,
+                    Operation = ReleasePlanMaintenanceOperation.Confirmation,
+                    Outcome = ReleasePlanMaintenanceOutcome.Failed, Reason = "Notification service unavailable."
+                }
+            ],
+            Warnings = ["Release Plan ID 42 was abandoned, but its confirmation was not delivered."],
+            ResponseErrors = hasError ? ["Release Plan ID 43 could not be updated."] : []
+        };
+
+        var text = response.ToString();
+
+        Assert.That(response.ExitCode, Is.EqualTo(hasError ? 1 : 0));
+        Assert.That(text, Does.Contain("Cleanup: Abandoned: 1"));
+        Assert.That(text, Does.Contain("Confirmation: Delivered: 0; Skipped: 0; Failed: 1"));
+        Assert.That(text, Does.Contain("[ABANDONED] Cleanup | Release Plan ID: 42 | Work Item ID: 400"));
+        Assert.That(text, Does.Contain("[FAILED] Confirmation | Release Plan ID: 42 | Work Item ID: 400"));
+        Assert.That(text, Does.Contain(plan.ReleasePlanLink).And.Contain("[WARNING] Release Plan ID 42"));
+        Assert.That(text.IndexOf("Maintenance summary:", StringComparison.Ordinal),
+            Is.EqualTo(text.LastIndexOf("Maintenance summary:", StringComparison.Ordinal)));
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
+        Assert.That(json.RootElement.GetProperty("maintenance_results").GetArrayLength(), Is.EqualTo(2));
+        Assert.That(json.RootElement.GetProperty("maintenance_results")[0].GetProperty("operation").GetString(), Is.EqualTo("Cleanup"));
+        Assert.That(json.RootElement.GetProperty("maintenance_summary").GetProperty("Cleanup").GetProperty("Abandoned").GetInt32(), Is.EqualTo(1));
+        Assert.That(json.RootElement.GetProperty("maintenance_summary").GetProperty("Cleanup").GetProperty("Failed").GetInt32(), Is.Zero);
+        Assert.That(json.RootElement.GetProperty("maintenance_summary").GetProperty("Confirmation").GetProperty("Failed").GetInt32(), Is.EqualTo(1));
+        Assert.That(json.RootElement.GetProperty("warnings")[0].GetString(), Does.Contain("42"));
     }
 
     [TestCase(0)]

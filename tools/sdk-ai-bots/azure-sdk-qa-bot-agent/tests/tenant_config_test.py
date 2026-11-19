@@ -669,7 +669,7 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     skills = asyncio.run(
         FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
     )
-    assert [skill.frontmatter.name for skill in skills] == ["pr-review"]
+    assert {skill.frontmatter.name for skill in skills} == {"find-owner", "pr-review"}
     assert "pr-review" not in get_skill_to_tenant_map()
 
     init = (
@@ -706,6 +706,7 @@ def test_pr_review_skill_does_not_change_tenant_routing() -> None:
         )
 
     assert ChatService._extract_routed_tenant([load_skill_call("pr-review")]) is None
+    assert ChatService._extract_routed_tenant([load_skill_call("find-owner")]) is None
     assert ChatService._extract_routed_tenant(
         [load_skill_call("api-spec-review")]
     ) == TenantID.API_SPEC_REVIEW_BOT

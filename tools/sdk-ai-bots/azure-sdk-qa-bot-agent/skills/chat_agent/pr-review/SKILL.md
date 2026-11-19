@@ -21,4 +21,5 @@ For PR review, failure troubleshooting or compatibility questions, naming a red 
 
 6. **Understand the changes.** Read the description and relevant diffs when needed for the user's request and preflight findings. Size `get_files` pages to the requested scope; reduce `perPage` on overflow. Assess changes alongside checks and feedback; state coverage gaps. Explicit fresh code/design review proceeds even on draft/red-check PRs.
 
-7. **Review approval:** When approval is next, mention up to 3 verified requested reviewers/code owners from the PR or matching `CODEOWNERS` entries as `@github-handle`. Never invent handles; otherwise point to the Reviewers panel/CODEOWNERS. Use at most one `get_file_contents` for ownership.
+7. **Review approval:** Identify the required approval from the user's stated blocker and current PR merge guidance before selecting or resolving people.
+   **Owner selection:** For an outstanding GitHub review, use requested reviewers or matching `CODEOWNERS` unless the scenario guidance specifies different priorities. Select up to 3 qualified, verified reviewers/code owners. Use at most one `get_file_contents` for ownership.

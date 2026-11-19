@@ -62,7 +62,7 @@ export class RAGModel implements PromptCompletionModel {
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    const replyStartTimestamp = await thinkingHandler.start(conversationMessages);
+    const replyStartTimestamp = await thinkingHandler.prepare(conversationMessages);
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
@@ -81,14 +81,7 @@ export class RAGModel implements PromptCompletionModel {
         references: undefined,
       };
     }
-    // Best-effort cancel: safeCancelTimer can throw if the thinking loop can't be stopped.
-    // Swallow the error so stop() still updates the activity with the final reply.
-    try {
-      await thinkingHandler.safeCancelTimer();
-    } catch (error: any) {
-      logger.warn('safeCancelTimer failed unexpectedly, proceeding to deliver reply', { error: error?.message, meta });
-    }
-    await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
+    await thinkingHandler.sendReply(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
 
     return { status: 'success' };
   }

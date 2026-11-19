@@ -79,18 +79,27 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
     throw new Error(message);
   }
 
+  if (context.config.typespecEmitter && !tspConfigPath) {
+    context.status = 'notEnabled';
+    context.logger.warn(configWarning(
+      `Warning: cannot validate selected emitter '${context.config.typespecEmitter}' without 'tspConfigPath'. ` +
+        `SDK generation will be skipped. Provide 'tspConfigPath' to enable TypeSpec generation.`,
+    ));
+    return;
+  }
+
   if (tspConfigPath) {
     const tspConfigContent = fs.readFileSync(tspConfigPath).toString();
-    const config = findSDKToGenerateFromTypeSpecProject(tspConfigContent, context.specRepoConfig);
+    const config = findSDKToGenerateFromTypeSpecProject(tspConfigContent, context.specRepoConfig, context.config.typespecEmitter);
     if (!config || config.length === 0 || !config.includes(context.config.sdkName)) {
-      if (!twoConfigProvided) {
+      if (!twoConfigProvided || context.config.typespecEmitter) {
         context.status = 'notEnabled';
         let sampleTspConfigUrl = 'https://aka.ms/azsdk/tspconfig-sample-dpg';
         if (tspConfigPath.includes('.Management')) {
           sampleTspConfigUrl = 'https://aka.ms/azsdk/tspconfig-sample-mpg';
         }
         message = configWarning(
-          `Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. ` +
+          `Warning: cannot find supported emitter${context.config.typespecEmitter ? ` '${context.config.typespecEmitter}' for ${context.config.sdkName}` : ''} in tspconfig.yaml for typespec project ${tspConfigPath}. ` +
             `This typespec project will be skipped from SDK generation. Refer to ${sampleTspConfigUrl} to add the right emitter config in the 'tspconfig.yaml' file`,
         );
         context.logger.warn(message);

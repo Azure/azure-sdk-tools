@@ -1,5 +1,9 @@
 # Release
 
+## 2026-11-06 - 0.9.11
+
+- Fixed configuration validation for explicitly selected TypeSpec emitters: absent, disabled, or SDK-mismatched emitters now produce a warning and `notEnabled` without invoking language automation or falling back to OpenAPI generation. Omitted or empty emitter selections preserve existing behavior.
+
 ## 2026-11-02 - 0.9.10
 
 - Added optional `typespecEmitter` to the `generateInput.json` contract, supplied through `--typespec-emitter` or programmatic workflow options. Existing behavior is preserved when omitted.

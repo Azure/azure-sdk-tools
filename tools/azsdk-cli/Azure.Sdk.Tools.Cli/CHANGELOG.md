@@ -1,15 +1,32 @@
 # Release History
 
-## Unreleased
+## 0.6.59 (Unreleased)
 
 ### Features Added
 
 - Release-plan get/create JSON and MCP responses report explicit `existing`, `created`, or `not_found` outcomes. Creation supports `--expected-api-version` / `expectedApiVersion` as a metadata assertion before selecting or writing a plan.
 
+### Breaking Changes
+
 ### Bugs Fixed
 
 - Concrete-version creation no longer reuses a different version through a PR-only fallback. Version-specific lookups accept only `In Progress` or `Finished` plans.
 - Multi-version aliases and differing metadata versions require manual version selection instead of creating unmatchable blank-version plans.
+- `api-review create`, `package get-approval-status`, and `package mark-released` now accept the same language aliases and normalize them for API Review Hub and APIView. Both `js` and `javascript` are sent to API Review Hub as `javascript`, to APIView as `JavaScript`, and default to `azure-sdk-for-js` when creating a review.
+
+### Other Changes
+
+## 0.6.58 (2026-11-10)
+
+### Features Added
+
+- Automatic overdue release-plan cleanup now skips recently updated plans and SDK PRs with recent commits, submitted reviews, or human comments. The inactivity window defaults to 30 days and can be set with `--inactivity-days`. Routine bot comments and CI checks do not reset it. Missing or unreadable activity prevents abandonment and reports an error. Overdue reminders describe abandonment as conditional on those activity checks.
+
+## 0.6.57 (2026-11-06)
+
+### Features Added
+
+- Updated `azsdk_customized_code_update` to modify only the content required by the request and preserve unrelated existing `client.tsp` content.
 
 ## 0.6.56 (2026-10-28)
 

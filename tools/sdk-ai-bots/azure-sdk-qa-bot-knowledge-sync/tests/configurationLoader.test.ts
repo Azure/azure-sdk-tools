@@ -38,11 +38,36 @@ describe('ConfigurationLoader', () => {
     ConfigurationLoader.setConfigPath(temp);
 
     const docs = ConfigurationLoader.getDocumentationSources();
-    // relativeByRepoPath true or path undefined uses docs/<repoName>
     expect(docs).toHaveLength(2);
     expect(docs[0].folder).toBe('folder_a');
-    expect(docs[0].path).toContain('docs/repo');
+    expect(docs[0].path).toBe('docs/repo/docs');
+    expect(docs[0].citationRoot).toBeUndefined();
     expect(docs[1].folder).toBe('folder_b');
+    expect(docs[1].path).toBe('docs/repo');
+    expect(docs[1].citationRoot).toBe('docs/repo');
+  });
+
+  it('separates configured file and directory paths from their citation root', () => {
+    const temp = writeTempConfig({
+      sources: [{
+        repository: { url: 'https://github.com/org/repo.git', path: 'checkout', branch: 'main' },
+        paths: [
+          { path: '/documentation', folder: 'docs', relativeByRepoPath: true },
+          { path: '/.github/arm-leases/README.md', folder: 'docs', relativeByRepoPath: true },
+          { path: '/guides', folder: 'guides' }
+        ]
+      }]
+    });
+    ConfigurationLoader.setConfigPath(temp);
+    const docs = ConfigurationLoader.getDocumentationSources();
+    expect(docs.map(source => source.path)).toEqual([
+      'docs/checkout/documentation',
+      'docs/checkout/.github/arm-leases/README.md',
+      'docs/checkout/guides'
+    ]);
+    expect(docs.map(source => source.citationRoot)).toEqual([
+      'docs/checkout', 'docs/checkout', undefined
+    ]);
   });
 
   it('transforms repository configs including sparse checkout', () => {
@@ -71,6 +96,33 @@ describe('ConfigurationLoader', () => {
     const missing = path.join(process.cwd(), 'definitely-missing-config.json');
     ConfigurationLoader.setConfigPath(missing);
     expect(() => ConfigurationLoader.getDocumentationSources()).toThrow();
+  });
+  it('selects maintained Stewardship documents without ingesting authorization YAML', () => {
+    const config = ConfigurationLoader.loadConfig();
+    const avocado = config.sources.find(source =>
+      source.repository.url === 'https://github.com/Azure/avocado.git');
+    expect(avocado?.repository.branch).toBe('main');
+    expect(avocado?.paths).toEqual([
+      expect.objectContaining({
+        path: '/README.md',
+        folder: 'azure_avocado_docs',
+        relativeByRepoPath: true,
+        metadata: { scope: 'branded' },
+      }),
+    ]);
+    const specs = config.sources.find(source =>
+      source.repository.url === 'https://github.com/Azure/azure-rest-api-specs.git');
+    expect(specs?.paths.map(item => item.path)).toEqual([
+      '/documentation',
+      '/eng/tools/typespec-suppressions/README.md',
+      '/.github/arm-leases/README.md',
+      '/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md',
+    ]);
+    expect(ConfigurationLoader.getRepositoryConfigs().find(repo => repo.name === 'avocado')
+      ?.sparseCheckout).toEqual(['/README.md']);
+    expect(ConfigurationLoader.getDocumentationSources().filter(source =>
+      source.folder === 'azure_rest_api_specs_docs'))
+      .toHaveLength(4);
   });
 
   it('syncs Azure MCP contribution and evaluator guides with repository-relative citation paths', () => {
@@ -101,7 +153,10 @@ describe('ConfigurationLoader', () => {
       source => source.folder === 'azure_mcp_server_docs'
     );
     expect(sources.length).toBeGreaterThan(0);
-    expect(sources.every(source => source.path === 'docs/mcp')).toBe(true);
+    expect(sources.map(source => source.path)).toEqual(
+      mcpSource?.paths.map(entry => `docs/mcp${entry.path}`)
+    );
+    expect(sources.every(source => source.citationRoot === 'docs/mcp')).toBe(true);
   });
 
   it('uses repository documentation and contributing guidance instead of the JS wiki', () => {
@@ -135,6 +190,68 @@ describe('ConfigurationLoader', () => {
     expect(config.sources.flatMap(source => source.paths).some(
       docPath => docPath.folder === 'azure_sdk_for_js_wiki'
     )).toBe(false);
+  });
+
+  it('syncs migrated REST API specs guides from the repository instead of the wiki', () => {
+    const config = ConfigurationLoader.loadConfig();
+    const specsSources = config.sources.filter(
+      source => source.repository.url === 'https://github.com/Azure/azure-rest-api-specs.git'
+    );
+
+    expect(specsSources).toHaveLength(1);
+    expect(specsSources[0].repository).toMatchObject({
+      branch: 'main',
+      authType: 'public',
+      issueTracker: { provider: 'github', repository: 'Azure/azure-sdk-pr' }
+    });
+    expect(specsSources[0].paths).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: '/documentation',
+        folder: 'azure_rest_api_specs_docs',
+        relativeByRepoPath: true,
+        metadata: { scope: 'branded' }
+      }),
+      expect.objectContaining({ path: '/eng/tools/typespec-suppressions/README.md' }),
+      expect.objectContaining({ path: '/.github/arm-leases/README.md' }),
+      expect.objectContaining({ path: '/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md' })
+    ]));
+    expect(specsSources[0].paths).toHaveLength(4);
+    expect(config.sources.some(
+      source => source.repository.url === 'https://github.com/Azure/azure-rest-api-specs.wiki.git'
+    )).toBe(false);
+    expect(config.sources.flatMap(source => source.paths).some(
+      docPath => docPath.folder === 'azure_rest_api_specs_wiki'
+    )).toBe(false);
+
+    const repository = ConfigurationLoader.getRepositoryConfigs().find(
+      repo => repo.url === specsSources[0].repository.url
+    );
+    expect(repository?.sparseCheckout).toContain('/documentation');
+    const sources = ConfigurationLoader.getDocumentationSources().filter(
+      source => source.folder === 'azure_rest_api_specs_docs'
+    );
+    expect(sources).toHaveLength(4);
+    expect(sources.map(source => source.path)).toEqual([
+      'docs/azure-rest-api-specs/documentation',
+      'docs/azure-rest-api-specs/eng/tools/typespec-suppressions/README.md',
+      'docs/azure-rest-api-specs/.github/arm-leases/README.md',
+      'docs/azure-rest-api-specs/.github/workflows/src/package-name-approval/PACKAGE-NAME-REVIEW-PROCESS.md'
+    ]);
+    expect(sources.every(source => source.citationRoot === 'docs/azure-rest-api-specs')).toBe(true);
+    expect(sources.map(source => source.ignoredPaths)).toEqual([
+      [
+        'Getting started with OpenAPI specifications.md',
+        'samplefiles/',
+        'samplefiles-dp/',
+        'api-scenario/',
+        'restler/',
+        'backlog-triage.md',
+        'api-reviewer-agent.md'
+      ],
+      undefined,
+      undefined,
+      undefined
+    ]);
   });
 
   afterAll(() => {

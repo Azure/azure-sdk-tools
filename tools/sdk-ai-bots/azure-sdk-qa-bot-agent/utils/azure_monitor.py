@@ -109,9 +109,6 @@ def record_chat_duration(tenant: str, elapsed: float, *, success: bool) -> None:
 # Log query : fetch spans by trace_id from an App Insights resource.
 # --------------------------------------------------------------------------- #
 
-# How far back to search for spans matching a trace_id.
-_DEFAULT_LOOKBACK_HOURS = 24 * 30
-
 _logs_client: LogsQueryClient | None = None
 
 
@@ -141,15 +138,14 @@ async def query_spans_by_trace_id(
     trace_id: str,
     *,
     resource_id: str,
-    lookback_hours: int = _DEFAULT_LOOKBACK_HOURS,
+    lookback_hours: int | None = None,
 ) -> list[TraceSpan]:
     """Return all App Insights rows tagged with ``trace_id`` (``operation_Id``).
 
     Queries the Application Insights resource identified by ``resource_id``
     (an ARM resource id). Searches ``dependencies``, ``requests`` and
-    ``traces`` so the caller can reconstruct tool calls, the inbound HTTP
-    request, and any log records. Returns an empty list if nothing is found
-    (e.g. ingestion lag).
+    ``traces`` across retained history unless a lookback is explicitly supplied.
+    Returns an empty list if nothing is found (e.g. ingestion lag).
     """
     if not trace_id:
         return []
@@ -186,7 +182,9 @@ union
         result = await client.query_resource(
             resource_id=resource_id,
             query=query,
-            timespan=timedelta(hours=lookback_hours),
+            timespan=(
+                timedelta(hours=lookback_hours) if lookback_hours is not None else None
+            ),
         )
     except Exception:
         logger.exception("App Insights query failed for trace_id=%s", trace_id)

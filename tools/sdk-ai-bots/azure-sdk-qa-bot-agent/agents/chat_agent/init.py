@@ -25,19 +25,21 @@ os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
 from agent_framework import Agent
 from agent_framework import CompactionProvider
+from agent_framework import FileSkillsSource
 from agent_framework import SkillsProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
 from config.app_config import get as cfg
+from skills import tenant_skills
+from skills.tenant_skills import create_tenant_skills
 from tools.knowledge_tools import KnowledgeTools
 from tools.identity_tools import IdentityTools
 from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
-from skills.tenant_skills import create_tenant_skills
 from utils.azure_ai_foundry import (
     get_agent_client,
     get_project_client,
@@ -56,6 +58,10 @@ MAX_TOOL_CALLS_PER_TURN = 10
 
 # Strong refs to fire-and-forget startup tasks so they aren't GC'd mid-flight.
 _background_tasks: set[asyncio.Task] = set()
+
+
+def _get_chat_skill_dir() -> Path:
+    return Path(tenant_skills.__file__).parent / "chat_agent"
 
 
 def _load_instructions(file_path: Path) -> str:
@@ -149,6 +155,8 @@ async def main() -> None:
 
     # Init Skills
     skills = create_tenant_skills(agent_name)
+    skills_dir = _get_chat_skill_dir()
+    skills.extend(await FileSkillsSource(skills_dir).get_skills())
     skills_provider = SkillsProvider(skills)
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")

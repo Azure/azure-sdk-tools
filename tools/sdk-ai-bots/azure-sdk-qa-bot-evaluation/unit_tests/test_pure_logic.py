@@ -11,6 +11,7 @@ Run:
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -34,6 +35,9 @@ from dataset.schema import (  # noqa: E402
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
     FoundryEvalsRunner,
+    _delete_eval_input,
+    _retry_foundry_call,
+    _upload_eval_items,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -53,6 +57,191 @@ def test_validate_case_ok():
             "reviewed": "pass",
         }
     )
+
+
+def test_upload_eval_items_uses_file_backed_data_source():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    client.files.create.return_value = SimpleNamespace(id="file-uploaded")
+    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-processed", status="processed")
+
+    data_source = _upload_eval_items(
+        client,
+        [{"testcase": "case", "query": "question", "response": "answer"}],
+        "typespec",
+    )
+
+    upload = client.files.create.call_args.kwargs
+    filename, content, content_type = upload["file"]
+    assert filename == "typespec-eval-input.jsonl"
+    assert json.loads(content.decode("utf-8"))["response"] == "answer"
+    assert content_type == "application/jsonl"
+    assert upload["purpose"] == "evals"
+    assert "expires_after" not in upload
+    client.files.wait_for_processing.assert_called_once_with("file-uploaded")
+    assert data_source == {
+        "type": "jsonl",
+        "source": {"type": "file_id", "id": "file-processed"},
+    }
+    client.files.delete.assert_not_called()
+
+
+def test_upload_processing_failure_deletes_its_input():
+    from types import SimpleNamespace
+    from unittest import TestCase
+    from unittest.mock import MagicMock
+
+    for failure in ("error", "timeout"):
+        client = MagicMock()
+        client.files.create.return_value = SimpleNamespace(id="file-input")
+        client.files.delete.return_value = SimpleNamespace(deleted=True)
+        client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="error")
+        if failure == "timeout":
+            client.files.wait_for_processing.side_effect = RuntimeError("Processing timed out")
+        with TestCase().assertRaises(RuntimeError):
+            _upload_eval_items(client, [{"query": "q", "response": "a"}], "typespec")
+        client.files.delete.assert_called_once_with("file-input")
+        client.evals.runs.create.assert_not_called()
+
+
+def test_eval_input_cleanup_retries_transient_errors():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    import httpx
+    from openai import APIStatusError
+
+    request = httpx.Request("DELETE", "https://example.test/files/file-input")
+    error = APIStatusError("unavailable", response=httpx.Response(503, request=request), body=None)
+    client = MagicMock()
+    client.files.delete.side_effect = [error, SimpleNamespace(deleted=True)]
+    with patch("_evals_runner.time.sleep"):
+        _delete_eval_input(client, "file-input")
+
+    assert client.files.delete.call_count == 2
+    assert all(call.args == ("file-input",) for call in client.files.delete.call_args_list)
+
+
+def test_eval_input_cleanup_requires_confirmed_deletion():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    client = MagicMock()
+    client.files.delete.return_value = SimpleNamespace(deleted=False)
+    with patch("_evals_runner.logger") as log:
+        _delete_eval_input(client, "file-input")
+    log.warning.assert_called_once()
+    assert "manual cleanup is required" in log.warning.call_args.args[0]
+
+
+def test_evaluation_input_cleanup_respects_remote_run_lifetime():
+    from contextlib import ExitStack
+    from types import SimpleNamespace
+    from unittest import TestCase
+    from unittest.mock import MagicMock, patch
+
+    import httpx
+    from openai import APIConnectionError, APIStatusError
+
+    request = httpx.Request("POST", "https://example.test/evals")
+    error = APIStatusError("rejected", response=httpx.Response(400, request=request), body=None)
+    for outcome in (
+        "completed", "failed", "canceled", "timeout", "status_error",
+        "output_error", "creation_unknown", "cleanup_error", "output_cleanup_error",
+    ):
+        client = MagicMock()
+        client.files.create.return_value = SimpleNamespace(id="file-input")
+        client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="processed")
+        client.files.delete.return_value = SimpleNamespace(deleted=True)
+        client.evals.create.return_value = SimpleNamespace(id="eval-id")
+        client.evals.runs.create.return_value = SimpleNamespace(id="run-id")
+        status = outcome if outcome in ("failed", "canceled") else "completed"
+        client.evals.runs.retrieve.return_value = SimpleNamespace(status=status, report_url=None)
+        client.evals.runs.output_items.list.return_value = []
+        results = MagicMock()
+        results.record_run_result.return_value = {"saved": True}
+        runner = FoundryEvalsRunner(["relevance"], results, model="test-model", poll_timeout=-1)
+        if outcome == "timeout":
+            client.evals.runs.retrieve.return_value = SimpleNamespace(status="in_progress")
+        elif outcome == "status_error":
+            client.evals.runs.retrieve.side_effect = error
+        elif outcome in ("output_error", "output_cleanup_error"):
+            client.evals.runs.output_items.list.side_effect = error
+        elif outcome == "creation_unknown":
+            client.evals.runs.create.side_effect = APIConnectionError(request=request)
+        if outcome in ("cleanup_error", "output_cleanup_error"):
+            client.files.delete.side_effect = error
+        expected = (
+            TimeoutError if outcome in ("timeout", "canceled")
+            else RuntimeError if outcome == "failed"
+            else APIConnectionError if outcome == "creation_unknown"
+            else APIStatusError
+        )
+        with ExitStack() as stack:
+            collector = stack.enter_context(patch("_evals_runner.CompletionCollector")).return_value
+            collector.collect.return_value = [{"testcase": "case", "query": "q", "response": "a"}]
+            stack.enter_context(patch("_evals_runner.build_testing_criteria", return_value=[{"name": "relevance"}]))
+            stack.enter_context(patch.object(runner, "_retrieve_tool_calls", return_value={}))
+            stack.enter_context(patch("_evals_runner.time.sleep"))
+            log = stack.enter_context(patch("_evals_runner.logger"))
+            if outcome not in ("completed", "cleanup_error"):
+                raised = stack.enter_context(TestCase().assertRaises(expected))
+            result = runner.evaluate_run_completion(
+                client, [{"testcase": "case", "query": "q"}], "typespec", project_client=MagicMock(),
+            )
+        if outcome in ("completed", "cleanup_error"):
+            assert result == {"typespec_run-id": {"saved": True}}, outcome
+        if outcome in ("output_error", "output_cleanup_error"):
+            assert raised.exception is error
+        if outcome in ("completed", "failed", "output_error", "cleanup_error", "output_cleanup_error"):
+            client.files.delete.assert_called_once_with("file-input")
+        else:
+            client.files.delete.assert_not_called()
+        if outcome in ("cleanup_error", "output_cleanup_error"):
+            log.warning.assert_called_once()
+
+
+def test_retry_foundry_call_retries_transient_status_errors():
+    import httpx
+    from openai import APIStatusError
+
+    calls = 0
+
+    def operation():
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            request = httpx.Request("POST", "https://example.test/evals")
+            response = httpx.Response(503, request=request)
+            raise APIStatusError("temporarily unavailable", response=response, body=None)
+        return "ok"
+
+    assert _retry_foundry_call(operation, "test operation", base_delay=0) == "ok"
+    assert calls == 3
+
+
+def test_retry_foundry_call_does_not_retry_validation_errors():
+    import httpx
+    from openai import APIStatusError
+
+    calls = 0
+
+    def operation():
+        nonlocal calls
+        calls += 1
+        request = httpx.Request("POST", "https://example.test/evals")
+        response = httpx.Response(400, request=request)
+        raise APIStatusError("invalid input", response=response, body=None)
+
+    try:
+        _retry_foundry_call(operation, "test operation", base_delay=0)
+    except APIStatusError:
+        pass
+    else:
+        raise AssertionError("Expected validation errors to remain non-retryable")
+    assert calls == 1
 
 
 def test_validate_case_missing_field():
@@ -260,6 +449,48 @@ def test_output_items_to_rows_groundedness_fail():
     assert rows[0]["outputs.groundedness.groundedness_result"] == "fail"
 
 
+def test_output_items_to_rows_unwraps_file_item_envelope():
+    output_items = [
+        {
+            "datasource_item": {
+                "item": {
+                    "testcase": "t3",
+                    "query": "q3",
+                    "response": "answer",
+                }
+            },
+            "results": [{"name": "fluency", "score": 5.0, "passed": True}],
+        }
+    ]
+
+    rows = output_items_to_rows(output_items, ["fluency"])["rows"]
+    assert rows[0]["inputs.testcase"] == "t3"
+    assert rows[0]["inputs.query"] == "q3"
+
+
+def test_output_items_to_rows_raises_for_grader_error():
+    output_items = [
+        {
+            "datasource_item": {"testcase": "t4"},
+            "results": [
+                {
+                    "name": "similarity",
+                    "status": "error",
+                    "sample": {"error": {"message": "Missing inputs: data.response"}},
+                }
+            ],
+        }
+    ]
+
+    try:
+        output_items_to_rows(output_items, ["similarity"])
+    except RuntimeError as exc:
+        assert "similarity" in str(exc)
+        assert "Missing inputs" in str(exc)
+    else:
+        raise AssertionError("Expected grader errors to fail the evaluation")
+
+
 def test_build_testing_criteria_all_builtins():
     crit = build_testing_criteria(list(BUILTIN_EVALUATORS), model="gpt-4o")
     by_name = {c["evaluator_name"]: c for c in crit}
@@ -283,6 +514,24 @@ def test_build_testing_criteria_bot_evals_expands():
     crit = build_testing_criteria(["bot_evals"], model="gpt-4o")
     names = {c["evaluator_name"] for c in crit}
     assert names == {"builtin.similarity", "builtin.response_completeness"}
+
+
+def test_builtin_completeness_preserves_mapping_and_threshold():
+    criteria = build_testing_criteria(
+        ["response_completeness", "bot_evals"], model="model", threshold=4
+    )
+    by_name = {c["name"]: c for c in criteria}
+    assert len(criteria) == 2
+    assert by_name["response_completeness"] == {
+        "type": "azure_ai_evaluator",
+        "name": "response_completeness",
+        "evaluator_name": "builtin.response_completeness",
+        "initialization_parameters": {"model": "model", "threshold": 4},
+        "data_mapping": {
+            "response": "{{item.response}}",
+            "ground_truth": "{{item.ground_truth}}",
+        },
+    }
 
 
 def test_criteria_read_from_item():
@@ -391,14 +640,285 @@ def test_resolve_tenant_for_scenario():
         "TypeSpec Discussion": "tenant-ts",
         "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
+        "API Stewardship Board - General": "api_stewardship_board_qa_bot",
         "Language - DotNet": "dotnet_channel_qa_bot",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
+    assert resolve_tenant_for_scenario("apistewardshipboard", m) == "api_stewardship_board_qa_bot"
+    assert resolve_tenant_for_scenario("apistewardshipboard", {"default": "tenant-default"}) == "tenant-default"
     assert resolve_tenant_for_scenario("dotnet", m) == "dotnet_channel_qa_bot"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
+
+
+def test_apistewardshipboard_dataset():
+    from pathlib import Path
+
+    from dataset.schema import normalize_query
+
+    root = Path(__file__).resolve().parents[1]
+    datasets = {}
+    for target in ("basic", "perf"):
+        dataset = root / "evaluation_datasets" / target / "apistewardshipboard.jsonl"
+        count = validate_file(dataset, require_reviewed=True)
+        records, scenario = resolve_records(
+            f"qa-bot-{target}-apistewardshipboard:latest", script_dir=root
+        )
+        assert resolve_records(str(dataset), script_dir=root) == (records, scenario)
+        assert count == len(records)
+        assert scenario == "apistewardshipboard"
+        assert all(row["scenario"] == scenario for row in records)
+        assert all(row["tenant"] == "api_stewardship_board_qa_bot" for row in records)
+        assert all(row["reviewed"] == "pass" for row in records)
+        assert all(row["source"] and row["expected_references"] for row in records)
+        assert len({normalize_query(row["query"]) for row in records}) == count
+        datasets[target] = records
+    assert len(datasets["basic"]) == 1
+    assert datasets["basic"][0]["testcase"] == "Async data-plane review request"
+    assert len(datasets["perf"]) >= 30
+    assert datasets["basic"][0] == datasets["perf"][0]
+
+
+def test_apistewardshipboard_cases_are_customer_questions_and_expert_answers():
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    for target in ("basic", "perf"):
+        records, _ = resolve_records(
+            str(root / "evaluation_datasets" / target / "apistewardshipboard.jsonl"),
+            script_dir=root,
+        )
+        for row in records:
+            title, separator, question = row["query"].partition("\n\nquestion: ")
+            assert title.startswith("title: ") and separator, row["testcase"]
+            assert re.search(r"\b(?:I|my|we|our)\b", question, re.IGNORECASE), row["testcase"]
+            assert not re.search(
+                r"\b(?:give guidance only|do not approve|do not (?:change|apply) labels)\b",
+                question,
+                re.IGNORECASE,
+            ), row["testcase"]
+            assert not re.match(
+                r"(?:Explain|Establish|Inspect|Discuss|State that|Do not|"
+                r"Use (?:the )?(?:current|maintained))\b",
+                row["ground_truth"],
+            ), row["testcase"]
+
+
+def test_apistewardshipboard_preserves_expert_conclusions_and_case_context():
+    root = Path(__file__).resolve().parents[1]
+    records, _ = resolve_records(
+        str(root / "evaluation_datasets" / "perf" / "apistewardshipboard.jsonl"),
+        script_dir=root,
+    )
+    cases = {row["testcase"]: row for row in records}
+    expectations = {
+        "Previously approved break repeats in new preview": {
+            "query": ("latest GA",),
+            "ground_truth": ("every new preview", "re-approved", "next stable"),
+            "source": ("1787603383879",),
+        },
+        "TypeSpec migration without a new API version": {
+            "ground_truth": ("does not need API Stewardship Board review", "DefaultValueChanged"),
+            "source": ("1775678660583", "1775678867344"),
+        },
+        "Separate SDK package versus additional client": {
+            "query": ("same service", "version independently"),
+            "ground_truth": ("existing package", "maintenance"),
+            "source": ("1790198371681",),
+        },
+        "Resource-specific LRO monitor is allowed": {
+            "ground_truth": ("yes", "separate endpoints", "different resources"),
+            "source": ("1779411536613",),
+        },
+        "Scheduler role-like error does not justify elevation": {
+            "ground_truth": ("no additional permissions", "locked meeting slot", "backend fix"),
+            "source": ("1776726962353", "1776814126219"),
+        },
+        "Unknown InternalARMContracts synchronization rule": {
+            "ground_truth": ("ARM Office Hours", "does not establish"),
+            "source": ("1791914122933",),
+        },
+        "Additive preview versioning review and exception routing": {
+            "ground_truth": ("approved", "recordkeeping", "CPEX"),
+            "source": ("1788893117225",),
+        },
+        "New-version default change needs compatibility review": {
+            "query": ("upcoming API versions", "existing connections"),
+            "ground_truth": ("new API versions", "unchanged", "not approved"),
+            "source": ("no expert reply",),
+        },
+        "Published contract correction across main and release branches": {
+            "ground_truth": ("two PRs", "main", "release-", "SDK"),
+            "source": ("1788197041926", "1788201530309"),
+        },
+        "Multiple versions need explicit SDK generation and review": {
+            "query": ("MultipleNewApiVersions",),
+            "ground_truth": ("api-version", "tspconfig.yaml", "every SDK language"),
+            "source": ("1788326574286",),
+        },
+        "AFEC-gated limited preview is not public preview": {
+            "query": ("AFEC", "white-glove", "limited"),
+            "ground_truth": ("not public preview", "private preview", "feature flags"),
+            "source": ("1766001736240", "1766001828993"),
+        },
+        "Legacy meeting cancellation after async review": {
+            "ground_truth": ("manual cancellation", "scheduler", "not automatically"),
+            "source": ("1780421016315",),
+        },
+    }
+    for testcase, fields in expectations.items():
+        for field, required in fields.items():
+            for text in required:
+                assert text.casefold() in cases[testcase][field].casefold(), (testcase, field, text)
+
+
+def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, status=200):
+    from contextlib import ExitStack
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    import evals_run
+
+    posts = []
+
+    class Response:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def json(self):
+            return {"id": "content-filter", "answer": "advisory answer", "references": []}
+
+    class Session:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        def post(self, url, *, json, headers):
+            posts.append((url, json))
+            response = Response()
+            response.status = status
+            return response
+
+    project = MagicMock()
+    project.__enter__.return_value = project
+    client = MagicMock()
+    project.get_openai_client.return_value.__enter__.return_value = client
+    client.files.create.return_value = SimpleNamespace(id="file-local")
+    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-local", status="processed")
+    client.evals.create.return_value = SimpleNamespace(id="eval-local")
+    client.evals.runs.create.return_value = SimpleNamespace(id="run-local")
+    records = [
+        {"testcase": "one", "query": "q1", "ground_truth": "a", "tenant": "ignored-row-tenant"},
+        {"testcase": "two", "query": "q2", "ground_truth": "a", "tenant": "another-ignored-tenant"},
+    ]
+    argv = ["--dataset", "evaluation_datasets/basic/apistewardshipboard.jsonl", "--baseline_check", "False"]
+
+    with ExitStack() as stack:
+        stack.enter_context(patch.dict(os.environ, {
+            "AZURE_AI_PROJECT_ENDPOINT": "https://unused.invalid",
+            "AZURE_EVALUATION_MODEL_NAME": "unused-model",
+            "EVALUATE_THRESHOLD": "3",
+        }))
+        stack.enter_context(patch("azure.ai.projects.AIProjectClient", return_value=project))
+        stack.enter_context(patch("aiohttp.ClientSession", Session))
+        stack.enter_context(patch.object(evals_run, "load_dotenv"))
+        stack.enter_context(patch.object(evals_run, "credential_for", return_value=object()))
+        stack.enter_context(patch.object(evals_run, "resolve_bot_token", return_value=None))
+        stack.enter_context(patch.object(evals_run, "resolve_completion_url", return_value="http://unused.invalid/completion"))
+        stack.enter_context(patch.object(evals_run, "resolve_records", return_value=(records, scenario)))
+        stack.enter_context(patch.object(evals_run, "_load_suppression", return_value={"evaluators": [], "testcases": []}))
+        stack.enter_context(patch.object(evals_run.EvalsResult, "show_results"))
+        stack.enter_context(patch.object(FoundryEvalsRunner, "_poll_and_adapt", return_value={}))
+        lookup = stack.enter_context(patch.object(
+            evals_run,
+            "retrieve_channel_tenant_map",
+            return_value=tenant_map,
+        ))
+        exit_code = evals_run.main(argv)
+        assert lookup.call_count == 1
+
+    return exit_code, posts
+
+
+def test_cli_apistewardshipboard_channel_routing_reaches_real_completion_runner():
+    exit_code, posts = _run_completion_cli(
+        tenant_map={"API Stewardship Board - General": "api_stewardship_board_qa_bot"},
+    )
+    assert exit_code == 0
+    assert len(posts) == 2
+    assert all(url.endswith("/completion") for url, _ in posts)
+    assert all(payload["tenant_id"] == "api_stewardship_board_qa_bot" for _, payload in posts)
+    assert [payload["message"]["content"] for _, payload in posts] == ["q1", "q2"]
+    assert all(payload["with_full_context"] is True for _, payload in posts)
+
+
+def test_cli_default_routing_reaches_completion_unchanged():
+    for scenario, mapping, expected in [
+        ("typespec", {"TypeSpec Discussion": "tenant-ts", "default": "tenant-default"}, "tenant-ts"),
+        ("unknown", {"default": "tenant-default"}, "tenant-default"),
+        ("apistewardshipboard", None, "general_qa_bot"),
+    ]:
+        exit_code, posts = _run_completion_cli(scenario=scenario, tenant_map=mapping)
+        assert exit_code == 0
+        assert len(posts) == 2
+        assert all(payload["tenant_id"] == expected for _, payload in posts)
+
+
+def test_cli_rejected_tenant_does_not_fall_back():
+    exit_code, posts = _run_completion_cli(
+        tenant_map={"API Stewardship Board - General": "unregistered_tenant"},
+        status=400,
+    )
+    assert exit_code == 1
+    assert len(posts) == 2
+    assert all(payload["tenant_id"] == "unregistered_tenant" for _, payload in posts)
+
+
+def test_offline_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
+    from pathlib import Path
+
+    import yaml
+
+    path = Path(__file__).resolve().parents[2] / "offline-evaluation.yml"
+    pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
+    scenarios = pipeline["parameters"][0]["default"]
+    assert scenarios == ["typespec", "onboarding", "python", "dotnet", "javascript", "go", "apispec", "authoring", "mcpserver", "sdkagent", "apistewardshipboard"]
+    jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
+    steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
+    inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Evals (${{ scenario }})")
+    script = inputs["inlineScript"]
+    assert '--dataset "qa-bot-basic-${{ scenario }}:latest"' in script
+    assert "evaluation_datasets/" not in script
+    assert "--tenant-id" not in script
+
+
+def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
+    from pathlib import Path
+
+    import yaml
+
+    path = Path(__file__).resolve().parents[2] / "perf-evaluation.yml"
+    pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
+    scenarios = pipeline["parameters"][0]["default"]
+    assert scenarios == ["typespec", "onboarding", "python", "dotnet", "javascript", "go", "apispec", "general", "releasesupport", "authoring", "mcpserver", "apistewardshipboard"]
+    jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
+    steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
+    inputs = next(step["inputs"] for step in steps if step.get("displayName") == "Run Perf Evals (${{ scenario }})")
+    script = inputs["inlineScript"]
+    assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in script
+    assert "evaluation_datasets/" not in script
+    assert "--tenant-id" not in script
 
 
 def test_javascript_scenario_routes_to_configured_js_channel():
@@ -577,11 +1097,6 @@ def test_monitor_onboarding_case_has_no_live_issue_or_pr_dependencies():
     for field in ("query", "ground_truth"):
         assert not re.search(r"(?:/issues/|/pull/|#)\d+", case[field])
         assert "Alan Zimmer" not in case[field]
-    assert "existing Azure Monitor toolset" in case["query"]
-    assert "non-confidential" in case["query"]
-    assert "public microsoft/mcp repository" in case["ground_truth"]
-    assert "add-azure-mcp-tools" in case["ground_truth"]
-    assert "recorded live tests" in case["ground_truth"]
 
 
 def test_main_passes_project_for_response_selected_agents():

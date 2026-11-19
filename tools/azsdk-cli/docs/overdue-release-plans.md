@@ -64,11 +64,13 @@ Use the positive `--inactivity-days` option to set a different window. An activi
 timestamp exactly at the cutoff still protects the plan. Both preview and actual
 cleanup use the same checks:
 
-- A recent Azure DevOps release-plan update protects the plan. Revisions that
-  only set `Custom.OverdueLastNotifiedDate` (overdue reminders) are ignored,
-  so a reminder alone does not reset the clock. Any other field or link change
-  in the same revision still counts. If work-item history cannot be read, the
-  last update is treated as recent activity.
+- A recent Azure DevOps release-plan update protects the plan. The first
+  reminder's `Custom.OverdueLastNotifiedDate` write does not count while it is
+  still the latest change (within one minute of `System.ChangedDate`), so a
+  reminder alone does not reset the clock; any later change does. Only the
+  latest change time is read, so an edit inside the window but before that
+  reminder is not seen. On the monthly schedule with 30 days, that blind spot
+  is at most about two days; manual reminder runs or a longer window widen it.
 - Recent activity on any linked SDK PR protects the plan, even when approval
   is pending or changes have been requested. Activity includes commit timestamps,
   submitted reviews, and human comments, including inline review comments and edits.
@@ -156,8 +158,8 @@ the automation write access and confirm the dashboard can read the field. If
 the emailer accepts a reminder but the timestamp write fails, the command
 reports both facts and does not resend the email; the next accepted reminder
 fills the empty field. Do not rerun notifications just to repair that timestamp.
-Reminder writes advance `System.ChangedDate`, but
-cleanup ignores them when measuring inactivity (see Recent activity protection).
+The write advances `System.ChangedDate`; cleanup does not count it as
+activity while it is the latest change (see Recent activity protection).
 
 Reminder and abandonment subjects are distinct. Both emails use the assessment's
 exact reason; missing PRs, closed PRs, unapproved open PRs, merged or approved PRs,

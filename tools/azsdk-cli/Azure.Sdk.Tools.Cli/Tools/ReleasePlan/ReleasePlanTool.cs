@@ -280,13 +280,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         };
 
         private const string sdkApexEmail = "azsdkapex@microsoft.com";
-        private const string OverdueLastNotifiedDateField = ReleasePlanWorkItem.OverdueLastNotifiedDateField;
-        // Fields Azure DevOps stamps on every revision; they do not indicate a meaningful change by themselves.
-        private static readonly HashSet<string> RevisionBookkeepingFields =
-        [
-            "System.Rev", "System.ChangedDate", "System.ChangedBy", "System.AuthorizedDate", "System.AuthorizedAs",
-            "System.RevisedDate", "System.Watermark", "System.PersonId"
-        ];
+        // The reminder record holds the agent's clock just before Azure DevOps stamps System.ChangedDate.
+        private static readonly TimeSpan OverdueReminderRecordTolerance = TimeSpan.FromMinutes(1);
         private static readonly string DEFAULT_BRANCH = "main";
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string PRIVATE_SPECS_REPO = "azure-rest-api-specs-pr";
@@ -2325,16 +2320,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             continue;
                         }
 
-                        if (releasePlan.ChangedDate >= recentActivityCutoff.UtcDateTime)
+                        // The one-time OverdueLastNotifiedDate write is not plan activity while it is still the latest change.
+                        var lastChangeIsReminderRecord = releasePlan.OverdueLastNotifiedDate is DateTime notifiedAt
+                            && (releasePlan.ChangedDate - notifiedAt).Duration() <= OverdueReminderRecordTolerance;
+                        if (releasePlan.ChangedDate >= recentActivityCutoff.UtcDateTime && !lastChangeIsReminderRecord)
                         {
-                            var latestActivity = await GetLatestNonReminderActivityAsync(releasePlan, ct);
-                            if (latestActivity == null || latestActivity >= recentActivityCutoff.UtcDateTime)
-                            {
-                                var activityDate = latestActivity ?? releasePlan.ChangedDate;
-                                var activityReason = $"Release plan work item {releasePlan.WorkItemId} was updated at {activityDate:O}, within the last {inactivityDays} days.";
-                                RecordSkippedPlan(releasePlan, "recent_plan_activity", activityReason);
-                                continue;
-                            }
+                            var activityReason = $"Release plan work item {releasePlan.WorkItemId} was updated at {releasePlan.ChangedDate:O}, within the last {inactivityDays} days.";
+                            RecordSkippedPlan(releasePlan, "recent_plan_activity", activityReason);
+                            continue;
                         }
 
                         var assessment = await EvaluateReleasePlanWorkAsync(releasePlan, ct);
@@ -2500,46 +2493,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     : "No SDKs are recorded as released, and all linked SDK pull requests are closed without being merged.");
         }
 
-        /// <summary>
-        /// Returns the latest work-item change time, ignoring revisions that only recorded an overdue reminder.
-        /// Returns null when history cannot be verified so callers stay conservative.
-        /// </summary>
-        private async Task<DateTime?> GetLatestNonReminderActivityAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
-        {
-            List<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItemUpdate> updates;
-            try
-            {
-                updates = await devOpsService.GetWorkItemUpdatesAsync(releasePlan.WorkItemId, ct);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                logger.LogWarning(ex, "Could not read history for release plan work item {WorkItemId}; treating its last update as recent activity.", releasePlan.WorkItemId);
-                return null;
-            }
-
-            DateTime? latest = null;
-            foreach (var update in updates ?? [])
-            {
-                var fields = update.Fields;
-                // Azure DevOps includes Relations only when the revision changed links.
-                var isReminderOnly = update.Relations == null && fields != null && fields.ContainsKey(OverdueLastNotifiedDateField) &&
-                    fields.Keys.All(key => key == OverdueLastNotifiedDateField || RevisionBookkeepingFields.Contains(key));
-                if (isReminderOnly)
-                {
-                    continue;
-                }
-                if (fields == null || !fields.TryGetValue("System.ChangedDate", out var changedDate) || changedDate?.NewValue is not DateTime changedAt)
-                {
-                    return null;
-                }
-                if (latest == null || changedAt > latest)
-                {
-                    latest = changedAt;
-                }
-            }
-            return latest;
-        }
-
         private async Task<string?> GetRecentSdkPullRequestActivityAsync(ReleasePlanWorkItem releasePlan, DateTimeOffset cutoff, int inactivityDays, CancellationToken ct)
         {
             foreach (var url in releasePlan.SDKInfo.Select(sdk => sdk.SdkPullRequestUrl)
@@ -2684,7 +2637,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
                     {
-                        [OverdueLastNotifiedDateField] = sentAtUtc
+                        [ReleasePlanWorkItem.OverdueLastNotifiedDateField] = sentAtUtc
                     }, ct);
                     if (updatedWorkItem is null)
                     {
@@ -2719,10 +2672,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogInformation("Sending Email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
 
-                using var response = await httpClient.PostAsync(emailerUri, httpContent, ct);
+                var response = await httpClient.PostAsync(emailerUri, httpContent, ct);
                 response.EnsureSuccessStatusCode();
 
-                logger.LogInformation("Emailer accepted email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
+                logger.LogInformation("Successfully sent email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
             }
         }
 

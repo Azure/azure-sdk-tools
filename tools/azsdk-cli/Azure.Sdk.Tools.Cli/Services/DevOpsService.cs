@@ -184,7 +184,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
-        Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task EnsureReleasePlanAutomationRelationAsync(int releasePlanWorkItemId, int completedReleasePlanWorkItemId, CancellationToken ct);
@@ -2466,26 +2465,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = '{workItemType}' AND [{fieldName}] = '{escapedValue}'";
             query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
             return await FetchWorkItemsPagedAsync(query, expand: expand, ct: ct);
-        }
-
-        public async Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default)
-        {
-            const int pageSize = 200;
-            var workItemClient = connection.GetWorkItemClient(ct);
-            var updates = new List<WorkItemUpdate>();
-            while (true)
-            {
-                var page = await workItemClient.GetUpdatesAsync(workItemId, top: pageSize, skip: updates.Count, cancellationToken: ct);
-                if (page == null || page.Count == 0)
-                {
-                    return updates;
-                }
-                updates.AddRange(page);
-                if (page.Count < pageSize)
-                {
-                    return updates;
-                }
-            }
         }
 
         public async Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default)

@@ -151,6 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<(WorkItem Plan, WorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?> GetReleasePlanReadinessAsync(string sdkPullRequest, string language, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", string? specCommitSha = null, CancellationToken ct = default);
@@ -437,19 +438,39 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
         {
-            var normalizedUrl = NormalizeSdkPullRequestUrl(sdkPullRequest, language);
-            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-            query += " AND [System.WorkItemType] = 'Release Plan' AND [System.State] = 'In Progress'";
-            query += $" AND [Custom.SDKPullRequestFor{languageId}] = '{normalizedUrl}'";
-            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
-            var workItems = await FetchWorkItemsAsync(query, ct);
+            var workItems = await FindReleasePlansBySdkPullRequestAsync(sdkPullRequest, language, isTestReleasePlan, ct);
             var plans = new List<ReleasePlanWorkItem>();
             foreach (var workItem in workItems)
             {
                 plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
             }
             return plans;
+        }
+
+        public async Task<(WorkItem Plan, WorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?> GetReleasePlanReadinessAsync(
+            string sdkPullRequest, string language, CancellationToken ct = default)
+        {
+            var plans = await FindReleasePlansBySdkPullRequestAsync(sdkPullRequest, language, IsAgentTesting, ct);
+            if (plans.Count != 1)
+            {
+                return null;
+            }
+            var plan = plans[0];
+            var specification = await GetApiSpecWorkItemAsync(plan, ct);
+            var planUpdates = await GetWorkItemUpdatesAsync(plan.Id!.Value, ct);
+            var specificationUpdates = await GetWorkItemUpdatesAsync(specification.Id!.Value, ct);
+            return (plan, specification, planUpdates, specificationUpdates);
+        }
+
+        private async Task<List<WorkItem>> FindReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan, CancellationToken ct)
+        {
+            var normalizedUrl = NormalizeSdkPullRequestUrl(sdkPullRequest, language);
+            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan' AND [System.State] = 'In Progress'";
+            query += $" AND [Custom.SDKPullRequestFor{languageId}] = '{normalizedUrl}'";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            return await FetchWorkItemsAsync(query, ct);
         }
 
         internal static string NormalizeSdkPullRequestUrl(string sdkPullRequest, string language)
@@ -1515,7 +1536,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException($"Work item {releasePlanWorkItemId} not found.");
             }
+            return await GetApiSpecWorkItemAsync(releasePlanWorkItem, ct);
+        }
 
+        private async Task<WorkItem> GetApiSpecWorkItemAsync(WorkItem releasePlanWorkItem, CancellationToken ct)
+        {
+            var releasePlanWorkItemId = releasePlanWorkItem.Id!.Value;
             if (releasePlanWorkItem.Relations == null || !releasePlanWorkItem.Relations.Any(r => r.Rel.Equals("System.LinkTypes.Hierarchy-Forward")))
             {
                 throw new InvalidOperationException("Release plan work item does not have any child work item");

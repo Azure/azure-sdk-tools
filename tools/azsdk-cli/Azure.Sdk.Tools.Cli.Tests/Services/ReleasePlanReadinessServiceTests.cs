@@ -10,7 +10,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services;
 [TestFixture]
 public class ReleasePlanReadinessServiceTests
 {
-    private const string Field = "Custom.ExampleReadiness";
+    private const string Field = "Custom.ServiceApiVersionReadinessDetails";
+    private const string StatusField = "Custom.ServiceApiVersionReadinessStatus";
+    private const string CheckedAtField = "Custom.ServiceApiVersionReadinessCheckedAt";
     private const string Project = "specification/example/Example.Management";
     private const string Version = "2026-04-01";
     private static readonly string Commit = new('b', 40);
@@ -26,11 +28,10 @@ public class ReleasePlanReadinessServiceTests
     [SetUp]
     public void SetUp()
     {
-        foreach (var name in new[] { "AZSDK_SERVICE_READINESS_FIELD", "AZSDK_SERVICE_READINESS_ENVIRONMENT" })
+        foreach (var name in new[] { "AZSDK_SERVICE_READINESS_ENVIRONMENT" })
         {
             _environment[name] = Environment.GetEnvironmentVariable(name);
         }
-        Environment.SetEnvironmentVariable("AZSDK_SERVICE_READINESS_FIELD", Field);
         Environment.SetEnvironmentVariable("AZSDK_SERVICE_READINESS_ENVIRONMENT", "validation");
         _scopeChangedAt = Now.AddHours(-2);
         _specification = new WorkItem
@@ -59,6 +60,8 @@ public class ReleasePlanReadinessServiceTests
                 ["Custom.SDKPullRequestForJava"] = "https://github.com/Azure/azure-sdk-for-java/pull/12",
                 ["Custom.ApiSpecProjectPath"] = Project,
                 [ReleasePlanWorkItem.SpecCommitSHAField] = Commit,
+                [StatusField] = ServiceApiReadinessResponse.Passed,
+                [CheckedAtField] = Now.AddMinutes(-10).ToString("O"),
                 [Field] = Stored("Passed", "validation", "widgets", Now.AddMinutes(-10))
             }
         };
@@ -71,7 +74,7 @@ public class ReleasePlanReadinessServiceTests
         _ado.Setup(service => service.GetWorkItemUpdatesAsync(123, It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => [new WorkItemUpdate
             {
-                Rev = _plan.Rev!.Value,
+                Rev = _plan.Rev.GetValueOrDefault(),
                 Fields = new Dictionary<string, WorkItemFieldUpdate>
                 {
                     ["Custom.ApiSpecProjectPath"] = new() { NewValue = Project },
@@ -81,13 +84,28 @@ public class ReleasePlanReadinessServiceTests
         _ado.Setup(service => service.GetWorkItemUpdatesAsync(456, It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => [new WorkItemUpdate
             {
-                Rev = _specification.Rev!.Value,
+                Rev = _specification.Rev.GetValueOrDefault(),
                 Fields = new Dictionary<string, WorkItemFieldUpdate>
                 {
                     ["Custom.APISpecversion"] = new() { NewValue = Version },
                     ["System.ChangedDate"] = new() { NewValue = _scopeChangedAt.ToString("O") }
                 }
             }]);
+        _ado.Setup(service => service.GetReleasePlanReadinessAsync(It.IsAny<string>(), "Java", It.IsAny<CancellationToken>()))
+            .Returns<string, string, CancellationToken>(async (url, language, ct) =>
+            {
+                var plans = await _ado.Object.GetReleasePlansBySdkPullRequestAsync(url, language, ct: ct);
+                if (plans.Count != 1)
+                {
+                    return null;
+                }
+                var items = await _ado.Object.GetWorkItemsByIdsAsync([plans[0].WorkItemId, plans[0].ApiSpecWorkItemId], ct: ct);
+                var plan = items.Single(item => item.Id == plans[0].WorkItemId);
+                var specification = items.Single(item => item.Id == plans[0].ApiSpecWorkItemId);
+                var planUpdates = await _ado.Object.GetWorkItemUpdatesAsync(plan.Id!.Value, ct);
+                var specificationUpdates = await _ado.Object.GetWorkItemUpdatesAsync(specification.Id!.Value, ct);
+                return (plan, specification, planUpdates, specificationUpdates);
+            });
         _readiness = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
         _readiness.Setup(service => service.GetPackageMetadataAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => Result(false));
@@ -121,7 +139,7 @@ public class ReleasePlanReadinessServiceTests
     [Test]
     public async Task UnconfiguredCheckDoesNotAccessAdo()
     {
-        Environment.SetEnvironmentVariable("AZSDK_SERVICE_READINESS_FIELD", null);
+        Environment.SetEnvironmentVariable("AZSDK_SERVICE_READINESS_ENVIRONMENT", null);
         Assert.That((await Check(false)).ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         _ado.VerifyNoOtherCalls();
         _readiness.Verify(service => service.GetPackageMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -139,10 +157,24 @@ public class ReleasePlanReadinessServiceTests
         _ado.Verify(service => service.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [TestCase("Error", Version, "validation", "widgets", -10)]
+    [Test]
+    public async Task ReadOnlyCheckUsesOneCompleteDevOpsLookup()
+    {
+        var planUpdates = await _ado.Object.GetWorkItemUpdatesAsync(123);
+        var specificationUpdates = await _ado.Object.GetWorkItemUpdatesAsync(456);
+        _ado.Invocations.Clear();
+        _ado.Setup(service => service.GetReleasePlanReadinessAsync(It.IsAny<string>(), "Java", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((_plan, _specification, planUpdates, specificationUpdates));
+
+        var result = await Check(false);
+
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        _ado.Verify(service => service.GetReleasePlanReadinessAsync("https://github.com/Azure/azure-sdk-for-java/pull/12", "Java", It.IsAny<CancellationToken>()), Times.Once);
+        _ado.VerifyNoOtherCalls();
+    }
+
     [TestCase("Passed", "2025-01-01", "validation", "widgets", -10)]
     [TestCase("Passed", Version, "other", "widgets", -10)]
-    [TestCase("Passed", Version, "validation", "otherType", -10)]
     [TestCase("Passed", Version, "validation", "widgets", 1)]
     public async Task UnusableObservationValidatesTheAlreadyReadMetadata(string status, string version, string environment, string resourceType, int minutes)
     {
@@ -154,13 +186,41 @@ public class ReleasePlanReadinessServiceTests
         _readiness.Verify(service => service.CheckAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [TestCase("Passed", 2400, true)]
+    [TestCase("Not detected", 23.99, true)]
+    [TestCase("Not detected", 24, false)]
+    [TestCase("Inconclusive", 23.99, true)]
+    [TestCase("Inconclusive", 24, false)]
+    [TestCase("Error", 23.99, true)]
+    [TestCase("Error", 24, false)]
+    public async Task WorkItemCacheLifetimeDependsOnThePersistedResult(string status, double hours, bool reuse)
+    {
+        var checkedAt = Now.AddHours(-hours);
+        _scopeChangedAt = checkedAt.AddDays(-1);
+        SetStored(status, "validation", "unrelatedType", checkedAt);
+
+        var result = await Check(false);
+
+        Assert.That(result.Detail.Contains("Reused"), Is.EqualTo(reuse));
+        Assert.That(result.ReadinessStatus, Is.EqualTo(reuse ? status : ServiceApiReadinessResponse.Passed));
+        if (reuse)
+        {
+            Assert.That(result.Projects.Single().Matches.Single().ResourceType, Is.EqualTo("unrelatedType"));
+            Assert.That(result.Projects.Single().Matches.Single().Regions, Is.EqualTo(new[] { "East US", "West US" }));
+            Assert.That(result.CheckedAt, Is.EqualTo(checkedAt));
+        }
+        _readiness.Verify(service => service.GetPackageMetadataAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()), Times.Once);
+        _readiness.Verify(service => service.ValidateAsync(It.IsAny<ServiceApiReadinessResponse>(), It.IsAny<CancellationToken>()), reuse ? Times.Never() : Times.Once());
+        _ado.Verify(service => service.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     [TestCase(61)]
     [TestCase(86400)]
     public async Task MatchingEvidenceDoesNotExpireAsTimePasses(int minutes)
     {
         var checkedAt = Now.AddMinutes(-minutes);
         _scopeChangedAt = checkedAt.AddHours(-1);
-        _plan.Fields[Field] = Stored("Passed", "validation", "widgets", checkedAt);
+        SetStored("Passed", "validation", "widgets", checkedAt);
 
         var result = await Check(false);
 
@@ -233,15 +293,14 @@ public class ReleasePlanReadinessServiceTests
         var result = await Check(false);
         Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(result.Detail, Does.Contain("unavailable").And.Not.Contains("private response"));
-        _readiness.Verify(service => service.GetPackageMetadataAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()), Times.Once);
-        _readiness.Verify(service => service.ValidateAsync(result, It.IsAny<CancellationToken>()), Times.Once);
-        _readiness.Verify(service => service.CheckAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _readiness.Verify(service => service.GetPackageMetadataAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()), Times.Never);
+        _readiness.Verify(service => service.CheckAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
     public async Task UnsupportedFutureMetadataIsNeverOverwritten()
     {
-        _plan.Fields[Field] = "{\"schemaVersion\":4,\"results\":[]}";
+        _plan.Fields[Field] = "{\"schemaVersion\":5,\"results\":[]}";
         var result = await Check(true);
         Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         _ado.Verify(service => service.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -259,7 +318,7 @@ public class ReleasePlanReadinessServiceTests
 
     [TestCase(false)]
     [TestCase(true)]
-    public async Task OnlyExplicitRecordingWritesFiveNonDuplicateObservationFields(bool record)
+    public async Task OnlyExplicitRecordingWritesAllThreeProvisionedFields(bool record)
     {
         _plan.Fields[Field] = "";
         Dictionary<string, string>? written = null;
@@ -273,9 +332,11 @@ public class ReleasePlanReadinessServiceTests
             Assert.That(written, Is.Null);
             return;
         }
-        Assert.That(written!.Keys, Is.EqualTo(new[] { Field }));
+        Assert.That(written!.Keys, Is.EquivalentTo(new[] { StatusField, CheckedAtField, Field }));
+        Assert.That(written[StatusField], Is.EqualTo(result.ReadinessStatus));
+        Assert.That(DateTimeOffset.Parse(written[CheckedAtField]), Is.EqualTo(result.CheckedAt));
         using var json = JsonDocument.Parse(written[Field]);
-        Assert.That(json.RootElement.GetProperty("schemaVersion").GetInt32(), Is.EqualTo(3));
+        Assert.That(json.RootElement.GetProperty("schemaVersion").GetInt32(), Is.EqualTo(4));
         Assert.That(json.RootElement.GetProperty("results")[0].EnumerateObject().Select(property => property.Name), Is.EquivalentTo(new[]
         {
             "resourceProvider", "status", "matchedResourceTypes", "validationEnvironment", "checkedAt"
@@ -314,6 +375,7 @@ public class ReleasePlanReadinessServiceTests
 
     [TestCase(1)]
     [TestCase(2)]
+    [TestCase(3)]
     public async Task OlderMetadataRequiresFreshValidationBeforeExplicitReplacement(int schema)
     {
         _plan.Fields[Field] = JsonSerializer.Serialize(new { schemaVersion = schema, results = new[] { new { apiVersion = Version } } });
@@ -350,6 +412,113 @@ public class ReleasePlanReadinessServiceTests
 
     private Task<ServiceApiReadinessResponse> Check(bool record) =>
         _service.CheckAsync("Azure", "azure-sdk-for-java", 12, record, CancellationToken.None);
+
+    [TestCase(StatusField, "")]
+    [TestCase(StatusField, "Error")]
+    [TestCase(CheckedAtField, "")]
+    [TestCase(CheckedAtField, "invalid")]
+    [TestCase(CheckedAtField, "2026-11-12T15:55:00Z")]
+    public async Task MissingOrInconsistentSummaryCannotReuseJsonAlone(string field, string value)
+    {
+        _plan.Fields[field] = value;
+
+        var result = await Check(false);
+
+        Assert.That(result.Detail, Does.Not.Contain("Reused"));
+        _readiness.Verify(service => service.ValidateAsync(result, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task NativeAdoDateTimePreservesObservationPrecision(bool offset)
+    {
+        var checkedAt = Now.AddMinutes(-10).AddTicks(1234567);
+        SetStored("Passed", "validation", "widgets", checkedAt);
+        _plan.Fields[CheckedAtField] = offset ? (object)checkedAt : checkedAt.UtcDateTime;
+
+        var result = await Check(false);
+
+        Assert.That(result.Detail, Does.Contain("Reused"));
+        Assert.That(result.CheckedAt, Is.EqualTo(checkedAt));
+    }
+
+    [TestCase(-2, true)]
+    [TestCase(2, true)]
+    [TestCase(-4, false)]
+    [TestCase(4, false)]
+    public async Task NativeAdoTimestampRoundingDoesNotChangeEvidenceTime(int milliseconds, bool reuse)
+    {
+        var checkedAt = Now.AddMinutes(-10);
+        SetStored("Passed", "validation", "widgets", checkedAt);
+        _plan.Fields[CheckedAtField] = checkedAt.AddMilliseconds(milliseconds).UtcDateTime;
+
+        var result = await Check(false);
+
+        Assert.That(result.Detail.Contains("Reused"), Is.EqualTo(reuse));
+        if (reuse)
+        {
+            Assert.That(result.CheckedAt, Is.EqualTo(checkedAt));
+        }
+        _readiness.Verify(service => service.ValidateAsync(result, It.IsAny<CancellationToken>()), reuse ? Times.Never() : Times.Once());
+    }
+
+    [TestCase("Passed")]
+    [TestCase("Not detected")]
+    [TestCase("Inconclusive")]
+    [TestCase("Error")]
+    public async Task AllThreeFieldsRepresentTheActualRecordedOutcome(string status)
+    {
+        _plan.Fields[Field] = "";
+        _readiness.Setup(service => service.ValidateAsync(It.IsAny<ServiceApiReadinessResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ServiceApiReadinessResponse metadata, CancellationToken ct) =>
+            {
+                metadata.ReadinessStatus = status;
+                var project = metadata.Projects.Single();
+                project.ReadinessStatus = status;
+                project.Matches = status == "Passed" ? [new() { ResourceType = "widgets" }] : [];
+                return metadata;
+            });
+        Dictionary<string, string>? written = null;
+        _ado.Setup(service => service.UpdateWorkItemAsync(123, It.IsAny<Dictionary<string, string>>(), 5, It.IsAny<CancellationToken>()))
+            .Callback<int, Dictionary<string, string>, int, CancellationToken>((id, fields, revision, ct) => written = fields)
+            .ReturnsAsync(_plan);
+
+        await Check(true);
+
+        Assert.That(written![StatusField], Is.EqualTo(status));
+        Assert.That(DateTimeOffset.Parse(written[CheckedAtField]), Is.EqualTo(Now));
+        using var json = JsonDocument.Parse(written[Field]);
+        Assert.That(json.RootElement.GetProperty("results")[0].GetProperty("status").GetString(), Is.EqualTo(status));
+    }
+
+    [TestCase("Not detected")]
+    [TestCase("Inconclusive")]
+    [TestCase("Error")]
+    public async Task OlderResultDoesNotReplaceNewerSummaryOrDetails(string status)
+    {
+        var storedTime = Now.AddMinutes(-1);
+        SetStored("Passed", "validation", "widgets", storedTime);
+        _plan.Fields.Remove(StatusField);
+        _readiness.Setup(service => service.ValidateAsync(It.IsAny<ServiceApiReadinessResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ServiceApiReadinessResponse metadata, CancellationToken ct) =>
+            {
+                metadata.CheckedAt = Now.AddMinutes(-5);
+                metadata.ReadinessStatus = status;
+                metadata.Projects.Single().ReadinessStatus = status;
+                return metadata;
+            });
+        Dictionary<string, string>? written = null;
+        _ado.Setup(service => service.UpdateWorkItemAsync(123, It.IsAny<Dictionary<string, string>>(), 5, It.IsAny<CancellationToken>()))
+            .Callback<int, Dictionary<string, string>, int, CancellationToken>((id, fields, revision, ct) => written = fields)
+            .ReturnsAsync(_plan);
+
+        await Check(true);
+
+        Assert.That(written![StatusField], Is.EqualTo("Passed"));
+        Assert.That(DateTimeOffset.Parse(written[CheckedAtField]), Is.EqualTo(storedTime));
+        using var json = JsonDocument.Parse(written[Field]);
+        Assert.That(json.RootElement.GetProperty("results")[0].GetProperty("checkedAt").GetDateTimeOffset(), Is.EqualTo(storedTime));
+    }
 
     [TestCase(false)]
     [TestCase(true)]
@@ -403,14 +572,57 @@ public class ReleasePlanReadinessServiceTests
         _ado.Verify(service => service.UpdateWorkItemAsync(123, It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task OptionalWriteDeadlinePreservesPrimaryButCallerCancellationIsHonored(bool cancelCaller)
+    {
+        _plan.Fields[Field] = "";
+        using var caller = new CancellationTokenSource();
+        _ado.Setup(service => service.UpdateWorkItemAsync(123, It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Returns<int, Dictionary<string, string>, int, CancellationToken>((id, fields, revision, ct) =>
+            {
+                if (cancelCaller)
+                {
+                    caller.Cancel();
+                }
+                else
+                {
+                    var budget = (CancellationTokenSource)typeof(CancellationToken)
+                        .GetField("_source", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(ct)!;
+                    budget.Cancel();
+                }
+                return Task.FromCanceled<WorkItem>(ct);
+            });
+
+        if (cancelCaller)
+        {
+            Assert.CatchAsync<OperationCanceledException>(async () =>
+                await _service.CheckAsync("Azure", "azure-sdk-for-java", 12, true, caller.Token));
+        }
+        else
+        {
+            var result = await _service.CheckAsync("Azure", "azure-sdk-for-java", 12, true, caller.Token);
+            Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+            Assert.That(result.Detail, Does.Contain("optional release-plan update failed"));
+            Assert.That(caller.IsCancellationRequested, Is.False);
+        }
+    }
+
+    private void SetStored(string status, string environment, string resourceType, DateTimeOffset checkedAt)
+    {
+        _plan.Fields[StatusField] = status;
+        _plan.Fields[CheckedAtField] = checkedAt.ToString("O");
+        _plan.Fields[Field] = Stored(status, environment, resourceType, checkedAt);
+    }
+
     private static string Stored(string status, string environment, string resourceType, DateTimeOffset checkedAt) =>
         JsonSerializer.Serialize(new
         {
-            schemaVersion = 3,
+            schemaVersion = 4,
             results = new[] { new
         {
             resourceProvider = "Microsoft.Example", status,
-            matchedResourceTypes = new[] { resourceType }, validationEnvironment = environment, checkedAt
+            matchedResourceTypes = new[] { new { resourceType, regions = new[] { "East US", "West US" } } }, validationEnvironment = environment, checkedAt
         } }
         });
 

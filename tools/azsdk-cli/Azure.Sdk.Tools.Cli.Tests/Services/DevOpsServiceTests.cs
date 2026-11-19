@@ -29,6 +29,31 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+        [TestCase(null, false)]
+        [TestCase("false", false)]
+        [TestCase("true", true)]
+        [NonParallelizable]
+        public async Task GetReleasePlanReadinessAsync_UsesExistingAgentTestMode(string? mode, bool testing)
+        {
+            var original = Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING");
+            try
+            {
+                Environment.SetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING", mode);
+
+                var result = await _devOpsService.GetReleasePlanReadinessAsync(
+                    "https://github.com/Azure/azure-sdk-for-java/pull/12", "Java");
+
+                Assert.That(result, Is.Null);
+                Assert.That(_connection.LastCapturedQuery, Does.Contain(testing
+                    ? "[System.Tags] CONTAINS 'Release Planner App Test'"
+                    : "[System.Tags] NOT CONTAINS 'Release Planner App Test'"));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING", original);
+            }
+        }
+
         [TestCase("0123456789abcdef0123456789abcdef01234567")]
         [TestCase("")]
         public async Task GetReleasePlanForWorkItemAsync_ReadsOptionalSavedCommit(string sha)

@@ -161,15 +161,17 @@ azsdk pkg validate-service-api-readiness --package-path <package-root> --output 
 
 For a current-head metadata inspection without ARM requests, use
 `azsdk pkg validate-service-api-readiness --pull-request-url <sdk-pr-url> --metadata-only --output json`.
-This CLI-only option resolves package provenance and pinned resource requirements
+This CLI-only option resolves package provenance and provider/API-version requirements
 without Azure credentials. It returns metadata with an Inconclusive readiness
 status, not a passing service observation. Automation can compare that evidence
 with release-plan state before deciding whether a full ARM check is needed.
 Metadata-only mode requires PR input and retains the captured-head contract.
 
 Release-plan reuse is handled by the CLI coordinator using the existing ADO
-service. Set `AZSDK_SERVICE_READINESS_FIELD` and `AZSDK_SERVICE_READINESS_ENVIRONMENT`
-to enable optional cache reads. Plan
+service. Set `AZSDK_SERVICE_READINESS_ENVIRONMENT` to enable optional cache reads.
+The provisioned fields are `Custom.ServiceApiVersionReadinessStatus`,
+`Custom.ServiceApiVersionReadinessCheckedAt`, and
+`Custom.ServiceApiVersionReadinessDetails`; no field-name setting is needed. Plan
 association and project/commit values come from the existing release-plan work
 item. The API version comes from `Custom.APISpecversion` on its existing API-spec
 child. None of those values is copied into readiness JSON. Existing update history
@@ -178,25 +180,49 @@ change. Missing or incomplete history prevents reuse. Packages must use the API
 version on that API-spec item to reuse or record plan evidence; other versions are
 validated directly without recording under that plan.
 An unconfigured or unavailable cache falls back to the stateless ARM check.
+Before enablement, the details field needs long-text storage preserving raw JSON.
+Its currently provisioned single-line `string` type has a 255-character limit,
+which is too small for the evidence; no data is truncated to fit.
+Live test-plan validation rejected a 289-character payload with `TF401324`.
+The current ADO status list also excludes `Error`; backend owners must align
+that value before enablement rather than map an operational failure to Passed.
+For designated test plans, the existing `AZSDKTOOLS_AGENT_TESTING=true` setting
+restricts readiness lookup to the `Release Planner App Test` tag. Normal mode
+excludes that tag; this does not enable the automation action.
 Once package metadata has been read for reuse, a miss validates those same objects
 without repeating package discovery or specification reads.
 Matching Passed evidence does not expire with time. A new build, retry, or SDK PR
 head still reads current package metadata, but does not invalidate service evidence
-when its requirements and recorded scope remain unchanged. `checkedAt` records when
-validation occurred and binds evidence to scope history; it is not an expiry timer.
+when its API version and recorded scope remain unchanged. Non-Passed observations
+are reused for less than 24 hours and revalidated at 24 hours or later. `checkedAt`
+records the original validation time; reusing a result does not reset that time.
+ADO's native date field can round by a few milliseconds. Summary comparison
+allows at most 3 ms, retains the original JSON check time, and rejects larger
+differences. Scope and 24-hour freshness checks still use the original evidence.
+The existing `DevOpsService` returns the plan, linked API spec, saved JSON, and scope
+histories through one coherent lookup. Native ADO APIs still require internal
+requests; this is one owner operation, not one HTTP request.
 
 Add `--record-release-plan` with PR input to explicitly allow revision-safe ADO
 persistence after a fresh check. This CLI-only option is incompatible with local
 package input and `--metadata-only`; the MCP check and normal CLI invocation do
-not write ADO. Schema-3 JSON stores only Resource Provider, validation status,
+not write ADO. Explicit recording updates all three fields in one revision-checked
+request. The separate status and date/time are queryable summaries of the recorded
+evidence; empty status means Not recorded, not necessarily never checked. Missing
+or inconsistent summaries prevent reuse of JSON alone. Schema-4 JSON stores only Resource Provider, validation status,
 matched resource types, validation environment, and UTC check time. `checkedAt`
 is a timestamp, not a commit SHA or metric. Status is the service-validation
 outcome, not the ADO plan state or SDK release status. Matched resource types are
-the observed successful subset, not the specification's expected resource list.
+objects containing `resourceType` and `regions` for backtracking, not a spec filter
+or a package-specific readiness key. No separate `cloud` or constant `checkedBy`
+field is persisted; the environment identifies the trusted validation context.
 An unrelated ADO edit must not refresh that check time. The environment identifies
 where ARM was validated; it is not inferred from the dashboard's deployment.
-No API version, project, commit, entry ID, explicit expiry, or diagnostic values
-are duplicated. Older schemas require a fresh validation before explicit replacement.
+No API version, project, commit, entry ID, or explicit expiry is copied into JSON.
+Status and check time are intentionally available as both summary fields and
+per-provider evidence. Older schemas or JSON without a summary require fresh
+validation before explicit replacement. A newer retained observation must not be
+assigned an older result's status or a new publication timestamp.
 
 Supply exactly one of `--pull-request-url` or `--package-path`. The MCP tool
 `azsdk_validate_service_api_readiness` accepts the same alternatives:
@@ -210,18 +236,20 @@ Supply exactly one of `--pull-request-url` or `--package-path`. The MCP tool
 ```
 
 The CLI and MCP entry points share one read-only check. It resolves exact generation metadata from the SDK
-files at the current PR head or the selected local package, enriches `PackageInfo`
-from the pinned specification, and compares its RP/version/resource-type entries
-with ARM provider metadata. It returns Passed, Not detected,
+files at the current PR head or the selected local package and compares exact
+provider/API-version entries with ARM provider metadata. It returns Passed if at
+least one provider resource type advertises the exact version; it does not require
+that type to match a spec resource list. It returns Passed, Not detected,
 Inconclusive, or Error with package, source, and resource-type evidence. It does not edit
 GitHub, grant permissions, merge a PR, or release a package.
 
 Package discovery is internal to this command; running `eng package-info` first
 is not required. Each package carries `ApiVersions`, `TypeSpecLocation`,
 `ResourceTypes`, `MetadataFiles`, and `MetadataIssues`, alongside the existing
-package path and SDK type. Enrichment means adding expected resource mappings
-from the pinned specification to that same object. Those expected mappings are
-not proof that ARM advertises them; the validation result records actual matches.
+package path and SDK type. Explicit generated provider metadata does not need
+Swagger resource inspection. Scalar metadata still uses pinned project evidence
+to resolve provider scope. The separate `--include-resource-types` inspection
+option remains available; validation records actual provider matches and regions.
 
 In PR mode, the command captures the SDK PR head SHA. Callers must
 compare that SHA with the current head before publishing a result. It does not

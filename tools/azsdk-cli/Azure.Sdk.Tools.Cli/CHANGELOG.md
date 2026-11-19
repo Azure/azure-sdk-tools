@@ -4,9 +4,25 @@
 
 ### Features Added
 
-- Reuse matching service readiness evidence without time-based expiry. New SDK
-	builds and retries inspect their current metadata but do not invalidate unchanged
-	service requirements. Retain the validation timestamp for audit and scope checks.
+- Honor the existing agent-testing flag for test-only readiness plan lookup.
+	Tolerate at most 3 ms of native ADO timestamp rounding without replacing the
+	original observation time; reject larger summary mismatches.
+
+- Use the provisioned service API-version readiness status, UTC check time, and
+	JSON details fields. Update all three in one revision-checked request only with
+	explicit recording. Require consistent summaries for cache reuse and preserve
+	newer observations during older-result writes. Field names no longer need configuration.
+
+- Apply the agreed provider-level readiness policy: any provider resource advertising
+  the exact API version can pass without filtering by spec resource types. Explicit
+  generated provider metadata avoids unnecessary Swagger inspection; scalar metadata
+  still resolves provider scope from pinned evidence.
+- Reuse Passed results without age expiry for matching spec/API scope. Reuse non-Passed
+  results for less than 24 hours and revalidate them after that period. Store schema-4
+  resource-type objects with regions for backtracking, preserving the original check time.
+- Return all readiness scope and observations through one existing DevOpsService
+  lookup, without a new client or duplicated metadata fields. Preserve completed
+  validation when optional persistence exhausts its internal budget; honor caller cancellation.
 
 - Move optional release-plan readiness reuse into a CLI coordinator that reuses
 	existing ADO lookup, history, and revision-checked update services. A CLI-only

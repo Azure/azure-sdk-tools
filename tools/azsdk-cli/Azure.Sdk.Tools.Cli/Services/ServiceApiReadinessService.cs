@@ -74,10 +74,10 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             {
                 return result;
             }
-            await PopulatePackageResourceTypesAsync(result, ct);
+            await PopulateValidationProjectsAsync(result, ct);
             if (metadataOnly)
             {
-                result.Detail = "Pinned package metadata and resource requirements only; no ARM readiness check was performed.";
+                result.Detail = "Pinned package metadata and provider/API-version requirements only; no ARM readiness check was performed.";
                 return result;
             }
             await ValidateAsync(result, ct);
@@ -106,7 +106,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             {
                 return result;
             }
-            await PopulatePackageResourceTypesAsync(result, ct);
+            await PopulateValidationProjectsAsync(result, ct);
             await ValidateAsync(result, ct);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -172,38 +172,36 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         return true;
     }
 
-    private async Task PopulatePackageResourceTypesAsync(ServiceApiReadinessResponse result, CancellationToken ct)
+    private async Task PopulateValidationProjectsAsync(ServiceApiReadinessResponse result, CancellationToken ct)
     {
         for (var index = 0; index < result.Packages.Count; index++)
         {
             var package = result.Packages[index];
             ct.ThrowIfCancellationRequested();
             var versions = package.ResolvedApiVersions;
-            PackageInfo populatedPackage;
-            try
+            if (versions.Length == 0 || package.ApiVersions.Any(version => version.Namespace is null))
             {
-                populatedPackage = await packageMetadataService.PopulateResourceTypesAsync(package, ct);
-                result.Packages[index] = populatedPackage;
-            }
-            catch (Exception exception) when (exception is not OutOfMemoryException)
-            {
-                result.Projects.AddRange(versions.Select(version => new ServiceApiReadinessProject
+                try
                 {
-                    Package = package,
-                    ApiVersion = version,
-                    Namespace = version.Namespace ?? "",
-                    ReadinessStatus = ServiceApiReadinessResponse.Error,
-                    Detail = SafeError(exception)
-                }));
-                continue;
+                    package = await packageMetadataService.PopulateResourceTypesAsync(package, ct);
+                    result.Packages[index] = package;
+                    versions = package.ResolvedApiVersions;
+                }
+                catch (Exception exception) when (exception is not OutOfMemoryException)
+                {
+                    result.ReadinessStatus = ServiceApiReadinessResponse.Error;
+                    result.Detail = SafeError(exception);
+                    result.ResponseError = result.Detail;
+                    return;
+                }
             }
-            result.Projects.AddRange(populatedPackage.ResolvedApiVersions.Select(version => new ServiceApiReadinessProject
+            result.Projects.AddRange(versions.Select(version => new ServiceApiReadinessProject
             {
-                Package = populatedPackage,
+                Package = package,
                 ApiVersion = version,
                 Namespace = version.Namespace ?? "",
-                Detail = populatedPackage.MetadataIssues.Length > 0
-                    ? $"Missing or unresolved: {string.Join(", ", populatedPackage.MetadataIssues)}." : ""
+                Detail = package.MetadataIssues.Length > 0
+                    ? $"Missing or unresolved: {string.Join(", ", package.MetadataIssues)}." : ""
             }));
         }
     }
@@ -223,8 +221,6 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 project.ReadinessStatus != ServiceApiReadinessResponse.Error))
             {
                 ct.ThrowIfCancellationRequested();
-                var resourceTypes = package.ResourceTypes.Where(type => type.Namespace.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) && type.ApiVersion == project.ApiVersion.Version)
-                    .Select(type => type.ResourceType).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 try
                 {
                     if (!providers.TryGetValue(project.Namespace, out var providerTask))
@@ -239,7 +235,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                         project.Detail = "The provider is unavailable in the validation tenant.";
                         continue;
                     }
-                    CompareApiVersion(project, provider, resourceTypes);
+                    CompareApiVersion(project, provider);
                 }
                 catch (Exception exception) when (exception is not OutOfMemoryException)
                 {
@@ -250,17 +246,17 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         }
     }
 
-    private static void CompareApiVersion(ServiceApiReadinessProject project, JsonNode provider, IReadOnlySet<string> resourceTypes)
+    private static void CompareApiVersion(ServiceApiReadinessProject project, JsonNode provider)
     {
         if (!Text(provider["namespace"]).Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) ||
             provider["resourceTypes"] is not JsonArray advertisedTypes)
         {
             throw new InvalidOperationException("Unexpected ARM provider metadata response.");
         }
-        var applicable = advertisedTypes.Where(resource => resourceTypes.Contains(Text(resource?["resourceType"]))).ToArray();
+        var applicable = advertisedTypes.Where(resource => !string.IsNullOrWhiteSpace(Text(resource?["resourceType"]))).ToArray();
         if (applicable.Length == 0)
         {
-            project.Detail = "No project resource type could be mapped to provider metadata.";
+            project.Detail = "The provider metadata contains no resource types.";
             return;
         }
         foreach (var resource in applicable)
@@ -274,16 +270,15 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 .Where(region => !string.IsNullOrEmpty(region)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
             project.Matches.Add(new ServiceApiReadinessMatch { ResourceType = Text(resource["resourceType"]), Regions = regions });
         }
-        // One exact match passes this project, but does not prove every operation or region.
         project.ReadinessStatus = project.Matches.Count > 0 ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected;
-        project.Detail = $"{project.Matches.Count} of {applicable.Length} mapped resource types advertise the exact version ({resourceTypes.Count} project resource types identified).";
+        project.Detail = $"{project.Matches.Count} of {applicable.Length} provider resource types advertise the exact version; spec resource-type filtering is not applied.";
         if (project.ReadinessStatus == ServiceApiReadinessResponse.NotDetected)
         {
             project.Detail += " Ask the service owner to confirm deployment; this is not a confirmed deployment failure.";
         }
     }
 
-    private static void SetOverallResult(ServiceApiReadinessResponse result)
+    internal static void SetOverallResult(ServiceApiReadinessResponse result)
     {
         if (result.Projects.Any(project => project.ReadinessStatus == ServiceApiReadinessResponse.Error))
         {

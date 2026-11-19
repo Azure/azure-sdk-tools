@@ -99,6 +99,43 @@ public class ServiceApiReadinessServiceTests
     public void TearDown() => _http.Dispose();
 
     [Test]
+    public async Task PinnedResourceDiscoveryDoesNotRequireAMainFileProviderDecorator()
+    {
+        SetFile(SpecRepository, SpecCommit, $"{Project}/main.tsp", "import \"./provider.tsp\";");
+
+        var evidence = await new ProjectResourceTypeHelper(_http, "github-test-token")
+            .ReadPinnedSwaggerResourceTypesAsync(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", Version);
+
+        Assert.That(evidence.MissingEvidence, Is.Empty);
+        Assert.That(evidence.ProviderNamespaces, Is.EqualTo(new[] { "Microsoft.Example" }));
+        Assert.That(evidence.ResourceTypes.Single().ResourceType, Is.EqualTo("widgets"));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
+    public async Task ExactProviderVersionPassesWithoutSpecResourceTypeFiltering()
+    {
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json",
+            JsonSerializer.Serialize(new
+            {
+                info = new { version = Version },
+                paths = new Dictionary<string, object>
+                {
+                    ["/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Example/servers/{serverName}"] = new { get = new { } }
+                }
+            }));
+
+        var result = await CheckAsync();
+
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(result.Packages.Single().ResourceTypes, Is.Empty);
+        Assert.That(result.Projects.Single().Matches.Select(match => match.ResourceType), Does.Contain("widgets"));
+        Assert.That(_requests.Where(request => request.Uri.AbsolutePath.EndsWith("example.json", StringComparison.Ordinal)), Is.Empty);
+        Assert.That(result.Detail, Does.Contain("metadata"));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
     public async Task ReadinessConsumesTheInjectedMetadataInterface()
     {
         var package = new PackageInfo
@@ -122,7 +159,7 @@ public class ServiceApiReadinessServiceTests
 
         Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         metadata.Verify(service => service.ReadLocalGenerationEvidenceAsync(package, It.IsAny<CancellationToken>()), Times.Once);
-        metadata.Verify(service => service.PopulateResourceTypesAsync(package, It.IsAny<CancellationToken>()), Times.Once);
+        metadata.Verify(service => service.PopulateResourceTypesAsync(package, It.IsAny<CancellationToken>()), Times.Never);
         _github.Verify(service => service.GetAuthToken(It.IsAny<CancellationToken>()), Times.Never);
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
     }
@@ -162,13 +199,13 @@ public class ServiceApiReadinessServiceTests
     }
 
     [Test]
-    public async Task MetadataOnlyReturnsCurrentHeadRequirementsWithoutArmAuthentication()
+    public async Task MetadataOnlyReturnsCurrentHeadProviderRequirementsWithoutArmAuthentication()
     {
         var response = await _service.GetPackageMetadataAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
 
         Assert.That(response.HeadSha, Is.EqualTo(Head));
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
-        Assert.That(response.Packages.Single().ResourceTypes, Has.Length.EqualTo(1));
+        Assert.That(response.Packages.Single().ResourceTypes, Is.Empty);
         Assert.That(response.Projects.Single().Package, Is.SameAs(response.Packages.Single()));
         Assert.That(response.Detail, Does.Contain("no ARM"));
         Assert.That(ArmRequests(), Is.Empty);
@@ -225,6 +262,7 @@ public class ServiceApiReadinessServiceTests
     [TestCase(true)]
     public async Task PartialSwaggerEvidenceCannotProducePassingMetadataOrReadiness(bool invalidPaths)
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", Config("{service-name}/{version-status}/{version}/example.json"));
         _directories[Key(SpecRepository, SpecCommit, SwaggerDirectory)] = JsonSerializer.SerializeToNode(new[]
         {
@@ -271,26 +309,17 @@ public class ServiceApiReadinessServiceTests
     public async Task PopulatesEveryPackageInfoBeforeCheckingArmReadiness()
     {
         AddPackage($"{Package}-second", Metadata, Version);
-        var populatedPackages = new List<PackageInfo>();
-        var packageMetadataService = new Mock<IPackageApiMetadataService>(MockBehavior.Strict);
-        packageMetadataService.Setup(service => service.PopulateResourceTypesAsync(It.IsAny<PackageInfo>(), It.IsAny<CancellationToken>()))
-            .Returns<PackageInfo, CancellationToken>((package, cancellationToken) =>
-            {
-                Assert.That(ArmRequests(), Is.Empty, "Every package must be enriched before ARM validation starts.");
-                Assert.That(package.TypeSpecLocation?.Commit, Is.EqualTo(SpecCommit));
-                package.ResourceTypes = [new("Microsoft.Example", Version, "widgets")];
-                populatedPackages.Add(package);
-                return Task.FromResult(package);
-            });
-        var clients = new Mock<IHttpClientFactory>();
-        clients.Setup(factory => factory.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(_http);
-        var service = new ServiceApiReadinessService(_github.Object, _azure.Object, clients.Object, packageMetadataService.Object);
+        var metadata = await _service.GetPackageMetadataAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
+        var packages = metadata.Packages.ToArray();
+        Assert.That(packages, Has.Length.EqualTo(2));
+        Assert.That(packages.All(package => package.TypeSpecLocation?.Commit == SpecCommit && package.ResolvedApiVersions.Length > 0), Is.True);
+        Assert.That(ArmRequests(), Is.Empty);
 
-        var response = await service.CheckAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
+        var response = await _service.ValidateAsync(metadata, CancellationToken.None);
 
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed), response.Detail);
-        Assert.That(populatedPackages, Has.Count.EqualTo(2));
-        Assert.That(response.Packages, Is.EqualTo(populatedPackages));
+        Assert.That(response, Is.SameAs(metadata));
+        Assert.That(response.Packages, Is.EqualTo(packages));
         Assert.That(response.Projects, Has.Count.EqualTo(2));
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
     }
@@ -492,7 +521,7 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.InputKind, Is.EqualTo("package"));
         Assert.That(response.HeadSha, Is.Empty);
         Assert.That(response.Packages.Single(), Is.SameAs(package));
-        Assert.That(package.ResourceTypes, Is.EqualTo(new[] { new PackageResourceType("Microsoft.Example", Version, "widgets") }));
+        Assert.That(package.ResourceTypes, Is.Empty);
         Assert.That(response.Detail, Does.Contain("local SDK metadata").And.Contain("not a PR-head attestation"));
         Assert.That(_pullRequestReads, Is.Zero);
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
@@ -679,7 +708,7 @@ public class ServiceApiReadinessServiceTests
 
         Assert.That(response.ReadinessStatus, Is.EqualTo(otherProviderAdvertisesVersion ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected));
         Assert.That(package.ApiVersions, Is.EquivalentTo(new[] { new PackageApiVersion(Version, "Microsoft.Example"), new PackageApiVersion(otherVersion, "Microsoft.Other") }));
-        Assert.That(package.ResourceTypes, Is.EquivalentTo(new[] { new PackageResourceType("Microsoft.Example", Version, "widgets"), new PackageResourceType("Microsoft.Other", otherVersion, "widgets") }));
+        Assert.That(package.ResourceTypes, Is.Empty);
         Assert.That(response.Projects, Has.Count.EqualTo(2));
         Assert.That(ArmRequests().Count(), Is.EqualTo(2));
     }
@@ -1163,6 +1192,7 @@ public class ServiceApiReadinessServiceTests
     [TestCase("{childType}")]
     public async Task UnresolvedChildCannotPassUsingItsParent(string child)
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetSwagger(Version, $"/providers/Microsoft.Example/widgets/{{name}}/{child}", true);
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
@@ -1181,6 +1211,7 @@ public class ServiceApiReadinessServiceTests
     [Test]
     public async Task UnresolvedProviderExpressionIsNotGuessedFromNamespace()
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetFile(SpecRepository, SpecCommit, $"{Project}/main.tsp", "@armProviderNamespace(providerName)\nnamespace Microsoft.Example;");
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
@@ -1193,6 +1224,7 @@ public class ServiceApiReadinessServiceTests
     [TestCase("{\"info\":\"2026-04-01\"}")]
     public async Task InvalidOrWrongVersionSwaggerIsInconclusive(string swagger)
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json", swagger);
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
@@ -1202,6 +1234,7 @@ public class ServiceApiReadinessServiceTests
     [Test]
     public async Task InheritedSwaggerMappingIsNotGuessed()
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", ManagementConfiguration + "extends: ../tspconfig.yaml\n");
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
@@ -1225,6 +1258,7 @@ public class ServiceApiReadinessServiceTests
     [TestCase(true)]
     public async Task ExplicitProviderFolderDoesNotReadSiblingSwagger(bool configuredOutputExists)
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml",
             Config("{azure-resource-provider-folder}/{version-status}/{version}/example.json") + "    azure-resource-provider-folder: resource-manager\n");
         var swagger = _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")];
@@ -1242,6 +1276,7 @@ public class ServiceApiReadinessServiceTests
     [TestCase(33)]
     public async Task WildcardDiscoveryBoundsConcreteSwaggerSuffix(int count)
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", Config("{service-name}/{version-status}/{version}/example.json"));
         _directories[Key(SpecRepository, SpecCommit, SwaggerDirectory)] = JsonSerializer.SerializeToNode(
             Enumerable.Range(0, count).Select(index => new { name = $"service{index}", type = "dir" }))!.AsArray();
@@ -1258,6 +1293,7 @@ public class ServiceApiReadinessServiceTests
     [Test]
     public async Task LargeSwaggerUsesBoundedRawContentOnTheSamePinnedApiHost()
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         var path = $"{SwaggerDirectory}/stable/{Version}/example.json";
         var document = JsonNode.Parse(_files[Key(SpecRepository, SpecCommit, path)])!.AsObject();
         document["description"] = new string('x', 2 * 1024 * 1024);
@@ -1276,6 +1312,7 @@ public class ServiceApiReadinessServiceTests
     [TestCase(HttpStatusCode.Redirect)]
     public async Task RawContentAccessFailureOrRedirectIsAnError(HttpStatusCode status)
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         _rawFiles.Add(Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json"));
         _rawStatus = status;
         var response = await CheckAsync();
@@ -1287,6 +1324,7 @@ public class ServiceApiReadinessServiceTests
     [Test]
     public async Task OversizedRawSwaggerIsRejectedBeforeDownload()
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         var path = $"{SwaggerDirectory}/stable/{Version}/example.json";
         SetFile(SpecRepository, SpecCommit, path, new string('x', 4 * 1024 * 1024 + 1));
         _rawFiles.Add(Key(SpecRepository, SpecCommit, path));

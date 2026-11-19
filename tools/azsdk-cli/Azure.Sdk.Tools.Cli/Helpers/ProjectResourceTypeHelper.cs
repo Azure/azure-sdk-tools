@@ -16,7 +16,7 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
     private const string ConfigurationSuffix = "/tspconfig.yaml";
 
     public sealed record ResourceTypeEvidence(PackageResourceType[] ResourceTypes, string[] ProviderNamespaces, List<string> MissingEvidence);
-    private sealed record SpecMapping(string Namespace, string? SwaggerPattern, List<string> MissingEvidence);
+    private sealed record SpecMapping(string? SwaggerPattern, List<string> MissingEvidence);
     private sealed record ProjectSource(string SpecRepository, string CommitSha, string Configuration, string ApiVersion);
 
     public async Task<ResourceTypeEvidence> ReadPinnedSwaggerResourceTypesAsync(
@@ -64,30 +64,22 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
         ProjectSource source, CancellationToken ct)
     {
         var project = source.Configuration[..^ConfigurationSuffix.Length];
-        var configTask = ReadFileAsync(source, source.Configuration, ct);
-        var mainTask = ReadFileAsync(source, $"{project}/main.tsp", ct);
-        await Task.WhenAll(configTask, mainTask);
-        var configText = await configTask;
-        var provider = GeneratedSdkMetadataHelper.ProviderNamespace(await mainTask ?? "");
+        var configText = await ReadFileAsync(source, source.Configuration, ct);
         var missing = new List<string>();
-        if (string.IsNullOrEmpty(provider))
-        {
-            missing.Add("provider namespace");
-        }
         if (configText is null)
         {
             missing.Add("TypeSpec configuration at spec commit");
         }
         if (missing.Count > 0)
         {
-            return new(provider, null, missing);
+            return new(null, missing);
         }
         var pattern = SwaggerOutputPattern(configText!, project, source.ApiVersion);
         if (pattern is null)
         {
             missing.Add("checked-in Swagger output mapping");
         }
-        return new(provider, pattern, missing);
+        return new(pattern, missing);
     }
 
     private async Task<List<string>> DiscoverSwaggerFilesAsync(string pattern, ProjectSource source, CancellationToken ct)

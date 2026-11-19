@@ -44,10 +44,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -56,10 +59,15 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: file-matches
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: '@@clientName(Microsoft.Widget.EmployeeProperties.profileUri, "profileUrl", "go")'
+          pattern: '@@clientName\s*\(\s*(?:Microsoft\.Widget\.)?EmployeeProperties\.profileUri\s*,\s*"profileUrl"\s*,\s*"go"\s*\)'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004002-property-renamed-breaking-change-SpecInputs-csharp
     tags:
@@ -83,10 +91,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -95,10 +106,15 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: file-matches
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: '@@clientName(Microsoft.Widget.EmployeeProperties.profileUri, "profileUrl", "csharp")'
+          pattern: '@@clientName\s*\(\s*(?:Microsoft\.Widget\.)?EmployeeProperties\.profileUri\s*,\s*"profileUrl"\s*,\s*"csharp"\s*\)'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004002-property-renamed-breaking-change-SpecInputs-python
     tags:
@@ -122,10 +138,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -134,10 +153,15 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: file-matches
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: '@@clientName(Microsoft.Widget.EmployeeProperties.profileUri, "profileUrl", "python")'
+          pattern: '@@clientName\s*\(\s*(?:Microsoft\.Widget\.)?EmployeeProperties\.profileUri\s*,\s*"profileUrl"\s*,\s*"python"\s*\)'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004002-property-renamed-breaking-change-SpecInputs-java
     tags:
@@ -161,10 +185,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -173,10 +200,15 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: file-matches
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: '@@clientName(Microsoft.Widget.EmployeeProperties.profileUri, "profileUrl", "java")'
+          pattern: '@@clientName\s*\(\s*(?:Microsoft\.Widget\.)?EmployeeProperties\.profileUri\s*,\s*"profileUrl"\s*,\s*"java"\s*\)'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004002-property-renamed-breaking-change-SpecInputs-javascript
     tags:
@@ -200,10 +232,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -212,7 +247,12 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: file-matches
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: '@@clientName(Microsoft.Widget.EmployeeProperties.profileUri, "profileUrl", "javascript")'
+          pattern: '@@clientName\s*\(\s*(?:Microsoft\.Widget\.)?EmployeeProperties\.profileUri\s*,\s*"profileUrl"\s*,\s*"javascript"\s*\)'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0

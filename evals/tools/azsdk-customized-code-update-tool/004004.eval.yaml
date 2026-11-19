@@ -44,10 +44,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -63,6 +66,11 @@ stimuli:
             @@override(Microsoft.Widget.Employees.listByResourceGroup,
             reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
             #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "go");
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004004-operation-param-order-breaking-change-SpecInputs-csharp
     tags:
@@ -86,10 +94,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -105,6 +116,11 @@ stimuli:
             @@override(Microsoft.Widget.Employees.listByResourceGroup,
             reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
             #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "csharp");
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004004-operation-param-order-breaking-change-SpecInputs-python
     tags:
@@ -128,10 +144,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -147,6 +166,11 @@ stimuli:
             @@override(Microsoft.Widget.Employees.listByResourceGroup,
             reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
             #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "python");
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004004-operation-param-order-breaking-change-SpecInputs-java
     tags:
@@ -170,10 +194,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -189,6 +216,11 @@ stimuli:
             @@override(Microsoft.Widget.Employees.listByResourceGroup,
             reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
             #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "java");
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004004-operation-param-order-breaking-change-SpecInputs-javascript
     tags:
@@ -212,10 +244,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -231,3 +266,8 @@ stimuli:
             @@override(Microsoft.Widget.Employees.listByResourceGroup,
             reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
             #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "javascript");
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0

@@ -15,7 +15,7 @@ import (
 func CreateAPIView(pkgDir, outputDir string) error {
 	review, err := createReview(pkgDir)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	filename := filepath.Join(outputDir, review.Name+".json")
 	file, _ := json.MarshalIndent(review, "", " ")

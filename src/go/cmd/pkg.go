@@ -118,6 +118,16 @@ func (p *Pkg) unversionedModulePath() string {
 	return p.modulePath
 }
 
+func unparenType(expr ast.Expr) ast.Expr {
+	for {
+		paren, ok := expr.(*ast.ParenExpr)
+		if !ok {
+			return expr
+		}
+		expr = paren.X
+	}
+}
+
 func (p *Pkg) indexFile(f *ast.File) {
 	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
 	imports := map[string]string{}
@@ -156,9 +166,13 @@ func (p *Pkg) indexFile(f *ast.File) {
 				}
 			}
 		case *ast.TypeSpec:
-			switch t := x.Type.(type) {
+			switch t := unparenType(x.Type).(type) {
 			case *ast.ArrayType:
 				// "type UUID [16]byte"
+				txt := p.getText(t.Pos(), t.End())
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
+			case *ast.ChanType, *ast.StarExpr:
 				txt := p.getText(t.Pos(), t.End())
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
@@ -359,6 +373,11 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 		}
 		a.Package.types[a.Name] = exportedDef
 	}
+	// Private aliases can be used by public aliases, but have no review line of their own.
+	if !ast.IsExported(a.Name) {
+		a.resolved = true
+		return nil
+	}
 	level := CodeDiagnosticLevelInfo
 	originalName := a.QualifiedName
 	// if the definition is in the same module as the alias, strip the module path from the diagnostic message
@@ -375,7 +394,7 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	if def.n == nil || def.p == nil {
 		t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), a.QualifiedName, nil)
 	} else {
-		switch n := def.n.Type.(type) {
+		switch n := unparenType(def.n.Type).(type) {
 		case *ast.InterfaceType:
 			t = a.Package.c.addInterface(*def.p, a.Name, a.Package.Name(), n, nil)
 		case *ast.StructType:
@@ -409,14 +428,14 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 				})
 			}
 		case *ast.Ident:
-			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), def.n.Type.(*ast.Ident).Name, nil)
+			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), n.Name, nil)
 			a.hoistMethods(def)
-		case *ast.ArrayType, *ast.FuncType, *ast.IndexExpr, *ast.IndexListExpr, *ast.MapType:
-			underlying := def.p.getText(def.n.Type.Pos(), def.n.Type.End())
+		case *ast.ArrayType, *ast.ChanType, *ast.FuncType, *ast.IndexExpr, *ast.IndexListExpr, *ast.MapType:
+			underlying := def.p.getText(n.Pos(), n.End())
 			t = a.Package.c.addSimpleType(*def.p, a.Name, a.Package.Name(), underlying, nil)
 			a.hoistMethods(def)
 		default:
-			return fmt.Errorf("unsupported type %T for alias %s.%s", def.n.Type, a.Package.Name(), a.Name)
+			return fmt.Errorf("unsupported type %T for alias %s.%s", n, a.Package.Name(), a.Name)
 		}
 	}
 
@@ -432,7 +451,7 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 }
 
 func (a *TypeAlias) hoistMethods(def typeDef) {
-	if !a.isAlias {
+	if !a.isAlias || !ast.IsExported(a.Name) {
 		return
 	}
 	pkg, name := def.p, def.n.Name.Name

@@ -335,9 +335,292 @@ func (Entry) Valid() bool { return true }
 
 func TestAliasUnsupportedDefinition(t *testing.T) {
 	p := &Pkg{modulePath: "example.com/aliastest", relName: "aliastest", c: newContent(), types: map[string]typeDef{}}
-	alias := TypeAlias{Name: "Alias", Package: p, QualifiedName: "example.com/aliastest/internal.Channel", isAlias: true}
-	def := typeDef{n: &ast.TypeSpec{Name: ast.NewIdent("Channel"), Type: &ast.ChanType{}}, p: p}
-	require.ErrorContains(t, alias.Resolve(def), "unsupported type *ast.ChanType")
+	alias := TypeAlias{Name: "Alias", Package: p, QualifiedName: "example.com/aliastest/internal.Pointer", isAlias: true}
+	def := typeDef{n: &ast.TypeSpec{Name: ast.NewIdent("Pointer"), Type: &ast.StarExpr{}}, p: p}
+	require.ErrorContains(t, alias.Resolve(def), "unsupported type *ast.StarExpr")
+}
+
+func TestAliasUnsupportedCLIError(t *testing.T) {
+	dir := aliasFeedbackFixture(t, "type Public = types.Data\n", "type Data *int\n", nil)
+	output := t.TempDir()
+	rootCmd.SetArgs([]string{dir, output})
+	t.Cleanup(func() { rootCmd.SetArgs(nil) })
+	require.ErrorContains(t, rootCmd.Execute(), "unsupported type *ast.StarExpr")
+	files, err := os.ReadDir(output)
+	require.NoError(t, err)
+	require.Empty(t, files)
+}
+
+func TestAliasAdditionalDefinitions(t *testing.T) {
+	for _, test := range []struct {
+		name, original, changed, originalType, changedType string
+	}{
+		{"channel", "chan int", "chan string", "chanint", "chanstring"},
+		{"send channel", "chan<- int", "chan<- string", "chan<-int", "chan<-string"},
+		{"receive channel", "<-chan int", "<-chan string", "<-chanint", "<-chanstring"},
+		{"parenthesized slice", "([]byte)", "([]rune)", "[]byte", "[]rune"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			dir := aliasFeedbackFixture(t, "type Public = types.Data\n", "type Data "+test.original+"\n", nil)
+			review, err := createReview(dir)
+			require.NoError(t, err)
+			require.Equal(t, "typePublic"+test.originalType, feedbackLineText(feedbackLine(t, review, "aliastest.Public")))
+
+			source := filepath.Join(dir, "internal", "types", "types.go")
+			require.NoError(t, os.WriteFile(source, []byte("package types\ntype Data "+test.changed+"\n"), 0644))
+			review, err = createReview(dir)
+			require.NoError(t, err)
+			require.Equal(t, "typePublic"+test.changedType, feedbackLineText(feedbackLine(t, review, "aliastest.Public")))
+		})
+	}
+
+	for _, typ := range []string{"*int", "(*int)"} {
+		t.Run("unsupported pointer "+typ, func(t *testing.T) {
+			dir := aliasFeedbackFixture(t, "type Public = types.Data\n", "type Data "+typ+"\n", nil)
+			_, err := createReview(dir)
+			require.ErrorContains(t, err, "unsupported type *ast.StarExpr")
+		})
+	}
+	for _, alias := range []string{
+		"type Public = *types.Data\n",
+		"type Public = (*types.Data)\n",
+		"type hidden = *types.Data\ntype Public = hidden\n",
+	} {
+		t.Run("direct pointer alias "+alias, func(t *testing.T) {
+			dir := aliasFeedbackFixture(t, alias, "type Data struct{}\n", nil)
+			_, err := createReview(dir)
+			require.ErrorContains(t, err, "unsupported type *ast.StarExpr")
+		})
+	}
+	t.Run("defined pointer", func(t *testing.T) {
+		dir := aliasFeedbackFixture(t, "type Public *types.Data\n", "type Data struct{}\n", nil)
+		review, err := createReview(dir)
+		require.NoError(t, err)
+		require.Equal(t, "typePublic*types.Data", feedbackLineText(feedbackLine(t, review, "aliastest.Public")))
+	})
+	t.Run("channel methods", func(t *testing.T) {
+		dir := aliasFeedbackFixture(t, "type Public = types.Data\n", `
+type Data chan int
+func (Data) Send(other Data) Data { return other }
+`, nil)
+		review, err := createReview(dir)
+		require.NoError(t, err)
+		line := feedbackLine(t, review, "aliastest.Public")
+		method := feedbackMethod(t, line, "Public", "Send")
+		require.Equal(t, "func(Public)Send(otherPublic)Public", feedbackLineText(method))
+	})
+	t.Run("unicode receiver", func(t *testing.T) {
+		dir := aliasFeedbackFixture(t, "type Public = types.\u00c9tat\n", "type \u00c9tat []byte\nfunc (\u00c9tat) Method(v \u00c9tat) \u00c9tat { return v }\n", nil)
+		review, err := createReview(dir)
+		require.NoError(t, err)
+		method := feedbackMethod(t, feedbackLine(t, review, "aliastest.Public"), "Public", "Method")
+		require.Equal(t, "func(Public)Method(vPublic)Public", feedbackLineText(method))
+	})
+
+	for _, test := range []struct {
+		name, original, changed, originalMember, changedMember string
+	}{
+		{"struct", "(struct { Field int })", "(struct { Field string })", "int", "string"},
+		{"interface", "(interface { Value() int })", "(interface { Value() string })", "int", "string"},
+	} {
+		t.Run("parenthesized "+test.name, func(t *testing.T) {
+			dir := aliasFeedbackFixture(t, "type Public = types.Data\n", "type Data "+test.original+"\n", nil)
+			review, err := createReview(dir)
+			require.NoError(t, err)
+			line := feedbackLine(t, review, "aliastest.Public")
+			require.True(t, searchTokens(line.Children, func(token ReviewToken) bool { return token.Value == test.originalMember }))
+
+			source := filepath.Join(dir, "internal", "types", "types.go")
+			require.NoError(t, os.WriteFile(source, []byte("package types\ntype Data "+test.changed+"\n"), 0644))
+			review, err = createReview(dir)
+			require.NoError(t, err)
+			line = feedbackLine(t, review, "aliastest.Public")
+			require.True(t, searchTokens(line.Children, func(token ReviewToken) bool { return token.Value == test.changedMember }))
+		})
+	}
+}
+
+func TestAliasPrivateIntermediate(t *testing.T) {
+	dir := aliasFeedbackFixture(t, `
+type hidden = types.Data
+type Public = hidden
+type PublicTwo = Public
+type privateDefined types.Data
+func (privateDefined) Local() {}
+func (d (*privateDefined)) PrivatePointer() {}
+type Exposed = privateDefined
+type Direct hidden
+func (Direct) Own() {}
+`, `
+type Data []byte
+func (Data) Unnamed() {}
+func (d Data) Named() {}
+`, nil)
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	line := feedbackLine(t, review, "aliastest.Public")
+	require.Equal(t, "typePublic[]byte", feedbackLineText(line))
+	for _, method := range []string{"Named", "Unnamed"} {
+		feedbackMethod(t, line, "Public", method)
+		feedbackMethod(t, feedbackLine(t, review, "aliastest.PublicTwo"), "PublicTwo", method)
+	}
+	exposed := feedbackLine(t, review, "aliastest.Exposed")
+	feedbackMethod(t, exposed, "Exposed", "Local")
+	feedbackMethod(t, exposed, "Exposed", "PrivatePointer")
+	require.False(t, searchLines(exposed.Children, func(child ReviewLine) bool {
+		return strings.Contains(feedbackLineText(child), "Exposed)Named(")
+	}))
+	direct := feedbackLine(t, review, "aliastest.Direct")
+	require.Equal(t, "typeDirect[]byte", feedbackLineText(direct))
+	feedbackMethod(t, direct, "Direct", "Own")
+	require.False(t, searchLines(direct.Children, func(child ReviewLine) bool {
+		return strings.Contains(feedbackLineText(child), "Direct)Named(")
+	}))
+	require.False(t, searchLines(review.ReviewLines, func(line ReviewLine) bool {
+		return strings.Contains(line.LineID, "hidden") || strings.Contains(line.LineID, "privateDefined")
+	}))
+	for _, diagnostic := range review.Diagnostics {
+		require.NotEqual(t, "aliastest.hidden", diagnostic.TargetID)
+		require.NotEqual(t, "aliastest.privateDefined", diagnostic.TargetID)
+	}
+	lineIDs := map[string]bool{}
+	forAll(review.ReviewLines, func(line ReviewLine) {
+		lineIDs[line.LineID] = true
+	})
+	for _, namespace := range review.Navigation {
+		for _, item := range namespace.ChildItems {
+			require.NotContains(t, item.NavigationID, "hidden")
+			require.NotContains(t, item.NavigationID, "privateDefined")
+			require.True(t, lineIDs[item.NavigationID], "navigation target %s has no review line", item.NavigationID)
+		}
+	}
+}
+
+func TestAliasCyclicDefinitions(t *testing.T) {
+	dir := aliasFeedbackFixture(t, "type Public = types.A\n", "type A = B\ntype B = A\n", nil)
+	_, err := createReview(dir)
+	require.ErrorContains(t, err, "cyclic type definition")
+}
+
+func TestAliasMethodChainsAndSelfReferences(t *testing.T) {
+	dir := aliasFeedbackFixture(t, `
+type Slice = (types.Renamed)
+type Another = types.Data
+type Different = types.DefinedAlias
+`, `
+import "example.com/aliastest/other"
+type Data []byte
+type Middle = Data
+type hidden = Middle
+type Renamed = (hidden)
+type Sibling = Data
+type DataExtra int
+func (Data) Len() int { return 0 }
+func (Middle) ViaMiddle() {}
+func (Sibling) ViaSibling() {}
+func (d (*Data)) Wrapped(v Data) Data { return v }
+func (d *(Data)) Nested() {}
+func (Data) Clone(v *Data, all []Data, lookup map[string][]*Renamed, foreign other.Data, extra DataExtra) (Renamed, *Data) {
+	return nil, nil
+}
+type Defined Data
+type DefinedAlias = Defined
+func (Defined) Own(other Data) Defined { return nil }
+func (DefinedAlias) AliasOwn() {}
+`, map[string]string{
+		filepath.Join("other", "other.go"): "package other\ntype Data string\n",
+	})
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	for _, name := range []string{"Slice", "Another"} {
+		t.Run(name, func(t *testing.T) {
+			line := feedbackLine(t, review, "aliastest."+name)
+			require.Equal(t, "type"+name+"[]byte", feedbackLineText(line))
+			for _, method := range []string{"Len", "ViaMiddle", "ViaSibling", "Wrapped", "Nested"} {
+				feedbackMethod(t, line, name, method)
+			}
+			require.Contains(t, feedbackLineText(feedbackMethod(t, line, name, "Wrapped")), "func(*"+name+")Wrapped(v"+name+")"+name)
+			clone := feedbackMethod(t, line, name, "Clone")
+			require.Contains(t, feedbackLineText(clone), "foreignother.Data")
+			require.Contains(t, feedbackLineText(clone), "extraDataExtra")
+			require.NotContains(t, feedbackLineText(clone), "Renamed")
+			selfReferences := 0
+			foreignReference := false
+			for _, token := range clone.Tokens {
+				if token.Value == name && token.NavigateToID == "aliastest."+name {
+					selfReferences++
+				}
+				if token.Value == "other.Data" && token.NavigateToID == "aliastest/other.Data" {
+					foreignReference = true
+				}
+			}
+			require.Equal(t, 5, selfReferences, "parameter and result types must navigate to the public alias")
+			require.True(t, foreignReference, "an unrelated type with the same name must not be rewritten")
+		})
+	}
+	line := feedbackLine(t, review, "aliastest.Different")
+	require.Equal(t, "typeDifferent[]byte", feedbackLineText(line))
+	own := feedbackMethod(t, line, "Different", "Own")
+	require.Contains(t, feedbackLineText(own), "otherData")
+	require.True(t, searchTokens([]ReviewLine{own}, func(token ReviewToken) bool {
+		return token.Value == "Different" && token.NavigateToID == "aliastest.Different"
+	}))
+	feedbackMethod(t, line, "Different", "AliasOwn")
+	for _, method := range []string{"Len", "ViaMiddle", "ViaSibling", "Wrapped", "Nested", "Clone"} {
+		require.False(t, searchLines(line.Children, func(child ReviewLine) bool {
+			return strings.Contains(feedbackLineText(child), "Different)"+method+"(")
+		}), "a newly defined type must not inherit %s", method)
+	}
+}
+
+func aliasFeedbackFixture(t *testing.T, aliases, definitions string, extra map[string]string) string {
+	t.Helper()
+	dir := t.TempDir()
+	files := map[string]string{
+		"go.mod":   "module example.com/aliastest\n\ngo 1.21\n",
+		"alias.go": "package aliastest\nimport \"example.com/aliastest/internal/types\"\n" + aliases,
+		filepath.Join("internal", "types", "types.go"): "package types\n" + definitions,
+	}
+	for name, content := range extra {
+		files[name] = content
+	}
+	for name, content := range files {
+		p := filepath.Join(dir, name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(p), 0755))
+		require.NoError(t, os.WriteFile(p, []byte(content), 0644))
+	}
+	return dir
+}
+
+func feedbackLine(t *testing.T, review CodeFile, id string) ReviewLine {
+	t.Helper()
+	var found ReviewLine
+	forAll(review.ReviewLines, func(line ReviewLine) {
+		if line.LineID == id {
+			found = line
+		}
+	})
+	require.Equal(t, id, found.LineID, "missing definition")
+	return found
+}
+
+func feedbackLineText(line ReviewLine) string {
+	var text strings.Builder
+	for _, token := range line.Tokens {
+		text.WriteString(token.Value)
+	}
+	return text.String()
+}
+
+func feedbackMethod(t *testing.T, line ReviewLine, receiver, name string) ReviewLine {
+	t.Helper()
+	for _, child := range line.Children {
+		if strings.Contains(feedbackLineText(child), receiver+")"+name+"(") {
+			return child
+		}
+	}
+	t.Fatalf("missing method %s on %s", name, receiver)
+	return ReviewLine{}
 }
 
 func TestRecursiveAliasDefinitions(t *testing.T) {

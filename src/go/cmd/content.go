@@ -405,13 +405,7 @@ func (c *content) findMethods(s string) map[string]Func {
 		if unicode.IsLower(rune(name[0])) {
 			continue
 		}
-		_, n := getReceiver(key)
-		if before, _, found := strings.Cut(n, "["); found {
-			// ignore type parameters when matching receivers to types
-			n = before
-		}
-		n = removeNavigatorString(n)
-		if s == n || "*"+s == n {
+		if receiverTypeName(key) == s {
 			methods[key] = fn
 		}
 	}
@@ -437,7 +431,7 @@ func (c *content) searchForMethods(s string) []ReviewLine {
 }
 
 // receiverRegex captures a receiver's type and optional name
-var receiverRegex = regexp.MustCompile(`\((\w*)?(?: ?(\*?\w.*)\))?`)
+var receiverRegex = regexp.MustCompile(`\(([\p{L}_][\p{L}\p{N}_]*)?(?: ?(\(*\*?\(*[\p{L}_][\p{L}\p{N}_]*.*)\))?`)
 
 // getReceiver returns the components of the receiver on a method signature
 // i.e.: (c *Foo) Bar(s string) will return "c" and "Foo".
@@ -456,11 +450,35 @@ func getReceiver(s string) (string, string) {
 	return name, typ
 }
 
+func receiverTypeName(signature string) string {
+	_, receiver := getReceiver(signature)
+	receiver, _ = normalizeReceiverType(receiver)
+	if name, _, found := strings.Cut(receiver, "["); found {
+		receiver = name
+	}
+	return removeNavigatorString(receiver)
+}
+
+func normalizeReceiverType(receiver string) (string, bool) {
+	pointer := false
+	for {
+		receiver = strings.TrimSpace(receiver)
+		if len(receiver) >= 2 && receiver[0] == '(' && receiver[len(receiver)-1] == ')' {
+			receiver = receiver[1 : len(receiver)-1]
+		} else if strings.HasPrefix(receiver, "*") {
+			pointer = true
+			receiver = receiver[1:]
+		} else {
+			return receiver, pointer
+		}
+	}
+}
+
 // isOnUnexportedMember returns true for method signatures with unexported receivers such as
 // "(ep *entityPager[TFeed, T, TOutput]) Fetcher(ctx context.Context) ([]TOutput, error)"
 func isOnUnexportedMember(s string) bool {
-	r := regexp.MustCompile(`\([a-zA-Z]* \*?[a-z]+.*\)`)
-	return r.MatchString(s)
+	receiver := receiverTypeName(s)
+	return receiver != "" && !ast.IsExported(receiver)
 }
 
 // isExampleOrTest returns true if the string passed in begins with "Example" or "Test", this is used

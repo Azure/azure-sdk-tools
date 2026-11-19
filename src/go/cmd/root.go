@@ -16,18 +16,13 @@ var rootCmd = &cobra.Command{
 	Long: `apiviewgo outputs a file representing the public API of an Azure SDK for Go
 module in APIView format. It writes this file to <outputDir>/<module name>.json,
 overwriting any file of the same name.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	SilenceErrors: true,
+	SilenceUsage:  true,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 2 {
-			err := cmd.Help()
-			if err != nil {
-				fmt.Println(err)
-			}
-			return
+			return cmd.Help()
 		}
-		err := CreateAPIView(args[0], args[1])
-		if err != nil {
-			fmt.Println(err)
-		}
+		return CreateAPIView(args[0], args[1])
 	},
 }
 
@@ -35,7 +30,7 @@ overwriting any file of the same name.`,
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

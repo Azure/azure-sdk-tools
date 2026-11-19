@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -152,7 +153,11 @@ func NewModule(dir string) (*Module, error) {
 	// resolve cross-package references by adding the definitions of types exported by alias to the exporting package
 	for _, p := range m.Packages {
 		for _, alias := range p.TypeAliases {
-			if def, ok := recursiveFindTypeDef(alias.Name, p, m.Packages); ok {
+			def, found, err := recursiveFindTypeDef(alias.Name, p, m.Packages)
+			if err != nil {
+				return nil, fmt.Errorf("resolving alias %s.%s: %w", p.Name(), alias.Name, err)
+			}
+			if found {
 				if err := alias.Resolve(def); err != nil {
 					return nil, fmt.Errorf("resolving alias %s.%s: %w", p.Name(), alias.Name, err)
 				}
@@ -221,11 +226,71 @@ func unwrapStructFieldTypeName(field *ast.Field) string {
 }
 
 func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg, aliasName string) {
-	methods := pkg.c.findMethods(typeName)
-	for _, fn := range methods {
-		alias := fn.ForAlias(target.Name(), typeName, aliasName)
+	names := pkg.methodReceiverNames(typeName)
+	receivers := make(map[string]bool, len(names))
+	for _, name := range names {
+		receivers[name] = true
+	}
+	type receiverMethod struct {
+		receiver string
+		fn       Func
+	}
+	methods := []receiverMethod{}
+	for signature, fn := range pkg.c.Funcs {
+		receiver := receiverTypeName(signature)
+		if receivers[receiver] && ast.IsExported(fn.Name()) {
+			methods = append(methods, receiverMethod{receiver, fn})
+		}
+	}
+	for _, method := range methods {
+		alias := method.fn.ForAlias(pkg.Name(), target.Name(), method.receiver, aliasName, names)
 		target.c.Funcs[alias.signature()] = alias
 	}
+}
+
+func (p *Pkg) methodReceiverNames(typeName string) []string {
+	// Aliases share a method set; newly defined types form a separate boundary.
+	canonical := p.methodReceiverType(typeName)
+	names := []string{typeName}
+	for name, def := range p.types {
+		if name == typeName || (def.methodPackage != nil && def.methodPackage != p) ||
+			(def.methodPackage == nil && def.p != p) {
+			continue
+		}
+		if p.methodReceiverType(name) == canonical {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	return names
+}
+
+func (p *Pkg) methodReceiverType(name string) string {
+	for remaining := len(p.types) + 1; remaining > 0; remaining-- {
+		def, ok := p.types[name]
+		if !ok || def.n == nil {
+			break
+		}
+		if def.methodPackage != nil {
+			if def.methodPackage != p || def.methodName == name {
+				break
+			}
+			name = def.methodName
+		} else if def.p != p {
+			break
+		} else if def.n.Name.Name != name {
+			name = def.n.Name.Name
+		} else if def.n.Assign.IsValid() {
+			if ident, ok := unparenType(def.n.Type).(*ast.Ident); ok {
+				name = ident.Name
+			} else {
+				break
+			}
+		} else {
+			break
+		}
+	}
+	return name
 }
 
 func parseModFile(dir string) (*modfile.File, error) {
@@ -243,10 +308,40 @@ func parseModFile(dir string) (*modfile.File, error) {
 //   - source is the package containing the type alias
 //   - packages is the collection of Pkgs to search. Its keys are import paths e.g.
 //     "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
-func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) (typeDef, bool) {
+func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) (typeDef, bool, error) {
+	return findTypeDef(typeName, source, packages, map[typeDefRef]bool{})
+}
+
+type typeDefRef struct {
+	pkg  *Pkg
+	name string
+}
+
+func findTypeDef(typeName string, source *Pkg, packages map[string]*Pkg, seen map[typeDefRef]bool) (typeDef, bool, error) {
+	ref := typeDefRef{pkg: source, name: typeName}
+	if seen[ref] {
+		return typeDef{}, false, fmt.Errorf("cyclic type definition %s.%s", source.Name(), typeName)
+	}
+	seen[ref] = true
 	def, ok := source.types[typeName]
 	if ok {
-		return def, true
+		if def.p == source && def.n.Name.Name == typeName {
+			if ident, ok := unparenType(def.n.Type).(*ast.Ident); ok {
+				underlying, found, err := findTypeDef(ident.Name, source, packages, seen)
+				if err != nil {
+					return typeDef{}, false, err
+				}
+				if found {
+					if !def.n.Assign.IsValid() {
+						// A defined type owns its methods even when its underlying type is elsewhere.
+						underlying.methodPackage = source
+						underlying.methodName = typeName
+					}
+					return underlying, true, nil
+				}
+			}
+		}
+		return def, true, nil
 	}
 	// source doesn't define typeName; it must export typeName via an alias.
 	// Recurse into the package from which source imports typeName.
@@ -261,15 +356,15 @@ func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg
 			pkgPath := a.QualifiedName[:dot]      // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
 			sourceName := a.QualifiedName[dot+1:] // DeleteOptions
 			if p, ok := packages[pkgPath]; ok {
-				def, found := recursiveFindTypeDef(sourceName, p, packages)
+				def, found, err := findTypeDef(sourceName, p, packages, seen)
 				if found && !a.isAlias {
 					def.methodPackage = source
 					def.methodName = a.Name
 				}
-				return def, found
+				return def, found, err
 			}
 			break
 		}
 	}
-	return typeDef{}, false
+	return typeDef{}, false, nil
 }

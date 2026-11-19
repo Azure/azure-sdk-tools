@@ -6,6 +6,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"go/ast"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -243,13 +244,68 @@ func (r *Review) resolveAliases() error {
 				return fmt.Errorf("couldn't find definition for " + ta.Name)
 			}
 			sourceName := ta.QualifiedName[dot+1:]
-			if d, ok := recursiveFindTypeDef(sourceName, p, m.Packages); ok {
+			d, found, err := recursiveFindTypeDef(sourceName, p, m.Packages)
+			if err != nil {
+				return fmt.Errorf("resolving alias %s.%s: %w", ta.Package.Name(), ta.Name, err)
+			}
+			if found {
 				def = d
 			}
 		}
 		err = ta.Resolve(def)
 		if err != nil {
 			return (err)
+		}
+	}
+	return r.resolveLocalTypes()
+}
+
+func (r *Review) resolveLocalTypes() error {
+	for _, p := range r.reviewed.Packages {
+		if strings.Contains(p.relName, "/internal") {
+			continue
+		}
+		names := []string{}
+		for name, def := range p.types {
+			if def.p == p && def.n.Name.Name == name && ast.IsExported(name) {
+				switch typ := unparenType(def.n.Type).(type) {
+				case *ast.Ident:
+					if def.n.Assign.IsValid() || !ast.IsExported(typ.Name) {
+						names = append(names, name)
+					}
+				case *ast.StarExpr:
+					if def.n.Assign.IsValid() {
+						// Pointer aliases need different method-set handling.
+						return fmt.Errorf("unsupported type %T for alias %s.%s", typ, p.Name(), name)
+					}
+				}
+			}
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			original := p.types[name]
+			ident := unparenType(original.n.Type).(*ast.Ident)
+			def, found, err := recursiveFindTypeDef(name, p, r.reviewed.Packages)
+			if err != nil {
+				return fmt.Errorf("resolving type %s.%s: %w", p.Name(), name, err)
+			}
+			if !found || (def.p == p && def.n == original.n) {
+				continue
+			}
+			alias := TypeAlias{
+				Name:          name,
+				Package:       p,
+				QualifiedName: p.unversionedModulePath() + "." + ident.Name,
+				isAlias:       original.n.Assign.IsValid(),
+			}
+			if !ast.IsExported(ident.Name) {
+				if err := alias.Resolve(def); err != nil {
+					return fmt.Errorf("resolving alias %s.%s: %w", p.Name(), name, err)
+				}
+			} else if alias.isAlias {
+				// The public target already has a review line; only copy its method set.
+				alias.hoistMethods(def)
+			}
 		}
 	}
 	return nil

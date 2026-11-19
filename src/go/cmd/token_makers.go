@@ -220,16 +220,33 @@ func (f Func) signature() string {
 	return fmt.Sprintf("(%s %s) %s", f.ReceiverName, f.ReceiverType, f.name)
 }
 
-func (f Func) ForAlias(pkg, typeName, aliasName string) Func {
+func (f Func) ForAlias(sourcePkg, pkg, typeName, aliasName string, sourceNames []string) Func {
 	clone := f
 	prefix := ""
-	receiver := clone.ReceiverType
-	if strings.HasPrefix(receiver, "*") {
+	receiver, pointer := normalizeReceiverType(clone.ReceiverType)
+	if pointer {
 		prefix = "*"
-		receiver = strings.TrimPrefix(receiver, "*")
 	}
 	clone.ReceiverType = prefix + aliasName + strings.TrimPrefix(receiver, typeName)
 	clone.id = pkg + "-" + clone.signature()
+	clone.exported = ast.IsExported(aliasName) && ast.IsExported(clone.name)
+
+	// Match navigation markers as well as names to avoid rewriting unrelated types.
+	replacements := make([]string, 0, len(sourceNames)*2)
+	for _, name := range sourceNames {
+		replacements = append(replacements,
+			fmt.Sprintf("<%s.%s>%s", sourcePkg, name, name),
+			fmt.Sprintf("<%s.%s>%s", pkg, aliasName, aliasName))
+	}
+	replacer := strings.NewReplacer(replacements...)
+	clone.paramTypes = append([]string(nil), f.paramTypes...)
+	for i, typ := range clone.paramTypes {
+		clone.paramTypes[i] = replacer.Replace(typ)
+	}
+	clone.Returns = append([]string(nil), f.Returns...)
+	for i, typ := range clone.Returns {
+		clone.Returns[i] = replacer.Replace(typ)
+	}
 	return clone
 }
 
@@ -583,7 +600,7 @@ func NewStruct(source Pkg, name, packageName string, ts *ast.TypeSpec, imports m
 			s.typeParams = append(s.typeParams, strings.TrimRight(*param+" "+source.translateType(constraint, imports), " "))
 		})
 	}
-	source.translateFieldList(ts.Type.(*ast.StructType).Fields.List, func(n *string, t string) {
+	source.translateFieldList(unparenType(ts.Type).(*ast.StructType).Fields.List, func(n *string, t string) {
 		if n == nil {
 			s.AnonymousFields = append(s.AnonymousFields, t)
 		} else {

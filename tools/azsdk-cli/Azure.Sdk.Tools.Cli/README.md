@@ -28,24 +28,19 @@ This is the SDK developer experience CLI and MCP server. It is intended to:
 
 1. **Open VS Code** in the `azure-sdk-tools` directory
 
-2. **Start the MCP server via settings** (optional - Copilot will auto-start if needed):
-   - In `.vscode/mcp.json`, click the Start button below "servers"
-
-   ![Screenshot showing the MCP Start button in VS Code's mcp.json file](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Images/MCP-Start.png)
-
-3. **Alternatively, start the MCP server via command palette**:
+2. **Start the MCP server via command palette** (optional - Copilot will auto-start if needed):
    - Enter ctrl-shift-p (or cmd-shift-p for mac)
    - Type `MCP: List Servers`
    - Select `azure-sdk-mcp` and press enter
    - Select `Start Server` and press enter
 
-4. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`) with any of our recommended prompts from the [documentation](https://aka.ms/azsdk/agent#agentic-workflow-scenarios)
+3. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`) with any of our recommended prompts from the [documentation](https://aka.ms/azsdk/agent#agentic-workflow-scenarios)
 
 ## Usage Modes
 
 ### 1. MCP Server Mode
 
-The `<repo root>/.vscode/mcp.json` config file can be updated to change which version of the MCP server is used (local or release).
+The `<repo root>/.mcp.json` config file (read by both Copilot CLI and VS Code) can be updated to change which version of the MCP server is used (local or release).
 
 **Using dotnet tool**
 
@@ -54,18 +49,18 @@ made to the local branch.
 
 ```jsonc
 {
-  "servers": {
+  "mcpServers": {
     "azure-sdk-mcp": {
       "type": "stdio",
       "command": "dotnet",
       "args": [
         "run",
         "--project",
-        "${workspaceFolder}/tools/azsdk-cli/Azure.Sdk.Tools.Cli",
+        "./tools/azsdk-cli/Azure.Sdk.Tools.Cli",
         "--configuration",
         "Debug",
         "--",
-        "start"
+        "mcp"
       ]
     }
   }
@@ -74,10 +69,10 @@ made to the local branch.
 
 **Using standalone executable from github releases**
 
-Run the below command to update the `.vscode/mcp.json` file with a reference to the upstream release. Do not check this change in.
+Run the below command to update the `.mcp.json` file with a reference to the upstream release. Do not check this change in.
 
 ```
-<tools repo root>/eng/common/mcp/azure-sdk-mcp.ps1 -UpdateVsCodeConfig
+<tools repo root>/eng/common/mcp/azure-sdk-mcp.ps1 -UpdateMcpConfig
 ```
 
 ### 2. Standalone CLI Mode

@@ -222,7 +222,7 @@ dotnet run --project Azure.Sdk.Tools.Cli -- example hello-world foobar
 dotnet run --project Azure.Sdk.Tools.Cli -- start
 ```
 
-To use your local build with VS Code / Copilot, point your `.vscode/mcp.json` at this project. The file is gitignored and can be generated/updated by running [`eng/common/mcp/azure-sdk-mcp.ps1 -UpdateVsCodeConfig`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/mcp/azure-sdk-mcp.ps1) (see the [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/README.md#1-mcp-server-mode) for the full setup).
+To use your local build with VS Code / Copilot CLI, the checked-in repo-root `.mcp.json` already runs this project via `dotnet run`. To use the released binary instead, run [`eng/common/mcp/azure-sdk-mcp.ps1 -UpdateMcpConfig`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/mcp/azure-sdk-mcp.ps1) and don't check in the result (see the [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/README.md#1-mcp-server-mode) for the full setup).
 
 Tests live in [`Azure.Sdk.Tools.Cli.Tests`](https://github.com/Azure/azure-sdk-tools/tree/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests), mirroring the source layout (`Tools/`, `Services/`, `Helpers/`, etc.). When adding a tool, add a corresponding test class. Set `AZSDKTOOLS_AGENT_TESTING=true` to enable test-mode behavior in tools that call out to external services.
 

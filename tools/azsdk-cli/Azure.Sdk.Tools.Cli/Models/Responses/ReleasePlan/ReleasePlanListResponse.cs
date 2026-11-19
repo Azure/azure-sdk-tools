@@ -43,25 +43,44 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<ReleasePlanMaintenanceResult>? MaintenanceResults { get; set; }
 
+        // Empty completed scans have no per-plan rows; retrieval failures leave this unset.
+        [JsonIgnore]
+        public ReleasePlanMaintenanceOperation? CompletedMaintenanceOperation { get; set; }
+
         [JsonPropertyName("maintenance_summary")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Dictionary<string, Dictionary<string, int>>? MaintenanceSummary => MaintenanceResults?
-            .GroupBy(result => result.Operation)
-            .ToDictionary(operation => operation.Key.ToString(), operation => (operation.Key switch
+        public Dictionary<string, Dictionary<string, int>>? MaintenanceSummary
+        {
+            get
             {
-                ReleasePlanMaintenanceOperation.Preview => new[]
+                var operations = (MaintenanceResults ?? []).Select(result => result.Operation).ToHashSet();
+                if (CompletedMaintenanceOperation is { } completedOperation)
                 {
-                    ReleasePlanMaintenanceOutcome.Eligible, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
-                },
-                ReleasePlanMaintenanceOperation.Cleanup => new[]
-                {
-                    ReleasePlanMaintenanceOutcome.Abandoned, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
-                },
-                _ => new[]
-                {
-                    ReleasePlanMaintenanceOutcome.Delivered, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                    operations.Add(completedOperation);
                 }
-            }).ToDictionary(outcome => outcome.ToString(), outcome => operation.Count(result => result.Outcome == outcome)));
+                if (operations.Count == 0)
+                {
+                    return null;
+                }
+
+                return operations.ToDictionary(operation => operation.ToString(), operation => (operation switch
+                {
+                    ReleasePlanMaintenanceOperation.Preview => new[]
+                    {
+                        ReleasePlanMaintenanceOutcome.Eligible, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                    },
+                    ReleasePlanMaintenanceOperation.Cleanup => new[]
+                    {
+                        ReleasePlanMaintenanceOutcome.Abandoned, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                    },
+                    _ => new[]
+                    {
+                        ReleasePlanMaintenanceOutcome.Delivered, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                    }
+                }).ToDictionary(outcome => outcome.ToString(), outcome => MaintenanceResults?
+                    .Count(result => result.Operation == operation && result.Outcome == outcome) ?? 0));
+            }
+        }
 
         [JsonPropertyName("warnings")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -86,10 +105,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
             if (MaintenanceSummary != null)
             {
                 result.AppendLine("Maintenance summary:");
-                if (MaintenanceSummary.Count == 0)
-                {
-                    result.AppendLine("No maintenance actions were performed.");
-                }
                 foreach (var (operation, outcomes) in MaintenanceSummary)
                 {
                     result.AppendLine($"{operation}: {string.Join("; ", outcomes.Select(outcome => $"{outcome.Key}: {outcome.Value}"))}");

@@ -2237,6 +2237,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.MaintenanceResults = [];
                     response.Message = $"Overdue reminder results for {releasePlans.Count} release plan(s). Delivered means accepted by the notification service; inbox delivery is not verified.";
                     await NotifyOwnersOfOverdueReleasePlans(releasePlans, emailerUri, response, ct);
+                    response.CompletedMaintenanceOperation = ReleasePlanMaintenanceOperation.Reminder;
                 }
                 return response;
             }
@@ -2393,6 +2394,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                response.CompletedMaintenanceOperation = operation;
                 response.Message = dryRun
                     ? $"Dry run: {resultPlans.Count} release plan(s) eligible for abandonment after one full overdue calendar month. No plans were changed or notifications sent."
                     : $"Abandoned {resultPlans.Count} inactive release plan(s) after one full overdue calendar month.";

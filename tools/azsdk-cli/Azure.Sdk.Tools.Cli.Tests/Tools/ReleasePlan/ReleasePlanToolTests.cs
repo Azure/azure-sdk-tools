@@ -2862,44 +2862,77 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             AssertDryRunHasNoSideEffects(service, notification);
         }
 
-        [Test]
-        public async Task Test_abandon_overdue_dry_run_reports_empty_result()
+        [TestCase(ReleasePlanMaintenanceOperation.Preview)]
+        [TestCase(ReleasePlanMaintenanceOperation.Cleanup)]
+        [TestCase(ReleasePlanMaintenanceOperation.Reminder)]
+        public async Task Test_overdue_maintenance_empty_scan_reports_zero_counts(ReleasePlanMaintenanceOperation operation)
         {
             var service = new Mock<IDevOpsService>(MockBehavior.Strict);
             service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
             var notification = new Mock<INotificationService>(MockBehavior.Strict);
+            var captured = new List<JsonElement>();
+            using var client = CreateMaintenanceEmailClient(captured);
+            var tool = CreateOverdueMaintenanceTool(service.Object, notification: notification.Object, client: client);
 
-            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notification.Object)
-                .AbandonOverdueReleasePlans(dryRun: true);
+            var response = operation == ReleasePlanMaintenanceOperation.Reminder
+                ? await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send")
+                : await tool.AbandonOverdueReleasePlans(dryRun: operation == ReleasePlanMaintenanceOperation.Preview);
 
             Assert.That(response.ExitCode, Is.Zero);
             Assert.That(response.ReleasePlanDetailsList, Is.Empty);
-            Assert.That(response.EligibilityReasons, Is.Empty);
-            Assert.That(response.ToString(), Does.Contain("Dry run: 0").And.Contain("No eligible release plans found"));
+            Assert.That(response.MaintenanceResults, Is.Empty);
+            Assert.That(response.MaintenanceSummary, Contains.Key(operation.ToString()));
+            var counts = response.MaintenanceSummary![operation.ToString()];
+            Assert.That(counts, Has.Count.EqualTo(3));
+            Assert.That(counts.Values, Is.All.Zero);
+            var primaryOutcome = operation switch
+            {
+                ReleasePlanMaintenanceOperation.Preview => "Eligible",
+                ReleasePlanMaintenanceOperation.Cleanup => "Abandoned",
+                _ => "Delivered"
+            };
+            Assert.That(response.ToString(), Does.Contain($"{operation}: {primaryOutcome}: 0; Skipped: 0; Failed: 0"));
+            Assert.That(captured, Is.Empty);
             using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
-            Assert.That(json.RootElement.GetProperty("preview_summary").GetProperty("scanned").GetInt32(), Is.Zero);
-            Assert.That(json.RootElement.GetProperty("skipped_plans").EnumerateObject(), Is.Empty);
+            Assert.That(json.RootElement.GetProperty("maintenance_summary").GetProperty(operation.ToString()).GetProperty(primaryOutcome).GetInt32(), Is.Zero);
+            if (operation == ReleasePlanMaintenanceOperation.Preview)
+            {
+                Assert.That(response.EligibilityReasons, Is.Empty);
+                Assert.That(response.ToString(), Does.Contain("Dry run: 0").And.Contain("No eligible release plans found"));
+                Assert.That(json.RootElement.GetProperty("preview_summary").GetProperty("scanned").GetInt32(), Is.Zero);
+                Assert.That(json.RootElement.GetProperty("skipped_plans").EnumerateObject(), Is.Empty);
+            }
             AssertDryRunHasNoSideEffects(service, notification);
         }
 
-        [Test]
-        public async Task Test_abandon_overdue_dry_run_reports_initial_scan_failure()
+        [TestCase(ReleasePlanMaintenanceOperation.Preview)]
+        [TestCase(ReleasePlanMaintenanceOperation.Cleanup)]
+        [TestCase(ReleasePlanMaintenanceOperation.Reminder)]
+        public async Task Test_overdue_maintenance_initial_scan_failure_does_not_report_empty_success(ReleasePlanMaintenanceOperation operation)
         {
             var service = new Mock<IDevOpsService>(MockBehavior.Strict);
             service.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException("Work item 200 not found"));
             var notification = new Mock<INotificationService>(MockBehavior.Strict);
 
-            var response = await CreateOverdueMaintenanceTool(service.Object, notification: notification.Object)
-                .AbandonOverdueReleasePlans(dryRun: true);
+            var tool = CreateOverdueMaintenanceTool(service.Object, notification: notification.Object);
+            var response = operation == ReleasePlanMaintenanceOperation.Reminder
+                ? await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send")
+                : await tool.AbandonOverdueReleasePlans(dryRun: operation == ReleasePlanMaintenanceOperation.Preview);
 
             Assert.That(response.ExitCode, Is.EqualTo(1));
-            Assert.That(response.DryRun, Is.True);
+            Assert.That(response.DryRun, Is.EqualTo(operation == ReleasePlanMaintenanceOperation.Preview));
             Assert.That(response.ReleasePlanDetailsList, Is.Null);
-            Assert.That(response.ToString(), Does.Contain("Dry run failed").And.Contain("No plans were changed or notifications sent"));
+            Assert.That(response.MaintenanceSummary, Is.Null);
+            Assert.That(response.ToString(), Does.Not.Contain("Maintenance summary:"));
+            if (operation == ReleasePlanMaintenanceOperation.Preview)
+            {
+                Assert.That(response.ToString(), Does.Contain("Dry run failed").And.Contain("No plans were changed or notifications sent"));
+            }
             Assert.That(response.ResponseError, Does.Contain("Work item 200 not found"));
             using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
             Assert.That(json.RootElement.TryGetProperty("preview_summary", out _), Is.False, "Do not imply a completed empty scan after an initial failure.");
+            Assert.That(json.RootElement.TryGetProperty("maintenance_summary", out _), Is.False);
             Assert.That(json.RootElement.TryGetProperty("skipped_plans", out _), Is.False);
             AssertDryRunHasNoSideEffects(service, notification);
         }

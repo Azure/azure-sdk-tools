@@ -41,11 +41,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
 
         [JsonPropertyName("maintenance_results")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<ReleasePlanMaintenanceResult>? MaintenanceResults { get; set; }
+        public List<ReleasePlanOperationResult>? MaintenanceResults { get; set; }
 
         // Empty completed scans have no per-plan rows; retrieval failures leave this unset.
         [JsonIgnore]
-        public ReleasePlanMaintenanceOperation? CompletedMaintenanceOperation { get; set; }
+        public ReleasePlanOperation? CompletedMaintenanceOperation { get; set; }
 
         [JsonPropertyName("maintenance_summary")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -65,17 +65,17 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
 
                 return operations.ToDictionary(operation => operation.ToString(), operation => (operation switch
                 {
-                    ReleasePlanMaintenanceOperation.Preview => new[]
+                    ReleasePlanOperation.Preview => new[]
                     {
-                        ReleasePlanMaintenanceOutcome.Eligible, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                        ReleasePlanOperationOutcome.Eligible, ReleasePlanOperationOutcome.Skipped, ReleasePlanOperationOutcome.Failed
                     },
-                    ReleasePlanMaintenanceOperation.Cleanup => new[]
+                    ReleasePlanOperation.Cleanup => new[]
                     {
-                        ReleasePlanMaintenanceOutcome.Abandoned, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                        ReleasePlanOperationOutcome.Abandoned, ReleasePlanOperationOutcome.Skipped, ReleasePlanOperationOutcome.Failed
                     },
                     _ => new[]
                     {
-                        ReleasePlanMaintenanceOutcome.Delivered, ReleasePlanMaintenanceOutcome.Skipped, ReleasePlanMaintenanceOutcome.Failed
+                        ReleasePlanOperationOutcome.Delivered, ReleasePlanOperationOutcome.Skipped, ReleasePlanOperationOutcome.Failed
                     }
                 }).ToDictionary(outcome => outcome.ToString(), outcome => MaintenanceResults?
                     .Count(result => result.Operation == operation && result.Outcome == outcome) ?? 0));

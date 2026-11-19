@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ReleasePlanMaintenanceOperation
+public enum ReleasePlanOperation
 {
     Preview,
     Cleanup,
@@ -12,7 +12,7 @@ public enum ReleasePlanMaintenanceOperation
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ReleasePlanMaintenanceOutcome
+public enum ReleasePlanOperationOutcome
 {
     Eligible,
     Abandoned,
@@ -21,7 +21,7 @@ public enum ReleasePlanMaintenanceOutcome
     Failed
 }
 
-public class ReleasePlanMaintenanceResult
+public class ReleasePlanOperationResult
 {
     [JsonPropertyName("release_plan_id")]
     public int ReleasePlanId { get; init; }
@@ -33,10 +33,10 @@ public class ReleasePlanMaintenanceResult
     public string ReleasePlanLink { get; init; } = string.Empty;
 
     [JsonPropertyName("operation")]
-    public ReleasePlanMaintenanceOperation Operation { get; init; }
+    public ReleasePlanOperation Operation { get; init; }
 
     [JsonPropertyName("outcome")]
-    public ReleasePlanMaintenanceOutcome Outcome { get; init; }
+    public ReleasePlanOperationOutcome Outcome { get; init; }
 
     [JsonPropertyName("reason")]
     public string Reason { get; init; } = string.Empty;

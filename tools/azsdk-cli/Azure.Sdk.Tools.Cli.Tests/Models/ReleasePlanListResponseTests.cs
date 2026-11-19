@@ -94,17 +94,17 @@ public class ReleasePlanListResponseTests
             ReleasePlanDetailsList = [plan],
             MaintenanceResults =
             [
-                new ReleasePlanMaintenanceResult
+                new ReleasePlanOperationResult
                 {
                     ReleasePlanId = 42, WorkItemId = 400, ReleasePlanLink = plan.ReleasePlanLink,
-                    Operation = ReleasePlanMaintenanceOperation.Cleanup,
-                    Outcome = ReleasePlanMaintenanceOutcome.Abandoned, Reason = "State updated."
+                    Operation = ReleasePlanOperation.Cleanup,
+                    Outcome = ReleasePlanOperationOutcome.Abandoned, Reason = "State updated."
                 },
-                new ReleasePlanMaintenanceResult
+                new ReleasePlanOperationResult
                 {
                     ReleasePlanId = 42, WorkItemId = 400, ReleasePlanLink = plan.ReleasePlanLink,
-                    Operation = ReleasePlanMaintenanceOperation.Confirmation,
-                    Outcome = ReleasePlanMaintenanceOutcome.Failed, Reason = "Notification service unavailable."
+                    Operation = ReleasePlanOperation.Confirmation,
+                    Outcome = ReleasePlanOperationOutcome.Failed, Reason = "Notification service unavailable."
                 }
             ],
             Warnings = ["Release Plan ID 42 was abandoned, but its confirmation was not delivered."],

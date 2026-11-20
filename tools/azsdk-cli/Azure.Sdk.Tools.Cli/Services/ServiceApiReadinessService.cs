@@ -285,24 +285,24 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         }
     }
 
+    internal static string GetOverallStatus(IEnumerable<string> projectStatuses)
+    {
+        var statuses = projectStatuses.ToArray();
+        if (statuses.Contains(ServiceApiReadinessResponse.Error))
+        {
+            return ServiceApiReadinessResponse.Error;
+        }
+        if (statuses.Contains(ServiceApiReadinessResponse.Inconclusive))
+        {
+            return ServiceApiReadinessResponse.Inconclusive;
+        }
+        return statuses.All(status => status == ServiceApiReadinessResponse.Passed)
+            ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected;
+    }
+
     internal static void SetOverallResult(ServiceApiReadinessResponse result)
     {
-        if (result.Projects.Any(project => project.ReadinessStatus == ServiceApiReadinessResponse.Error))
-        {
-            result.ReadinessStatus = ServiceApiReadinessResponse.Error;
-        }
-        else if (result.Projects.Any(project => project.ReadinessStatus == ServiceApiReadinessResponse.Inconclusive))
-        {
-            result.ReadinessStatus = ServiceApiReadinessResponse.Inconclusive;
-        }
-        else if (result.Projects.All(project => project.ReadinessStatus == ServiceApiReadinessResponse.Passed))
-        {
-            result.ReadinessStatus = ServiceApiReadinessResponse.Passed;
-        }
-        else
-        {
-            result.ReadinessStatus = ServiceApiReadinessResponse.NotDetected;
-        }
+        result.ReadinessStatus = GetOverallStatus(result.Projects.Select(project => project.ReadinessStatus));
         result.Detail = result.InputKind == "package"
             ? "API versions were read from local SDK metadata. Working-tree content was inspected; this is not a PR-head attestation. Provider metadata is evidence, not release approval or proof of regional deployment."
             : "API versions were read from SDK metadata files at the checked PR head. Provider metadata is evidence, not release approval or proof of regional deployment.";

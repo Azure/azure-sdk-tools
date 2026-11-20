@@ -20,8 +20,8 @@ public class ServiceApiReadinessTool(IServiceApiReadinessService readiness, ILog
 
     private readonly Option<string> _pullRequestUrl = new("--pull-request-url") { Description = "GitHub SDK pull request URL; cannot be combined with --package-path." };
     private readonly Option<string> _packagePath = new("--package-path", "-p") { Description = "Local SDK package directory; cannot be combined with --pull-request-url." };
-    private readonly Option<bool> _metadataOnly = new("--metadata-only") { Description = "Return current-head package metadata and resource requirements without querying ARM; requires --pull-request-url." };
-    private readonly Option<bool> _recordReleasePlan = new("--record-release-plan") { Description = "Explicitly record fresh service evidence in the configured release-plan field; requires PR input and cannot be combined with --metadata-only." };
+    private readonly Option<bool> _metadataOnly = new("--metadata-only") { Description = "Return current-head package metadata and provider/API-version requirements without querying ARM; requires --pull-request-url." };
+    private readonly Option<bool> _recordReleasePlan = new("--record-release-plan") { Description = "Explicitly record fresh service evidence in the release-plan readiness fields; requires PR input and cannot be combined with --metadata-only." };
 
     protected override Command GetCommand() => new("validate-service-api-readiness", "Validate service API readiness for an SDK pull request or local package using ARM metadata.")
     {
@@ -33,50 +33,36 @@ public class ServiceApiReadinessTool(IServiceApiReadinessService readiness, ILog
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        if (parseResult.GetValue(_recordReleasePlan))
+        var url = parseResult.GetValue(_pullRequestUrl);
+        var packagePath = parseResult.GetValue(_packagePath);
+        var metadataOnly = parseResult.GetValue(_metadataOnly);
+        var recordReleasePlan = parseResult.GetValue(_recordReleasePlan);
+        if (!metadataOnly && !recordReleasePlan)
         {
-            try
-            {
-                if (parseResult.GetValue(_metadataOnly) || parseResult.GetValue(_packagePath) is not null ||
-                    parseResult.GetValue(_pullRequestUrl) is not { } url)
-                {
-                    throw new ArgumentException("Recording requires one SDK PR URL and a full check.");
-                }
-                var (owner, repository, pullRequest) = GitHubService.ParsePullRequestUrl(url);
-                return await releasePlanReadiness.CheckAsync(owner, repository, pullRequest, true, ct);
-            }
-            catch (Exception)
-            {
-                return new ServiceApiReadinessResponse
-                {
-                    ReadinessStatus = ServiceApiReadinessResponse.Error,
-                    Detail = "Release-plan recording could not complete. Supply one SDK PR URL and verify configured access.",
-                    ResponseError = "Release-plan recording could not complete."
-                };
-            }
+            return await ValidateServiceApiReadiness(url, packagePath, ct);
         }
-        if (parseResult.GetValue(_metadataOnly))
+        var operation = recordReleasePlan ? "Release-plan recording" : "The metadata-only check";
+        var access = recordReleasePlan ? "configured" : "GitHub";
+        try
         {
-            try
+            if (url is null || packagePath is not null || metadataOnly && recordReleasePlan)
             {
-                if (parseResult.GetValue(_packagePath) is not null || parseResult.GetValue(_pullRequestUrl) is not { } url)
-                {
-                    throw new ArgumentException("Metadata-only mode requires one SDK PR URL.");
-                }
-                var (owner, repository, pullRequest) = GitHubService.ParsePullRequestUrl(url);
-                return await readiness.GetPackageMetadataAsync(owner, repository, pullRequest, ct);
+                throw new ArgumentException("Supply one SDK PR URL and one check mode.");
             }
-            catch (Exception)
-            {
-                return new ServiceApiReadinessResponse
-                {
-                    ReadinessStatus = ServiceApiReadinessResponse.Error,
-                    Detail = "The metadata-only check could not complete. Supply one SDK PR URL and verify GitHub access.",
-                    ResponseError = "The metadata-only check could not complete."
-                };
-            }
+            var (owner, repository, pullRequest) = GitHubService.ParsePullRequestUrl(url);
+            return metadataOnly
+                ? await readiness.GetPackageMetadataAsync(owner, repository, pullRequest, ct)
+                : await releasePlanReadiness.CheckAsync(owner, repository, pullRequest, true, ct);
         }
-        return await ValidateServiceApiReadiness(parseResult.GetValue(_pullRequestUrl), parseResult.GetValue(_packagePath), ct);
+        catch (Exception)
+        {
+            return new ServiceApiReadinessResponse
+            {
+                ReadinessStatus = ServiceApiReadinessResponse.Error,
+                Detail = $"{operation} could not complete. Supply one SDK PR URL and verify {access} access.",
+                ResponseError = $"{operation} could not complete."
+            };
+        }
     }
 
     [McpServerTool(Name = "azsdk_validate_service_api_readiness", ReadOnly = true)]

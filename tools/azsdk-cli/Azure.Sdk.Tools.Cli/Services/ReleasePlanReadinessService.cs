@@ -232,7 +232,7 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
             }
             matches.Add((project, observation));
         }
-        var summary = Summarize(matches.Select(match => match.Observation));
+        var summary = GetEvidenceSummary(matches.Select(match => match.Observation));
         var checkedAt = plan.ServiceReadinessCheckedAt;
         var storedStatus = plan.ServiceReadinessStatus;
         var matchesStatus = summary.Status == ServiceApiReadinessResponse.NotDetected
@@ -260,21 +260,13 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         return true;
     }
 
-    private static (string Status, DateTimeOffset CheckedAt) Summarize(IEnumerable<Observation> observations)
+    private static (string Status, DateTimeOffset CheckedAt) GetEvidenceSummary(IEnumerable<Observation> observations)
     {
         var items = observations.ToArray();
-        var result = new ServiceApiReadinessResponse
-        {
-            Projects = [.. items.Select(item => new ServiceApiReadinessProject
-            {
-                Package = new PackageInfo(),
-                ReadinessStatus = item.Status
-            })]
-        };
-        ServiceApiReadinessService.SetOverallResult(result);
-        var timedItems = result.ReadinessStatus == ServiceApiReadinessResponse.Passed
+        var status = ServiceApiReadinessService.GetOverallStatus(items.Select(item => item.Status));
+        var timedItems = status == ServiceApiReadinessResponse.Passed
             ? items : items.Where(item => item.Status != ServiceApiReadinessResponse.Passed);
-        return (result.ReadinessStatus, timedItems.Min(item => item.CheckedAt));
+        return (status, timedItems.Min(item => item.CheckedAt));
     }
 
     private async Task RecordAsync(ReleasePlanWorkItem plan, ApiSpecWorkItem specification, ServiceApiReadinessResponse result, string environment,
@@ -335,7 +327,7 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
             {
                 throw new InvalidOperationException("Readiness metadata is too large.");
             }
-            var summary = Summarize(result.Projects.Select(project => observations.Single(item =>
+            var summary = GetEvidenceSummary(result.Projects.Select(project => observations.Single(item =>
                 item.ResourceProvider.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) &&
                 item.ValidationEnvironment == environment)));
             var expectedRevision = current.Revision;

@@ -103,6 +103,7 @@
 /src/swift/                                         @tjprescott
 /src/java/apiview-java-processor/                   @JonathanGiles @alzimmermsft
 /packages/java-packages/codesnippet-maven-plugin/   @alzimmermsft
+/packages/java-packages/api-review-maven-plugin/    @alzimmermsft @weidongxu-microsoft
 /packages/python-packages/apiview-copilot/          @tjprescott
 /packages/python-packages/*stub*/                   @l0lawrence
 /src/go/                                            @jhendrixMSFT @RickWinter

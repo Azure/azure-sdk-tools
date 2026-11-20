@@ -1,9 +1,15 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.model;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * CSS rendering categories assigned to review tokens.
+ */
 public enum RenderClass {
     ASSEMBLY("assembly", "java-assembly"),
 
@@ -49,6 +55,11 @@ public enum RenderClass {
         this.values = Collections.unmodifiableList(Arrays.asList(values));
     }
 
+    /**
+     * Returns the values.
+     *
+     * @return the values
+     */
     public List<String> getValues() {
         return values;
     }

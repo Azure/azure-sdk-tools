@@ -1,18 +1,20 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.diagnostics.rules;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
-import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MemberValuePair;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,21 +37,31 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
 
     private final String builderProtocol;
 
-    private final List<String> missingMethods = new ArrayList<>();
-
+    /**
+     * Creates a required builder methods diagnostic rule.
+     *
+     * @param builderProtocol the builder protocol
+     */
     public RequiredBuilderMethodsDiagnosticRule(String builderProtocol) {
-        this.builderMethods = new HashMap<>();
+        this.builderMethods = new LinkedHashMap<>();
         this.builderProtocol = builderProtocol;
     }
 
-    public RequiredBuilderMethodsDiagnosticRule addMethod(String methodName, Function<MethodDeclaration, Optional<Diagnostic>> func) {
+    /**
+     * Adds method.
+     *
+     * @param methodName the method name
+     * @param func the func
+     * @return this instance
+     */
+    public RequiredBuilderMethodsDiagnosticRule addMethod(String methodName,
+        Function<MethodDeclaration, Optional<Diagnostic>> func) {
         builderMethods.put(methodName, func);
-        missingMethods.add(methodName);
         return this;
     }
 
     @Override
-    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final ApiListing listing) {
         // check if the class has the @ServiceClientBuilder annotation, if not, do nothing
         getClasses(cu).forEach(typeDeclaration -> {
             if (typeDeclaration.isAnnotationPresent(BUILDER_ANNOTATION)) {
@@ -59,7 +71,8 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                 // of this diagnostic rule and just assume we are looking at an http protocol.
                 // This is unless the builderProtocol is null, in which case the set of rules we have
                 // will all be applied.
-                final String protocolName = typeDeclaration.getAnnotationByName(BUILDER_ANNOTATION).get()
+                final String protocolName = typeDeclaration.getAnnotationByName(BUILDER_ANNOTATION)
+                    .get()
                     .getChildNodes()
                     .stream()
                     .filter(n -> n instanceof MemberValuePair)
@@ -67,15 +80,17 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                     .filter(p -> "protocol".equals(p.getNameAsString()))
                     .map(MemberValuePair::getValue)
                     .map(Node::toString)
+                    .map(name -> name.substring(name.lastIndexOf('.') + 1))
                     .findFirst()
-                    .orElse("http");  // TODO for now we assume that no specified protocol in the builder means we will be http
+                    .orElse("http");  // TODO (apiview):for now we assume that no specified protocol in the builder means we will be http
 
                 if (builderProtocol != null) {
-                    if (!builderProtocol.equals(protocolName) || protocolName.isEmpty()) {
+                    if (!builderProtocol.equalsIgnoreCase(protocolName) || protocolName.isEmpty()) {
                         return;
                     }
                 }
 
+                final List<String> missingMethods = new ArrayList<>(builderMethods.keySet());
                 getPublicOrProtectedMethods(typeDeclaration).forEach(methodDeclaration -> {
                     final String methodName = methodDeclaration.getNameAsString();
                     if (builderMethods.containsKey(methodName)) {
@@ -85,44 +100,61 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                 });
 
                 if (!missingMethods.isEmpty()) {
-                    listing.addDiagnostic(new Diagnostic(
-                        WARNING,
-                        makeId(typeDeclaration),
-                        "This builder is missing common APIs. These are not required, but please consider if the following methods should exist: " + missingMethods,
+                    listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration),
+                        "This builder is missing common APIs. These are not required, but please consider if the following methods should exist: "
+                            + missingMethods,
                         "https://azure.github.io/azure-sdk/java_introduction.html#java-service-client-builder-consistency"));
                 }
             }
         });
     }
 
+    /**
+     * Checks builder method parameter type names.
+     */
     public static class ExactTypeNameCheckFunction implements Function<MethodDeclaration, Optional<Diagnostic>> {
         private final ParameterAllowedTypes[] expectedTypes;
 
         // For each parameter that we check for, we allow for there to be multiple types allowed for it,
-        // e.g. credential(TokenCredential) or credential(AzureKeyCredential) or credential(AzureSasCredential)
+        /**
+         * Creates an exact type name check function.
+         *
+         * @param expectedTypes the expected types
+         */
         public ExactTypeNameCheckFunction(ParameterAllowedTypes... expectedTypes) {
             this.expectedTypes = expectedTypes;
         }
 
+        /**
+         * Creates an exact type name check function.
+         *
+         * @param expectedTypes the expected types
+         */
         public ExactTypeNameCheckFunction(String... expectedTypes) {
             this(Arrays.stream(expectedTypes).map(ParameterAllowedTypes::new).toArray(ParameterAllowedTypes[]::new));
         }
 
         @Override
         public Optional<Diagnostic> apply(final MethodDeclaration methodDeclaration) {
+            int parameterCount = methodDeclaration.getParameters().size();
+            if (parameterCount < expectedTypes.length) {
+                return Optional.of(new Diagnostic(WARNING, makeId(methodDeclaration),
+                    "Incorrect number of parameters for this builder method. Expected at least " + expectedTypes.length
+                        + " but was " + parameterCount + "."));
+            }
+
             for (int i = 0; i < expectedTypes.length; i++) {
                 ParameterAllowedTypes expectedType = expectedTypes[i];
                 Type actualType = methodDeclaration.getParameter(i).getType();
 
-                String actualTypeName = ((ClassOrInterfaceType) actualType).getNameAsString();
+                String actualTypeName = actualType.isClassOrInterfaceType()
+                    ? actualType.asClassOrInterfaceType().getNameAsString()
+                    : actualType.asString();
 
-                if (!expectedType.supports(actualTypeName)) {
-                    return Optional.of(
-                        new Diagnostic(
-                            WARNING,
-                            makeId(methodDeclaration),
-                            "Incorrect type being supplied to this builder method. Expected " + expectedType +
-                                ", but was " + actualTypeName + "."));
+                if (!actualType.isClassOrInterfaceType() || !expectedType.supports(actualTypeName)) {
+                    return Optional.of(new Diagnostic(WARNING, makeId(methodDeclaration),
+                        "Incorrect type being supplied to this builder method. Expected " + expectedType + ", but was "
+                            + actualTypeName + "."));
                 }
             }
 
@@ -130,31 +162,61 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
         }
     }
 
+    /**
+     * A placeholder for checking builder parameter subclasses.
+     */
     public static class DirectSubclassCheckFunction implements Function<MethodDeclaration, Optional<Diagnostic>> {
         private final String parentTypeName;
 
+        /**
+         * Creates a direct subclass check function.
+         *
+         * @param parentTypeName the parent type name
+         */
         public DirectSubclassCheckFunction(String parentTypeName) {
             this.parentTypeName = parentTypeName;
         }
 
         @Override
         public Optional<Diagnostic> apply(final MethodDeclaration methodDeclaration) {
+            if (methodDeclaration.getParameters().isEmpty()) {
+                return Optional.of(new Diagnostic(WARNING, makeId(methodDeclaration),
+                    "Incorrect number of parameters for this builder method. Expected at least 1 but was 0."));
+            }
             Type parameterType = methodDeclaration.getParameter(0).getType();
-            ClassOrInterfaceType classOrInterfaceType = parameterType.asClassOrInterfaceType();
+            if (!parameterType.isClassOrInterfaceType()) {
+                return Optional.of(new Diagnostic(WARNING, makeId(methodDeclaration),
+                    "Incorrect type being supplied to this builder method. Expected a subclass of " + parentTypeName
+                        + ", but was " + parameterType.asString() + "."));
+            }
 
-            // TODO
+            // TODO (apiview):
 
             return Optional.empty();
         }
     }
 
+    /**
+     * Type names accepted for a builder method parameter.
+     */
     public static class ParameterAllowedTypes {
         private final String[] allowedTypes;
 
+        /**
+         * Creates a parameter allowed types.
+         *
+         * @param allowedTypes the allowed types
+         */
         public ParameterAllowedTypes(String... allowedTypes) {
             this.allowedTypes = allowedTypes;
         }
 
+        /**
+         * Checks whether the type name is allowed.
+         *
+         * @param type the type
+         * @return true if the type name is allowed
+         */
         public boolean supports(String type) {
             for (int i = 0; i < allowedTypes.length; i++) {
                 if (type.equals(allowedTypes[i])) {

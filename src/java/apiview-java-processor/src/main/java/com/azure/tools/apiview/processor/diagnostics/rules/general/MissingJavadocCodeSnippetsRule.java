@@ -1,7 +1,10 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
-import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
 
@@ -19,25 +22,22 @@ import static com.azure.tools.apiview.processor.model.DiagnosticKind.INFO;
 public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
     public static final String CODE_SNIPPET_TAG = "{@codesnippet";
 
-    private static final Pattern NEW_CODESNIPPET_TAG = Pattern
-        .compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9.#\\-_]+)\\s*-->");
+    private static final Pattern NEW_CODESNIPPET_TAG
+        = Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9.#\\-_]+)\\s*-->");
 
     @Override
-    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
+    public void scanIndividual(final CompilationUnit cu, final ApiListing listing) {
         getClasses(cu).forEach(typeDeclaration -> {
             String className = typeDeclaration.getNameAsString();
 
             // Check for codesnippets in class level javadoc for clients and client builders
             if (typeDeclaration.getJavadocComment().isPresent()
-                    && (className.endsWith("Client") || className.endsWith("Builder"))) {
+                && (className.endsWith("Client") || className.endsWith("Builder"))) {
 
                 if (!javadocContainsCodeSnippetTag(typeDeclaration.getJavadocComment().get().getContent())) {
-                    listing.addDiagnostic((new Diagnostic(
-                            INFO,
-                            makeId(typeDeclaration),
-                            "JavaDoc for clients and builders should include code samples to instantiate clients.",
-                            "https://github.com/Azure/azure-sdk-for-java/wiki/JavaDoc-with-CodeSnippet"
-                    )));
+                    listing.addDiagnostic((new Diagnostic(INFO, makeId(typeDeclaration),
+                        "JavaDoc for clients and builders should include code samples to instantiate clients.",
+                        "https://github.com/Azure/azure-sdk-for-java/wiki/JavaDoc-with-CodeSnippet")));
                 }
             }
 
@@ -49,18 +49,15 @@ public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
                 // service methods have codesnippets. If we find at least one service method with codesnippets, we
                 // assume library developers have picked the methods that are most useful to provide code samples.
                 boolean serviceMethodHasCodesnippets = getPublicOrProtectedMethods(cu)
-                        .filter(methodDeclaration -> methodDeclaration.isAnnotationPresent("ServiceMethod"))
-                        .filter(methodDeclaration -> methodDeclaration.getJavadocComment().isPresent())
-                        .map(methodDeclaration -> methodDeclaration.getJavadocComment().get().getContent())
-                        .anyMatch(MissingJavadocCodeSnippetsRule::javadocContainsCodeSnippetTag);
+                    .filter(methodDeclaration -> methodDeclaration.isAnnotationPresent("ServiceMethod"))
+                    .filter(methodDeclaration -> methodDeclaration.getJavadocComment().isPresent())
+                    .map(methodDeclaration -> methodDeclaration.getJavadocComment().get().getContent())
+                    .anyMatch(MissingJavadocCodeSnippetsRule::javadocContainsCodeSnippetTag);
 
                 if (!serviceMethodHasCodesnippets) {
-                    listing.addDiagnostic((new Diagnostic(
-                            INFO,
-                            makeId(typeDeclaration),
-                            "JavaDoc for service methods should include code samples.",
-                            "https://github.com/Azure/azure-sdk-for-java/wiki/JavaDoc-with-CodeSnippet"
-                    )));
+                    listing.addDiagnostic((new Diagnostic(INFO, makeId(typeDeclaration),
+                        "JavaDoc for service methods should include code samples.",
+                        "https://github.com/Azure/azure-sdk-for-java/wiki/JavaDoc-with-CodeSnippet")));
                 }
             }
         });

@@ -1,7 +1,10 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
-import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.BodyDeclaration;
@@ -23,49 +26,45 @@ public class MissingEqualsAndHashCodeDiagnosticRule implements DiagnosticRule {
 
     private final Pattern packageRegex;
 
+    /**
+     * Creates a missing equals and hash code diagnostic rule.
+     *
+     * @param packageRegex the package regex
+     */
     public MissingEqualsAndHashCodeDiagnosticRule(String packageRegex) {
         this.packageRegex = Pattern.compile(packageRegex);
     }
 
     @Override
-    public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
-        getClasses(cu)
-            .filter(type -> packageRegex.matcher(getPackageName(type)).matches())
-            .forEach(typeDeclaration -> {
-                boolean hasEquals = hasValidEqualsMethod(typeDeclaration);
-                boolean hasHashCode = hasValidHashCodeMethod(typeDeclaration);
+    public void scanIndividual(final CompilationUnit cu, final ApiListing listing) {
+        getClasses(cu).filter(type -> packageRegex.matcher(getPackageName(type)).matches()).forEach(typeDeclaration -> {
+            boolean hasEquals = hasValidEqualsMethod(typeDeclaration);
+            boolean hasHashCode = hasValidHashCodeMethod(typeDeclaration);
 
-                if (!hasEquals && !hasHashCode) {
-                    listing.addDiagnostic(new Diagnostic(
-                            INFO,
-                            makeId(typeDeclaration),
-                            "Both equals and hashCode methods are missing. Consider adding both methods."
-                    ));
-                } else if (!hasEquals) {
-                    listing.addDiagnostic(new Diagnostic(
-                            WARNING,
-                            makeId(typeDeclaration),
-                            "equals method is missing, but hashCode method is present. Consider adding the equals method."
-                    ));
-                } else if (!hasHashCode) {
-                    listing.addDiagnostic(new Diagnostic(
-                            WARNING,
-                            makeId(typeDeclaration),
-                            "hashCode method is missing, but equals method is present. Consider adding the hashCode method."
-                    ));
-                }
-            });
+            if (!hasEquals && !hasHashCode) {
+                listing.addDiagnostic(new Diagnostic(INFO, makeId(typeDeclaration),
+                    "Both equals and hashCode methods are missing. Consider adding both methods."));
+            } else if (!hasEquals) {
+                listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration),
+                    "equals method is missing, but hashCode method is present. Consider adding the equals method."));
+            } else if (!hasHashCode) {
+                listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration),
+                    "hashCode method is missing, but equals method is present. Consider adding the hashCode method."));
+            }
+        });
     }
 
     private boolean hasValidEqualsMethod(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMembers().stream()
+        return typeDeclaration.getMembers()
+            .stream()
             .filter(BodyDeclaration::isMethodDeclaration)
             .map(BodyDeclaration::asMethodDeclaration)
             .anyMatch(this::isValidEqualsMethod);
     }
 
     private boolean hasValidHashCodeMethod(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMethods().stream()
+        return typeDeclaration.getMethods()
+            .stream()
             .filter(BodyDeclaration::isMethodDeclaration)
             .map(BodyDeclaration::asMethodDeclaration)
             .anyMatch(this::isValidHashCodeMethod);

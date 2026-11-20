@@ -1,0 +1,60 @@
+trigger:
+  branches:
+    include: [main]
+  paths:
+    include:
+      - /packages/java-packages/api-review-maven-plugin/
+      - /src/java/apiview-java-processor/
+
+pr:
+  branches:
+    include: [main]
+  paths:
+    include:
+      - /packages/java-packages/api-review-maven-plugin/
+      - /src/java/apiview-java-processor/
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: Validate
+        jobs:
+          - job: Validate
+            variables:
+              - template: /eng/pipelines/templates/variables/globals.yml
+              - template: /eng/pipelines/templates/variables/image.yml
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - template: /eng/common/pipelines/templates/steps/maven-authenticate.yml
+              - task: Maven@4
+                displayName: Verify standalone processor
+                inputs:
+                  mavenPomFile: src/java/apiview-java-processor/pom.xml
+                  goals: clean verify
+                  options: --batch-mode --no-transfer-progress
+                  javaHomeOption: JDKVersion
+                  jdkVersionOption: '1.8'
+                  jdkArchitectureOption: x64
+                  publishJUnitResults: true
+                  testResultsFiles: src/java/apiview-java-processor/target/surefire-reports/TEST-*.xml
+              - task: Maven@4
+                displayName: Verify Maven plugin
+                inputs:
+                  mavenPomFile: packages/java-packages/api-review-maven-plugin/pom.xml
+                  goals: clean verify
+                  options: --batch-mode --no-transfer-progress
+                  javaHomeOption: JDKVersion
+                  jdkVersionOption: '1.8'
+                  jdkArchitectureOption: x64
+                  publishJUnitResults: true
+                  testResultsFiles: packages/java-packages/api-review-maven-plugin/target/surefire-reports/TEST-*.xml
+              - task: PowerShell@2
+                displayName: Test release scripts
+                inputs:
+                  targetType: filePath
+                  filePath: packages/java-packages/api-review-maven-plugin/eng/Test-Scripts.ps1
+                  pwsh: true

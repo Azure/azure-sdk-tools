@@ -4,10 +4,10 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"go/ast"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"slices"
@@ -16,7 +16,6 @@ import (
 
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
-	"golang.org/x/mod/semver"
 )
 
 // Review represents an apiview review of an Azure SDK for Go module
@@ -231,7 +230,7 @@ func (r *Review) resolveExternalType(mod module.Version, qualifiedName string, s
 	if !ok {
 		return typeDef{}, "", fmt.Errorf("couldn't find package %s for %s", importPath, qualifiedName)
 	}
-	def, found, err := recursiveFindTypeDef(typeName, p, m.Packages)
+	def, found, err := findTypeDef(typeName, p, m.Packages, map[typeDefRef]bool{}, true)
 	if err != nil {
 		return typeDef{}, "", err
 	}
@@ -241,6 +240,12 @@ func (r *Review) resolveExternalType(mod module.Version, qualifiedName string, s
 	for _, alias := range p.TypeAliases {
 		if alias.Name != typeName {
 			continue
+		}
+		if !alias.isAlias {
+			def := alias.definition
+			def.methodPackage = p
+			def.methodName = alias.Name
+			return def, "", nil
 		}
 		if alias.SourceMod == (module.Version{}) {
 			aliasDot := strings.LastIndex(alias.QualifiedName, ".")
@@ -252,7 +257,7 @@ func (r *Review) resolveExternalType(mod module.Version, qualifiedName string, s
 			if versionReg.MatchString(modulePath) {
 				modulePath = path.Dir(modulePath)
 			}
-			if strings.HasPrefix(aliasImportPath, modulePath+"/") {
+			if aliasImportPath == modulePath || strings.HasPrefix(aliasImportPath, modulePath+"/") {
 				return r.resolveModuleType(m, alias.QualifiedName, seen)
 			}
 			if isStandardLibraryImportPath(aliasImportPath) {
@@ -288,7 +293,7 @@ func (r *Review) resolveModuleType(m *Module, qualifiedName string, seen map[str
 	if !ok {
 		return typeDef{}, "", fmt.Errorf("couldn't find package %s for %s", importPath, qualifiedName)
 	}
-	def, found, err := recursiveFindTypeDef(typeName, p, m.Packages)
+	def, found, err := findTypeDef(typeName, p, m.Packages, map[typeDefRef]bool{}, true)
 	if err != nil {
 		return typeDef{}, "", err
 	}
@@ -298,6 +303,12 @@ func (r *Review) resolveModuleType(m *Module, qualifiedName string, seen map[str
 	for _, alias := range p.TypeAliases {
 		if alias.Name != typeName {
 			continue
+		}
+		if !alias.isAlias {
+			def := alias.definition
+			def.methodPackage = p
+			def.methodName = alias.Name
+			return def, "", nil
 		}
 		if alias.SourceMod != (module.Version{}) {
 			return r.resolveExternalType(alias.SourceMod, alias.QualifiedName, seen)
@@ -324,6 +335,13 @@ func (r *Review) resolveModuleType(m *Module, qualifiedName string, seen map[str
 
 func (r *Review) resolveTypeDefinition(m *Module, def typeDef, seen map[string]bool) (typeDef, string, error) {
 	if def.n == nil || def.p == nil {
+		return def, "", nil
+	}
+	if !def.n.Assign.IsValid() {
+		if def.methodPackage == nil {
+			def.methodPackage = def.p
+			def.methodName = def.n.Name.Name
+		}
 		return def, "", nil
 	}
 	selector, ok := unparenType(def.n.Type).(*ast.SelectorExpr)
@@ -375,17 +393,12 @@ func (r *Review) selectedModuleVersion(mod module.Version) (module.Version, erro
 	if selected, ok := r.selectedModules[mod.Path]; ok {
 		return selected, nil
 	}
-	cmd := exec.Command("go", "list", "-mod=readonly", "-m", "-json", mod.Path)
-	cmd.Dir = r.path
-	output, err := cmd.CombinedOutput()
+	cmd := newGoCommand(r.path, "list", "-mod=readonly", "-m", "-json", mod.Path)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	output, err := cmd.Output()
 	if err != nil {
-		if selected, ok, graphErr := r.selectedModuleVersionFromGraph(mod.Path); ok {
-			r.selectedModules[mod.Path] = selected
-			return selected, nil
-		} else if graphErr != nil {
-			return module.Version{}, fmt.Errorf("resolving selected version for module %s: %w (go list: %s)", mod.Path, graphErr, strings.TrimSpace(string(output)))
-		}
-		return module.Version{}, fmt.Errorf("resolving selected version for module %s: %w: %s", mod.Path, err, strings.TrimSpace(string(output)))
+		return module.Version{}, fmt.Errorf("resolving selected version for module %s: %w: %s", mod.Path, err, strings.TrimSpace(stderr.String()))
 	}
 	var selected struct {
 		Path    string
@@ -400,44 +413,6 @@ func (r *Review) selectedModuleVersion(mod module.Version) (module.Version, erro
 	resolved := module.Version{Path: selected.Path, Version: selected.Version}
 	r.selectedModules[mod.Path] = resolved
 	return resolved, nil
-}
-
-func (r *Review) selectedModuleVersionFromGraph(target string) (module.Version, bool, error) {
-	selected := map[string]module.Version{}
-	processed := map[string]module.Version{}
-	queue := []module.Version{}
-	for _, requirement := range r.reviewed.ModFile.Require {
-		queue = append(queue, module.Version{Path: requirement.Mod.Path, Version: requirement.Mod.Version})
-	}
-	for len(queue) > 0 {
-		requirement := queue[0]
-		queue = queue[1:]
-		if requirement.Path == "" || requirement.Path == r.reviewed.ModFile.Module.Mod.Path {
-			continue
-		}
-		current, found := selected[requirement.Path]
-		if !found || semver.Compare(requirement.Version, current.Version) > 0 {
-			selected[requirement.Path] = requirement
-		}
-		current = selected[requirement.Path]
-		if previous, ok := processed[requirement.Path]; ok &&
-			semver.Compare(current.Version, previous.Version) <= 0 {
-			continue
-		}
-		dependency, err := r.externalModule(current)
-		if err != nil {
-			if current.Path == target {
-				return module.Version{}, false, err
-			}
-			continue
-		}
-		processed[current.Path] = current
-		for _, dependencyRequirement := range dependency.ModFile.Require {
-			queue = append(queue, module.Version{Path: dependencyRequirement.Mod.Path, Version: dependencyRequirement.Mod.Version})
-		}
-	}
-	version, ok := selected[target]
-	return version, ok, nil
 }
 
 func (r *Review) replacementImportPath(mod module.Version, resolvedModulePath, importPath string) string {
@@ -507,7 +482,7 @@ func (r *Review) resolveLocalTypes() error {
 				switch typ.(type) {
 				case *ast.IndexExpr, *ast.IndexListExpr:
 					return fmt.Errorf("generic instantiation alias %s.%s cannot be represented", p.Name(), name)
-				default:
+				case *ast.StarExpr:
 					continue
 				}
 			}
@@ -515,6 +490,12 @@ func (r *Review) resolveLocalTypes() error {
 			case *ast.ArrayType, *ast.ChanType, *ast.FuncType, *ast.MapType, *ast.StarExpr, *ast.IndexExpr, *ast.IndexListExpr:
 				if err := validateCompositeType(def.n.Type, p, p, def.imports); err != nil {
 					return fmt.Errorf("unsupported composite type for %s.%s: %w", p.Name(), name, err)
+				}
+			case *ast.InterfaceType, *ast.StructType:
+				if def.n.Assign.IsValid() {
+					if err := validateCompositeType(def.n.Type, p, p, def.imports); err != nil {
+						return fmt.Errorf("unsupported composite type for %s.%s: %w", p.Name(), name, err)
+					}
 				}
 			}
 		}

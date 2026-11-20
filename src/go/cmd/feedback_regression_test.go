@@ -32,7 +32,7 @@ type Public = types.Unused
 
 func TestUnresolvedInternalAliasFailsWhenExposed(t *testing.T) {
 	dir := aliasFeedbackFixture(t, "type Public = types.External\n", `
-import "example.com/elsewhere"
+import elsewhere "example.com/elsewhere"
 type External = elsewhere.Entry
 `, nil)
 	_, err := createReview(dir)
@@ -66,6 +66,7 @@ func TestUnsupportedDirectCompositeAndGenericTypes(t *testing.T) {
 		name, source, expected string
 	}{
 		{"hidden slice component", "type hidden struct{}\ntype Public []hidden\n", "hidden component type"},
+		{"hidden composite alias component", "type hidden struct{}\ntype Public = []hidden\n", "hidden component type"},
 		{"generic instantiation alias", "type Box[T any] struct{}\ntype Public = Box[int]\n", "generic instantiation"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -131,19 +132,35 @@ type Data []model.Item
 
 func TestUnnamedImportUsesDeclaredPackageName(t *testing.T) {
 	dir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/aliastest\n\ngo 1.21\n"), 0644))
+	t.Setenv("GOPROXY", "off")
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/importer\n\ngo 1.21\nrequire example.com/go-amqp v1.0.0\nreplace example.com/go-amqp => ../go-amqp\n"), 0644))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "alias.go"), []byte(`
-package aliastest
-import "example.com/aliastest/go-amqp"
+package importer
+import "example.com/go-amqp"
 type Public = amqp.Data
 `), 0644))
-	packageDir := filepath.Join(dir, "go-amqp")
+	packageDir := filepath.Join(filepath.Dir(dir), "go-amqp")
 	require.NoError(t, os.MkdirAll(packageDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(packageDir, "go.mod"), []byte("module example.com/go-amqp\n\ngo 1.21\n"), 0644))
 	require.NoError(t, os.WriteFile(filepath.Join(packageDir, "types.go"), []byte("package amqp\ntype Data []byte\n"), 0644))
 
 	review, err := createReview(dir)
 	require.NoError(t, err)
-	require.Equal(t, "typePublic=[]byte", withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "aliastest.Public"))))
+	require.Equal(t, "typePublic=[]byte", withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "importer.Public"))))
+}
+
+func TestUnnamedImportNameLookupFailureIsReported(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GOPROXY", "off")
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/importer\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "alias.go"), []byte(`
+package importer
+import "example.com/go-amqp"
+type Public = amqp.Data
+`), 0644))
+
+	_, err := createReview(dir)
+	require.ErrorContains(t, err, "resolving unnamed import example.com/go-amqp")
 }
 
 func TestGenericComponentsAndSignaturesAreValidatedRecursively(t *testing.T) {

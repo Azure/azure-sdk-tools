@@ -401,14 +401,22 @@ func findExposedQualifiedType(target *Pkg, qualifiedName string) (*Pkg, string, 
 		if isInternalPackage(pkg) {
 			continue
 		}
-		for _, alias := range pkg.TypeAliases {
+		aliases := append([]*TypeAlias(nil), pkg.TypeAliases...)
+		sort.Slice(aliases, func(i, j int) bool { return aliases[i].Name < aliases[j].Name })
+		for _, alias := range aliases {
 			if alias.isAlias && ast.IsExported(alias.Name) &&
 				normalizeAliasTarget(packages, aliasTarget(pkg, alias.Name, map[string]bool{}), map[string]bool{}) ==
 					normalizeAliasTarget(packages, qualifiedName, map[string]bool{}) {
 				return pkg, alias.Name, true
 			}
 		}
-		for name, def := range pkg.types {
+		names := make([]string, 0, len(pkg.types))
+		for name := range pkg.types {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			def := pkg.types[name]
 			if ast.IsExported(name) && def.n != nil && def.n.Assign.IsValid() &&
 				normalizeAliasTarget(packages, aliasTarget(pkg, name, map[string]bool{}), map[string]bool{}) ==
 					normalizeAliasTarget(packages, qualifiedName, map[string]bool{}) {

@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -109,10 +110,32 @@ func (pkg Pkg) Name() string {
 }
 
 // Index parses the package's files, adding exported types to the package's content as discovered.
-func (p *Pkg) Index() {
+func (p *Pkg) Index() error {
 	for _, f := range p.p.Files {
-		p.indexFile(f)
+		if err := p.indexFile(f); err != nil {
+			return fmt.Errorf("indexing %s: %w", p.fs.Position(f.Pos()).Filename, err)
+		}
 	}
+	return nil
+}
+
+func newGoCommand(dir string, args ...string) *exec.Cmd {
+	cmd := exec.Command("go", args...)
+	cmd.Dir = filepath.FromSlash(dir)
+	env := os.Environ()
+	found := false
+	for i, entry := range env {
+		name, _, ok := strings.Cut(entry, "=")
+		if ok && strings.EqualFold(name, "GOWORK") {
+			env[i] = "GOWORK=off"
+			found = true
+		}
+	}
+	if !found {
+		env = append(env, "GOWORK=off")
+	}
+	cmd.Env = env
+	return cmd
 }
 
 // returns p.modulePath minus any major version suffix
@@ -133,7 +156,7 @@ func unparenType(expr ast.Expr) ast.Expr {
 	}
 }
 
-func (p *Pkg) indexFile(f *ast.File) {
+func (p *Pkg) indexFile(f *ast.File) error {
 	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
 	imports := map[string]string{}
 	modulePathReplacement := ""
@@ -153,9 +176,9 @@ func (p *Pkg) indexFile(f *ast.File) {
 		if imp.Name != nil {
 			imports[imp.Name.String()] = pkgPath
 		} else {
-			name := filepath.Base(pkgPath)
-			if resolved, err := p.packageName(pkgPath); err == nil {
-				name = resolved
+			name, err := p.packageName(pkgPath)
+			if err != nil {
+				return fmt.Errorf("resolving unnamed import %s: %w", pkgPath, err)
 			}
 			imports[name] = pkgPath
 		}
@@ -231,6 +254,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 							Package:       p,
 							QualifiedName: impPath + "." + t.Sel.Name,
 							isAlias:       x.Assign.IsValid(),
+							definition:    typeDef{n: x, p: p, imports: imports},
 						}
 						p.TypeAliases = append(p.TypeAliases, &ta)
 					} else {
@@ -261,6 +285,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 		}
 		return true
 	})
+	return nil
 }
 
 func (p *Pkg) packageName(importPath string) (string, error) {
@@ -270,11 +295,12 @@ func (p *Pkg) packageName(importPath string) (string, error) {
 	if imported, ok := p.modulePackages[importPath]; ok && imported.p != nil {
 		return imported.p.Name, nil
 	}
-	cmd := exec.Command("go", "list", "-mod=readonly", "-f", "{{.Name}}", importPath)
-	cmd.Dir = filepath.FromSlash(p.moduleRoot)
-	output, err := cmd.CombinedOutput()
+	cmd := newGoCommand(p.moduleRoot, "list", "-mod=readonly", "-f", "{{.Name}}", importPath)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	output, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("resolving Go package name for %s: %w: %s", importPath, err, strings.TrimSpace(string(output)))
+		return "", fmt.Errorf("resolving Go package name for %s: %w: %s", importPath, err, strings.TrimSpace(stderr.String()))
 	}
 	name := strings.TrimSpace(string(output))
 	if name == "" || strings.ContainsAny(name, "\r\n") {
@@ -382,7 +408,8 @@ type TypeAlias struct {
 	// QualifiedName of the source type e.g. "github.com/Azure/azure-sdk-for-go/sdk/internal/log.Event"
 	QualifiedName string
 	// SourceMod is the module defining the type
-	SourceMod module.Version
+	SourceMod  module.Version
+	definition typeDef
 
 	// isAlias distinguishes an alias from a new type with the same underlying type.
 	isAlias bool
@@ -462,6 +489,13 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 			}
 		case *ast.Ident:
 			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), n.Name, nil)
+			if err := a.hoistMethods(def); err != nil {
+				return err
+			}
+		case *ast.SelectorExpr:
+			simple := NewSimpleType(a.Name, a.Package.Name(), originalName)
+			a.Package.c.SimpleTypes[a.Name] = simple
+			t = simple
 			if err := a.hoistMethods(def); err != nil {
 				return err
 			}

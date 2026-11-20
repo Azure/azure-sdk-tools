@@ -164,12 +164,14 @@ func newModule(dir string, deferAliases bool) (*Module, error) {
 		p.packageNames = packageNames
 	}
 	for _, p := range m.Packages {
-		p.Index()
+		if err := p.Index(); err != nil {
+			return nil, fmt.Errorf("indexing package %s: %w", p.Name(), err)
+		}
 	}
 	// resolve cross-package references by adding the definitions of types exported by alias to the exporting package
 	for _, p := range m.Packages {
 		for _, alias := range p.TypeAliases {
-			def, found, err := recursiveFindTypeDef(alias.Name, p, m.Packages)
+			def, found, err := findTypeDef(alias.Name, p, m.Packages, map[typeDefRef]bool{}, alias.isAlias)
 			alias.SourceMod = sourceModuleForAlias(alias.QualifiedName, m.ModFile.Require)
 			if deferAliases {
 				if alias.SourceMod != (module.Version{}) {
@@ -365,7 +367,7 @@ func parseModFile(dir string) (*modfile.File, error) {
 //   - packages is the collection of Pkgs to search. Its keys are import paths e.g.
 //     "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) (typeDef, bool, error) {
-	return findTypeDef(typeName, source, packages, map[typeDefRef]bool{})
+	return findTypeDef(typeName, source, packages, map[typeDefRef]bool{}, false)
 }
 
 type typeDefRef struct {
@@ -373,17 +375,27 @@ type typeDefRef struct {
 	name string
 }
 
-func findTypeDef(typeName string, source *Pkg, packages map[string]*Pkg, seen map[typeDefRef]bool) (typeDef, bool, error) {
+func findTypeDef(typeName string, source *Pkg, packages map[string]*Pkg, seen map[typeDefRef]bool, preserveDefinedTypes bool) (typeDef, bool, error) {
 	ref := typeDefRef{pkg: source, name: typeName}
 	if seen[ref] {
 		return typeDef{}, false, fmt.Errorf("cyclic type definition %s.%s", source.Name(), typeName)
 	}
 	seen[ref] = true
+	if preserveDefinedTypes {
+		for _, alias := range source.TypeAliases {
+			if alias.Name == typeName && !alias.isAlias && alias.definition.n != nil {
+				def := alias.definition
+				def.methodPackage = source
+				def.methodName = alias.Name
+				return def, true, nil
+			}
+		}
+	}
 	def, ok := source.types[typeName]
 	if ok {
 		if def.p == source && def.n.Name.Name == typeName {
 			if ident, ok := unparenType(def.n.Type).(*ast.Ident); ok {
-				underlying, found, err := findTypeDef(ident.Name, source, packages, seen)
+				underlying, found, err := findTypeDef(ident.Name, source, packages, seen, preserveDefinedTypes)
 				if err != nil {
 					return typeDef{}, false, err
 				}
@@ -412,7 +424,7 @@ func findTypeDef(typeName string, source *Pkg, packages map[string]*Pkg, seen ma
 			pkgPath := a.QualifiedName[:dot]      // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
 			sourceName := a.QualifiedName[dot+1:] // DeleteOptions
 			if p, ok := packages[pkgPath]; ok {
-				def, found, err := findTypeDef(sourceName, p, packages, seen)
+				def, found, err := findTypeDef(sourceName, p, packages, seen, preserveDefinedTypes)
 				if found && !a.isAlias {
 					def.methodPackage = source
 					def.methodName = a.Name

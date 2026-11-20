@@ -153,6 +153,7 @@ func TestDiagnostics(t *testing.T) {
 }
 
 func TestExternalModule(t *testing.T) {
+	t.Setenv("GOPROXY", "off")
 	review, err := createReview(filepath.Clean("testdata/test_external_module"))
 	require.NoError(t, err)
 	require.Equal(t, "1.0.0-beta.1", review.PackageVersion)
@@ -305,7 +306,7 @@ func (Entry) Valid() bool { return true }
 		{"Status", "=string", []string{"Label"}, nil},
 		{"Record", "", []string{"Valid"}, nil},
 		{"Defined", "[]byte", []string{"Local"}, []string{"Len", "Reset"}},
-		{"Indirect", "=[]byte", []string{"BridgeOnly"}, []string{"Len", "Reset"}},
+		{"Indirect", "=internal/bridge.Defined", []string{"BridgeOnly"}, []string{"Len", "Reset"}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			line := findLine(t, review, "aliastest."+test.name)

@@ -53,7 +53,7 @@ public class InstrumentedTool(
             var result = await base.InvokeAsync(request, ct);
 
             // Tag response in the activity
-            var content = JsonSerializer.Serialize(result.Content);
+            var content = JsonSerializer.Serialize(activity?.GetCustomProperty(TagName.ToolResponse) ?? result.Content);
             activity?.SetTag(TagName.ToolResponse, content);
             activity?.SetStatus(ActivityStatusCode.Ok);
 

@@ -9,6 +9,7 @@ import logging
 import os
 import re
 from urllib.parse import urlparse
+from uuid import uuid4
 
 import httpx
 from azure.core.exceptions import AzureError
@@ -32,6 +33,7 @@ from models.conversation import ConversationMessage, ConversationType
 from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from models.identity import ResolveGitHubUsersResult
 from services.conversation_service import ConversationService
+from services.sdk_breaking_change_review import sdk_breaking_change_review_hold
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import (
     build_skill_content,
@@ -140,7 +142,6 @@ class ChatService:
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
-        project_client = self._get_project_client()
         tenant_config = get_tenant_config(req.tenant_id)
         agent_name, configured_agent_version = self._resolve_agent_configuration(tenant_config)
         agent_version = configured_agent_version or None
@@ -149,7 +150,18 @@ class ChatService:
         )
         if request_agent_version is not None:
             agent_version = request_agent_version
-        agent = await self._get_agent(project_client, agent_name, agent_version)
+
+        review_hold = await sdk_breaking_change_review_hold(req)
+        if review_hold:
+            response_id = str(uuid4())
+            BackgroundTaskTracker.instance().track(
+                asyncio.create_task(
+                    self._save_bot_answer_to_conversation(req, response_id, review_hold)
+                )
+            )
+            return ChatResponse(id=response_id, answer=review_hold, has_result=True)
+
+        agent = await self._get_agent(self._get_project_client(), agent_name, agent_version)
         logger.info(
             "Resolved agent=%s version=%s source=%s tenant=%s.",
             agent.name, agent.version,

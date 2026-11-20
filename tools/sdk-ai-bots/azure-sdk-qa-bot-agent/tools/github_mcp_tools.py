@@ -1091,22 +1091,30 @@ async def _get_github_issue_payload(issue_url: str) -> dict:
     if match is None:
         raise ValueError(f"Invalid GitHub issue URL: {issue_url}")
 
+    return await _get_github_api_payload(
+        f"/repos/{match.group('owner')}/{match.group('repo')}/issues/{match.group('number')}"
+    )
+
+
+async def _get_github_api_payload(path: str) -> dict:
     token, _ = await _get_github_token()
     headers = {
         "Authorization": "Bearer " + token,
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    owner = match.group("owner")
-    repo = match.group("repo")
-    number = match.group("number")
     async with httpx.AsyncClient(timeout=_GITHUB_API_TIMEOUT_SECS) as client:
-        response = await client.get(
-            f"{_GITHUB_API}/repos/{owner}/{repo}/issues/{number}",
-            headers=headers,
-        )
+        response = await client.get(f"{_GITHUB_API}{path}", headers=headers)
         response.raise_for_status()
     return response.json()
+
+
+async def get_spec_pull_request_labels(repo: str, number: int) -> set[str]:
+    """Read live labels for an Azure spec PR without returning authored content."""
+    if repo not in {"azure-rest-api-specs", "azure-rest-api-specs-pr"} or number < 1:
+        raise ValueError("Invalid Azure spec pull request")
+    payload = await _get_github_api_payload(f"/repos/Azure/{repo}/pulls/{number}")
+    return {entry["name"].casefold() for entry in payload["labels"]}
 
 
 def _validated_issue_state(payload: dict, issue_url: str) -> str:

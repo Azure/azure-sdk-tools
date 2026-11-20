@@ -28,3 +28,7 @@ Cross-module aliases are resolved using the dependency version in `go.mod`, not 
 checkouts. Set `GOMODCACHE` to use an existing module cache; otherwise missing versions are
 downloaded from the Go module proxy. Explicit `replace` directives in the reviewed module
 are honored.
+
+The parser rejects public aliases of generic instantiations and composites whose hidden
+component types or array-length expressions it cannot represent reliably. Exposed pointer
+aliases remain unsupported; defined pointers to representable types are supported.

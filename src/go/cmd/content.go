@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -420,7 +419,7 @@ func (c *content) findMethods(s string) map[string]Func {
 		if unicode.IsLower(rune(name[0])) {
 			continue
 		}
-		if receiverTypeName(key) == s {
+		if fn.receiverTypeName() == s {
 			methods[key] = fn
 		}
 	}
@@ -445,35 +444,6 @@ func (c *content) searchForMethods(s string) []ReviewLine {
 	return lines
 }
 
-// receiverRegex captures a receiver's type and optional name
-var receiverRegex = regexp.MustCompile(`\(([\p{L}_][\p{L}\p{N}_]*)?(?: ?(\(*\*?\(*[\p{L}_][\p{L}\p{N}_]*.*)\))?`)
-
-// getReceiver returns the components of the receiver on a method signature
-// i.e.: (c *Foo) Bar(s string) will return "c" and "Foo".
-func getReceiver(s string) (string, string) {
-	name, typ := "", ""
-	t := receiverRegex.FindStringSubmatch(s)
-	if t != nil {
-		if t[2] == "" {
-			// nameless receiver e.g., (Foo)
-			typ = t[1]
-		} else {
-			name = t[1]
-			typ = t[2]
-		}
-	}
-	return name, typ
-}
-
-func receiverTypeName(signature string) string {
-	_, receiver := getReceiver(signature)
-	receiver, _ = normalizeReceiverType(receiver)
-	if name, _, found := strings.Cut(receiver, "["); found {
-		receiver = name
-	}
-	return removeNavigatorString(receiver)
-}
-
 func normalizeReceiverType(receiver string) (string, bool) {
 	pointer := false
 	for {
@@ -489,19 +459,12 @@ func normalizeReceiverType(receiver string) (string, bool) {
 	}
 }
 
-// isOnUnexportedMember returns true for method signatures with unexported receivers such as
-// "(ep *entityPager[TFeed, T, TOutput]) Fetcher(ctx context.Context) ([]TOutput, error)"
-func isOnUnexportedMember(s string) bool {
-	receiver := receiverTypeName(s)
-	return receiver != "" && !ast.IsExported(receiver)
-}
-
 func (c *content) parseFunc() []ReviewLine {
 	lns := []ReviewLine{}
 	keys := make([]string, 0, len(c.Funcs))
 	for key, fn := range c.Funcs {
 		name := fn.Name()
-		if !(isOnUnexportedMember(key) || unicode.IsLower(rune(name[0]))) {
+		if !(fn.ReceiverType != "" && !ast.IsExported(fn.receiverTypeName()) || unicode.IsLower(rune(name[0]))) {
 			keys = append(keys, key)
 		}
 	}

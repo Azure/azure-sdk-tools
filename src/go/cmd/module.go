@@ -154,6 +154,12 @@ func NewModule(dir string) (*Module, error) {
 	for _, p := range m.Packages {
 		for _, alias := range p.TypeAliases {
 			def, found, err := recursiveFindTypeDef(alias.Name, p, m.Packages)
+			if strings.Contains(p.relName, "/internal") {
+				if err == nil && found {
+					alias.cacheDefinition(def)
+				}
+				continue
+			}
 			if err != nil {
 				return nil, fmt.Errorf("resolving alias %s.%s: %w", p.Name(), alias.Name, err)
 			}
@@ -172,6 +178,14 @@ func NewModule(dir string) (*Module, error) {
 				}
 			}
 			if alias.SourceMod == (module.Version{}) {
+				dot := strings.LastIndex(alias.QualifiedName, ".")
+				if dot > 0 {
+					importPath := alias.QualifiedName[:dot]
+					if strings.HasPrefix(importPath, p.unversionedModulePath()+"/") &&
+						(strings.HasSuffix(importPath, "/internal") || strings.Contains(importPath, "/internal/")) {
+						return nil, fmt.Errorf("couldn't resolve internal type %s for %s.%s", alias.QualifiedName, p.Name(), alias.Name)
+					}
+				}
 				// The exporting module doesn't require the source module, so this must be a standard library type.
 				// We want this to appear in the API like "type AzureTime time.Time" and don't want to hoist the
 				// definition into the review. Resolving with a zero typeDef adds a SimpleType to the review.
@@ -236,9 +250,12 @@ func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg, aliasName strin
 		fn       Func
 	}
 	methods := []receiverMethod{}
-	for signature, fn := range pkg.c.Funcs {
-		receiver := receiverTypeName(signature)
+	for _, fn := range pkg.c.Funcs {
+		receiver := fn.receiverTypeName()
 		if receivers[receiver] && ast.IsExported(fn.Name()) {
+			if pkg == target && receiver == aliasName {
+				continue
+			}
 			methods = append(methods, receiverMethod{receiver, fn})
 		}
 	}

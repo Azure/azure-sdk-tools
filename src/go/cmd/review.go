@@ -203,9 +203,10 @@ func (r *Review) resolveAliases() error {
 			if err != nil {
 				return fmt.Errorf("resolving alias %s.%s: %w", ta.Package.Name(), ta.Name, err)
 			}
-			if found {
-				def = d
+			if !found {
+				return fmt.Errorf("couldn't resolve type %s for %s.%s", ta.QualifiedName, ta.Package.Name(), ta.Name)
 			}
+			def = d
 		}
 		err = ta.Resolve(def)
 		if err != nil {
@@ -250,6 +251,9 @@ func (r *Review) resolveLocalTypes() error {
 						// Pointer aliases need different method-set handling.
 						return fmt.Errorf("unsupported type %T for alias %s.%s", typ, p.Name(), name)
 					}
+					if err := validateCompositeType(typ, p, p, def.imports); err != nil {
+						return fmt.Errorf("unsupported composite type for %s.%s: %w", p.Name(), name, err)
+					}
 				}
 			}
 		}
@@ -262,6 +266,12 @@ func (r *Review) resolveLocalTypes() error {
 				return fmt.Errorf("resolving type %s.%s: %w", p.Name(), name, err)
 			}
 			if !found || (def.p == p && def.n == original.n) {
+				if target := p.unresolvedPrivateAlias(ident.Name); target != "" {
+					alias := TypeAlias{Name: name, Package: p, QualifiedName: target, isAlias: original.n.Assign.IsValid()}
+					if err := alias.Resolve(typeDef{}); err != nil {
+						return fmt.Errorf("resolving alias %s.%s: %w", p.Name(), name, err)
+					}
+				}
 				continue
 			}
 			alias := TypeAlias{
@@ -279,8 +289,38 @@ func (r *Review) resolveLocalTypes() error {
 				alias.hoistMethods(def)
 			}
 		}
+		names = names[:0]
+		for name, def := range p.types {
+			if ast.IsExported(name) && def.p == p && def.n != nil && def.n.Name.Name == name {
+				names = append(names, name)
+			}
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			hoistMethodsForType(p, name, p, name)
+		}
 	}
 	return nil
+}
+
+func (p *Pkg) unresolvedPrivateAlias(name string) string {
+	seen := map[string]bool{}
+	for !ast.IsExported(name) && !seen[name] {
+		seen[name] = true
+		if def, ok := p.types[name]; ok && def.p == p && def.n != nil && def.n.Assign.IsValid() {
+			if ident, ok := unparenType(def.n.Type).(*ast.Ident); ok {
+				name = ident.Name
+				continue
+			}
+		}
+		for _, alias := range p.TypeAliases {
+			if alias.Name == name && alias.isAlias && alias.resolved {
+				return alias.QualifiedName
+			}
+		}
+		break
+	}
+	return ""
 }
 
 // forAll recursively applies a function to all lines and their children

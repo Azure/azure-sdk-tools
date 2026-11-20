@@ -394,9 +394,8 @@ func TestAliasAdditionalDefinitions(t *testing.T) {
 	}
 	t.Run("defined pointer", func(t *testing.T) {
 		dir := aliasFeedbackFixture(t, "type Public *types.Data\n", "type Data struct{}\n", nil)
-		review, err := createReview(dir)
-		require.NoError(t, err)
-		require.Equal(t, "typePublic*types.Data", feedbackLineText(feedbackLine(t, review, "aliastest.Public")))
+		_, err := createReview(dir)
+		require.ErrorContains(t, err, "hidden component type")
 	})
 	t.Run("channel methods", func(t *testing.T) {
 		dir := aliasFeedbackFixture(t, "type Public = types.Data\n", `

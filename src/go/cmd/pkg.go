@@ -170,29 +170,29 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.ArrayType:
 				// "type UUID [16]byte"
 				txt := p.getText(t.Pos(), t.End())
-				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.ChanType, *ast.StarExpr:
 				txt := p.getText(t.Pos(), t.End())
-				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.FuncType:
 				// "type PolicyFunc func(*Request) (*http.Response, error)"
 				txt := p.getText(t.Pos(), t.End())
-				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.Ident:
 				// "type ETag string"
-				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name, imports)
 			case *ast.IndexExpr, *ast.IndexListExpr:
 				// "type Client GenericClient[BaseClient]"
 				// "type Client CompositeClient[BaseClient1, BaseClient2]"
 				txt := p.getText(t.Pos(), t.End())
-				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.InterfaceType:
-				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
 				in := p.c.addInterface(*p, x.Name.Name, p.Name(), x, imports)
 				if in.Sealed {
 					p.diagnostics = append(p.diagnostics, CodeDiagnostic{
@@ -204,7 +204,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.MapType:
 				// "type opValues map[reflect.Type]interface{}"
 				txt := p.getText(t.Pos(), t.End())
-				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
@@ -232,7 +232,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 					}
 				}
 			case *ast.StructType:
-				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
 				s := p.c.addStruct(*p, x.Name.Name, p.Name(), x, imports)
 				for _, t := range s.AnonymousFields {
 					// if t contains "." it must be exported
@@ -366,13 +366,8 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 		// this should never happen but if it does, it's a bug we want to know about
 		return fmt.Errorf("alias %s already resolved", a.Name)
 	}
-	if def != (typeDef{}) {
-		exportedDef := def
-		if !a.isAlias {
-			exportedDef.methodPackage = a.Package
-			exportedDef.methodName = a.Name
-		}
-		a.Package.types[a.Name] = exportedDef
+	if def.n != nil && def.p != nil {
+		a.cacheDefinition(def)
 	}
 	// Private aliases can be used by public aliases, but have no review line of their own.
 	if !ast.IsExported(a.Name) {
@@ -403,6 +398,9 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 			a.hoistMethods(def)
 			// ensure that all struct field types that are structs are also aliased from this package
 			for _, field := range n.Fields.List {
+				if def.p == a.Package {
+					break
+				}
 				fieldTypeName := unwrapStructFieldTypeName(field)
 				if fieldTypeName == "" {
 					// we can ignore this field
@@ -431,9 +429,25 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 		case *ast.Ident:
 			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), n.Name, nil)
 			a.hoistMethods(def)
-		case *ast.ArrayType, *ast.ChanType, *ast.FuncType, *ast.IndexExpr, *ast.IndexListExpr, *ast.MapType:
-			underlying := def.p.getText(n.Pos(), n.End())
-			t = a.Package.c.addSimpleType(*def.p, a.Name, a.Package.Name(), underlying, nil)
+		case *ast.StarExpr:
+			if a.isAlias {
+				return fmt.Errorf("unsupported type %T for alias %s.%s", n, a.Package.Name(), a.Name)
+			}
+			underlying, err := a.compositeType(def, n)
+			if err != nil {
+				return err
+			}
+			simple := NewSimpleType(a.Name, a.Package.Name(), underlying)
+			a.Package.c.SimpleTypes[a.Name] = simple
+			t = simple
+		case *ast.ArrayType, *ast.ChanType, *ast.FuncType, *ast.MapType:
+			underlying, err := a.compositeType(def, n)
+			if err != nil {
+				return err
+			}
+			simple := NewSimpleType(a.Name, a.Package.Name(), underlying)
+			a.Package.c.SimpleTypes[a.Name] = simple
+			t = simple
 			a.hoistMethods(def)
 		default:
 			return fmt.Errorf("unsupported type %T for alias %s.%s", n, a.Package.Name(), a.Name)
@@ -450,6 +464,14 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	}
 	a.resolved = true
 	return nil
+}
+
+func (a *TypeAlias) cacheDefinition(def typeDef) {
+	if !a.isAlias {
+		def.methodPackage = a.Package
+		def.methodName = a.Name
+	}
+	a.Package.types[a.Name] = def
 }
 
 func (a *TypeAlias) hoistMethods(def typeDef) {
@@ -472,4 +494,5 @@ type typeDef struct {
 	// methodPackage and methodName identify a defined type whose underlying type is n.
 	methodPackage *Pkg
 	methodName    string
+	imports       map[string]string
 }

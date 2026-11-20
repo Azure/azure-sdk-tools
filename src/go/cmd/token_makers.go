@@ -4,8 +4,12 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
+	"go/parser"
+	"go/token"
 	"regexp"
 	"sort"
 	"strings"
@@ -152,12 +156,16 @@ func NewFunc(pkg Pkg, f *ast.FuncDecl, imports map[string]string) Func {
 	fn := newFunc(pkg, f.Type, imports)
 	fn.name = f.Name.Name
 	if f.Recv != nil {
-		fn.ReceiverType = pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
+		var receiver bytes.Buffer
+		if err := format.Node(&receiver, pkg.fs, f.Recv.List[0].Type); err != nil {
+			panic(fmt.Errorf("formatting receiver for %s: %w", fn.name, err))
+		}
+		fn.ReceiverType = receiver.String()
 		if len(f.Recv.List[0].Names) != 0 {
 			fn.ReceiverName = f.Recv.List[0].Names[0].Name
 		}
 	}
-	fn.exported = !isOnUnexportedMember(fn.signature()) && unicode.IsUpper(rune(fn.name[0]))
+	fn.exported = (fn.ReceiverType == "" || ast.IsExported(fn.receiverTypeName())) && unicode.IsUpper(rune(fn.name[0]))
 	fn.id = pkg.Name() + "-" + fn.signature()
 	return fn
 }
@@ -190,13 +198,13 @@ func newFunc(pkg Pkg, f *ast.FuncType, imports map[string]string) Func {
 			} else {
 				fn.paramNames = append(fn.paramNames, "")
 			}
-			fn.paramTypes = append(fn.paramTypes, pkg.translateType(t, imports))
+			fn.paramTypes = append(fn.paramTypes, pkg.translateSignatureType(t, imports))
 		})
 	}
 	if f.Results != nil {
 		fn.Returns = make([]string, 0, len(f.Results.List))
 		pkg.translateFieldList(f.Results.List, func(n *string, t string) {
-			fn.Returns = append(fn.Returns, pkg.translateType(t, imports))
+			fn.Returns = append(fn.Returns, pkg.translateSignatureType(t, imports))
 		})
 	}
 	return fn
@@ -208,6 +216,58 @@ func (f Func) Exported() bool {
 
 func (f Func) ID() string {
 	return f.id
+}
+
+func (f Func) receiverTypeName() string {
+	expr, err := parser.ParseExpr(f.ReceiverType)
+	if err != nil {
+		return ""
+	}
+	for {
+		switch n := expr.(type) {
+		case *ast.ParenExpr:
+			expr = n.X
+		case *ast.StarExpr:
+			expr = n.X
+		case *ast.IndexExpr:
+			expr = n.X
+		case *ast.IndexListExpr:
+			expr = n.X
+		case *ast.Ident:
+			return n.Name
+		default:
+			return ""
+		}
+	}
+}
+
+func (pkg Pkg) translateSignatureType(text string, imports map[string]string) string {
+	if strings.HasPrefix(text, "...") {
+		return "..." + pkg.translateSignatureType(text[3:], imports)
+	}
+	fset := token.NewFileSet()
+	expr, err := parser.ParseExprFrom(fset, "", text, 0)
+	if err != nil {
+		return pkg.translateType(text, imports)
+	}
+	var names []*ast.Ident
+	ast.Inspect(expr, func(n ast.Node) bool {
+		if field, ok := n.(*ast.Field); ok {
+			names = append(names, field.Names...)
+		}
+		return true
+	})
+	sort.Slice(names, func(i, j int) bool { return names[i].Pos() < names[j].Pos() })
+	var result strings.Builder
+	last := 0
+	for _, name := range names {
+		start, end := fset.Position(name.Pos()).Offset, fset.Position(name.End()).Offset
+		result.WriteString(pkg.translateType(text[last:start], imports))
+		result.WriteString(text[start:end])
+		last = end
+	}
+	result.WriteString(pkg.translateType(text[last:], imports))
+	return result.String()
 }
 
 func (f Func) signature() string {

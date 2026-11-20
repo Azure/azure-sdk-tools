@@ -11,8 +11,8 @@ public interface IServiceApiReadinessService
 {
     Task<ServiceApiReadinessResponse> CheckAsync(string owner, string repository, int pullRequest, CancellationToken ct);
     Task<ServiceApiReadinessResponse> GetPackageMetadataAsync(string owner, string repository, int pullRequest, CancellationToken ct);
-    Task<ServiceApiReadinessResponse> CheckPackageAsync(PackageInfo package, CancellationToken ct);
     Task<ServiceApiReadinessResponse> ValidateAsync(ServiceApiReadinessResponse metadata, CancellationToken ct);
+    Task<ServiceApiReadinessResponse> CheckPackageAsync(PackageInfo package, CancellationToken ct);
 }
 
 public class ServiceApiReadinessService(IGitHubService github, IAzureService azure, IHttpClientFactory clients,
@@ -80,7 +80,8 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 result.Detail = "Pinned package metadata and provider/API-version requirements only; no ARM readiness check was performed.";
                 return result;
             }
-            await ValidateAsync(result, ct);
+            await ValidatePackagesAsync(result.Packages, result, ct);
+            SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -107,7 +108,8 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 return result;
             }
             await PopulateValidationProjectsAsync(result, ct);
-            await ValidateAsync(result, ct);
+            await ValidatePackagesAsync(result.Packages, result, ct);
+            SetOverallResult(result);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -185,17 +187,21 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 {
                     package = await packageMetadataService.PopulateResourceTypesAsync(package, ct);
                     result.Packages[index] = package;
-                    versions = package.ResolvedApiVersions;
                 }
                 catch (Exception exception) when (exception is not OutOfMemoryException)
                 {
-                    result.ReadinessStatus = ServiceApiReadinessResponse.Error;
-                    result.Detail = SafeError(exception);
-                    result.ResponseError = result.Detail;
-                    return;
+                    result.Projects.AddRange(versions.Select(version => new ServiceApiReadinessProject
+                    {
+                        Package = package,
+                        ApiVersion = version,
+                        Namespace = version.Namespace ?? "",
+                        ReadinessStatus = ServiceApiReadinessResponse.Error,
+                        Detail = SafeError(exception)
+                    }));
+                    continue;
                 }
             }
-            result.Projects.AddRange(versions.Select(version => new ServiceApiReadinessProject
+            result.Projects.AddRange(package.ResolvedApiVersions.Select(version => new ServiceApiReadinessProject
             {
                 Package = package,
                 ApiVersion = version,
@@ -270,8 +276,9 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 .Where(region => !string.IsNullOrEmpty(region)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
             project.Matches.Add(new ServiceApiReadinessMatch { ResourceType = Text(resource["resourceType"]), Regions = regions });
         }
+        // One exact match passes this project, but does not prove every operation or region.
         project.ReadinessStatus = project.Matches.Count > 0 ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected;
-        project.Detail = $"{project.Matches.Count} of {applicable.Length} provider resource types advertise the exact version; spec resource-type filtering is not applied.";
+        project.Detail = $"{project.Matches.Count} of {applicable.Length} provider resource types advertise the exact version.";
         if (project.ReadinessStatus == ServiceApiReadinessResponse.NotDetected)
         {
             project.Detail += " Ask the service owner to confirm deployment; this is not a confirmed deployment failure.";

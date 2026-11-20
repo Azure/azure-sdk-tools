@@ -4,49 +4,17 @@
 
 ### Features Added
 
-- Honor the existing agent-testing flag for test-only readiness plan lookup.
-	Tolerate at most 3 ms of native ADO timestamp rounding without replacing the
-	original observation time; reject larger summary mismatches.
-
-- Use the provisioned service API-version readiness status, UTC check time, and
-	JSON details fields. Update all three in one revision-checked request only with
-	explicit recording. Require consistent summaries for cache reuse and preserve
-	newer observations during older-result writes. Field names no longer need configuration.
-
-- Apply the agreed provider-level readiness policy: any provider resource advertising
-  the exact API version can pass without filtering by spec resource types. Explicit
-  generated provider metadata avoids unnecessary Swagger inspection; scalar metadata
-  still resolves provider scope from pinned evidence.
-- Reuse Passed results without age expiry for matching spec/API scope. Reuse non-Passed
-  results for less than 24 hours and revalidate them after that period. Store schema-4
-  resource-type objects with regions for backtracking, preserving the original check time.
-- Return all readiness scope and observations through one existing DevOpsService
-  lookup, without a new client or duplicated metadata fields. Preserve completed
-  validation when optional persistence exhausts its internal budget; honor caller cancellation.
-
-- Move optional release-plan readiness reuse into a CLI coordinator that reuses
-	existing ADO lookup, history, and revision-checked update services. A CLI-only
-	`--record-release-plan` option explicitly allows writes; ordinary checks and MCP
-	remain read-only. Store five observation values, deriving project/commit scope
-	from the existing plan and API version from its API-spec child. Both items'
-	update histories invalidate older observations; no API version is copied into JSON.
-
-- Add `pkg validate-service-api-readiness --metadata-only` for SDK PRs, returning current-head
-	package metadata and pinned resource requirements without ARM calls or Azure
-	credentials. The read-only result supports release-plan evidence reuse outside
-	the validator and does not report service readiness as Passed.
-
-- Added CLI `pkg validate-service-api-readiness` and read-only MCP tool `azsdk_validate_service_api_readiness` to validate service API readiness against ARM metadata using either a PR URL or a local package path, returning Passed, Not detected, Inconclusive, or Error with evidence.
-	Returns enriched `PackageInfo` objects with API-version pairs, validated TypeSpec location, and RP/version-scoped resource types. Identifies all packages before populating their metadata, then enriches every package before ARM validation. Location, SDK type, and diagnostics remain associated with each package instead of parallel lists or per-package result wrappers. Shared metadata and project-resource helpers are independent of PR input; the metadata-only service does not depend on Azure credentials. Every RP/version used by a package is checked independently, including scalar-version projects with several RPs.
-	Preserves scalar and explicit-provider evidence until RP resolution, so metadata filename order cannot hide an RP. Unresolved required-provider mappings remain Inconclusive even when another provider matches; extension resources use their owning provider rather than the parent scope.
-	The service validates readiness through focused SDK-generation and pinned-Swagger readers with named evidence results. Shared metadata layouts remain in the local metadata helper, and bounded HTTP responses have a protocol-neutral owner. Uses the documented tenant-scoped provider API without a subscription ID; does not validate subscription registration or deployment. Supports five SDK layouts and classifies validated project metadata without PR labels; confirmed data-plane projects skip version and ARM reads.
-	Generation and resource enrichment return `PackageInfo` directly, carrying `MetadataFiles`, `MetadataIssues`, API versions, resource types, and the existing `SdkType`. Removed `PackageApiSource` and the per-package generation/resource evidence wrappers; PR-wide discovery retains only a multi-package batch result. Readiness projects reference the package and project the existing JSON source contract only for output.
-	Both inspection and readiness consume `IPackageApiMetadataService`, with no concrete readiness fallback. Local language metadata and pinned generation discovery share one typed text-based TypeSpec location parser. PackageInfo owns the validated location and diagnostics directly.
-	Local project metadata and readiness share configuration-based plane classification. Directory names no longer decide plane; missing, malformed, conflicting, inherited-only, or unmarked pinned configuration remains Inconclusive before version/ARM work.
-	Uses the existing token helper with optional cancellation, captures the PR head once without a SHA input, and keeps evidence reads bounded. Callers check that returned head against the current PR before publishing results. The command and result contract are documented in the CLI README.
-	Local package mode reads the working tree without requiring a PR or claiming a checked PR head. Both CLI and MCP require exactly one package source, and the automation worker retains PR-only invocation.
-	Finds package roots from pinned generation metadata rather than directory depth, with cached and bounded discovery. Uses the pinned PR base only to identify removed packages, never as current generation evidence.
-	Rejects blank provider keys, normalizes version arrays, and treats malformed Swagger info as inconclusive. Plain output includes the captured head even when GitHub evidence reads fail, plus project diagnostics and sanitized ARM errors.
+- Added CLI `pkg validate-service-api-readiness` and read-only MCP tool
+  `azsdk_validate_service_api_readiness` for SDK PRs or local packages. Check every
+  required provider/API-version pair against ARM metadata; any provider resource
+  advertising the exact version can pass, independently of spec resource types.
+  Reuse the same PackageInfo objects through metadata discovery, cache evaluation,
+  and ARM fallback. Explicit provider metadata skips Swagger inspection; scalar
+  metadata resolves all pinned providers without hiding unresolved requirements.
+  Keep v1 outcomes Passed, Not detected, Inconclusive, and Error with source and
+  matched-type/region evidence. Optional release-plan reuse preserves original
+  timestamps; only CLI `--record-release-plan` permits revision-checked writes to
+  the status/time and HTML details fields. This is not deployment or release approval.
 - `eng package-info` supports `--package-path` to inspect one local SDK package and return its information directly, or export it with `--out-dir`. Existing bulk export remains supported.
 	Optional `--include-resource-types` enriches that same `PackageInfo` from pinned project specifications using GitHub access only, without an ARM readiness check. Default inspection and bulk export retain local metadata-only behavior.
 - Package discovery now populates `PackageInfo.ApiVersions` from generated metadata for Java, JavaScript, Python, Go, and .NET. Output entries preserve `Namespace` and `Version` from the `apiVersions` map, falling back to an unnamed `apiVersion` when the map is absent or empty. Namespace/version pairs are deduplicated and sorted, with version strings trimmed. Missing metadata leaves the array empty; malformed or unreadable metadata logs a warning without failing package discovery.
@@ -54,13 +22,9 @@
 
 ### Breaking Changes
 
-- Rename the unreleased readiness entry points to `pkg validate-service-api-readiness` and `azsdk_validate_service_api_readiness`; callers must use the new names.
-
 - `release-plan abandon` now accepts only `--release-plan-id`; `azsdk_abandon_release_plan` accepts only `releasePlanId`. The work item ID input is no longer supported for manual abandonment.
 
 ### Bugs Fixed
-
-- Reuse already populated `PackageInfo` objects when release-plan evidence is unusable or unavailable, rather than repeating SDK discovery and pinned-spec reads before ARM validation.
 
 - Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release.
 - Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.

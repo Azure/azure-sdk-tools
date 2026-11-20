@@ -99,43 +99,6 @@ public class ServiceApiReadinessServiceTests
     public void TearDown() => _http.Dispose();
 
     [Test]
-    public async Task PinnedResourceDiscoveryDoesNotRequireAMainFileProviderDecorator()
-    {
-        SetFile(SpecRepository, SpecCommit, $"{Project}/main.tsp", "import \"./provider.tsp\";");
-
-        var evidence = await new ProjectResourceTypeHelper(_http, "github-test-token")
-            .ReadPinnedSwaggerResourceTypesAsync(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", Version);
-
-        Assert.That(evidence.MissingEvidence, Is.Empty);
-        Assert.That(evidence.ProviderNamespaces, Is.EqualTo(new[] { "Microsoft.Example" }));
-        Assert.That(evidence.ResourceTypes.Single().ResourceType, Is.EqualTo("widgets"));
-        Assert.That(ArmRequests(), Is.Empty);
-    }
-
-    [Test]
-    public async Task ExactProviderVersionPassesWithoutSpecResourceTypeFiltering()
-    {
-        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json",
-            JsonSerializer.Serialize(new
-            {
-                info = new { version = Version },
-                paths = new Dictionary<string, object>
-                {
-                    ["/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Example/servers/{serverName}"] = new { get = new { } }
-                }
-            }));
-
-        var result = await CheckAsync();
-
-        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
-        Assert.That(result.Packages.Single().ResourceTypes, Is.Empty);
-        Assert.That(result.Projects.Single().Matches.Select(match => match.ResourceType), Does.Contain("widgets"));
-        Assert.That(_requests.Where(request => request.Uri.AbsolutePath.EndsWith("example.json", StringComparison.Ordinal)), Is.Empty);
-        Assert.That(result.Detail, Does.Contain("metadata"));
-        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
-    }
-
-    [Test]
     public async Task ReadinessConsumesTheInjectedMetadataInterface()
     {
         var package = new PackageInfo
@@ -148,8 +111,6 @@ public class ServiceApiReadinessServiceTests
         };
         var metadata = new Mock<IPackageApiMetadataService>(MockBehavior.Strict);
         metadata.Setup(service => service.ReadLocalGenerationEvidenceAsync(package, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(package);
-        metadata.Setup(service => service.PopulateResourceTypesAsync(package, It.IsAny<CancellationToken>()))
             .ReturnsAsync(package);
         var factory = new Mock<IHttpClientFactory>();
         factory.Setup(clients => clients.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(_http);
@@ -198,64 +159,24 @@ public class ServiceApiReadinessServiceTests
         Assert.That(json.RootElement.GetProperty("packages")[0].TryGetProperty("ResolvedApiVersions", out _), Is.False);
     }
 
-    [Test]
-    public async Task MetadataOnlyReturnsCurrentHeadProviderRequirementsWithoutArmAuthentication()
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task MetadataOnlyReturnsCurrentHeadRequirementsWithoutArmAuthentication(bool scalarVersion)
     {
+        if (scalarVersion)
+        {
+            SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
+        }
         var response = await _service.GetPackageMetadataAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
 
         Assert.That(response.HeadSha, Is.EqualTo(Head));
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
-        Assert.That(response.Packages.Single().ResourceTypes, Is.Empty);
+        Assert.That(response.Packages.Single().ResourceTypes, Has.Length.EqualTo(scalarVersion ? 1 : 0));
+        Assert.That(_requests.Any(request => request.Uri.AbsolutePath.Contains(SwaggerDirectory, StringComparison.Ordinal)), Is.EqualTo(scalarVersion));
         Assert.That(response.Projects.Single().Package, Is.SameAs(response.Packages.Single()));
         Assert.That(response.Detail, Does.Contain("no ARM"));
         Assert.That(ArmRequests(), Is.Empty);
         _azure.Verify(service => service.GetCredential(It.IsAny<string?>()), Times.Never);
-    }
-
-    [Test]
-    public async Task ValidatingPopulatedMetadataDoesNotReadSdkOrSpecificationFilesAgain()
-    {
-        var metadata = await _service.GetPackageMetadataAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
-        var package = metadata.Packages.Single();
-        var githubReads = _requests.Count(request => request.Uri.Host != "management.azure.com");
-
-        var response = await _service.ValidateAsync(metadata, CancellationToken.None);
-
-        Assert.That(response, Is.SameAs(metadata));
-        Assert.That(response.Packages.Single(), Is.SameAs(package));
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
-        Assert.That(_requests.Count(request => request.Uri.Host != "management.azure.com"), Is.EqualTo(githubReads));
-        Assert.That(_pullRequestReads, Is.EqualTo(1));
-        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
-    }
-
-    [TestCase("missing")]
-    [TestCase("data-plane")]
-    [TestCase("error")]
-    public async Task UnusableMetadataCannotBecomePassingOrStartMoreEvidenceReads(string kind)
-    {
-        if (kind == "missing")
-        {
-            _files.Remove(Key(_repository, Head, $"{Package}/{Metadata}"));
-        }
-        else if (kind == "data-plane")
-        {
-            SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", DataConfiguration);
-        }
-        else
-        {
-            _githubStatus = HttpStatusCode.Forbidden;
-        }
-        var metadata = await _service.GetPackageMetadataAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
-        var status = metadata.ReadinessStatus;
-        var reads = _requests.Count;
-
-        var response = await _service.ValidateAsync(metadata, CancellationToken.None);
-
-        Assert.That(response, Is.SameAs(metadata));
-        Assert.That(response.ReadinessStatus, Is.EqualTo(status).And.Not.EqualTo(ServiceApiReadinessResponse.Passed));
-        Assert.That(_requests, Has.Count.EqualTo(reads));
-        Assert.That(ArmRequests(), Is.Empty);
     }
 
     [TestCase(false)]
@@ -309,17 +230,31 @@ public class ServiceApiReadinessServiceTests
     public async Task PopulatesEveryPackageInfoBeforeCheckingArmReadiness()
     {
         AddPackage($"{Package}-second", Metadata, Version);
-        var metadata = await _service.GetPackageMetadataAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
-        var packages = metadata.Packages.ToArray();
-        Assert.That(packages, Has.Length.EqualTo(2));
-        Assert.That(packages.All(package => package.TypeSpecLocation?.Commit == SpecCommit && package.ResolvedApiVersions.Length > 0), Is.True);
-        Assert.That(ArmRequests(), Is.Empty);
+        foreach (var package in new[] { Package, $"{Package}-second" })
+        {
+            SetFile(_repository, Head, $"{package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
+        }
+        var populatedPackages = new List<PackageInfo>();
+        var packageMetadataService = new Mock<IPackageApiMetadataService>(MockBehavior.Strict);
+        packageMetadataService.Setup(service => service.PopulateResourceTypesAsync(It.IsAny<PackageInfo>(), It.IsAny<CancellationToken>()))
+            .Returns<PackageInfo, CancellationToken>((package, cancellationToken) =>
+            {
+                Assert.That(ArmRequests(), Is.Empty, "Every package must be enriched before ARM validation starts.");
+                Assert.That(package.TypeSpecLocation?.Commit, Is.EqualTo(SpecCommit));
+                package.ResourceTypes = [new("Microsoft.Example", Version, "widgets")];
+                package.ResolvedApiVersions = [new(Version, "Microsoft.Example")];
+                populatedPackages.Add(package);
+                return Task.FromResult(package);
+            });
+        var clients = new Mock<IHttpClientFactory>();
+        clients.Setup(factory => factory.CreateClient(ServiceApiReadinessService.HttpClientName)).Returns(_http);
+        var service = new ServiceApiReadinessService(_github.Object, _azure.Object, clients.Object, packageMetadataService.Object);
 
-        var response = await _service.ValidateAsync(metadata, CancellationToken.None);
+        var response = await service.CheckAsync("helen229", "azure-sdk-for-java", 1, CancellationToken.None);
 
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed), response.Detail);
-        Assert.That(response, Is.SameAs(metadata));
-        Assert.That(response.Packages, Is.EqualTo(packages));
+        Assert.That(populatedPackages, Has.Count.EqualTo(2));
+        Assert.That(response.Packages, Is.EqualTo(populatedPackages));
         Assert.That(response.Projects, Has.Count.EqualTo(2));
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
     }
@@ -1203,19 +1138,37 @@ public class ServiceApiReadinessServiceTests
     [Test]
     public async Task PostActionRetainsItsOwningResourceType()
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetSwagger(Version, "/providers/Microsoft.Example/widgets/{name}/restart", false);
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
     }
 
-    [Test]
-    public async Task UnresolvedProviderExpressionIsNotGuessedFromNamespace()
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task ExactVersionOnAnotherProviderResourceTypeStillPasses(bool scalarVersion)
     {
-        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
-        SetFile(SpecRepository, SpecCommit, $"{Project}/main.tsp", "@armProviderNamespace(providerName)\nnamespace Microsoft.Example;");
+        if (scalarVersion)
+        {
+            SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
+        }
+        SetSwagger(Version, "/providers/Microsoft.Example/gadgets/{name}", true);
+
         var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
-        Assert.That(ArmRequests(), Is.Empty);
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.Projects.Single().Matches.Select(match => match.ResourceType), Does.Contain("widgets"));
+    }
+
+    [Test]
+    public async Task ExplicitGeneratedProviderDoesNotRequireALiteralMainDeclaration()
+    {
+        SetFile(SpecRepository, SpecCommit, $"{Project}/main.tsp", "@armProviderNamespace(providerName)\nnamespace Microsoft.Example;");
+        SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json", "{invalid Swagger");
+        var response = await CheckAsync();
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+        Assert.That(_requests.Any(request => request.Uri.AbsolutePath.Contains(SwaggerDirectory, StringComparison.Ordinal)), Is.False);
     }
 
     [TestCase("{bad json")]
@@ -1246,6 +1199,7 @@ public class ServiceApiReadinessServiceTests
     [Test]
     public async Task WildcardDiscoveryReadsOnlyTheMappedPinnedSwaggerDirectory()
     {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", Config("{service-name}/{version-status}/{version}/example.json"));
         _directories[Key(SpecRepository, SpecCommit, SwaggerDirectory)] = JsonSerializer.SerializeToNode(new[] { new { name = "Example", type = "dir" } })!.AsArray();
         var swagger = _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")];

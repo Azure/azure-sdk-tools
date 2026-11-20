@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
@@ -10,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services;
 [TestFixture]
 public class ReleasePlanReadinessServiceTests
 {
-    private const string Field = "Custom.ServiceApiVersionReadinessDetails";
+    private const string Field = "Custom.ServiceReadinessDetails";
     private const string StatusField = "Custom.ServiceApiVersionReadinessStatus";
     private const string CheckedAtField = "Custom.ServiceApiVersionReadinessCheckedAt";
     private const string Project = "specification/example/Example.Management";
@@ -60,7 +61,7 @@ public class ReleasePlanReadinessServiceTests
                 ["Custom.SDKPullRequestForJava"] = "https://github.com/Azure/azure-sdk-for-java/pull/12",
                 ["Custom.ApiSpecProjectPath"] = Project,
                 [ReleasePlanWorkItem.SpecCommitSHAField] = Commit,
-                [StatusField] = ServiceApiReadinessResponse.Passed,
+                [StatusField] = "Ready",
                 [CheckedAtField] = Now.AddMinutes(-10).ToString("O"),
                 [Field] = Stored("Passed", "validation", "widgets", Now.AddMinutes(-10))
             }
@@ -333,9 +334,9 @@ public class ReleasePlanReadinessServiceTests
             return;
         }
         Assert.That(written!.Keys, Is.EquivalentTo(new[] { StatusField, CheckedAtField, Field }));
-        Assert.That(written[StatusField], Is.EqualTo(result.ReadinessStatus));
+        Assert.That(written[StatusField], Is.EqualTo("Ready"));
         Assert.That(DateTimeOffset.Parse(written[CheckedAtField]), Is.EqualTo(result.CheckedAt));
-        using var json = JsonDocument.Parse(written[Field]);
+        using var json = JsonDocument.Parse(WebUtility.HtmlDecode(written[Field]));
         Assert.That(json.RootElement.GetProperty("schemaVersion").GetInt32(), Is.EqualTo(4));
         Assert.That(json.RootElement.GetProperty("results")[0].EnumerateObject().Select(property => property.Name), Is.EquivalentTo(new[]
         {
@@ -415,6 +416,7 @@ public class ReleasePlanReadinessServiceTests
 
     [TestCase(StatusField, "")]
     [TestCase(StatusField, "Error")]
+    [TestCase(StatusField, "Failed")]
     [TestCase(CheckedAtField, "")]
     [TestCase(CheckedAtField, "invalid")]
     [TestCase(CheckedAtField, "2026-11-12T15:55:00Z")]
@@ -483,11 +485,17 @@ public class ReleasePlanReadinessServiceTests
             .Callback<int, Dictionary<string, string>, int, CancellationToken>((id, fields, revision, ct) => written = fields)
             .ReturnsAsync(_plan);
 
-        await Check(true);
+        var result = await Check(true);
 
-        Assert.That(written![StatusField], Is.EqualTo(status));
+        Assert.That(result.ReadinessStatus, Is.EqualTo(status));
+        Assert.That(written![StatusField], Is.EqualTo(status switch
+        {
+            "Passed" => "Ready",
+            "Not detected" => "Note Ready",
+            _ => "Unknown"
+        }));
         Assert.That(DateTimeOffset.Parse(written[CheckedAtField]), Is.EqualTo(Now));
-        using var json = JsonDocument.Parse(written[Field]);
+        using var json = JsonDocument.Parse(WebUtility.HtmlDecode(written[Field]));
         Assert.That(json.RootElement.GetProperty("results")[0].GetProperty("status").GetString(), Is.EqualTo(status));
     }
 
@@ -514,9 +522,9 @@ public class ReleasePlanReadinessServiceTests
 
         await Check(true);
 
-        Assert.That(written![StatusField], Is.EqualTo("Passed"));
+        Assert.That(written![StatusField], Is.EqualTo("Ready"));
         Assert.That(DateTimeOffset.Parse(written[CheckedAtField]), Is.EqualTo(storedTime));
-        using var json = JsonDocument.Parse(written[Field]);
+        using var json = JsonDocument.Parse(WebUtility.HtmlDecode(written[Field]));
         Assert.That(json.RootElement.GetProperty("results")[0].GetProperty("checkedAt").GetDateTimeOffset(), Is.EqualTo(storedTime));
     }
 
@@ -608,15 +616,94 @@ public class ReleasePlanReadinessServiceTests
         }
     }
 
+    [TestCase("Note Ready")]
+    [TestCase("Not Ready")]
+    [TestCase("Not ready")]
+    public async Task NotReadyStorageSpellingDoesNotChangeTheRecordedOutcome(string storedStatus)
+    {
+        SetStored("Not detected", "validation", "widgets", Now.AddMinutes(-10));
+        _plan.Fields[StatusField] = storedStatus;
+
+        var result = await Check(false);
+
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.NotDetected));
+        Assert.That(result.Detail, Does.Contain("Reused"));
+    }
+
+    [TestCase(262145)]
+    [TestCase(1000001)]
+    public async Task OversizedMultilineEvidenceIsNotReused(int length)
+    {
+        _plan.Fields[Field] = new string('x', length);
+
+        var result = await Check(false);
+
+        Assert.That(result.Detail, Does.Not.Contain("Reused"));
+        _readiness.Verify(service => service.ValidateAsync(result, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task MultilineRecordingAndReusePreserveLiteralEntitiesAndLongEvidence()
+    {
+        const string resourceType = "widgets <type> &quot; &amp;";
+        _plan.Fields[Field] = "";
+        var fresh = Result(true);
+        fresh.Projects.Single().Matches = [new() { ResourceType = resourceType, Regions = ["East US", "West US"] }];
+        _readiness.Setup(service => service.ValidateAsync(It.IsAny<ServiceApiReadinessResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(fresh);
+        Dictionary<string, string>? written = null;
+        _ado.Setup(service => service.UpdateWorkItemAsync(123, It.IsAny<Dictionary<string, string>>(), 5, It.IsAny<CancellationToken>()))
+            .Callback<int, Dictionary<string, string>, int, CancellationToken>((id, fields, revision, ct) => written = fields)
+            .ReturnsAsync(_plan);
+
+        await Check(true);
+
+        Assert.That(written![Field], Does.Contain("&quot;").And.Length.GreaterThan(255));
+        foreach (var entry in written)
+        {
+            _plan.Fields[entry.Key] = entry.Value;
+        }
+        var reused = await Check(false);
+
+        Assert.That(reused.Detail, Does.Contain("Reused"));
+        Assert.That(reused.Projects.Single().Matches.Single().ResourceType, Is.EqualTo(resourceType));
+        Assert.That(reused.Projects.Single().Matches.Single().Regions, Is.EqualTo(new[] { "East US", "West US" }));
+    }
+
+    [Test]
+    public async Task OldShortDetailsFieldIsNeitherReusedNorOverwritten()
+    {
+        const string oldField = "Custom.ServiceApiVersionReadinessDetails";
+        var oldValue = _plan.Fields[Field];
+        _plan.Fields.Remove(Field);
+        _plan.Fields[oldField] = oldValue;
+        Dictionary<string, string>? written = null;
+        _ado.Setup(service => service.UpdateWorkItemAsync(123, It.IsAny<Dictionary<string, string>>(), 5, It.IsAny<CancellationToken>()))
+            .Callback<int, Dictionary<string, string>, int, CancellationToken>((id, fields, revision, ct) => written = fields)
+            .ReturnsAsync(_plan);
+
+        var result = await Check(true);
+
+        Assert.That(result.Detail, Does.Not.Contain("Reused"));
+        Assert.That(written!.ContainsKey(Field), Is.True);
+        Assert.That(written.ContainsKey(oldField), Is.False);
+        Assert.That(_plan.Fields[oldField], Is.EqualTo(oldValue));
+    }
+
     private void SetStored(string status, string environment, string resourceType, DateTimeOffset checkedAt)
     {
-        _plan.Fields[StatusField] = status;
+        _plan.Fields[StatusField] = status switch
+        {
+            "Passed" => "Ready",
+            "Not detected" => "Note Ready",
+            _ => "Unknown"
+        };
         _plan.Fields[CheckedAtField] = checkedAt.ToString("O");
         _plan.Fields[Field] = Stored(status, environment, resourceType, checkedAt);
     }
 
     private static string Stored(string status, string environment, string resourceType, DateTimeOffset checkedAt) =>
-        JsonSerializer.Serialize(new
+        WebUtility.HtmlEncode(JsonSerializer.Serialize(new
         {
             schemaVersion = 4,
             results = new[] { new
@@ -624,7 +711,7 @@ public class ReleasePlanReadinessServiceTests
             resourceProvider = "Microsoft.Example", status,
             matchedResourceTypes = new[] { new { resourceType, regions = new[] { "East US", "West US" } } }, validationEnvironment = environment, checkedAt
         } }
-        });
+        }));
 
     private static ServiceApiReadinessResponse Result(bool ready)
     {

@@ -167,62 +167,50 @@ status, not a passing service observation. Automation can compare that evidence
 with release-plan state before deciding whether a full ARM check is needed.
 Metadata-only mode requires PR input and retains the captured-head contract.
 
-Release-plan reuse is handled by the CLI coordinator using the existing ADO
-service. Set `AZSDK_SERVICE_READINESS_ENVIRONMENT` to enable optional cache reads.
-The provisioned fields are `Custom.ServiceApiVersionReadinessStatus`,
-`Custom.ServiceApiVersionReadinessCheckedAt`, and
-`Custom.ServiceApiVersionReadinessDetails`; no field-name setting is needed. Plan
-association and project/commit values come from the existing release-plan work
-item. The API version comes from `Custom.APISpecversion` on its existing API-spec
-child. None of those values is copied into readiness JSON. Existing update history
-for both items invalidates observations made before a project, commit, or API-version
-change. Missing or incomplete history prevents reuse. Packages must use the API
-version on that API-spec item to reuse or record plan evidence; other versions are
-validated directly without recording under that plan.
-An unconfigured or unavailable cache falls back to the stateless ARM check.
-Before enablement, the details field needs long-text storage preserving raw JSON.
-Its currently provisioned single-line `string` type has a 255-character limit,
-which is too small for the evidence; no data is truncated to fit.
-Live test-plan validation rejected a 289-character payload with `TF401324`.
-The current ADO status list also excludes `Error`; backend owners must align
-that value before enablement rather than map an operational failure to Passed.
-For designated test plans, the existing `AZSDKTOOLS_AGENT_TESTING=true` setting
-restricts readiness lookup to the `Release Planner App Test` tag. Normal mode
-excludes that tag; this does not enable the automation action.
-Once package metadata has been read for reuse, a miss validates those same objects
-without repeating package discovery or specification reads.
-Matching Passed evidence does not expire with time. A new build, retry, or SDK PR
-head still reads current package metadata, but does not invalidate service evidence
-when its API version and recorded scope remain unchanged. Non-Passed observations
-are reused for less than 24 hours and revalidated at 24 hours or later. `checkedAt`
-records the original validation time; reusing a result does not reset that time.
-ADO's native date field can round by a few milliseconds. Summary comparison
-allows at most 3 ms, retains the original JSON check time, and rejects larger
-differences. Scope and 24-hour freshness checks still use the original evidence.
-The existing `DevOpsService` returns the plan, linked API spec, saved JSON, and scope
-histories through one coherent lookup. Native ADO APIs still require internal
-requests; this is one owner operation, not one HTTP request.
+#### Release-Plan Evidence
 
-Add `--record-release-plan` with PR input to explicitly allow revision-safe ADO
-persistence after a fresh check. This CLI-only option is incompatible with local
-package input and `--metadata-only`; the MCP check and normal CLI invocation do
-not write ADO. Explicit recording updates all three fields in one revision-checked
-request. The separate status and date/time are queryable summaries of the recorded
-evidence; empty status means Not recorded, not necessarily never checked. Missing
-or inconsistent summaries prevent reuse of JSON alone. Schema-4 JSON stores only Resource Provider, validation status,
-matched resource types, validation environment, and UTC check time. `checkedAt`
-is a timestamp, not a commit SHA or metric. Status is the service-validation
-outcome, not the ADO plan state or SDK release status. Matched resource types are
-objects containing `resourceType` and `regions` for backtracking, not a spec filter
-or a package-specific readiness key. No separate `cloud` or constant `checkedBy`
-field is persisted; the environment identifies the trusted validation context.
-An unrelated ADO edit must not refresh that check time. The environment identifies
-where ARM was validated; it is not inferred from the dashboard's deployment.
-No API version, project, commit, entry ID, or explicit expiry is copied into JSON.
-Status and check time are intentionally available as both summary fields and
-per-provider evidence. Older schemas or JSON without a summary require fresh
-validation before explicit replacement. A newer retained observation must not be
-assigned an older result's status or a new publication timestamp.
+Set `AZSDK_SERVICE_READINESS_ENVIRONMENT` to identify the trusted ARM validation
+environment and enable optional reuse through the existing `DevOpsService`.
+It returns the associated plan, API-spec child, evidence, and scope histories in
+one owner lookup, not one HTTP request. The plan owns SDK PR association and
+project/commit scope; its API-spec child supplies `Custom.APISpecversion`.
+Missing associations or incomplete histories prevent reuse. Other API versions
+are checked directly and are not recorded under that plan.
+
+| Fixed ADO field | Type | Meaning |
+| --- | --- | --- |
+| `Custom.ServiceApiVersionReadinessStatus` | `string` | Recorded readiness summary. |
+| `Custom.ServiceApiVersionReadinessCheckedAt` | `dateTime` | Original check time. |
+| `Custom.ServiceReadinessDetails` | `html` | HTML-encoded schema-4 provider evidence. |
+
+Schema 4 stores `resourceProvider`, raw `status`, `checkedAt`,
+`validationEnvironment`, and `matchedResourceTypes` entries with `resourceType`
+and `regions`. Scope is not duplicated in JSON. The CLI HTML-encodes compact JSON
+and decodes exactly once on read; bounds are 1,000,000 HTML characters, 262,144
+decoded JSON characters, and 128 observations. No data is truncated, and the old
+short-string details field is neither read nor overwritten.
+
+ADO uses Ready for Passed and Unknown for Inconclusive or Error. Not detected
+uses the provisioned dropdown spelling Note Ready; reads also accept Not Ready
+and Not ready. The CLI v1 result and JSON keep their original raw outcomes.
+An operational check failure does not establish service unavailability.
+
+Matching Passed evidence has no age expiry. Non-Passed evidence is reusable for
+less than 24 rolling hours and refreshed at or after 24 hours. Every invocation
+reads current SDK metadata; a miss validates those same PackageInfo objects
+without repeated discovery. Project, commit, API-version, or environment changes
+prevent reuse. Reuse never resets the original check time; summary/evidence
+comparison tolerates at most 3 ms of native ADO rounding. Missing, malformed,
+future, or inconsistent evidence is not reusable; unsupported future schemas
+are not overwritten.
+
+Add CLI-only `--record-release-plan` with PR input to permit one revision-checked
+update of all three fields. It is incompatible with local input and
+`--metadata-only`; normal CLI/MCP validation stays read-only. Optional ADO
+failures preserve the primary check result with a safe warning. Existing
+`AZSDKTOOLS_AGENT_TESTING=true` selects only plans tagged `Release Planner App Test`;
+normal mode excludes them. No action registration, permissions, or deployment
+is enabled by these settings.
 
 Supply exactly one of `--pull-request-url` or `--package-path`. The MCP tool
 `azsdk_validate_service_api_readiness` accepts the same alternatives:

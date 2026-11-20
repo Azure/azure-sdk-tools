@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -16,8 +17,10 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
     private const string VersionField = "Custom.APISpecversion";
     private const string StatusField = "Custom.ServiceApiVersionReadinessStatus";
     private const string CheckedAtField = "Custom.ServiceApiVersionReadinessCheckedAt";
-    private const string DetailsField = "Custom.ServiceApiVersionReadinessDetails";
+    private const string DetailsField = "Custom.ServiceReadinessDetails";
     private const int MaxObservations = 128;
+    private const int MaxJsonLength = 262144;
+    private const int MaxHtmlLength = 1000000;
     private static readonly TimeSpan NonPassedLifetime = TimeSpan.FromHours(24);
     private static readonly TimeSpan AdoTimestampPrecision = TimeSpan.FromMilliseconds(3);
     private readonly TimeProvider _clock = timeProvider ?? TimeProvider.System;
@@ -106,6 +109,13 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
     private static string Text(WorkItem item, string field) =>
         item.Fields.TryGetValue(field, out var value) ? Convert.ToString(value, CultureInfo.InvariantCulture) ?? "" : "";
 
+    private static string ToAdoStatus(string status) => status switch
+    {
+        ServiceApiReadinessResponse.Passed => "Ready",
+        ServiceApiReadinessResponse.NotDetected => "Note Ready",
+        _ => "Unknown"
+    };
+
     private static bool MatchesPlan(WorkItem plan, WorkItem specification, ServiceApiReadinessResponse result, string url, string language)
     {
         var fieldLanguage = language.Equals("DotNet", StringComparison.OrdinalIgnoreCase) ? "Dotnet" : language;
@@ -123,12 +133,17 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
 
     private static Observation[] ReadObservations(WorkItem plan)
     {
-        var text = Text(plan, DetailsField);
-        if (string.IsNullOrEmpty(text))
+        var html = Text(plan, DetailsField);
+        if (string.IsNullOrEmpty(html))
         {
             return [];
         }
-        if (text.Length > 262144)
+        if (html.Length > MaxHtmlLength)
+        {
+            throw new InvalidOperationException("Readiness metadata is too large.");
+        }
+        var text = WebUtility.HtmlDecode(html);
+        if (text.Length > MaxJsonLength)
         {
             throw new InvalidOperationException("Readiness metadata is too large.");
         }
@@ -226,7 +241,11 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         }
         var summary = Summarize(matches.Select(match => match.Observation));
         var checkedAt = ReadCheckedAt(plan);
-        if (Text(plan, StatusField) != summary.Status ||
+        var storedStatus = Text(plan, StatusField);
+        var matchesStatus = summary.Status == ServiceApiReadinessResponse.NotDetected
+            ? storedStatus.Equals("Not ready", StringComparison.OrdinalIgnoreCase) || storedStatus == "Note Ready"
+            : storedStatus == ToAdoStatus(summary.Status);
+        if (!matchesStatus ||
             !checkedAt.HasValue || checkedAt > now + AdoTimestampPrecision ||
             (checkedAt.Value - summary.CheckedAt).Duration() > AdoTimestampPrecision)
         {
@@ -329,6 +348,12 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
                 throw new InvalidOperationException("Readiness metadata is full.");
             }
             var document = new JsonObject { ["schemaVersion"] = 4, ["results"] = JsonSerializer.SerializeToNode(observations) };
+            var json = document.ToJsonString();
+            var html = WebUtility.HtmlEncode(json);
+            if (json.Length > MaxJsonLength || html.Length > MaxHtmlLength)
+            {
+                throw new InvalidOperationException("Readiness metadata is too large.");
+            }
             var summary = Summarize(result.Projects.Select(project => observations.Single(item =>
                 item.ResourceProvider.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) &&
                 item.ValidationEnvironment == environment)));
@@ -337,9 +362,9 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
             {
                 await devOps.UpdateWorkItemAsync(current.Id!.Value, new Dictionary<string, string>
                 {
-                    [StatusField] = summary.Status,
+                    [StatusField] = ToAdoStatus(summary.Status),
                     [CheckedAtField] = summary.CheckedAt.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-                    [DetailsField] = document.ToJsonString()
+                    [DetailsField] = html
                 }, expectedRevision, ct);
                 return;
             }

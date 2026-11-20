@@ -360,6 +360,10 @@
               "Value": "InterfaceA"
             },
             {
+              "Kind": 1,
+              "Value": "="
+            },
+            {
               "Kind": 2,
               "Value": "interface",
               "HasSuffixSpace": false
@@ -384,6 +388,10 @@
               "Kind": 3,
               "NavigationDisplayName": "test_output.Unimplementable",
               "Value": "Unimplementable"
+            },
+            {
+              "Kind": 1,
+              "Value": "="
             },
             {
               "Kind": 2,
@@ -882,6 +890,12 @@
             },
             {
               "HasPrefixSpace": true,
+              "Kind": 1,
+              "Value": "=",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
               "HasSuffixSpace": false
@@ -914,6 +928,12 @@
               "Kind": 3,
               "NavigationDisplayName": "test_output.StructB",
               "Value": "StructB",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 1,
+              "Value": "=",
               "HasSuffixSpace": false
             },
             {
@@ -1073,6 +1093,12 @@
               "Kind": 3,
               "NavigationDisplayName": "test_output.StructEmpty",
               "Value": "StructEmpty",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 1,
+              "Value": "=",
               "HasSuffixSpace": false
             },
             {
@@ -1251,6 +1277,10 @@
               "Kind": 3,
               "NavigationDisplayName": "test_output.Enum",
               "Value": "Enum"
+            },
+            {
+              "Kind": 1,
+              "Value": "="
             },
             {
               "Kind": 3,

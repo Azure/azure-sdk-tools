@@ -267,10 +267,25 @@ func (c *content) addSimpleType(pkg Pkg, name, packageName string, underlyingTyp
 
 // addInterface adds the specified interface type to the exports list.
 // The imports map stores the key value pair for package imports which will be used to identify types.
-func (c *content) addInterface(source Pkg, name, packageName string, i *ast.InterfaceType, imports map[string]string) Interface {
+func (c *content) addInterface(source Pkg, name, packageName string, i *ast.TypeSpec, imports map[string]string) Interface {
 	in := NewInterface(source, name, packageName, i, imports)
 	c.Interfaces[name] = in
 	return in
+}
+
+func (c *content) setTypeAlias(name string, isAlias bool) {
+	if t, ok := c.SimpleTypes[name]; ok {
+		t.isAlias = isAlias
+		c.SimpleTypes[name] = t
+	}
+	if t, ok := c.Interfaces[name]; ok {
+		t.isAlias = isAlias
+		c.Interfaces[name] = t
+	}
+	if t, ok := c.Structs[name]; ok {
+		t.isAlias = isAlias
+		c.Structs[name] = t
+	}
 }
 
 // adds the specified struct type to the exports list.
@@ -481,18 +496,12 @@ func isOnUnexportedMember(s string) bool {
 	return receiver != "" && !ast.IsExported(receiver)
 }
 
-// isExampleOrTest returns true if the string passed in begins with "Example" or "Test", this is used
-// to help exclude these functions from the API view output
-func isExampleOrTest(s string) bool {
-	return strings.Contains(s, "Example") || strings.Contains(s, "Test")
-}
-
 func (c *content) parseFunc() []ReviewLine {
 	lns := []ReviewLine{}
 	keys := make([]string, 0, len(c.Funcs))
 	for key, fn := range c.Funcs {
 		name := fn.Name()
-		if !(isOnUnexportedMember(key) || isExampleOrTest(name) || unicode.IsLower(rune(name[0]))) {
+		if !(isOnUnexportedMember(key) || unicode.IsLower(rune(name[0]))) {
 			keys = append(keys, key)
 		}
 	}

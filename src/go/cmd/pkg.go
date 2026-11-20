@@ -193,7 +193,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.InterfaceType:
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t, imports)
+				in := p.c.addInterface(*p, x.Name.Name, p.Name(), x, imports)
 				if in.Sealed {
 					p.diagnostics = append(p.diagnostics, CodeDiagnostic{
 						TargetID: in.ID(),
@@ -248,6 +248,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 				txt := p.getText(x.Pos(), x.End())
 				fmt.Printf("unhandled node type %T: %s\n", t, txt)
 			}
+			p.c.setTypeAlias(x.Name.Name, x.Assign.IsValid())
 		}
 		return true
 	})
@@ -396,7 +397,7 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	} else {
 		switch n := unparenType(def.n.Type).(type) {
 		case *ast.InterfaceType:
-			t = a.Package.c.addInterface(*def.p, a.Name, a.Package.Name(), n, nil)
+			t = a.Package.c.addInterface(*def.p, a.Name, a.Package.Name(), def.n, nil)
 		case *ast.StructType:
 			t = a.Package.c.addStruct(*def.p, a.Name, a.Package.Name(), def.n, nil)
 			a.hoistMethods(def)
@@ -440,6 +441,7 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	}
 
 	if t != nil {
+		a.Package.c.setTypeAlias(a.Name, a.isAlias)
 		a.Package.diagnostics = append(a.Package.diagnostics, CodeDiagnostic{
 			Level:    level,
 			TargetID: t.ID(),

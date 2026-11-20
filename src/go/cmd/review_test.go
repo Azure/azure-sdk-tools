@@ -4,95 +4,47 @@
 package cmd
 
 import (
+	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/mod/module"
 )
 
-func TestLocalModulePath(t *testing.T) {
-	for _, tc := range []struct {
-		expect, filePath string
-		mod              module.Version
-	}{
-		// realistic cases
-		{
-			expect:   "/home/me/azure-sdk-for-go/sdk/azcore",
-			filePath: "/home/me/azure-sdk-for-go/sdk/storage/azblob",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/azcore"},
-		},
-		{
-			expect:   "/home/me/sdk/foo/sdk/bar/sdk/internal",
-			filePath: "/home/me/sdk/foo/sdk/bar/sdk/azcore",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/internal"},
-		},
-		{
-			expect:   "c:/Users/me/work/sdk/storage/azblob",
-			filePath: "c:/Users/me/work/sdk/azcore",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"},
-		},
-		{
-			expect:   "/home/me/az/sdk/security/keyvault/internal",
-			filePath: "/home/me/az/sdk/security/keyvault/azkeys",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal"},
-		},
-		{
-			expect:   "c:/azure-sdk-for-go/sdk/azidentity",
-			filePath: "c:/azure-sdk-for-go/sdk/azidentity/cache",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/azidentity"},
-		},
-		{
-			expect:   "d:/azure-sdk-for-go/sdk/azidentity/cache",
-			filePath: "d:/azure-sdk-for-go/sdk/azidentity",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/azidentity/cache"},
-		},
-		{
-			expect:   "/home/me/azure-sdk-for-go/sdk/internal",
-			filePath: "/home/me/azure-sdk-for-go/sdk/resourcemanager/internal",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/internal"},
-		},
-		{
-			expect:   "/home/me/azure-sdk-for-go/sdk/internal",
-			filePath: "/home/me/azure-sdk-for-go/sdk/security/keyvault/internal",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/internal"},
-		},
-
-		// unrealistic edge cases just to exercise the algorithm
-		{
-			expect:   "/home/me/azure-sdk-for-go/sdk/azcore",
-			filePath: "/home/me/azure-sdk-for-go/sdk/azcore",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/azcore"},
-		},
-		{
-			expect:   "/home/me/azure-sdk-for-go/sdk/security/keyvault/internal",
-			filePath: "/home/me/azure-sdk-for-go/sdk/internal",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal"},
-		},
-		{
-			expect:   "",
-			filePath: "/foo",
-			mod:      module.Version{Path: ""},
-		},
-		{
-			expect:   "",
-			filePath: "",
-			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/azcore"},
-		},
-		{
-			expect:   "",
-			filePath: "/home/me/azure-sdk-for-go/sdk/storage/azblob",
-			mod:      module.Version{Path: "net/http"},
-		},
-		{
-			expect:   "",
-			filePath: "/home/me/azure-sdk-for-go/sdk/storage/azblob",
-			mod:      module.Version{Path: "github.com/Foo/bar"},
-		},
-	} {
-		expect := strings.ReplaceAll(tc.expect, "/", string(filepath.Separator))
-		actual := localModulePath(tc.mod, tc.filePath)
-		require.Equal(t, expect, actual)
+func TestExternalAliasDependencyVersion(t *testing.T) {
+	dir := t.TempDir()
+	cache := filepath.Join(dir, "cache")
+	t.Setenv("GOMODCACHE", cache)
+	reviewed := filepath.Join(dir, "sdk", "exporter")
+	write := func(name, content string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(filepath.Dir(name), 0755))
+		require.NoError(t, os.WriteFile(name, []byte(content), 0644))
 	}
+	sourceModule := "example.com/sdk/source"
+	for version, underlying := range map[string]string{"v1.0.0": "[]byte", "v1.1.0": "[]rune"} {
+		modDir := filepath.Join(cache, filepath.FromSlash(sourceModule)) + "@" + version
+		write(filepath.Join(modDir, "go.mod"), "module "+sourceModule+"\n\ngo 1.21\n")
+		write(filepath.Join(modDir, "types.go"), "package source\ntype Data "+underlying+"\n")
+	}
+	// A neighboring checkout must not override the version required by the reviewed module.
+	neighbor := filepath.Join(dir, "sdk", "source")
+	write(filepath.Join(neighbor, "go.mod"), "module "+sourceModule+"\n\ngo 1.21\n")
+	write(filepath.Join(neighbor, "types.go"), "package source\ntype Data []bool\n")
+	write(filepath.Join(reviewed, "alias.go"), "package exporter\nimport \""+sourceModule+"\"\ntype Public = source.Data\n")
+	for _, test := range []struct{ version, declaration string }{
+		{"v1.0.0", "typePublic=[]byte"},
+		{"v1.1.0", "typePublic=[]rune"},
+	} {
+		write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire "+sourceModule+" "+test.version+"\n")
+		review, err := createReview(reviewed)
+		require.NoError(t, err)
+		require.Equal(t, test.declaration, feedbackLineText(feedbackLine(t, review, "exporter.Public")))
+	}
+	t.Run("explicit local replacement", func(t *testing.T) {
+		write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire "+sourceModule+" v1.0.0\nreplace "+sourceModule+" => ../source\n")
+		review, err := createReview(reviewed)
+		require.NoError(t, err)
+		require.Equal(t, "typePublic=[]bool", feedbackLineText(feedbackLine(t, review, "exporter.Public")))
+	})
 }

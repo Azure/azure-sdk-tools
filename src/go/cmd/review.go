@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"path/filepath"
@@ -14,8 +13,6 @@ import (
 
 	"golang.org/x/mod/module"
 )
-
-var errExternalModule = errors.New("reviewed module exports a type defined in a different repository")
 
 // Review represents an apiview review of an Azure SDK for Go module
 type Review struct {
@@ -172,45 +169,6 @@ func (r *Review) Review() (CodeFile, error) {
 	}, nil
 }
 
-// findLocalModule tries to find the source module defining a type in the same repository as
-// the reviewed module. Returns errExternalModule if the source module is in a different repository.
-func (r *Review) findLocalModule(ta TypeAlias) (*Module, error) {
-	// localModulePath could be inlined but is instead separate for easier testing
-	if dir := localModulePath(ta.SourceMod, r.path); dir != "" {
-		return NewModule(dir)
-	}
-	return nil, errExternalModule
-}
-
-// localModulePath tries to find a file path for the given module.Version assuming that
-// module is in the same repository as dir. If it is, the two paths must have a common
-// segment implying a disk location for the module. For example:
-//
-//   - mod.Path "github.com/Azure/azure-sdk-for-go/sdk/internal"
-//   - dir "/home/me/azsdk/sdk/azcore"
-//   - return "/home/me/azsdk/sdk/internal"
-//
-// It returns an empty string when no such segment exists. Also, it ignores the module
-// version, using only the module path.
-func localModulePath(mod module.Version, dir string) string {
-	mp := strings.Split(mod.Path, "/")
-	// find the rightmost common segment of mod.Path and dir, ignoring the final
-	// segment of mod.Path because it's a package name that may be used in both modules
-	i, j := -1, -1
-	for m := len(mp) - 2; m > 0; m-- {
-		if n := strings.LastIndex(dir, mp[m]); n > i {
-			i = n
-			j = m
-		}
-	}
-	if i == -1 || j == -1 {
-		return ""
-	}
-	root := dir[:i]
-	modDir := filepath.Join(mp[j:]...)
-	return filepath.Join(root, modDir)
-}
-
 // resolveAliases resolves type aliases in the reviewed module that refer to types in other modules
 func (r *Review) resolveAliases() error {
 	for _, ta := range r.reviewed.ExternalAliases {
@@ -220,10 +178,7 @@ func (r *Review) resolveAliases() error {
 			ok  bool
 		)
 		if m, ok = r.modules[ta.SourceMod.Path]; !ok {
-			m, err = r.findLocalModule(*ta)
-			if errors.Is(err, errExternalModule) {
-				m, err = GetExternalModule(ta.SourceMod)
-			}
+			m, err = r.externalModule(ta.SourceMod)
 			if err == nil {
 				err = r.AddModule(m)
 			}
@@ -258,6 +213,23 @@ func (r *Review) resolveAliases() error {
 		}
 	}
 	return r.resolveLocalTypes()
+}
+
+func (r *Review) externalModule(mod module.Version) (*Module, error) {
+	for _, replacement := range r.reviewed.ModFile.Replace {
+		if replacement.Old.Path != mod.Path || (replacement.Old.Version != "" && replacement.Old.Version != mod.Version) {
+			continue
+		}
+		if replacement.New.Version != "" {
+			return GetExternalModule(replacement.New)
+		}
+		dir := filepath.FromSlash(replacement.New.Path)
+		if !filepath.IsAbs(dir) {
+			dir = filepath.Join(r.path, dir)
+		}
+		return NewModule(dir)
+	}
+	return GetExternalModule(mod)
 }
 
 func (r *Review) resolveLocalTypes() error {

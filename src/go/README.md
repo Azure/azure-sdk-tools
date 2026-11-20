@@ -23,3 +23,8 @@ Run the following command to generate a JSON file for upload to [APIView](https:
 ```
 
 NOTE: The output file location must be a folder that already exists. Simply use `.` to output to the current directory where the command is being run.
+
+Cross-module aliases are resolved using the dependency version in `go.mod`, not neighboring
+checkouts. Set `GOMODCACHE` to use an existing module cache; otherwise missing versions are
+downloaded from the Go module proxy. Explicit `replace` directives in the reviewed module
+are honored.

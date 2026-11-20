@@ -387,15 +387,19 @@ type Interface struct {
 	id                 string
 	methods            map[string]Func
 	name               string
+	isAlias            bool
+	typeParams         []string
 }
 
-func NewInterface(source Pkg, name, packageName string, n *ast.InterfaceType, imports map[string]string) Interface {
+func NewInterface(source Pkg, name, packageName string, ts *ast.TypeSpec, imports map[string]string) Interface {
 	in := Interface{
 		name:               name,
 		embeddedInterfaces: []string{},
 		methods:            map[string]Func{},
 		id:                 packageName + "." + name,
+		typeParams:         typeParameters(source, ts, imports),
 	}
+	n := unparenType(ts.Type).(*ast.InterfaceType)
 	if n.Methods != nil {
 		for _, m := range n.Methods.List {
 			if len(m.Names) > 0 {
@@ -439,12 +443,18 @@ func (i Interface) MakeReviewLine() ReviewLine {
 				NavigationDisplayName: i.id,
 				Value:                 i.name,
 			},
-			{
-				Kind:  TokenKindKeyword,
-				Value: "interface",
-			},
 		},
 	}
+	if len(i.typeParams) > 0 {
+		interfaceLine.Tokens[len(interfaceLine.Tokens)-1].HasSuffixSpace = false
+		interfaceLine.Tokens = append(interfaceLine.Tokens, ReviewToken{Kind: TokenKindPunctuation, Value: "["})
+		interfaceLine.Tokens = append(interfaceLine.Tokens, parseAndMakeTypeTokens(strings.Join(i.typeParams, ", "))...)
+		interfaceLine.Tokens = append(interfaceLine.Tokens, ReviewToken{Kind: TokenKindPunctuation, Value: "]", HasSuffixSpace: true})
+	}
+	if i.isAlias {
+		interfaceLine.Tokens = append(interfaceLine.Tokens, aliasToken())
+	}
+	interfaceLine.Tokens = append(interfaceLine.Tokens, ReviewToken{Kind: TokenKindKeyword, Value: "interface"})
 
 	for _, name := range i.embeddedInterfaces {
 		if exportedFieldRgx.MatchString(name) {
@@ -486,6 +496,7 @@ type SimpleType struct {
 	id             string
 	name           string
 	underlyingType string
+	isAlias        bool
 }
 
 func NewSimpleType(name, packageName, underlyingType string) SimpleType {
@@ -514,6 +525,9 @@ func (s SimpleType) MakeTokens() []ReviewToken {
 			Value:                 s.name,
 		},
 	}
+	if s.isAlias {
+		tks = append(tks, aliasToken())
+	}
 	tks = append(tks, parseAndMakeTypeTokens(s.underlyingType)...)
 	return tks
 }
@@ -533,6 +547,7 @@ type Struct struct {
 	// typeParams lists the func's type parameters as strings of the form "name constraint"
 	typeParams []string
 	pkgName    string
+	isAlias    bool
 }
 
 func (s Struct) MakeReviewLine() ReviewLine {
@@ -593,13 +608,7 @@ func (s Struct) MakeReviewLine() ReviewLine {
 }
 
 func NewStruct(source Pkg, name, packageName string, ts *ast.TypeSpec, imports map[string]string) Struct {
-	s := Struct{name: name, id: packageName + "." + name, pkgName: source.Name()}
-	if ts.TypeParams != nil {
-		s.typeParams = make([]string, 0, len(ts.TypeParams.List))
-		source.translateFieldList(ts.TypeParams.List, func(param *string, constraint string) {
-			s.typeParams = append(s.typeParams, strings.TrimRight(*param+" "+source.translateType(constraint, imports), " "))
-		})
-	}
+	s := Struct{name: name, id: packageName + "." + name, pkgName: source.Name(), typeParams: typeParameters(source, ts, imports)}
 	source.translateFieldList(unparenType(ts.Type).(*ast.StructType).Fields.List, func(n *string, t string) {
 		if n == nil {
 			s.AnonymousFields = append(s.AnonymousFields, t)
@@ -612,6 +621,20 @@ func NewStruct(source Pkg, name, packageName string, ts *ast.TypeSpec, imports m
 	})
 	sort.Strings(s.AnonymousFields)
 	return s
+}
+
+func typeParameters(source Pkg, ts *ast.TypeSpec, imports map[string]string) []string {
+	var params []string
+	if ts.TypeParams != nil {
+		source.translateFieldList(ts.TypeParams.List, func(param *string, constraint string) {
+			params = append(params, strings.TrimRight(*param+" "+source.translateType(constraint, imports), " "))
+		})
+	}
+	return params
+}
+
+func aliasToken() ReviewToken {
+	return ReviewToken{Kind: TokenKindPunctuation, Value: "=", HasSuffixSpace: true}
 }
 
 func (s Struct) Exported() bool {
@@ -639,6 +662,12 @@ func (s Struct) MakeTokens() []ReviewToken {
 		rts = append(rts, ReviewToken{Kind: TokenKindPunctuation, Value: "["})
 		rts = append(rts, ReviewToken{Kind: TokenKindTypeName, Value: strings.Join(s.typeParams, ", ")})
 		rts = append(rts, ReviewToken{Kind: TokenKindPunctuation, Value: "]"})
+	}
+	if s.isAlias {
+		token := aliasToken()
+		token.HasPrefixSpace = true
+		token.HasSuffixSpace = false
+		rts = append(rts, token)
 	}
 	rts = append(rts, ReviewToken{
 		HasPrefixSpace: true,

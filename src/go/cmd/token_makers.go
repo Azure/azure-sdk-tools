@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/exp/slices"
 )
@@ -315,6 +316,11 @@ func (f Func) ForAlias(source, target *Pkg, typeName, aliasName string, sourceNa
 
 func (f Func) translateAliasSignatureType(source, target *Pkg, sourceType, translated, aliasName string, sourceNames []string) string {
 	replacements := []string{}
+	type selectorReplacement struct {
+		source string
+		target string
+	}
+	selectorReplacements := []selectorReplacement{}
 	sourceAliases := make(map[string]bool, len(sourceNames))
 	for _, name := range sourceNames {
 		sourceAliases[name] = true
@@ -377,7 +383,7 @@ func (f Func) translateAliasSignatureType(source, target *Pkg, sourceType, trans
 			sourceExpr := source.translateType(original, f.imports)
 			targetExpr := importPath + "." + selector.Sel.Name
 			if endpoint, exposedName, found := findExposedSignatureType(target, targetExpr); found {
-				if target.modulePackages[importPath] == endpoint && exposedName == selector.Sel.Name {
+				if packageForTypeImport(target.modulePackages, importPath) == endpoint && exposedName == selector.Sel.Name {
 					targetExpr = sourceExpr
 				} else {
 					displayName := exposedName
@@ -387,14 +393,67 @@ func (f Func) translateAliasSignatureType(source, target *Pkg, sourceType, trans
 					targetExpr = fmt.Sprintf("<%s.%s>%s", endpoint.Name(), exposedName, displayName)
 				}
 			}
-			replacements = append(replacements, sourceExpr, targetExpr)
+			selectorReplacements = append(selectorReplacements, selectorReplacement{source: sourceExpr, target: targetExpr})
 			return true
 		})
 	}
 	if len(replacements) == 0 {
+		for _, replacement := range selectorReplacements {
+			translated = replaceCompleteTypeExpression(translated, replacement.source, replacement.target)
+		}
 		return translated
 	}
-	return strings.NewReplacer(replacements...).Replace(translated)
+	translated = strings.NewReplacer(replacements...).Replace(translated)
+	for _, replacement := range selectorReplacements {
+		translated = replaceCompleteTypeExpression(translated, replacement.source, replacement.target)
+	}
+	return translated
+}
+
+func replaceCompleteTypeExpression(text, source, target string) string {
+	var result strings.Builder
+	last := 0
+	for offset := 0; offset < len(text); {
+		relative := strings.Index(text[offset:], source)
+		if relative < 0 {
+			break
+		}
+		start := offset + relative
+		end := start + len(source)
+		previous := previousRune(text, start)
+		hasLeftBoundary := start == 0 || !isTypeIdentifierRune(previous)
+		if !hasLeftBoundary && previous == '.' && start >= 3 && text[start-3:start] == "..." {
+			hasLeftBoundary = true
+		}
+		hasRightBoundary := end == len(text) || !isTypeIdentifierRune(nextRune(text, end))
+		if hasLeftBoundary && hasRightBoundary {
+			result.WriteString(text[last:start])
+			result.WriteString(target)
+			last = end
+			offset = end
+		} else {
+			offset = start + 1
+		}
+	}
+	if last == 0 {
+		return text
+	}
+	result.WriteString(text[last:])
+	return result.String()
+}
+
+func previousRune(text string, offset int) rune {
+	r, _ := utf8.DecodeLastRuneInString(text[:offset])
+	return r
+}
+
+func nextRune(text string, offset int) rune {
+	r, _ := utf8.DecodeRuneInString(text[offset:])
+	return r
+}
+
+func isTypeIdentifierRune(r rune) bool {
+	return r == '_' || r == '.' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
 func findExposedSignatureType(target *Pkg, qualifiedName string) (*Pkg, string, bool) {
@@ -410,8 +469,8 @@ func findExposedSignatureType(target *Pkg, qualifiedName string) (*Pkg, string, 
 	if packages == nil {
 		packages = map[string]*Pkg{target.importPath(): target}
 	}
-	pkg, found := packages[importPath]
-	if !found || isInternalPackage(pkg) || !ast.IsExported(name) {
+	pkg := packageForTypeImport(packages, importPath)
+	if pkg == nil || isInternalPackage(pkg) || !ast.IsExported(name) {
 		return nil, "", false
 	}
 	def, found := pkg.types[name]

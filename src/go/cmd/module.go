@@ -181,6 +181,12 @@ func newModule(dir string, deferAliases bool, packageNameRoot string) (*Module, 
 		for _, alias := range p.TypeAliases {
 			def, found, err := findTypeDef(alias.Name, p, m.Packages, map[typeDefRef]bool{}, true)
 			alias.SourceMod = sourceModuleForAlias(alias.QualifiedName, m.ModFile.Require)
+			if isInternalPackage(p) {
+				if err == nil && found {
+					alias.cacheDefinition(def)
+				}
+				continue
+			}
 			if deferAliases {
 				if alias.SourceMod != (module.Version{}) {
 					m.ExternalAliases = append(m.ExternalAliases, alias)
@@ -189,12 +195,6 @@ func newModule(dir string, deferAliases bool, packageNameRoot string) (*Module, 
 			}
 			if alias.SourceMod != (module.Version{}) {
 				m.ExternalAliases = append(m.ExternalAliases, alias)
-				continue
-			}
-			if strings.Contains(p.relName, "/internal") {
-				if err == nil && found {
-					alias.cacheDefinition(def)
-				}
 				continue
 			}
 			if !alias.isAlias && alias.definition.n != nil && def.n == alias.definition.n && def.underlyingType == "" {
@@ -405,13 +405,6 @@ func findTypeDef(typeName string, source *Pkg, packages map[string]*Pkg, seen ma
 		return typeDef{}, false, fmt.Errorf("cyclic type definition %s.%s", source.Name(), typeName)
 	}
 	seen[ref] = true
-	if preserveDefinedTypes {
-		for _, alias := range source.TypeAliases {
-			if alias.Name == typeName && !alias.isAlias && alias.definition.n != nil {
-				return resolveDefinedSelector(alias.definition, source, packages, seen)
-			}
-		}
-	}
 	def, ok := source.types[typeName]
 	if ok {
 		if def.p == source && def.n.Name.Name == typeName {
@@ -436,6 +429,13 @@ func findTypeDef(typeName string, source *Pkg, packages map[string]*Pkg, seen ma
 			}
 		}
 		return def, true, nil
+	}
+	if preserveDefinedTypes {
+		for _, alias := range source.TypeAliases {
+			if alias.Name == typeName && !alias.isAlias && alias.definition.n != nil {
+				return resolveDefinedSelector(alias.definition, source, packages, seen)
+			}
+		}
 	}
 	// source doesn't define typeName; it must export typeName via an alias.
 	// Recurse into the package from which source imports typeName.

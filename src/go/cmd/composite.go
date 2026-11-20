@@ -160,13 +160,16 @@ func isInternalPackage(pkg *Pkg) bool {
 }
 
 func aliasPackageExports(pkg *Pkg, qualifiedName string, seen map[string]bool) bool {
-	if seen[qualifiedName] {
+	key := typeIdentityKey(pkg.modulePackages, qualifiedName)
+	if seen[key] {
 		return false
 	}
-	seen[qualifiedName] = true
+	seen[key] = true
 	for _, alias := range pkg.TypeAliases {
 		if alias.isAlias && ast.IsExported(alias.Name) &&
-			normalizeAliasTarget(pkg.modulePackages, aliasTarget(pkg, alias.Name, map[string]bool{}), map[string]bool{}) == qualifiedName {
+			sameTypeIdentity(pkg.modulePackages,
+				normalizeAliasTarget(pkg.modulePackages, aliasTarget(pkg, alias.Name, map[string]bool{}), map[string]bool{}),
+				qualifiedName) {
 			return true
 		}
 	}
@@ -175,7 +178,7 @@ func aliasPackageExports(pkg *Pkg, qualifiedName string, seen map[string]bool) b
 			continue
 		}
 		targetName := aliasTarget(pkg, name, map[string]bool{})
-		if normalizeAliasTarget(pkg.modulePackages, targetName, map[string]bool{}) == qualifiedName {
+		if sameTypeIdentity(pkg.modulePackages, normalizeAliasTarget(pkg.modulePackages, targetName, map[string]bool{}), qualifiedName) {
 			return true
 		}
 	}
@@ -223,12 +226,13 @@ func aliasTarget(pkg *Pkg, name string, seen map[string]bool) string {
 
 func normalizeAliasTarget(packages map[string]*Pkg, qualifiedName string, seen map[string]bool) string {
 	dot := strings.LastIndex(qualifiedName, ".")
-	if dot < 1 || seen[qualifiedName] {
+	key := typeIdentityKey(packages, qualifiedName)
+	if dot < 1 || seen[key] {
 		return qualifiedName
 	}
-	seen[qualifiedName] = true
-	pkg, ok := packages[qualifiedName[:dot]]
-	if !ok {
+	seen[key] = true
+	pkg := packageForTypeImport(packages, qualifiedName[:dot])
+	if pkg == nil {
 		return qualifiedName
 	}
 	name := qualifiedName[dot+1:]
@@ -243,6 +247,41 @@ func normalizeAliasTarget(packages map[string]*Pkg, qualifiedName string, seen m
 		}
 	}
 	return qualifiedName
+}
+
+func packageForTypeImport(packages map[string]*Pkg, importPath string) *Pkg {
+	if pkg, ok := packages[importPath]; ok {
+		return pkg
+	}
+	for _, pkg := range packages {
+		if versionedPackageImportPath(pkg) == importPath {
+			return pkg
+		}
+	}
+	return nil
+}
+
+func versionedPackageImportPath(pkg *Pkg) string {
+	if !versionReg.MatchString(pkg.modulePath) {
+		return pkg.importPath()
+	}
+	relativePath := strings.TrimPrefix(pkg.importPath(), pkg.unversionedModulePath())
+	return pkg.modulePath + relativePath
+}
+
+func typeIdentityKey(packages map[string]*Pkg, qualifiedName string) string {
+	dot := strings.LastIndex(qualifiedName, ".")
+	if dot < 1 {
+		return qualifiedName
+	}
+	if pkg := packageForTypeImport(packages, qualifiedName[:dot]); pkg != nil {
+		return fmt.Sprintf("%p.%s", pkg, qualifiedName[dot+1:])
+	}
+	return qualifiedName
+}
+
+func sameTypeIdentity(packages map[string]*Pkg, left, right string) bool {
+	return typeIdentityKey(packages, left) == typeIdentityKey(packages, right)
 }
 
 func (a *TypeAlias) compositeType(def typeDef, expr ast.Expr) (string, error) {
@@ -405,8 +444,9 @@ func findExposedQualifiedType(target *Pkg, qualifiedName string) (*Pkg, string, 
 		sort.Slice(aliases, func(i, j int) bool { return aliases[i].Name < aliases[j].Name })
 		for _, alias := range aliases {
 			if alias.isAlias && ast.IsExported(alias.Name) &&
-				normalizeAliasTarget(packages, aliasTarget(pkg, alias.Name, map[string]bool{}), map[string]bool{}) ==
-					normalizeAliasTarget(packages, qualifiedName, map[string]bool{}) {
+				sameTypeIdentity(packages,
+					normalizeAliasTarget(packages, aliasTarget(pkg, alias.Name, map[string]bool{}), map[string]bool{}),
+					normalizeAliasTarget(packages, qualifiedName, map[string]bool{})) {
 				return pkg, alias.Name, true
 			}
 		}
@@ -418,8 +458,9 @@ func findExposedQualifiedType(target *Pkg, qualifiedName string) (*Pkg, string, 
 		for _, name := range names {
 			def := pkg.types[name]
 			if ast.IsExported(name) && def.n != nil && def.n.Assign.IsValid() &&
-				normalizeAliasTarget(packages, aliasTarget(pkg, name, map[string]bool{}), map[string]bool{}) ==
-					normalizeAliasTarget(packages, qualifiedName, map[string]bool{}) {
+				sameTypeIdentity(packages,
+					normalizeAliasTarget(packages, aliasTarget(pkg, name, map[string]bool{}), map[string]bool{}),
+					normalizeAliasTarget(packages, qualifiedName, map[string]bool{})) {
 				return pkg, name, true
 			}
 		}

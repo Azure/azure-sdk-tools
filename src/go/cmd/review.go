@@ -364,19 +364,24 @@ func (r *Review) resolveTypeDefinition(m *Module, def typeDef, seen map[string]b
 	var err error
 	if mod != (module.Version{}) {
 		resolved, terminal, err = r.resolveExternalType(mod, qualifiedName, seen)
-	} else if importPath == m.ModFile.Module.Mod.Path ||
-		strings.HasPrefix(importPath, strings.TrimSuffix(m.ModFile.Module.Mod.Path, "/")+"/") {
-		resolved, terminal, err = r.resolveModuleType(m, qualifiedName, seen)
-	} else if isStandardLibraryImportPath(importPath) {
-		if isDefined {
-			def.underlyingType = qualifiedName
-			def.methodPackage = methodPackage
-			def.methodName = methodName
-			return def, "", nil
-		}
-		return typeDef{}, qualifiedName, nil
 	} else {
-		return typeDef{}, "", fmt.Errorf("couldn't resolve dependency for type %s", qualifiedName)
+		modulePath := m.ModFile.Module.Mod.Path
+		if versionReg.MatchString(modulePath) {
+			modulePath = path.Dir(modulePath)
+		}
+		if importPath == modulePath || strings.HasPrefix(importPath, strings.TrimSuffix(modulePath, "/")+"/") {
+			resolved, terminal, err = r.resolveModuleType(m, qualifiedName, seen)
+		} else if isStandardLibraryImportPath(importPath) {
+			if isDefined {
+				def.underlyingType = qualifiedName
+				def.methodPackage = methodPackage
+				def.methodName = methodName
+				return def, "", nil
+			}
+			return typeDef{}, qualifiedName, nil
+		} else {
+			return typeDef{}, "", fmt.Errorf("couldn't resolve dependency for type %s", qualifiedName)
+		}
 	}
 	if err != nil {
 		return typeDef{}, "", err
@@ -496,6 +501,12 @@ func (r *Review) resolveLocalTypes() error {
 				case *ast.IndexExpr, *ast.IndexListExpr:
 					return fmt.Errorf("generic instantiation alias %s.%s cannot be represented", p.Name(), name)
 				case *ast.StarExpr:
+					continue
+				}
+			}
+			if !def.n.Assign.IsValid() {
+				switch typ.(type) {
+				case *ast.IndexExpr, *ast.IndexListExpr:
 					continue
 				}
 			}

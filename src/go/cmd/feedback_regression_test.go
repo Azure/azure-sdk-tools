@@ -164,6 +164,81 @@ type Public = js.Value
 	require.Equal(t, "typePublic=syscall/js.Value", withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "importer.Public"))))
 }
 
+func TestPackageNamePrefersGoListForBuildExcludedPackages(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GOPROXY", "off")
+	dependency := filepath.Join(dir, "dependency")
+	importer := filepath.Join(dir, "importer")
+	write := func(name, content string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(filepath.Dir(name), 0755))
+		require.NoError(t, os.WriteFile(name, []byte(content), 0644))
+	}
+	write(filepath.Join(importer, "go.mod"), "module example.com/importer\n\ngo 1.21\nrequire example.com/dependency v1.0.0\nreplace example.com/dependency => "+filepath.ToSlash(dependency)+"\n")
+	write(filepath.Join(importer, "importer.go"), "package importer\n")
+	write(filepath.Join(dependency, "go.mod"), "module example.com/dependency\n\ngo 1.21\n")
+	write(filepath.Join(dependency, "dependency.go"), "package dependency\n")
+	write(filepath.Join(dependency, "tools.go"), "//go:build tools\n\npackage tools\n")
+
+	pkg, err := NewPkg(importer, "example.com/importer", importer)
+	require.NoError(t, err)
+	name, err := pkg.packageName("example.com/dependency")
+	require.NoError(t, err)
+	require.Equal(t, "dependency", name)
+}
+
+func TestUnusedDependencyImportsAreResolvedLazily(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GOPROXY", "off")
+	reviewed := filepath.Join(dir, "exporter")
+	dependency := filepath.Join(dir, "source")
+	write := func(name, content string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(filepath.Dir(name), 0755))
+		require.NoError(t, os.WriteFile(name, []byte(content), 0644))
+	}
+	write(filepath.Join(dependency, "go.mod"), "module example.com/sdk/source\n\ngo 1.21\nrequire example.com/helper v1.0.0\n")
+	write(filepath.Join(dependency, "types.go"), `
+package source
+import _ "example.com/helper"
+type Data []byte
+func (Data) helper() {}
+`)
+	write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire example.com/sdk/source v1.0.0\nreplace example.com/sdk/source => "+filepath.ToSlash(dependency)+"\n")
+	write(filepath.Join(reviewed, "alias.go"), `
+package exporter
+import source "example.com/sdk/source"
+type Public = source.Data
+`)
+
+	review, err := createReview(reviewed)
+	require.NoError(t, err)
+	require.Contains(t, feedbackLineText(feedbackLine(t, review, "exporter.Public")), "[]byte")
+}
+
+func TestUnusedInternalAliasesToUnsupportedDependenciesAreSkipped(t *testing.T) {
+	dir := t.TempDir()
+	dependency := filepath.Join(filepath.Dir(dir), "dependency")
+	write := func(name, content string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(filepath.Dir(name), 0755))
+		require.NoError(t, os.WriteFile(name, []byte(content), 0644))
+	}
+	write(filepath.Join(dependency, "go.mod"), "module example.com/dependency\n\ngo 1.21\n")
+	write(filepath.Join(dependency, "types.go"), "package dependency\ntype Pointer *int\n")
+	write(filepath.Join(dir, "go.mod"), "module example.com/aliastest\n\ngo 1.21\nrequire example.com/dependency v1.0.0\nreplace example.com/dependency => "+filepath.ToSlash(dependency)+"\n")
+	write(filepath.Join(dir, "types.go"), "package aliastest\ntype Public int\n")
+	write(filepath.Join(dir, "internal", "types", "types.go"), `
+package types
+import dependency "example.com/dependency"
+type unused = dependency.Pointer
+`)
+
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	require.Contains(t, feedbackLineText(feedbackLine(t, review, "aliastest.Public")), "int")
+}
+
 func TestDependencyPackageNameUsesReviewedModuleResolution(t *testing.T) {
 	dir := t.TempDir()
 	reviewed := filepath.Join(dir, "exporter")
@@ -191,6 +266,146 @@ func (Data) Use(amqp.Value) {}
 	require.NoError(t, err)
 	method := feedbackMethod(t, feedbackLine(t, review, "exporter.Public"), "Public", "Use")
 	require.Contains(t, feedbackLineText(method), "example.com/go-amqp.Value")
+}
+
+func TestHoistedSignatureRewriteMatchesCompleteSelector(t *testing.T) {
+	target := &Pkg{
+		modulePath: "example.com/target",
+		relName:    "target",
+		TypeAliases: []*TypeAlias{{
+			Name:          "Value",
+			QualifiedName: "example.com/other.Value",
+			isAlias:       true,
+		}},
+	}
+	target.TypeAliases[0].Package = target
+	target.modulePackages = map[string]*Pkg{"example.com/target": target}
+	source := &Pkg{modulePath: "example.com/source", relName: "source"}
+	fn := Func{imports: map[string]string{"other": "example.com/other"}}
+	typ := "struct { A other.Value; B other.ValueExtra }"
+
+	got := fn.translateAliasSignatureType(source, target, typ, typ, "Public", nil)
+	require.Contains(t, got, "A <target.Value>Value")
+	require.Contains(t, got, "B example.com/other.ValueExtra")
+	require.NotContains(t, got, "<target.Value>ValueExtra")
+}
+
+func TestVersionedModuleTypeIdentityFindsExposedAliases(t *testing.T) {
+	dependency := &Pkg{
+		modulePath: "example.com/model/v2",
+		relName:    "model/types",
+	}
+	target := &Pkg{
+		modulePath: "example.com/api",
+		relName:    "api",
+		TypeAliases: []*TypeAlias{{
+			Name:          "Item",
+			QualifiedName: "example.com/model/v2/types.Item",
+			isAlias:       true,
+		}},
+	}
+	target.TypeAliases[0].Package = target
+	target.modulePackages = map[string]*Pkg{
+		"example.com/api":         target,
+		"example.com/model/types": dependency,
+	}
+	dependency.modulePackages = target.modulePackages
+	qualifiedName := "example.com/model/v2/types.Item"
+
+	require.True(t, targetExportsQualifiedType(target, qualifiedName))
+	endpoint, name, found := findExposedSignatureType(target, qualifiedName)
+	require.True(t, found)
+	require.Same(t, target, endpoint)
+	require.Equal(t, "Item", name)
+}
+
+func TestDefinedGenericInstantiationRemainsSupported(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/generics\n\ngo 1.21\n"), 0644))
+	for name, content := range map[string]string{
+		"alias.go": `package generics
+import (
+	"example.com/generics/base"
+	"example.com/generics/generated"
+)
+type Client base.Client[generated.BlobClient]
+`,
+		filepath.Join("base", "base.go"):           "package base\ntype Client[T any] struct{}\n",
+		filepath.Join("generated", "generated.go"): "package generated\ntype BlobClient struct{}\n",
+	} {
+		file := filepath.Join(dir, name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(file), 0755))
+		require.NoError(t, os.WriteFile(file, []byte(content), 0644))
+	}
+
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	line := feedbackLine(t, review, "generics.Client")
+	require.Contains(t, feedbackLineText(line), "Client")
+	require.Contains(t, feedbackLineText(line), "BlobClient")
+}
+
+func TestVersionedDependencyAliasThroughInternalDefinedSelector(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GOPROXY", "off")
+	reviewed := filepath.Join(dir, "exporter")
+	source := filepath.Join(dir, "source")
+	model := filepath.Join(dir, "model")
+	write := func(name, content string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(filepath.Dir(name), 0755))
+		require.NoError(t, os.WriteFile(name, []byte(content), 0644))
+	}
+	write(filepath.Join(model, "go.mod"), "module example.com/model/v2\n\ngo 1.21\n")
+	write(filepath.Join(model, "types", "types.go"), "package types\ntype Data []byte\n")
+	write(filepath.Join(source, "go.mod"), "module example.com/sdk/source/v2\n\ngo 1.21\nrequire example.com/model/v2 v2.0.0\n")
+	write(filepath.Join(source, "source.go"), `
+package source
+import bridge "example.com/sdk/source/v2/internal/bridge"
+type Public = bridge.Defined
+`)
+	write(filepath.Join(source, "internal", "bridge", "bridge.go"), `
+package bridge
+import model "example.com/model/v2/types"
+type Defined model.Data
+func (Defined) Method() {}
+`)
+	write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire (\n\texample.com/sdk/source/v2 v2.0.0\n\texample.com/model/v2 v2.0.0\n)\nreplace example.com/sdk/source/v2 => "+filepath.ToSlash(source)+"\nreplace example.com/model/v2 => "+filepath.ToSlash(model)+"\n")
+	write(filepath.Join(reviewed, "alias.go"), `
+package exporter
+import source "example.com/sdk/source/v2"
+type Public = source.Public
+`)
+
+	review, err := createReview(reviewed)
+	require.NoError(t, err)
+	line := feedbackLine(t, review, "exporter.Public")
+	require.Contains(t, withoutAliasTarget(feedbackLineText(line)), "[]byte")
+	feedbackMethod(t, line, "Public", "Method")
+}
+
+func TestVersionedModuleResolvesInternalDefinedSelector(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/sdk/contract/v2\n\ngo 1.21\n"), 0644))
+	for name, content := range map[string]string{
+		"alias.go": `package contract
+import types "example.com/sdk/contract/v2/internal/types"
+type Public = types.Defined
+`,
+		filepath.Join("internal", "types", "types.go"): `package types
+import base "example.com/sdk/contract/v2/internal/base"
+type Defined base.Data
+`,
+		filepath.Join("internal", "base", "base.go"): "package base\ntype Data []byte\n",
+	} {
+		file := filepath.Join(dir, name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(file), 0755))
+		require.NoError(t, os.WriteFile(file, []byte(content), 0644))
+	}
+
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	require.Contains(t, withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "contract.Public"))), "[]byte")
 }
 
 func TestHoistedMethodTypesUseExposedAliasesAndImportPaths(t *testing.T) {

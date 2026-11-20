@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -159,8 +160,8 @@ func unparenType(expr ast.Expr) ast.Expr {
 }
 
 func (p *Pkg) indexFile(f *ast.File) error {
-	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
 	imports := map[string]string{}
+	unnamedImports := []string{}
 	modulePathReplacement := ""
 	if versionReg.MatchString(p.modulePath) {
 		// the module has a major version suffix. we need to remove that from the
@@ -178,17 +179,26 @@ func (p *Pkg) indexFile(f *ast.File) error {
 		if imp.Name != nil {
 			imports[imp.Name.String()] = pkgPath
 		} else {
-			name, err := p.packageName(pkgPath)
-			if err != nil {
-				return fmt.Errorf("resolving unnamed import %s: %w", pkgPath, err)
-			}
-			imports[name] = pkgPath
+			unnamedImports = append(unnamedImports, pkgPath)
 		}
 	}
 
+	var indexErr error
 	ast.Inspect(f, func(n ast.Node) bool {
+		if indexErr != nil {
+			return false
+		}
 		switch x := n.(type) {
 		case *ast.FuncDecl:
+			declarations := []ast.Node{x.Type}
+			if x.Recv != nil {
+				declarations = append(declarations, x.Recv)
+			}
+			imports, err := p.importsForDeclaration(imports, unnamedImports, declarations...)
+			if err != nil {
+				indexErr = err
+				return false
+			}
 			p.c.addFunc(*p, x, imports)
 			// children can't be exported, let's not inspect them
 			return false
@@ -196,10 +206,28 @@ func (p *Pkg) indexFile(f *ast.File) error {
 			if x.Tok == token.CONST || x.Tok == token.VAR {
 				// const or var declaration
 				for _, s := range x.Specs {
-					p.c.addGenDecl(*p, x.Tok, s.(*ast.ValueSpec), imports)
+					spec := s.(*ast.ValueSpec)
+					declarations := []ast.Node{}
+					if spec.Type != nil {
+						declarations = append(declarations, spec.Type)
+					}
+					for _, value := range spec.Values {
+						declarations = append(declarations, value)
+					}
+					imports, err := p.importsForDeclaration(imports, unnamedImports, declarations...)
+					if err != nil {
+						indexErr = err
+						return false
+					}
+					p.c.addGenDecl(*p, x.Tok, spec, imports)
 				}
 			}
 		case *ast.TypeSpec:
+			imports, err := p.importsForDeclaration(imports, unnamedImports, x.Type)
+			if err != nil {
+				indexErr = err
+				return false
+			}
 			switch t := unparenType(x.Type).(type) {
 			case *ast.ArrayType:
 				// "type UUID [16]byte"
@@ -290,7 +318,93 @@ func (p *Pkg) indexFile(f *ast.File) error {
 		}
 		return true
 	})
-	return nil
+	return indexErr
+}
+
+func (p *Pkg) importsForDeclaration(explicitImports map[string]string, unnamedImports []string, declarations ...ast.Node) (map[string]string, error) {
+	imports := make(map[string]string, len(explicitImports))
+	for name, importPath := range explicitImports {
+		imports[name] = importPath
+	}
+	usedNames := map[string]bool{}
+	for _, declaration := range declarations {
+		if declaration == nil {
+			continue
+		}
+		ast.Inspect(declaration, func(n ast.Node) bool {
+			selector, ok := n.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+			if name, ok := selector.X.(*ast.Ident); ok {
+				usedNames[name.Name] = true
+			}
+			return true
+		})
+	}
+	names := make([]string, 0, len(usedNames))
+	for name := range usedNames {
+		if _, ok := imports[name]; !ok {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		candidateError := error(nil)
+		matched := false
+		candidates := make([]string, 0, len(unnamedImports))
+		remaining := make([]string, 0, len(unnamedImports))
+		for _, importPath := range unnamedImports {
+			if importPathMayUsePackageName(importPath, name) {
+				candidates = append(candidates, importPath)
+			} else {
+				remaining = append(remaining, importPath)
+			}
+		}
+		for _, group := range [][]string{candidates, remaining} {
+			for _, importPath := range group {
+				packageName, err := p.packageName(importPath)
+				if err != nil {
+					if (len(candidates) == 0 || importPathMayUsePackageName(importPath, name)) && candidateError == nil {
+						candidateError = fmt.Errorf("resolving unnamed import %s: %w", importPath, err)
+					}
+					continue
+				}
+				if packageName != name {
+					continue
+				}
+				if previous, ok := imports[name]; ok && previous != importPath {
+					return nil, fmt.Errorf("multiple unnamed imports declare package %s", name)
+				}
+				imports[name] = importPath
+				matched = true
+				break
+			}
+			if matched {
+				break
+			}
+		}
+		if !matched {
+			if candidateError != nil {
+				return nil, candidateError
+			}
+			return nil, fmt.Errorf("unknown import name %s in declaration", name)
+		}
+	}
+	return imports, nil
+}
+
+func importPathMayUsePackageName(importPath, name string) bool {
+	for _, component := range strings.Split(importPath, "/") {
+		for _, part := range strings.FieldsFunc(component, func(r rune) bool {
+			return r == '-' || r == '_' || r == '.'
+		}) {
+			if part == name {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (p *Pkg) packageName(importPath string) (string, error) {
@@ -300,18 +414,29 @@ func (p *Pkg) packageName(importPath string) (string, error) {
 	if imported, ok := p.modulePackages[importPath]; ok && imported.p != nil {
 		return imported.p.Name, nil
 	}
-	cmd := newGoCommand(p.packageNameRoot, "list", "-e", "-mod=readonly", "-f", "{{.Dir}}", importPath)
+	cmd := newGoCommand(p.packageNameRoot, "list", "-e", "-mod=readonly", "-f", "{{.Name}}\n{{.Dir}}", importPath)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	output, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("resolving Go package name for %s: %w: %s", importPath, err, strings.TrimSpace(stderr.String()))
 	}
-	dir := strings.TrimSpace(string(output))
+	name, dir, ok := strings.Cut(strings.TrimRight(string(output), "\r\n"), "\n")
+	name = strings.TrimSpace(name)
+	dir = strings.TrimSpace(dir)
+	if !ok {
+		return "", fmt.Errorf("go list returned an invalid package record for %s", importPath)
+	}
+	if name != "" {
+		if p.packageNames != nil {
+			p.packageNames[importPath] = name
+		}
+		return name, nil
+	}
 	if dir == "" || strings.ContainsAny(dir, "\r\n") {
 		return "", fmt.Errorf("go list returned no directory for package %s: %s", importPath, strings.TrimSpace(stderr.String()))
 	}
-	name, err := packageNameFromDir(dir)
+	name, err = packageNameFromDir(dir)
 	if err != nil {
 		return "", fmt.Errorf("resolving Go package name for %s in %s: %w", importPath, dir, err)
 	}

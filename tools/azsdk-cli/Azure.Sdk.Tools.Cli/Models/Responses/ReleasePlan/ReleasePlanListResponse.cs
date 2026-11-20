@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Services.Notification;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
 {
@@ -39,58 +40,44 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Dictionary<int, string>? SkippedPlans { get; set; }
 
-        [JsonPropertyName("maintenance_results")]
+        [JsonPropertyName("cleanup_summary")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<ReleasePlanOperationResult>? MaintenanceResults { get; set; }
+        public ReleasePlanPreviewSummary? CleanupSummary { get; set; }
 
-        // Empty completed scans have no per-plan rows; retrieval failures leave this unset.
-        [JsonIgnore]
-        public ReleasePlanOperation? CompletedMaintenanceOperation { get; set; }
-
-        [JsonPropertyName("maintenance_summary")]
+        [JsonPropertyName("reminder_notifications")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Dictionary<string, Dictionary<string, int>>? MaintenanceSummary
-        {
-            get
-            {
-                var operations = (MaintenanceResults ?? []).Select(result => result.Operation).ToHashSet();
-                if (CompletedMaintenanceOperation is { } completedOperation)
-                {
-                    operations.Add(completedOperation);
-                }
-                if (operations.Count == 0)
-                {
-                    return null;
-                }
+        public Dictionary<int, NotificationResult>? ReminderNotifications { get; set; }
 
-                return operations.ToDictionary(operation => operation.ToString(), operation => (operation switch
-                {
-                    ReleasePlanOperation.Preview => new[]
-                    {
-                        ReleasePlanOperationOutcome.Eligible, ReleasePlanOperationOutcome.Skipped, ReleasePlanOperationOutcome.Failed
-                    },
-                    ReleasePlanOperation.Cleanup => new[]
-                    {
-                        ReleasePlanOperationOutcome.Abandoned, ReleasePlanOperationOutcome.Skipped, ReleasePlanOperationOutcome.Failed
-                    },
-                    _ => new[]
-                    {
-                        ReleasePlanOperationOutcome.Delivered, ReleasePlanOperationOutcome.Skipped, ReleasePlanOperationOutcome.Failed
-                    }
-                }).ToDictionary(outcome => outcome.ToString(), outcome => MaintenanceResults?
-                    .Count(result => result.Operation == operation && result.Outcome == outcome) ?? 0));
-            }
-        }
+        [JsonPropertyName("abandonment_notifications")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<int, NotificationResult>? AbandonmentNotifications { get; set; }
+
+        [JsonPropertyName("reminder_summary")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ReleasePlanPreviewSummary? ReminderSummary => SummarizeNotifications(ReminderNotifications);
+
+        [JsonPropertyName("abandonment_notification_summary")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ReleasePlanPreviewSummary? AbandonmentNotificationSummary => SummarizeNotifications(AbandonmentNotifications);
 
         [JsonPropertyName("warnings")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<string>? Warnings { get; set; }
 
+        private static ReleasePlanPreviewSummary? SummarizeNotifications(Dictionary<int, NotificationResult>? notifications) =>
+            notifications == null ? null : new ReleasePlanPreviewSummary
+            {
+                Scanned = notifications.Count,
+                Delivered = notifications.Values.Count(result => result.Status == NotificationStatus.Sent),
+                Skipped = notifications.Values.Count(result => result.Status is NotificationStatus.Disabled or NotificationStatus.SkippedNoRecipients),
+                Failed = notifications.Values.Count(result => result.IsFailure)
+            };
+
         public override string ToString()
         {
             // Preserve partial results and summaries alongside errors in either mode.
             return OperationStatus == Status.Failed && (ReleasePlanDetailsList != null || !string.IsNullOrWhiteSpace(Message)
-                || MaintenanceResults?.Count > 0 || Warnings?.Count > 0)
+                || CleanupSummary != null || ReminderNotifications != null || AbandonmentNotifications != null || Warnings?.Count > 0)
                 ? Format() + Environment.NewLine + base.ToString()
                 : base.ToString();
         }
@@ -102,22 +89,13 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
             {
                 result.AppendLine(Message);
             }
-            if (MaintenanceSummary != null)
+            if (CleanupSummary != null)
             {
-                result.AppendLine("Maintenance summary:");
-                foreach (var (operation, outcomes) in MaintenanceSummary)
-                {
-                    result.AppendLine($"{operation}: {string.Join("; ", outcomes.Select(outcome => $"{outcome.Key}: {outcome.Value}"))}");
-                }
+                result.AppendLine($"Cleanup: Abandoned: {CleanupSummary.Abandoned}; Skipped: {CleanupSummary.Skipped}; Failed: {CleanupSummary.Failed}");
+                result.AppendLine($"Scanned: {CleanupSummary.Scanned}; Eligible candidates: {CleanupSummary.Eligible}; Evaluation errors: {CleanupSummary.EvaluationErrors}");
             }
-            if (MaintenanceResults?.Count > 0)
-            {
-                result.AppendLine("Per-plan maintenance outcomes:");
-                foreach (var outcome in MaintenanceResults)
-                {
-                    result.AppendLine($"[{outcome.Outcome.ToString().ToUpperInvariant()}] {outcome.Operation} | Release Plan ID: {outcome.ReleasePlanId} | Work Item ID: {outcome.WorkItemId} | {outcome.Reason} | {outcome.ReleasePlanLink}");
-                }
-            }
+            AppendNotificationResults(result, "Reminder", ReminderNotifications, ReminderSummary);
+            AppendNotificationResults(result, "Confirmation", AbandonmentNotifications, AbandonmentNotificationSummary);
             foreach (var warning in Warnings ?? [])
             {
                 result.AppendLine($"[WARNING] {warning}");
@@ -167,6 +145,22 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
                 }
             }
             return result.ToString();
+        }
+
+        private void AppendNotificationResults(StringBuilder text, string notification,
+            Dictionary<int, NotificationResult>? notifications, ReleasePlanPreviewSummary? summary)
+        {
+            if (notifications == null || summary == null)
+            {
+                return;
+            }
+            text.AppendLine($"{notification}: Delivered: {summary.Delivered}; Skipped: {summary.Skipped}; Failed: {summary.Failed}");
+            foreach (var (workItemId, result) in notifications)
+            {
+                var plan = ReleasePlanDetailsList?.FirstOrDefault(plan => plan.WorkItemId == workItemId);
+                var planId = plan?.ReleasePlanId > 0 ? plan.ReleasePlanId : workItemId;
+                text.AppendLine($"[{result.Status.ToString().ToUpperInvariant()}] {notification} | Release Plan ID: {planId} | Work Item ID: {workItemId} | {result.ErrorMessage ?? "Accepted by the notification service; inbox delivery is not verified."} | {plan?.ReleasePlanLink}");
+            }
         }
     }
 }

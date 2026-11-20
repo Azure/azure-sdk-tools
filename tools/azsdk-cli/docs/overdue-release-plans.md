@@ -112,29 +112,35 @@ A successful empty preview means no scanned plans qualify. It is a point-in-time
 assessment, not a reservation: an actual run re-evaluates eligibility, and a plan
 can change or its update can fail after the preview.
 
-## Per-plan maintenance results
+## Cleanup and notification results
 
-Cleanup, preview, and reminder responses include `maintenance_results`. Each entry
-identifies the release-plan ID (falling back to the work-item ID), the backing
-`work_item_id`, the dashboard link, the operation, its outcome, and a reason.
-Release-plan and work-item IDs can differ; both are printed in the logs.
+The existing `release_plans` list contains eligible plans in preview and
+successfully abandoned plans after cleanup. `skipped_plans` contains protected
+plan IDs and dashboard links in both modes. `eligibility_reasons` also explains
+the skips, keyed by work-item ID. Cleanup failures retain their plan IDs in
+`response_errors`. Logs print both the release-plan and backing work-item IDs.
 
-`maintenance_summary` groups counts by operation. The text summary includes zero
-counts so a missing failure count cannot be mistaken for an unknown result:
+`preview_summary` remains the read-only scan summary. Actual cleanup adds
+`cleanup_summary`, with scanned and eligible-candidate counts, successfully
+`abandoned`, `skipped`, and `failed` counts, and evaluation-error details.
+
+`reminder_notifications` and `abandonment_notifications` are flat maps keyed by
+work-item ID, using the existing notification result. Each value has a `Status`
+and optional `ErrorMessage`. `Sent` means the notification service accepted the
+request, not that inbox delivery was verified. `Disabled` and
+`SkippedNoRecipients` are skips; `Failed` is an unsuccessful delivery attempt.
+The reason explains intentional skips, such as a merged Private Preview spec.
+
+`reminder_summary` and `abandonment_notification_summary` contain typed
+`delivered`, `skipped`, and `failed` counts. Completed empty scans report zeros;
+initial retrieval failures do not contain a successful scan or delivery summary.
+The text summary includes zero counts:
 
 ```text
-Maintenance summary:
 Cleanup: Abandoned: 2; Skipped: 1; Failed: 0
 Confirmation: Delivered: 1; Skipped: 0; Failed: 1
 ```
 
-- `Preview` reports `Eligible`, `Skipped`, and `Failed` without changing states or
-  sending notifications.
-- `Cleanup` reports `Abandoned`, `Skipped`, and `Failed`. Every scanned plan has
-  a result, including protected plans and plans with evaluation or update errors.
-- `Reminder` and `Confirmation` report `Delivered`, `Skipped`, and `Failed`.
-  `Delivered` means the notification service accepted the request; it does not
-  verify inbox delivery.
 - Cleanup and confirmation are independent outcomes. A successfully abandoned
   plan remains `Abandoned` even if its confirmation is skipped or fails.
 - Missing reminder recipients are counted as skipped results with warnings.

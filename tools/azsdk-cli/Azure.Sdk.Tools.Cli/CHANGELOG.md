@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- `release-plan link-sdk-pr` and `azsdk_link_sdk_pull_request_to_release_plan` now add `auto-release` to eligible open, non-draft public Azure SDK PRs targeting `main` for management-only release plans, including manually generated PRs. Data-plane, test, Private Preview, and inactive plans are excluded. Existing labels are preserved, repeated linking is safe, and labeling failures report that linking succeeded but labeling needs a retry. CI and review requirements still apply before merge.
+
 ### Breaking Changes
 
 ### Bugs Fixed

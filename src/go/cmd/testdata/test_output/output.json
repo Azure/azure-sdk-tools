@@ -367,6 +367,12 @@
               "Kind": 2,
               "Value": "interface",
               "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 7,
+              "Value": "/* alias of github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output/subpackage.Interface */",
+              "HasSuffixSpace": false
             }
           ]
         },
@@ -396,6 +402,12 @@
             {
               "Kind": 2,
               "Value": "interface",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 7,
+              "Value": "/* alias of github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output/subpackage.Unimplementable */",
               "HasSuffixSpace": false
             }
           ]
@@ -899,6 +911,12 @@
               "Kind": 2,
               "Value": "struct",
               "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 7,
+              "Value": "/* alias of github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output/subpackage.StructA */",
+              "HasSuffixSpace": false
             }
           ]
         },
@@ -940,6 +958,12 @@
               "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 7,
+              "Value": "/* alias of github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output/subpackage.StructB */",
               "HasSuffixSpace": false
             }
           ]
@@ -1105,6 +1129,12 @@
               "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 7,
+              "Value": "/* alias of github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output/subpackage.StructEmpty */",
               "HasSuffixSpace": false
             }
           ]
@@ -1285,6 +1315,12 @@
             {
               "Kind": 3,
               "Value": "string",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 7,
+              "Value": "/* alias of github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output/subpackage.Enum */",
               "HasSuffixSpace": false
             }
           ]

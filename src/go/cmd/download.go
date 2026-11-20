@@ -25,14 +25,22 @@ var errCachedModuleNotFound = errors.New("cached module not found")
 // it looks for mod's source in the mod cache. Otherwise, it downloads mod from
 // the module proxy.
 func GetExternalModule(mod module.Version) (*Module, error) {
-	m, err := cachedModule(mod)
+	return getExternalModule(mod, false)
+}
+
+func GetExternalModuleForDependency(mod module.Version) (*Module, error) {
+	return getExternalModule(mod, true)
+}
+
+func getExternalModule(mod module.Version, deferAliases bool) (*Module, error) {
+	m, err := cachedModule(mod, deferAliases)
 	if err != nil && !errors.Is(err, errCachedModuleNotFound) {
 		return nil, fmt.Errorf("failed to parse cached module %s: %w", mod.Path, err)
 	}
 	if m == nil {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
-		m, err = downloadModule(ctx, mod)
+		m, err = downloadModuleWithMode(ctx, mod, deferAliases)
 	}
 	return m, err
 }
@@ -53,6 +61,10 @@ func GetExternalModule(mod module.Version) (*Module, error) {
 // modules to the local Go module cache, it doesn't do so to avoid affecting other Go programs
 // or reimplementing whatever `go mod download` behavior is necessary to ensure correctness.
 func downloadModule(ctx context.Context, mod module.Version) (*Module, error) {
+	return downloadModuleWithMode(ctx, mod, false)
+}
+
+func downloadModuleWithMode(ctx context.Context, mod module.Version, deferAliases bool) (*Module, error) {
 	d, err := downloadDir()
 	if err != nil {
 		return nil, err
@@ -111,16 +123,22 @@ func downloadModule(ctx context.Context, mod module.Version) (*Module, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unzip %s: %w", zp, err)
 	}
+	if deferAliases {
+		return NewModuleForDependency(p)
+	}
 	return NewModule(p)
 }
 
 // cachedModule returns a Module for mod if it's in either the local Go mod
 // cache or apiviewgo cache. It returns errCachedModuleNotFound when the
 // module isn't in either cache.
-func cachedModule(mod module.Version) (*Module, error) {
+func cachedModule(mod module.Version, deferAliases bool) (*Module, error) {
 	if modCache := os.Getenv("GOMODCACHE"); modCache != "" {
 		d := filepath.Join(modCache, mustEscape(mod.Path)) + "@" + mod.Version
 		if _, err := os.Stat(filepath.Join(d, "go.mod")); err == nil {
+			if deferAliases {
+				return NewModuleForDependency(d)
+			}
 			return NewModule(d)
 		}
 	}

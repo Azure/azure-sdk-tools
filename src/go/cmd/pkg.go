@@ -296,7 +296,7 @@ func (pkg Pkg) translateType(oriVal string, imports map[string]string) string {
 	result := ""
 	for _, ch := range oriVal {
 		switch string(ch) {
-		case "*", "[", "]", " ", "(", ")", "{", "}", ",":
+		case "*", "[", "]", " ", "\t", "\r", "\n", ";", "(", ")", "{", "}", ",":
 			if now != "" {
 				result += pkg.addTypeNavigator(now, imports)
 				now = ""
@@ -395,7 +395,9 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 			t = a.Package.c.addInterface(*def.p, a.Name, a.Package.Name(), def.n, nil)
 		case *ast.StructType:
 			t = a.Package.c.addStruct(*def.p, a.Name, a.Package.Name(), def.n, nil)
-			a.hoistMethods(def)
+			if err := a.hoistMethods(def); err != nil {
+				return err
+			}
 			// ensure that all struct field types that are structs are also aliased from this package
 			for _, field := range n.Fields.List {
 				if def.p == a.Package {
@@ -428,7 +430,9 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 			}
 		case *ast.Ident:
 			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), n.Name, nil)
-			a.hoistMethods(def)
+			if err := a.hoistMethods(def); err != nil {
+				return err
+			}
 		case *ast.StarExpr:
 			if a.isAlias {
 				return fmt.Errorf("unsupported type %T for alias %s.%s", n, a.Package.Name(), a.Name)
@@ -448,7 +452,9 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 			simple := NewSimpleType(a.Name, a.Package.Name(), underlying)
 			a.Package.c.SimpleTypes[a.Name] = simple
 			t = simple
-			a.hoistMethods(def)
+			if err := a.hoistMethods(def); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("unsupported type %T for alias %s.%s", n, a.Package.Name(), a.Name)
 		}
@@ -456,6 +462,10 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 
 	if t != nil {
 		a.Package.c.setTypeAlias(a.Name, a.isAlias)
+		if a.isAlias && def.p != nil && def.p != a.Package &&
+			ast.IsExported(a.QualifiedName[strings.LastIndex(a.QualifiedName, ".")+1:]) {
+			a.Package.c.setTypeAliasTarget(a.Name, a.QualifiedName)
+		}
 		a.Package.diagnostics = append(a.Package.diagnostics, CodeDiagnostic{
 			Level:    level,
 			TargetID: t.ID(),
@@ -474,15 +484,15 @@ func (a *TypeAlias) cacheDefinition(def typeDef) {
 	a.Package.types[a.Name] = def
 }
 
-func (a *TypeAlias) hoistMethods(def typeDef) {
+func (a *TypeAlias) hoistMethods(def typeDef) error {
 	if !a.isAlias || !ast.IsExported(a.Name) {
-		return
+		return nil
 	}
 	pkg, name := def.p, def.n.Name.Name
 	if def.methodPackage != nil {
 		pkg, name = def.methodPackage, def.methodName
 	}
-	hoistMethodsForType(pkg, name, a.Package, a.Name)
+	return hoistMethodsForType(pkg, name, a.Package, a.Name)
 }
 
 // TODO: could be replaced by TokenMaker

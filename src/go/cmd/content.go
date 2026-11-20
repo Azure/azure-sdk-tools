@@ -287,6 +287,21 @@ func (c *content) setTypeAlias(name string, isAlias bool) {
 	}
 }
 
+func (c *content) setTypeAliasTarget(name, target string) {
+	if t, ok := c.SimpleTypes[name]; ok {
+		t.aliasTarget = target
+		c.SimpleTypes[name] = t
+	}
+	if t, ok := c.Interfaces[name]; ok {
+		t.aliasTarget = target
+		c.Interfaces[name] = t
+	}
+	if t, ok := c.Structs[name]; ok {
+		t.aliasTarget = target
+		c.Structs[name] = t
+	}
+}
+
 // adds the specified struct type to the exports list.
 func (c *content) parseInterface() []ReviewLine {
 	ls := []ReviewLine{}

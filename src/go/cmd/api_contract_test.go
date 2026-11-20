@@ -70,6 +70,10 @@ func TestAliasTypeIdentity(t *testing.T) {
 				defined := feedbackLineText(feedbackLine(t, review, "contract.Defined"))
 				require.Contains(t, alias, "typeAlias=")
 				require.NotContains(t, defined, "=")
+				if imported {
+					require.Contains(t, alias, "alias of example.com/contract/internal/types.Source")
+				}
+				alias = strings.ReplaceAll(alias, "/* alias of example.com/contract/internal/types.Source */", "")
 				require.Equal(t, strings.Replace(alias, "Alias=", "Defined", 1), defined)
 			}
 		})

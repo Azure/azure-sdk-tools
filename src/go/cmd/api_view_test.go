@@ -273,6 +273,9 @@ func (Entry) Valid() bool { return true }
 	typeText := func(line ReviewLine) string {
 		var b strings.Builder
 		for _, token := range line.Tokens {
+			if token.Kind == TokenKindComment {
+				continue
+			}
 			b.WriteString(token.Value)
 		}
 		return b.String()
@@ -331,6 +334,9 @@ func (Entry) Valid() bool { return true }
 	require.NoError(t, err)
 	require.Equal(t, "typeSlice=[]rune", typeText(findLine(t, changedReview, "aliastest.Slice")))
 	require.Equal(t, "typeMap=map[string]int64", typeText(findLine(t, changedReview, "aliastest.Map")))
+	require.True(t, searchTokens([]ReviewLine{findLine(t, changedReview, "aliastest.Slice")}, func(token ReviewToken) bool {
+		return token.Value == "/* alias of example.com/aliastest/internal/types.Data */"
+	}))
 }
 
 func TestAliasUnsupportedDefinition(t *testing.T) {
@@ -364,13 +370,13 @@ func TestAliasAdditionalDefinitions(t *testing.T) {
 			dir := aliasFeedbackFixture(t, "type Public = types.Data\n", "type Data "+test.original+"\n", nil)
 			review, err := createReview(dir)
 			require.NoError(t, err)
-			require.Equal(t, "typePublic="+test.originalType, feedbackLineText(feedbackLine(t, review, "aliastest.Public")))
+			require.Equal(t, "typePublic="+test.originalType, withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "aliastest.Public"))))
 
 			source := filepath.Join(dir, "internal", "types", "types.go")
 			require.NoError(t, os.WriteFile(source, []byte("package types\ntype Data "+test.changed+"\n"), 0644))
 			review, err = createReview(dir)
 			require.NoError(t, err)
-			require.Equal(t, "typePublic="+test.changedType, feedbackLineText(feedbackLine(t, review, "aliastest.Public")))
+			require.Equal(t, "typePublic="+test.changedType, withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "aliastest.Public"))))
 		})
 	}
 
@@ -458,7 +464,7 @@ func (d Data) Named() {}
 	review, err := createReview(dir)
 	require.NoError(t, err)
 	line := feedbackLine(t, review, "aliastest.Public")
-	require.Equal(t, "typePublic=[]byte", feedbackLineText(line))
+	require.Equal(t, "typePublic=[]byte", withoutAliasTarget(feedbackLineText(line)))
 	for _, method := range []string{"Named", "Unnamed"} {
 		feedbackMethod(t, line, "Public", method)
 		feedbackMethod(t, feedbackLine(t, review, "aliastest.PublicTwo"), "PublicTwo", method)
@@ -470,7 +476,7 @@ func (d Data) Named() {}
 		return strings.Contains(feedbackLineText(child), "Exposed)Named(")
 	}))
 	direct := feedbackLine(t, review, "aliastest.Direct")
-	require.Equal(t, "typeDirect[]byte", feedbackLineText(direct))
+	require.Equal(t, "typeDirect[]byte", withoutAliasTarget(feedbackLineText(direct)))
 	feedbackMethod(t, direct, "Direct", "Own")
 	require.False(t, searchLines(direct.Children, func(child ReviewLine) bool {
 		return strings.Contains(feedbackLineText(child), "Direct)Named(")
@@ -513,35 +519,34 @@ type Middle = Data
 type hidden = Middle
 type Renamed = (hidden)
 type Sibling = Data
-type DataExtra int
 func (Data) Len() int { return 0 }
 func (Middle) ViaMiddle() {}
 func (Sibling) ViaSibling() {}
 func (d (*Data)) Wrapped(v Data) Data { return v }
 func (d *(Data)) Nested() {}
-func (Data) Clone(v *Data, all []Data, lookup map[string][]*Renamed, foreign other.Data, extra DataExtra) (Renamed, *Data) {
+func (Data) Clone(v *Data, all []Data, lookup map[string][]*Renamed, foreign other.Data, extra other.DataExtra) (Renamed, *Data) {
 	return nil, nil
 }
 type Defined Data
 type DefinedAlias = Defined
-func (Defined) Own(other Data) Defined { return nil }
+func (Defined) Own(other other.Data) Defined { return nil }
 func (DefinedAlias) AliasOwn() {}
 `, map[string]string{
-		filepath.Join("other", "other.go"): "package other\ntype Data string\n",
+		filepath.Join("other", "other.go"): "package other\ntype Data string\ntype DataExtra int\n",
 	})
 	review, err := createReview(dir)
 	require.NoError(t, err)
 	for _, name := range []string{"Slice", "Another"} {
 		t.Run(name, func(t *testing.T) {
 			line := feedbackLine(t, review, "aliastest."+name)
-			require.Equal(t, "type"+name+"=[]byte", feedbackLineText(line))
+			require.Equal(t, "type"+name+"=[]byte", withoutAliasTarget(feedbackLineText(line)))
 			for _, method := range []string{"Len", "ViaMiddle", "ViaSibling", "Wrapped", "Nested"} {
 				feedbackMethod(t, line, name, method)
 			}
 			require.Contains(t, feedbackLineText(feedbackMethod(t, line, name, "Wrapped")), "func(*"+name+")Wrapped(v"+name+")"+name)
 			clone := feedbackMethod(t, line, name, "Clone")
 			require.Contains(t, feedbackLineText(clone), "foreignother.Data")
-			require.Contains(t, feedbackLineText(clone), "extraDataExtra")
+			require.Contains(t, feedbackLineText(clone), "extraother.DataExtra")
 			require.NotContains(t, feedbackLineText(clone), "Renamed")
 			selfReferences := 0
 			foreignReference := false
@@ -558,9 +563,9 @@ func (DefinedAlias) AliasOwn() {}
 		})
 	}
 	line := feedbackLine(t, review, "aliastest.Different")
-	require.Equal(t, "typeDifferent=[]byte", feedbackLineText(line))
+	require.Equal(t, "typeDifferent=[]byte", withoutAliasTarget(feedbackLineText(line)))
 	own := feedbackMethod(t, line, "Different", "Own")
-	require.Contains(t, feedbackLineText(own), "otherData")
+	require.Contains(t, feedbackLineText(own), "otherother.Data")
 	require.True(t, searchTokens([]ReviewLine{own}, func(token ReviewToken) bool {
 		return token.Value == "Different" && token.NavigateToID == "aliastest.Different"
 	}))
@@ -609,6 +614,13 @@ func feedbackLineText(line ReviewLine) string {
 		text.WriteString(token.Value)
 	}
 	return text.String()
+}
+
+func withoutAliasTarget(text string) string {
+	if i := strings.Index(text, "/* alias of "); i >= 0 {
+		return text[:i]
+	}
+	return text
 }
 
 func feedbackMethod(t *testing.T, line ReviewLine, receiver, name string) ReviewLine {

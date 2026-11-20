@@ -36,7 +36,7 @@ import "example.com/elsewhere"
 type External = elsewhere.Entry
 `, nil)
 	_, err := createReview(dir)
-	require.ErrorContains(t, err, "couldn't resolve internal type")
+	require.ErrorContains(t, err, "couldn't find package example.com/elsewhere")
 }
 
 func TestUnsupportedHiddenCompositeTypes(t *testing.T) {
@@ -57,6 +57,36 @@ func TestUnsupportedHiddenCompositeTypes(t *testing.T) {
 			dir := aliasFeedbackFixture(t, test.aliases, test.definitions, nil)
 			_, err := createReview(dir)
 			require.ErrorContains(t, err, test.expected)
+		})
+	}
+}
+
+func TestUnsupportedDirectCompositeAndGenericTypes(t *testing.T) {
+	for _, test := range []struct {
+		name, source, expected string
+	}{
+		{"hidden slice component", "type hidden struct{}\ntype Public []hidden\n", "hidden component type"},
+		{"generic instantiation alias", "type Box[T any] struct{}\ntype Public = Box[int]\n", "generic instantiation"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/contract\n\ngo 1.21\n"), 0644))
+			require.NoError(t, os.WriteFile(filepath.Join(dir, "types.go"), []byte("package contract\n"+test.source), 0644))
+			_, err := createReview(dir)
+			require.ErrorContains(t, err, test.expected)
+		})
+	}
+}
+
+func TestUnsupportedHiddenHoistedMethodTypes(t *testing.T) {
+	for _, test := range []struct{ name, method string }{
+		{"parameter", "func (Data) Method(value hidden) {}"},
+		{"result", "func (Data) Method() hidden { return hidden{} }"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			dir := aliasFeedbackFixture(t, "type Public = types.Data\n", "type Data []byte\ntype hidden struct{}\n"+test.method+"\n", nil)
+			_, err := createReview(dir)
+			require.ErrorContains(t, err, "hidden component type")
 		})
 	}
 }
@@ -97,6 +127,17 @@ type Data []model.Item
 	changed, err := createReview(dir)
 	require.NoError(t, err)
 	require.Contains(t, feedbackLineText(feedbackLine(t, changed, "aliastest.Public")), "example.com/aliastest/other.Item")
+}
+
+func TestCompositeTypeRejectsUnknownImportName(t *testing.T) {
+	dir := aliasFeedbackFixture(t, "type Public = types.Data\n", `
+import model "example.com/aliastest/model"
+type Data []missing.Item
+`, map[string]string{
+		filepath.Join("model", "model.go"): "package model\ntype Item struct{}\n",
+	})
+	_, err := createReview(dir)
+	require.ErrorContains(t, err, "unknown import name missing")
 }
 
 func TestPrivateReceiverAliasAndComments(t *testing.T) {

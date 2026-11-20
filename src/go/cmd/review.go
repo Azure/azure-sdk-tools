@@ -6,11 +6,13 @@ package cmd
 import (
 	"fmt"
 	"go/ast"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
 
+	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 )
 
@@ -19,7 +21,8 @@ type Review struct {
 	// modules maps module paths to Modules implicated in this API review. It
 	// contains only the reviewed module in most cases, however it contains
 	// more when the reviewed module exports types defined in another module.
-	modules map[string]*Module
+	modules         map[string]*Module
+	externalModules map[string]*Module
 	// name of the APIView review e.g. "sdk/azcore"
 	name string
 	// path on disk to the reviewed module
@@ -35,9 +38,10 @@ func NewReview(p string) (*Review, error) {
 		return nil, err
 	}
 	r := &Review{
-		modules: map[string]*Module{},
-		name:    getPackageNameFromModPath(m.ModFile.Module.Mod.Path),
-		path:    p,
+		modules:         map[string]*Module{},
+		externalModules: map[string]*Module{},
+		name:            getPackageNameFromModPath(m.ModFile.Module.Mod.Path),
+		path:            p,
 	}
 	err = r.AddModule(m)
 	return r, err
@@ -172,41 +176,12 @@ func (r *Review) Review() (CodeFile, error) {
 // resolveAliases resolves type aliases in the reviewed module that refer to types in other modules
 func (r *Review) resolveAliases() error {
 	for _, ta := range r.reviewed.ExternalAliases {
-		var (
-			err error
-			m   *Module
-			ok  bool
-		)
-		if m, ok = r.modules[ta.SourceMod.Path]; !ok {
-			m, err = r.externalModule(ta.SourceMod)
-			if err == nil {
-				err = r.AddModule(m)
-			}
-			if err != nil {
-				return err
-			}
+		def, terminal, err := r.resolveExternalType(ta.SourceMod, ta.QualifiedName, map[string]bool{})
+		if err != nil {
+			return fmt.Errorf("resolving alias %s.%s: %w", ta.Package.Name(), ta.Name, err)
 		}
-		def := typeDef{}
-		if m != nil {
-			dot := strings.LastIndex(ta.QualifiedName, ".")
-			if len(ta.QualifiedName)-2 < dot || dot < 1 {
-				// there must be at least one rune before and after the dot
-				panic(fmt.Sprintf("alias %q refers to an invalid qualified name %q", ta.Name, ta.QualifiedName))
-			}
-			impPath := ta.QualifiedName[:dot]
-			p, ok := m.Packages[impPath]
-			if !ok {
-				return fmt.Errorf("couldn't find definition for " + ta.Name)
-			}
-			sourceName := ta.QualifiedName[dot+1:]
-			d, found, err := recursiveFindTypeDef(sourceName, p, m.Packages)
-			if err != nil {
-				return fmt.Errorf("resolving alias %s.%s: %w", ta.Package.Name(), ta.Name, err)
-			}
-			if !found {
-				return fmt.Errorf("couldn't resolve type %s for %s.%s", ta.QualifiedName, ta.Package.Name(), ta.Name)
-			}
-			def = d
+		if terminal != "" {
+			ta.QualifiedName = terminal
 		}
 		err = ta.Resolve(def)
 		if err != nil {
@@ -216,27 +191,181 @@ func (r *Review) resolveAliases() error {
 	return r.resolveLocalTypes()
 }
 
-func (r *Review) externalModule(mod module.Version) (*Module, error) {
-	for _, replacement := range r.reviewed.ModFile.Replace {
-		if replacement.Old.Path != mod.Path || (replacement.Old.Version != "" && replacement.Old.Version != mod.Version) {
+func (r *Review) resolveExternalType(mod module.Version, qualifiedName string, seen map[string]bool) (typeDef, string, error) {
+	key := mod.Path + "@" + mod.Version + ":" + qualifiedName
+	if seen[key] {
+		return typeDef{}, "", fmt.Errorf("cyclic external type alias %s", qualifiedName)
+	}
+	seen[key] = true
+	defer delete(seen, key)
+	if mod.Path == r.reviewed.ModFile.Module.Mod.Path {
+		return r.resolveReviewedType(qualifiedName, seen)
+	}
+	m, err := r.externalModule(mod)
+	if err != nil {
+		return typeDef{}, "", err
+	}
+	importPath, typeName, ok := strings.Cut(qualifiedName, ".")
+	if !ok {
+		return typeDef{}, "", fmt.Errorf("invalid qualified type %q", qualifiedName)
+	}
+	// Import paths contain dots; split at the last dot separating package and type.
+	dot := strings.LastIndex(qualifiedName, ".")
+	importPath, typeName = qualifiedName[:dot], qualifiedName[dot+1:]
+	importPath = r.replacementImportPath(mod, m.ModFile.Module.Mod.Path, importPath)
+	modulePath := m.ModFile.Module.Mod.Path
+	if versionReg.MatchString(modulePath) {
+		importPath = strings.ReplaceAll(importPath, modulePath, path.Dir(modulePath))
+	}
+	p, ok := m.Packages[importPath]
+	if !ok {
+		return typeDef{}, "", fmt.Errorf("couldn't find package %s for %s", importPath, qualifiedName)
+	}
+	def, found, err := recursiveFindTypeDef(typeName, p, m.Packages)
+	if err != nil {
+		return typeDef{}, "", err
+	}
+	if found {
+		return def, "", nil
+	}
+	for _, alias := range p.TypeAliases {
+		if alias.Name != typeName {
 			continue
 		}
-		if replacement.New.Version != "" {
-			return GetExternalModule(replacement.New)
+		if alias.SourceMod == (module.Version{}) {
+			aliasImportPath := alias.QualifiedName[:strings.LastIndex(alias.QualifiedName, ".")]
+			modulePath := m.ModFile.Module.Mod.Path
+			if versionReg.MatchString(modulePath) {
+				modulePath = path.Dir(modulePath)
+			}
+			if strings.HasPrefix(aliasImportPath, modulePath+"/") {
+				return r.resolveModuleType(m, alias.QualifiedName, seen)
+			}
+			return typeDef{}, alias.QualifiedName, nil
 		}
-		dir := filepath.FromSlash(replacement.New.Path)
-		if !filepath.IsAbs(dir) {
-			dir = filepath.Join(r.path, dir)
-		}
-		return NewModule(dir)
+		return r.resolveExternalType(alias.SourceMod, alias.QualifiedName, seen)
 	}
-	return GetExternalModule(mod)
+	return typeDef{}, "", fmt.Errorf("couldn't resolve type %s", qualifiedName)
+}
+
+func (r *Review) resolveReviewedType(qualifiedName string, seen map[string]bool) (typeDef, string, error) {
+	return r.resolveModuleType(r.reviewed, qualifiedName, seen)
+}
+
+func (r *Review) resolveModuleType(m *Module, qualifiedName string, seen map[string]bool) (typeDef, string, error) {
+	key := "module:" + m.ModFile.Module.Mod.Path + ":" + qualifiedName
+	if seen[key] {
+		return typeDef{}, "", fmt.Errorf("cyclic module type alias %s", qualifiedName)
+	}
+	seen[key] = true
+	defer delete(seen, key)
+	dot := strings.LastIndex(qualifiedName, ".")
+	if dot < 1 {
+		return typeDef{}, "", fmt.Errorf("invalid qualified type %q", qualifiedName)
+	}
+	importPath, typeName := qualifiedName[:dot], qualifiedName[dot+1:]
+	if versionReg.MatchString(m.ModFile.Module.Mod.Path) {
+		importPath = strings.ReplaceAll(importPath, m.ModFile.Module.Mod.Path, path.Dir(m.ModFile.Module.Mod.Path))
+	}
+	p, ok := m.Packages[importPath]
+	if !ok {
+		return typeDef{}, "", fmt.Errorf("couldn't find package %s for %s", importPath, qualifiedName)
+	}
+	def, found, err := recursiveFindTypeDef(typeName, p, m.Packages)
+	if err != nil {
+		return typeDef{}, "", err
+	}
+	if found {
+		return def, "", nil
+	}
+	for _, alias := range p.TypeAliases {
+		if alias.Name != typeName {
+			continue
+		}
+		if alias.SourceMod != (module.Version{}) {
+			return r.resolveExternalType(alias.SourceMod, alias.QualifiedName, seen)
+		}
+		return r.resolveModuleType(m, alias.QualifiedName, seen)
+	}
+	return typeDef{}, "", fmt.Errorf("couldn't resolve internal type %s", qualifiedName)
+}
+
+func (r *Review) replacementImportPath(mod module.Version, resolvedModulePath, importPath string) string {
+	if replacement := r.findReplacement(mod); replacement != nil {
+		return strings.Replace(importPath, mod.Path, resolvedModulePath, 1)
+	}
+	return importPath
+}
+
+func (r *Review) externalModule(mod module.Version) (*Module, error) {
+	key := mod.Path + "@" + mod.Version
+	if m, ok := r.externalModules[key]; ok {
+		return m, nil
+	}
+	replacement := r.findReplacement(mod)
+	var m *Module
+	var err error
+	if replacement != nil {
+		if replacement.New.Version != "" {
+			m, err = GetExternalModuleForDependency(replacement.New)
+		} else {
+			dir := filepath.FromSlash(replacement.New.Path)
+			if !filepath.IsAbs(dir) {
+				dir = filepath.Join(r.path, dir)
+			}
+			m, err = NewModuleForDependency(dir)
+		}
+	} else {
+		m, err = GetExternalModuleForDependency(mod)
+	}
+	if err != nil {
+		return nil, err
+	}
+	r.externalModules[key] = m
+	return m, nil
+}
+
+func (r *Review) findReplacement(mod module.Version) *modfile.Replace {
+	var wildcard, exact *modfile.Replace
+	for _, replacement := range r.reviewed.ModFile.Replace {
+		if replacement.Old.Path != mod.Path {
+			continue
+		}
+		if replacement.Old.Version == mod.Version {
+			exact = replacement
+		} else if replacement.Old.Version == "" {
+			wildcard = replacement
+		}
+	}
+	if exact != nil {
+		return exact
+	}
+	return wildcard
 }
 
 func (r *Review) resolveLocalTypes() error {
 	for _, p := range r.reviewed.Packages {
 		if strings.Contains(p.relName, "/internal") {
 			continue
+		}
+		for name, def := range p.types {
+			if def.p != p || def.n == nil || def.n.Name.Name != name || !ast.IsExported(name) {
+				continue
+			}
+			typ := unparenType(def.n.Type)
+			if def.n.Assign.IsValid() {
+				if _, genericInstantiation := typ.(*ast.IndexExpr); !genericInstantiation {
+					if _, genericInstantiation = typ.(*ast.IndexListExpr); !genericInstantiation {
+						continue
+					}
+				}
+			}
+			switch typ.(type) {
+			case *ast.ArrayType, *ast.ChanType, *ast.FuncType, *ast.MapType, *ast.StarExpr, *ast.IndexExpr, *ast.IndexListExpr:
+				if err := validateCompositeType(def.n.Type, p, p, def.imports); err != nil {
+					return fmt.Errorf("unsupported composite type for %s.%s: %w", p.Name(), name, err)
+				}
+			}
 		}
 		names := []string{}
 		for name, def := range p.types {
@@ -286,7 +415,9 @@ func (r *Review) resolveLocalTypes() error {
 				}
 			} else if alias.isAlias {
 				// The public target already has a review line; only copy its method set.
-				alias.hoistMethods(def)
+				if err := alias.hoistMethods(def); err != nil {
+					return fmt.Errorf("resolving alias %s.%s: %w", p.Name(), name, err)
+				}
 			}
 		}
 		names = names[:0]
@@ -297,7 +428,9 @@ func (r *Review) resolveLocalTypes() error {
 		}
 		sort.Strings(names)
 		for _, name := range names {
-			hoistMethodsForType(p, name, p, name)
+			if err := hoistMethodsForType(p, name, p, name); err != nil {
+				return fmt.Errorf("resolving methods for %s.%s: %w", p.Name(), name, err)
+			}
 		}
 	}
 	return nil

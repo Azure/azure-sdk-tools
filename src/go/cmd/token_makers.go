@@ -134,6 +134,8 @@ func (d Declaration) Name() string {
 type Func struct {
 	ReceiverName string
 	ReceiverType string
+	rawType      *ast.FuncType
+	imports      map[string]string
 	// Returns lists the func's return types
 	Returns []string
 
@@ -180,7 +182,7 @@ func NewFuncForInterfaceMethod(pkg Pkg, interfaceName string, f *ast.Field, impo
 }
 
 func newFunc(pkg Pkg, f *ast.FuncType, imports map[string]string) Func {
-	fn := Func{}
+	fn := Func{rawType: f, imports: imports}
 	if f.TypeParams != nil {
 		fn.typeParamNames = make([]string, 0, len(f.TypeParams.List))
 		fn.typeParamConstraints = make([]string, 0, len(f.TypeParams.List))
@@ -449,6 +451,7 @@ type Interface struct {
 	name               string
 	isAlias            bool
 	typeParams         []string
+	aliasTarget        string
 }
 
 func NewInterface(source Pkg, name, packageName string, ts *ast.TypeSpec, imports map[string]string) Interface {
@@ -515,6 +518,9 @@ func (i Interface) MakeReviewLine() ReviewLine {
 		interfaceLine.Tokens = append(interfaceLine.Tokens, aliasToken())
 	}
 	interfaceLine.Tokens = append(interfaceLine.Tokens, ReviewToken{Kind: TokenKindKeyword, Value: "interface"})
+	if i.aliasTarget != "" {
+		interfaceLine.Tokens = append(interfaceLine.Tokens, aliasTargetToken(i.aliasTarget))
+	}
 
 	for _, name := range i.embeddedInterfaces {
 		if exportedFieldRgx.MatchString(name) {
@@ -557,6 +563,7 @@ type SimpleType struct {
 	name           string
 	underlyingType string
 	isAlias        bool
+	aliasTarget    string
 }
 
 func NewSimpleType(name, packageName, underlyingType string) SimpleType {
@@ -589,6 +596,9 @@ func (s SimpleType) MakeTokens() []ReviewToken {
 		tks = append(tks, aliasToken())
 	}
 	tks = append(tks, parseAndMakeTypeTokens(s.underlyingType)...)
+	if s.aliasTarget != "" {
+		tks = append(tks, aliasTargetToken(s.aliasTarget))
+	}
 	return tks
 }
 
@@ -605,9 +615,10 @@ type Struct struct {
 	id     string
 	name   string
 	// typeParams lists the func's type parameters as strings of the form "name constraint"
-	typeParams []string
-	pkgName    string
-	isAlias    bool
+	typeParams  []string
+	pkgName     string
+	isAlias     bool
+	aliasTarget string
 }
 
 func (s Struct) MakeReviewLine() ReviewLine {
@@ -697,6 +708,10 @@ func aliasToken() ReviewToken {
 	return ReviewToken{Kind: TokenKindPunctuation, Value: "=", HasSuffixSpace: true}
 }
 
+func aliasTargetToken(target string) ReviewToken {
+	return ReviewToken{Kind: TokenKindComment, Value: "/* alias of " + target + " */", HasPrefixSpace: true}
+}
+
 func (s Struct) Exported() bool {
 	return unicode.IsUpper(rune(s.name[0]))
 }
@@ -734,6 +749,9 @@ func (s Struct) MakeTokens() []ReviewToken {
 		Kind:           TokenKindKeyword,
 		Value:          "struct",
 	})
+	if s.aliasTarget != "" {
+		rts = append(rts, aliasTargetToken(s.aliasTarget))
+	}
 	return rts
 }
 

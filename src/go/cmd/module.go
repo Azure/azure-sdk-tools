@@ -63,6 +63,14 @@ func getPackageNameFromModPath(modPath string) string {
 
 // NewModule indexes a module's ASTs
 func NewModule(dir string) (*Module, error) {
+	return newModule(dir, false)
+}
+
+func NewModuleForDependency(dir string) (*Module, error) {
+	return newModule(dir, true)
+}
+
+func newModule(dir string, deferAliases bool) (*Module, error) {
 	fmt.Println("Indexing", dir)
 	mf, err := parseModFile(dir)
 	if err != nil {
@@ -154,6 +162,13 @@ func NewModule(dir string) (*Module, error) {
 	for _, p := range m.Packages {
 		for _, alias := range p.TypeAliases {
 			def, found, err := recursiveFindTypeDef(alias.Name, p, m.Packages)
+			alias.SourceMod = sourceModuleForAlias(alias.QualifiedName, m.ModFile.Require)
+			if deferAliases {
+				if alias.SourceMod != (module.Version{}) {
+					m.ExternalAliases = append(m.ExternalAliases, alias)
+				}
+				continue
+			}
 			if strings.Contains(p.relName, "/internal") {
 				if err == nil && found {
 					alias.cacheDefinition(def)
@@ -171,19 +186,15 @@ func NewModule(dir string) (*Module, error) {
 			}
 			// The definition is in another module. Add the alias to
 			// ExternalAliases so the caller can find the definition later.
-			for _, req := range m.ModFile.Require {
-				if strings.HasPrefix(alias.QualifiedName, req.Mod.Path) {
-					alias.SourceMod = req.Mod
-					break
-				}
-			}
 			if alias.SourceMod == (module.Version{}) {
 				dot := strings.LastIndex(alias.QualifiedName, ".")
 				if dot > 0 {
 					importPath := alias.QualifiedName[:dot]
 					if strings.HasPrefix(importPath, p.unversionedModulePath()+"/") &&
 						(strings.HasSuffix(importPath, "/internal") || strings.Contains(importPath, "/internal/")) {
-						return nil, fmt.Errorf("couldn't resolve internal type %s for %s.%s", alias.QualifiedName, p.Name(), alias.Name)
+						alias.SourceMod = module.Version{Path: m.ModFile.Module.Mod.Path}
+						m.ExternalAliases = append(m.ExternalAliases, alias)
+						continue
 					}
 				}
 				// The exporting module doesn't require the source module, so this must be a standard library type.
@@ -198,6 +209,17 @@ func NewModule(dir string) (*Module, error) {
 		}
 	}
 	return &m, nil
+}
+
+func sourceModuleForAlias(qualifiedName string, requirements []*modfile.Require) module.Version {
+	var best module.Version
+	for _, requirement := range requirements {
+		if (qualifiedName == requirement.Mod.Path || strings.HasPrefix(qualifiedName, requirement.Mod.Path+".")) &&
+			len(requirement.Mod.Path) > len(best.Path) {
+			best = requirement.Mod
+		}
+	}
+	return best
 }
 
 // returns the type name for the specified struct field.
@@ -239,8 +261,11 @@ func unwrapStructFieldTypeName(field *ast.Field) string {
 	return ident.Name
 }
 
-func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg, aliasName string) {
+func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg, aliasName string) error {
 	names := pkg.methodReceiverNames(typeName)
+	if pkg == target && typeName == aliasName && len(names) == 1 {
+		return nil
+	}
 	receivers := make(map[string]bool, len(names))
 	for _, name := range names {
 		receivers[name] = true
@@ -253,6 +278,9 @@ func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg, aliasName strin
 	for _, fn := range pkg.c.Funcs {
 		receiver := fn.receiverTypeName()
 		if receivers[receiver] && ast.IsExported(fn.Name()) {
+			if err := validateCompositeType(fn.rawType, pkg, target, fn.imports); err != nil {
+				return fmt.Errorf("unsupported method signature %s.%s: %w", receiver, fn.Name(), err)
+			}
 			if pkg == target && receiver == aliasName {
 				continue
 			}
@@ -263,6 +291,7 @@ func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg, aliasName strin
 		alias := method.fn.ForAlias(pkg.Name(), target.Name(), method.receiver, aliasName, names)
 		target.c.Funcs[alias.signature()] = alias
 	}
+	return nil
 }
 
 func (p *Pkg) methodReceiverNames(typeName string) []string {

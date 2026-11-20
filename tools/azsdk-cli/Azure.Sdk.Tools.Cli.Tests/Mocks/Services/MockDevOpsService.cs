@@ -150,15 +150,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 return Task.FromResult(ConfiguredReleasePlanForSpecPrUrl);
             }
 
-            var releasePlan = new ReleasePlanWorkItem
-            {
-                WorkItemId = 0, // Release plan does not exists
-                ReleasePlanId = 1,
-                Title = "Mock Release Plan",
-                Description = "This is a mock release plan for testing purposes.",
-                SpecPullRequests = new List<string> { pullRequestUrl },
-            };
-            return Task.FromResult(releasePlan);
+            return Task.FromResult<ReleasePlanWorkItem>(null!);
         }
 
         Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan, CancellationToken ct)

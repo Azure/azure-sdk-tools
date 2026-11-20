@@ -145,8 +145,10 @@ When testing is enabled, release plans will be automatically generated in the te
 ### Version-safe release-plan lookup and creation
 
 `release-plan get --typespec-path <project> --api-version <version> --api-release-type <type>`
-searches for the same concrete API version and release type in `In Progress` or `Finished`
-status. JSON/MCP output reports `outcome: "existing"` when a plan is found and
+searches for the same API version and release type in `In Progress` or `Finished`
+status. Concrete versions match exactly. An explicitly empty version or either
+multi-version alias (`all`, `multiple-versions`) selects the unversioned flow.
+JSON/MCP output reports `outcome: "existing"` when a plan is found and
 `outcome: "not_found"` when no plan matches. The existing no-match exit code of 1 is preserved.
 If an API Spec child cannot be read, version-specific lookup fails instead of
 reporting `not_found`. Creation uses the same lookup and stops before writing a
@@ -158,12 +160,21 @@ another concrete version does not prevent creation. The optional `--expected-api
 (`expectedApiVersion` in MCP) checks the metadata before any plan is selected or written;
 it is an assertion, not a metadata override.
 
-Metadata containing `all`, `multiple-versions`, or differing versions requires manual
-version selection. The CLI does not create a blank-version plan for those values.
-Select the intended version and create or link a plan in
-[Release Planner](https://aka.ms/azsdk/releaseplan-dashboard).
-Existing manual URL-based and unversioned private-preview flows remain supported;
-automatic pipelines should use concrete metadata and the expected-version check.
+Metadata containing `all`, `multiple-versions`, differing versions, or no version
+uses an empty API version. This supports umbrella SDK projects such as Compute,
+Network, and Security without a project allowlist. The CLI first searches by
+project path and release type for an empty-version plan, including finished plans.
+If none exists, it can reuse an applicable empty-version plan linked to the PR.
+If no reusable plan exists, it creates one with an empty `Custom.APISpecversion`.
+An existing match is returned rather than creating another plan of that type.
+If only a concrete-version plan of the same type exists, the unversioned request
+reports that plan as a conflict instead of creating another plan or treating its version as empty.
+
+The expected-version assertion normalizes aliases to empty on both sides, so
+`--expected-api-version all` and `--expected-api-version ""` can validate a
+multi-version project. An empty version is never a wildcard for concrete-version
+requests, and a conflicting PR-linked plan produces an error instead of being
+silently reused. Failures to read API Spec details stop lookup and creation.
 
 ### Manual release-plan abandonment
 

@@ -455,7 +455,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         }
 
         private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(
-            WorkItem workItem, CancellationToken ct, bool requireSpecDetails = false, bool throwOnSpecReadFailure = false)
+            WorkItem workItem, CancellationToken ct, bool requireSpecDetails = false, bool throwOnSpecReadFailure = false,
+            WorkItem? apiSpecWorkItem = null)
         {
             var releasePlan = new ReleasePlanWorkItem()
             {
@@ -529,7 +530,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Get details from API spec work item
             try
             {
-                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
+                apiSpecWorkItem ??= await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
                 if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
                 {
                     releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
@@ -624,7 +625,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                                     continue;
                                 }
                             }
-                            var mappedPlan = await MapWorkItemToReleasePlanAsync(parentWorkItem, ct);
+                            var mappedPlan = await MapWorkItemToReleasePlanAsync(parentWorkItem, ct,
+                                throwOnSpecReadFailure: true, apiSpecWorkItem: workItem);
                             if (apiReleaseType != ApiReleaseType.Unknown && mappedPlan.ApiReleaseType != apiReleaseType)
                             {
                                 logger.LogInformation("Skipping release plan work item {WorkItemId} because API release type {Actual} does not match requested {Requested}", parentWorkItemId, mappedPlan.ApiReleaseType, apiReleaseType);
@@ -2409,9 +2411,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             try
             {
-                if (string.IsNullOrEmpty(typeSpecProjectPath) || string.IsNullOrEmpty(apiVersion) || apiReleaseType == ApiReleaseType.Unknown)
+                if (string.IsNullOrEmpty(typeSpecProjectPath) || apiVersion == null || apiReleaseType == ApiReleaseType.Unknown)
                 {
-                    logger.LogWarning("TypeSpec project path or API version is empty, or API release type is unknown. Skipping search for existing release plan.");
+                    logger.LogWarning("TypeSpec project path is empty, API version is null, or API release type is unknown. Skipping search for existing release plan.");
                     return null;
                 }
 
@@ -2438,6 +2440,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}", 
                     releasePlanWorkItems.Count, typeSpecProjectPath, apiVersion);
 
+                ReleasePlanWorkItem? conflictingVersionedPlan = null;
                 // Loop through all release plans to find one with matching API version
                 foreach (var workItem in releasePlanWorkItems)
                 {
@@ -2445,8 +2448,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct, throwOnSpecReadFailure: true);
 
                     // Verify mapped values as well as the WIQL filters before returning a match.
-                    if (!string.IsNullOrEmpty(releasePlan.SpecAPIVersion)
-                        && releasePlan.SpecAPIVersion.Equals(apiVersion, StringComparison.OrdinalIgnoreCase)
+                    if (releasePlan.SpecAPIVersion.Equals(apiVersion, StringComparison.OrdinalIgnoreCase)
                         && releasePlan.ApiReleaseType == apiReleaseType
                         && (releasePlan.Status.Equals(ReleasePlanInProgressState, StringComparison.OrdinalIgnoreCase)
                             || releasePlan.Status.Equals(ReleasePlanFinishedState, StringComparison.OrdinalIgnoreCase)))
@@ -2455,8 +2457,20 @@ namespace Azure.Sdk.Tools.Cli.Services
                             releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, apiVersion, apiReleaseType);
                         return releasePlan;
                     }
+                    if (apiVersion.Length == 0 &&
+                        releasePlan.ApiReleaseType == apiReleaseType &&
+                        (releasePlan.Status.Equals(ReleasePlanInProgressState, StringComparison.OrdinalIgnoreCase) ||
+                         releasePlan.Status.Equals(ReleasePlanFinishedState, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        conflictingVersionedPlan ??= releasePlan;
+                    }
                 }
 
+                if (conflictingVersionedPlan != null)
+                {
+                    throw new InvalidOperationException(
+                        $"Release plan {conflictingVersionedPlan.ReleasePlanId} already exists for this project and release type with API version '{conflictingVersionedPlan.SpecAPIVersion}'. No additional unversioned plan can be created.");
+                }
                 logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath} with matching API version: {apiVersion} and API release type: {apiReleaseType}", typeSpecProjectPath, apiVersion, apiReleaseType);
                 return null;
             }

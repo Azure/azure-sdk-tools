@@ -322,6 +322,9 @@ func (p *Pkg) indexFile(f *ast.File) error {
 				txt := p.getText(x.Pos(), x.End())
 				fmt.Printf("unhandled node type %T: %s\n", t, txt)
 			}
+			if x.TypeParams != nil {
+				p.c.setTypeParameters(x.Name.Name, typeParameters(*p, x, imports))
+			}
 			p.c.setTypeAlias(x.Name.Name, x.Assign.IsValid())
 		}
 		return true
@@ -621,6 +624,12 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	}
 	// Index() may have recorded the alias as a SimpleType we're about to replace with something more
 	// detailed, so we remove that SimpleType to avoid displaying it as a duplicate type in the review
+	var typeParams []string
+	if simple, ok := a.Package.c.SimpleTypes[a.Name]; ok {
+		typeParams = simple.typeParams
+	} else if a.definition.n != nil && a.definition.n.TypeParams != nil {
+		typeParams = typeParameters(*a.Package, a.definition.n, a.definition.imports)
+	}
 	delete(a.Package.c.SimpleTypes, a.Name)
 	var t TokenMaker
 	if def.n == nil || def.p == nil {
@@ -711,6 +720,9 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	}
 
 	if t != nil {
+		if len(typeParams) > 0 {
+			a.Package.c.setTypeParameters(a.Name, typeParams)
+		}
 		a.Package.c.setTypeAlias(a.Name, a.isAlias)
 		if a.isAlias && def.p != nil && def.p != a.Package &&
 			ast.IsExported(a.QualifiedName[strings.LastIndex(a.QualifiedName, ".")+1:]) {

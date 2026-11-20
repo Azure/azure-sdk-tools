@@ -730,6 +730,7 @@ type SimpleType struct {
 	id             string
 	name           string
 	underlyingType string
+	typeParams     []string
 	isAlias        bool
 	aliasTarget    string
 }
@@ -759,6 +760,12 @@ func (s SimpleType) MakeTokens() []ReviewToken {
 			NavigationDisplayName: s.id,
 			Value:                 s.name,
 		},
+	}
+	if len(s.typeParams) > 0 {
+		tks[len(tks)-1].HasSuffixSpace = false
+		tks = append(tks, ReviewToken{Kind: TokenKindPunctuation, Value: "["})
+		tks = append(tks, parseAndMakeTypeTokens(strings.Join(s.typeParams, ", "))...)
+		tks = append(tks, ReviewToken{Kind: TokenKindPunctuation, Value: "]", HasSuffixSpace: true})
 	}
 	if s.isAlias {
 		tks = append(tks, aliasToken())

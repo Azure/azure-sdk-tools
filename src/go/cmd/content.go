@@ -287,6 +287,21 @@ func (c *content) setTypeAlias(name string, isAlias bool) {
 	}
 }
 
+func (c *content) setTypeParameters(name string, typeParams []string) {
+	if t, ok := c.SimpleTypes[name]; ok {
+		t.typeParams = typeParams
+		c.SimpleTypes[name] = t
+	}
+	if t, ok := c.Interfaces[name]; ok {
+		t.typeParams = typeParams
+		c.Interfaces[name] = t
+	}
+	if t, ok := c.Structs[name]; ok {
+		t.typeParams = typeParams
+		c.Structs[name] = t
+	}
+}
+
 func (c *content) setTypeAliasTarget(name, target string) {
 	if t, ok := c.SimpleTypes[name]; ok {
 		t.aliasTarget = target

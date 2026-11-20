@@ -26,6 +26,51 @@ func TestInterfaceTypeParameters(t *testing.T) {
 	}
 }
 
+func TestSimpleTypeParameters(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/contract\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "constraints"), 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "constraints", "constraints.go"), []byte("package constraints\ntype Constraint interface { ~int }\n"), 0644))
+	for _, constraint := range []string{"any", "comparable"} {
+		source := `package contract
+import (
+	"example.com/contract/constraints"
+	"time"
+)
+type Responder[T ` + constraint + `] func(T)
+type Vector[T any] []T
+type Cache[K comparable, V any] map[K]V
+type Table[K, V comparable] map[K]V
+type Constrained[T constraints.Constraint] func(T)
+type hidden int
+type Named[T any] hidden
+type hiddenStruct struct{}
+type Container[T any] hiddenStruct
+type Duration[T any] time.Duration
+type Plain int
+`
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "types.go"), []byte(source), 0644))
+		review, err := createReview(dir)
+		require.NoError(t, err)
+		for name, expected := range map[string]string{
+			"Responder": "typeResponder[T" + constraint + "]func(T)",
+			"Vector":    "typeVector[Tany][]T",
+			"Cache":     "typeCache[Kcomparable,Vany]map[K]V",
+			"Table":     "typeTable[Kcomparable,Vcomparable]map[K]V",
+			"Named":     "typeNamed[Tany]int",
+			"Container": "typeContainer[T any]struct",
+			"Duration":  "typeDuration[Tany]time.Duration",
+			"Plain":     "typePlainint",
+		} {
+			require.Equal(t, expected, feedbackLineText(feedbackLine(t, review, "contract."+name)), name)
+		}
+		line := feedbackLine(t, review, "contract.Constrained")
+		require.True(t, searchTokens([]ReviewLine{line}, func(token ReviewToken) bool {
+			return token.NavigateToID == "contract/constraints.Constraint"
+		}), "constraint should link to its declaration")
+	}
+}
+
 func TestExportedFunctionNames(t *testing.T) {
 	dir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/contract\n\ngo 1.21\n"), 0644))

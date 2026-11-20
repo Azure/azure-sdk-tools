@@ -583,17 +583,6 @@ public class ServiceApiReadinessServiceTests
         Assert.That(locations.GroupBy(request => request.Uri).All(group => group.Count() == 1), Is.True);
     }
 
-    [Test]
-    public async Task PackageDiscoveryHasABoundedDirectoryBudget()
-    {
-        _changedFiles.Clear();
-        _changedFiles.Add($"{Package}/{string.Join('/', Enumerable.Repeat("nested", 129))}/Generated.cs");
-        var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
-        Assert.That(_requests.Count(request => request.Uri.AbsolutePath.EndsWith("/tsp-location.yaml", StringComparison.Ordinal)), Is.EqualTo(128));
-        Assert.That(ArmRequests(), Is.Empty);
-    }
-
     [TestCase("CHANGELOG.md")]
     [TestCase("eng/scripts/check.ps1")]
     [TestCase("sdk/test/example/source.cs")]
@@ -716,19 +705,6 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(response.Projects.Count, Is.EqualTo(1));
         Assert.That(response.Projects.Single().Package.MetadataFiles, Has.Length.EqualTo(3).And.Contains(other));
-    }
-
-    [Test]
-    public async Task JavaMetadataDiscoveryIsBounded()
-    {
-        for (var index = 0; index < 33; index++)
-        {
-            SetFile(_repository, Head, $"{Package}/src/main/resources/META-INF/extra{index}_metadata.json", "{}");
-        }
-        var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
-        Assert.That(response.Detail, Does.Contain("32-file evidence limit"));
-        Assert.That(ArmRequests(), Is.Empty);
     }
 
     [Test]
@@ -1224,24 +1200,6 @@ public class ServiceApiReadinessServiceTests
         var response = await CheckAsync();
         Assert.That(response.ReadinessStatus, Is.EqualTo(configuredOutputExists ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.Inconclusive));
         Assert.That(_requests.Any(request => request.Uri.AbsolutePath.Contains("/data-plane/", StringComparison.Ordinal)), Is.False);
-    }
-
-    [TestCase(32)]
-    [TestCase(33)]
-    public async Task WildcardDiscoveryBoundsConcreteSwaggerSuffix(int count)
-    {
-        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
-        SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", Config("{service-name}/{version-status}/{version}/example.json"));
-        _directories[Key(SpecRepository, SpecCommit, SwaggerDirectory)] = JsonSerializer.SerializeToNode(
-            Enumerable.Range(0, count).Select(index => new { name = $"service{index}", type = "dir" }))!.AsArray();
-        var swagger = _files[Key(SpecRepository, SpecCommit, $"{SwaggerDirectory}/stable/{Version}/example.json")];
-        for (var index = 0; index < count; index++)
-        {
-            SetFile(SpecRepository, SpecCommit, $"{SwaggerDirectory}/service{index}/stable/{Version}/example.json", swagger);
-        }
-        var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(count == 32 ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.Error));
-        Assert.That(_requests.Count(request => request.Uri.AbsolutePath.EndsWith("/example.json", StringComparison.Ordinal)), Is.LessThanOrEqualTo(32));
     }
 
     [TestCase(2 * 1024 * 1024)]

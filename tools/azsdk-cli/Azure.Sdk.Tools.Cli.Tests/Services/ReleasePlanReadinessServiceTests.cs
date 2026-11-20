@@ -568,6 +568,7 @@ public class ReleasePlanReadinessServiceTests
             });
         Assert.That((await Check(true)).ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(writes, Is.EqualTo(2));
+        _ado.Verify(service => service.GetReleasePlanReadinessAsync(It.IsAny<string>(), "Java", It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
     [Test]
@@ -634,14 +635,24 @@ public class ReleasePlanReadinessServiceTests
 
     [TestCase(262145)]
     [TestCase(1000001)]
-    public async Task OversizedMultilineEvidenceIsNotReused(int length)
+    public async Task AdoPayloadRejectionPreservesTheCompletedReadinessResult(int length)
     {
-        _plan.Fields[Field] = new string('x', length);
+        _plan.Fields[Field] = "";
+        var fresh = Result(true);
+        fresh.Projects.Single().Matches = [new() { ResourceType = new string('x', length) }];
+        _readiness.Setup(service => service.ValidateAsync(It.IsAny<ServiceApiReadinessResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(fresh);
+        _ado.Setup(service => service.UpdateWorkItemAsync(123, It.IsAny<Dictionary<string, string>>(), 5, It.IsAny<CancellationToken>()))
+            .Callback<int, Dictionary<string, string>, int, CancellationToken>((id, fields, revision, ct) =>
+                Assert.That(fields[Field].Length, Is.GreaterThan(length)))
+            .ThrowsAsync(new InvalidOperationException("ADO rejected the payload size"));
 
-        var result = await Check(false);
+        var result = await Check(true);
 
-        Assert.That(result.Detail, Does.Not.Contain("Reused"));
-        _readiness.Verify(service => service.ValidateAsync(result, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.That(result, Is.SameAs(fresh));
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(result.Detail, Does.Contain("optional release-plan update failed"));
+        _ado.Verify(service => service.UpdateWorkItemAsync(123, It.IsAny<Dictionary<string, string>>(), 5, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]

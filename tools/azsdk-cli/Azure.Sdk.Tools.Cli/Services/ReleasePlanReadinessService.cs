@@ -13,9 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceApiReadinessService readiness,
     TimeProvider? timeProvider = null)
 {
-    private const int MaxObservations = 128;
-    private const int MaxJsonLength = 262144;
-    private const int MaxHtmlLength = 1000000;
     private static readonly TimeSpan NonPassedLifetime = TimeSpan.FromHours(24);
     private static readonly TimeSpan AdoTimestampPrecision = TimeSpan.FromMilliseconds(3);
     private readonly TimeProvider _clock = timeProvider ?? TimeProvider.System;
@@ -129,15 +126,7 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         {
             return [];
         }
-        if (html.Length > MaxHtmlLength)
-        {
-            throw new InvalidOperationException("Readiness metadata is too large.");
-        }
         var text = WebUtility.HtmlDecode(html);
-        if (text.Length > MaxJsonLength)
-        {
-            throw new InvalidOperationException("Readiness metadata is too large.");
-        }
         var document = JsonNode.Parse(text) as JsonObject;
         if (document?["schemaVersion"]?.GetValue<int>() is 1 or 2 or 3)
         {
@@ -146,10 +135,6 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         if (document?["schemaVersion"]?.GetValue<int>() != 4 || document["results"] is not JsonArray results)
         {
             throw new InvalidOperationException("Unsupported readiness metadata.");
-        }
-        if (results.Count > MaxObservations)
-        {
-            throw new InvalidOperationException("Readiness metadata is full.");
         }
         var observations = results.Deserialize<Observation[]>() ?? [];
         if (observations.Any(item => string.IsNullOrWhiteSpace(item.ResourceProvider) ||
@@ -272,9 +257,9 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
     private async Task RecordAsync(ReleasePlanWorkItem plan, ApiSpecWorkItem specification, ServiceApiReadinessResponse result, string environment,
         string url, string language, CancellationToken ct)
     {
+        var snapshot = await devOps.GetReleasePlanReadinessAsync(url, language, ct);
         for (var attempt = 0; attempt < 2; attempt++)
         {
-            var snapshot = await devOps.GetReleasePlanReadinessAsync(url, language, ct);
             if (!snapshot.HasValue)
             {
                 return;
@@ -316,17 +301,9 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
                     observations[index] = addition;
                 }
             }
-            if (observations.Count > MaxObservations)
-            {
-                throw new InvalidOperationException("Readiness metadata is full.");
-            }
             var document = new JsonObject { ["schemaVersion"] = 4, ["results"] = JsonSerializer.SerializeToNode(observations) };
             var json = document.ToJsonString();
             var html = WebUtility.HtmlEncode(json);
-            if (json.Length > MaxJsonLength || html.Length > MaxHtmlLength)
-            {
-                throw new InvalidOperationException("Readiness metadata is too large.");
-            }
             var summary = GetEvidenceSummary(result.Projects.Select(project => observations.Single(item =>
                 item.ResourceProvider.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) &&
                 item.ValidationEnvironment == environment)));
@@ -348,6 +325,7 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
                 {
                     throw;
                 }
+                snapshot = latest;
             }
         }
     }

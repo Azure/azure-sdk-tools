@@ -10,8 +10,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 // Map checked-in spec files at the recorded commit without compiling TypeSpec.
 public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
 {
-    private const int MaxSwaggerFiles = 32;
-    private const int MaxSwaggerDirectories = 64;
     private const int MaxDirectoryEntries = 1000;
     private const string ConfigurationSuffix = "/tspconfig.yaml";
 
@@ -86,16 +84,11 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
     {
         var parts = pattern.Split('/');
         var files = new List<string>();
-        var visited = 0;
         await DiscoverAsync(0, "");
         return files;
 
         async Task DiscoverAsync(int index, string directory)
         {
-            if (++visited > MaxSwaggerDirectories || files.Count >= MaxSwaggerFiles)
-            {
-                throw new InvalidOperationException("Swagger discovery exceeded the per-project evidence limit.");
-            }
             var wildcard = Array.FindIndex(parts, index, part => part.Contains('*'));
             if (wildcard < 0)
             {
@@ -126,10 +119,6 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
                 if (wildcard == parts.Length - 1 && Text(entry?["type"]) == "file")
                 {
                     files.Add(path);
-                    if (files.Count > MaxSwaggerFiles)
-                    {
-                        throw new InvalidOperationException("Too many Swagger files for one project check.");
-                    }
                 }
                 else if (Text(entry?["type"]) == "dir")
                 {

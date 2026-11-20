@@ -2582,7 +2582,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             if (wi.Id == null)
             {
                 logger.LogError("Work item ID is null.");
-                throw new($"Work item ID is null");
+                throw new ($"Work item ID is null");
             }
 
             var result = new ProductOnboardingWorkItem
@@ -2641,7 +2641,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (workItems.Count > 1)
                 {
                     logger.LogError("Found multiple work items matching criteria.");
-                    throw new($"Found multiple work items matching criteria. Query: '{query}'");
+                    throw new ($"Found multiple work items matching criteria. Query: '{query}'");
                 }
                 return ToProductOnboardingWorkItem(workItems[0]);
             }

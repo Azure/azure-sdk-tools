@@ -13,17 +13,10 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
     internal const string UnknownPlane = "unknown";
     private sealed record ChangedPackages(HashSet<string> Packages, HashSet<string> KnownAtHead, List<string> Issues);
 
-    private const int MaxMetadataFiles = 32;
     private const int MaxDirectoryEntries = 1000;
-    private const int MaxPackageDirectories = 128;
     private const string GenerationLocationFile = "tsp-location.yaml";
     private readonly Dictionary<(string Repository, string Commit, string Directory), Task<string?>> _generationLocations = [];
     internal readonly record struct SdkSnapshot(string Repository, string HeadSha, SdkLanguage Language, string BaseRepository, string BaseSha, PackageInfo? LocalPackage = null);
-    internal sealed class PackageDiscoveryResult(IReadOnlyList<PackageInfo> packages, IReadOnlyList<string> issues)
-    {
-        public IReadOnlyList<PackageInfo> Packages { get; } = packages;
-        public IReadOnlyList<string> Issues { get; } = issues;
-    }
 
     public async Task<PackageInfo> ReadLocalGenerationEvidenceAsync(PackageInfo package, CancellationToken ct = default)
     {
@@ -39,13 +32,13 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         return await PopulateGenerationMetadataAsync(package, sdk, ct);
     }
 
-    internal async Task<PackageDiscoveryResult> DiscoverPackagesAsync(
+    internal async Task<(IReadOnlyList<PackageInfo> Packages, IReadOnlyList<string> Issues)> DiscoverPackagesAsync(
         string prPath, SdkSnapshot sdk, CancellationToken ct)
     {
         var changedPackages = await GetChangedPackagesAsync(prPath, sdk, ct);
         if (changedPackages is null)
         {
-            return new([], ["The changed-file listing reached GitHub's 3000-file limit; package discovery is incomplete."]);
+            return ([], ["The changed-file listing reached GitHub's 3000-file limit; package discovery is incomplete."]);
         }
         var packages = new List<PackageInfo>();
         foreach (var packagePath in changedPackages.Packages.Order(StringComparer.Ordinal))
@@ -63,7 +56,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             }
             packages.Add(package);
         }
-        return new(packages, changedPackages.Issues);
+        return (packages, changedPackages.Issues);
     }
 
     internal async Task<PackageInfo> PopulateGenerationMetadataAsync(PackageInfo package, SdkSnapshot sdk, CancellationToken ct)
@@ -154,14 +147,9 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         {
             var localDirectory = Path.Combine(sdk.LocalPackage.PackagePath, location.Directory);
             var localPaths = Directory.Exists(localDirectory)
-                ? Directory.EnumerateFiles(localDirectory, location.Pattern, SearchOption.TopDirectoryOnly).Take(MaxMetadataFiles + 1)
+                ? Directory.EnumerateFiles(localDirectory, location.Pattern, SearchOption.TopDirectoryOnly)
                     .Order(StringComparer.Ordinal).Select(path => $"{directory}/{Path.GetFileName(path)}").ToList()
                 : [];
-            if (localPaths.Count > MaxMetadataFiles)
-            {
-                issues.Add($"{package}: Java metadata exceeds the 32-file evidence limit.");
-                return [];
-            }
             if (localPaths.Count == 0)
             {
                 issues.Add($"{package}: missing SDK generation metadata ({directory}/{location.Pattern}).");
@@ -179,11 +167,6 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             .Select(entry => Text(entry?["name"]))
             .Where(name => name.EndsWith(location.Pattern[1..], StringComparison.Ordinal) && name.IndexOfAny(['/', '\\', '\0']) < 0)
             .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Select(name => $"{directory}/{name}").ToList();
-        if (paths.Count > MaxMetadataFiles)
-        {
-            issues.Add($"{package}: Java metadata exceeds the 32-file evidence limit.");
-            return [];
-        }
         if (paths.Count == 0)
         {
             issues.Add($"{package}: missing SDK generation metadata ({directory}/{location.Pattern}).");
@@ -360,10 +343,6 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         var key = (repository, commit, directory);
         if (!_generationLocations.TryGetValue(key, out var reading))
         {
-            if (_generationLocations.Count >= MaxPackageDirectories)
-            {
-                throw new InvalidOperationException("SDK package discovery exceeded its directory evidence limit.");
-            }
             reading = ReadFileAsync(repository, commit, $"{directory}/{GenerationLocationFile}", ct);
             _generationLocations.Add(key, reading);
         }

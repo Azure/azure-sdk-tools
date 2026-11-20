@@ -192,9 +192,10 @@ readiness fields. Only the explicit revision-checked three-field update writes t
 Schema 4 stores `resourceProvider`, raw `status`, `checkedAt`,
 `validationEnvironment`, and `matchedResourceTypes` entries with `resourceType`
 and `regions`. Scope is not duplicated in JSON. The CLI HTML-encodes compact JSON
-and decodes exactly once on read; bounds are 1,000,000 HTML characters, 262,144
-decoded JSON characters, and 128 observations. No data is truncated, and the old
-short-string details field is neither read nor overwritten.
+and decodes exactly once on read. ADO enforces its payload limits; a rejected
+optional update preserves the completed readiness result and reports a warning.
+There is no client-side payload-size preflight or observation-count cap. No data
+is truncated, and the old short-string details field is unused.
 
 ADO uses Ready for Passed and Unknown for Inconclusive or Error. Not detected
 uses the provisioned dropdown spelling Note Ready; reads also accept Not Ready
@@ -308,7 +309,7 @@ or unmarked configuration is unresolved; readiness remains Inconclusive without
 version or ARM reads. Confirmed data-plane configuration is not applicable.
 Directories with filename-like suffixes remain valid inside `specification`.
 
-#### Evaluation and limits
+#### Evidence flow
 
 The evidence flow is:
 
@@ -326,11 +327,11 @@ Readiness processes packages in separate stages:
 1. Identify package directories and create one `PackageInfo` for each directory.
 2. Populate those objects with validated `TypeSpecLocation`, `SdkType`, API
   versions, metadata-file paths, and metadata issues.
-3. Enrich the same package objects with pinned specification resource types.
-4. Validate readiness from the enriched packages, after all enrichment completes.
+3. Resolve pinned provider scope only for scalar or mixed provider metadata.
+4. Validate exact provider/API-version pairs after metadata preparation completes.
 
 There are no parallel per-package location, plane, or issue lists, and no separate
-location/plane result model. Only PR-wide discovery uses a batch result, because
+location/plane result model. PR-wide discovery returns packages and issues, because
 a PR can affect several packages and have discovery issues not attributable to a
 known package. Remote PR checks read files at the captured head without checking
 out or executing PR contents. Local checks use the same package-population logic
@@ -359,8 +360,8 @@ separate. Plain package-info inspection is still local and does not fetch projec
 configuration unless resource enrichment or readiness is requested.
 
 Package roots come from the nearest pinned `tsp-location.yaml`, not a fixed
-directory depth. Discovery caches location reads and permits at most 128 candidate
-directories across the head and base revisions. The pinned base is used only to
+directory depth. Discovery reuses location reads across the head and base revisions.
+The pinned base is used only to
 identify removed package paths; package existence and generation evidence are
 checked at the captured head. Missing current-head metadata remains inconclusive.
 
@@ -389,12 +390,12 @@ exact version for the overall result to be Passed. This is evidence, not release
 approval, service health, or proof of deployment in every region.
 
 The 40-second deadline includes token discovery. Reads honor cancellation,
-reject redirects, keep GitHub and ARM tokens on their fixed hosts, and cap
-responses at 4 MiB. Large files use raw content on `api.github.com` at the same
-revision, never `download_url`. Swagger discovery is bounded to 32 files and 64
-directories per project; a truncated directory or 3,000-file PR listing cannot
-establish complete evidence. No resource operations, regional probes, samples,
-resource creation, or role assignments are performed.
+keep GitHub and ARM tokens on their fixed hosts, and use the standard HTTP
+response APIs. Large files use raw content on `api.github.com` at the same
+revision, never `download_url`. Discovery has no additional file/directory cap;
+an incomplete GitHub directory or 3,000-file PR listing cannot establish complete
+evidence. No resource operations, regional probes, samples, resource creation,
+or role assignments are performed.
 
 #### Result contract
 
@@ -423,7 +424,7 @@ advertised `regions`, not regional health guarantees.
 
 Exit zero means Passed, Not detected, or Inconclusive; exit one means Error.
 Always read `status`. Treat an unusable or unknown contract as Error. Unit tests
-cover layouts, statuses, credentials, limits, mapping, cancellation, and safe
+cover layouts, statuses, credentials, mapping, cancellation, and safe
 errors; live CLI checks separately establish installation and Azure access.
 
 `ServiceApiReadinessService` coordinates the check and ARM comparison.

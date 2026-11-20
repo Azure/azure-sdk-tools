@@ -2618,6 +2618,35 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ct.ThrowIfCancellationRequested();
                     logger.LogError(ex, "Failed to notify owner of overdue release plan {WorkItemId}", releasePlan.WorkItemId);
                     errors.Add($"Failed to notify owner of overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                    continue;
+                }
+
+                // Keep the first recorded notification date; only fill the field when it is empty.
+                if (releasePlan.OverdueLastNotifiedDate != null)
+                {
+                    continue;
+                }
+
+                var sentAtUtc = _timeProvider.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
+                try
+                {
+                    // The revision check stops a run with a stale read from replacing a date another run just saved.
+                    var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                    {
+                        [ReleasePlanWorkItem.OverdueLastNotifiedDateField] = sentAtUtc
+                    }, releasePlan.Revision, ct);
+                    if (updatedWorkItem is null)
+                    {
+                        throw new InvalidOperationException("Azure DevOps did not confirm the update.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex,
+                        "Overdue reminder accepted for release-plan work item {WorkItemId} at {SentAtUtc}, but its send time could not be recorded",
+                        releasePlan.WorkItemId, sentAtUtc);
+                    ct.ThrowIfCancellationRequested();
+                    errors.Add($"Overdue reminder accepted for release-plan work item {releasePlan.WorkItemId} at {sentAtUtc}, but its send time could not be recorded: {ex.Message}");
                 }
             }
             return errors;

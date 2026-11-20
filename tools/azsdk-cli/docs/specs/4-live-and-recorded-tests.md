@@ -75,7 +75,7 @@ public abstract class LanguageService
 
 ### Test resource deployment and cleanup
 
-Deployment of test resources involves many different variables depending on the user's needs. We do not know which subscription, tenant, etc. the user might have available or want to use. For example, devs on the SDK team might use the Playground subscription to deploy test resources, but devs on service teams may have their own subscriptions they might want to use. Or, maybe the user wants to deploy to TME. Given the array of possibilities here, a __skill__ will be developed for deploying test resources in the context of running live and recorded tests.
+Deployment of test resources involves variables such as the user's service directory, resource group name, and deployment region. The live-and-recorded-tests skill uses the Azure SDK Test Resources - TME tenant and subscription by default when deploying test resources; users can specify another subscription when needed.
 
 #### Skill outline
 

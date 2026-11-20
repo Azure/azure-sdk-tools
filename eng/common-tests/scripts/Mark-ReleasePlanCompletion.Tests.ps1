@@ -145,7 +145,8 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
 
     It 'rejects malformed explicit IDs without rounding them to another plan' -TestCases @(
         @{ Value = '-1' }, @{ Value = '100.6' }, @{ Value = '0.9' },
-        @{ Value = '2147483648' }, @{ Value = 'not-an-id' }, @{ Value = ' 100' }
+        @{ Value = '2147483648' }, @{ Value = 'not-an-id' }, @{ Value = ' 100' },
+        @{ Value = "0'; Write-Output 'probe'; #" }, @{ Value = '$(Write-Output probe)' }
     ) {
         param($Value)
         { Invoke-CompletionTest $script:packageInfoPath -ReleasePlanId $Value } | Should -Throw
@@ -245,7 +246,8 @@ Describe 'Mark-ReleasePlanCompletion' -Tag 'UnitTest' {
         $template = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../common/pipelines/templates/steps/mark-release-completion.yml') -Raw
         $template | Should -Match 'ReleasePlanId: 0'
         $template | Should -Match "SdkPullRequest: ''"
-        $template | Should -Match '-ReleasePlanId.+parameters\.ReleasePlanId'
+        $template | Should -Match ([regex]::Escape('-ReleasePlanId "$env:AZSDK_RELEASE_PLAN_ID"'))
+        $template | Should -Match ([regex]::Escape('AZSDK_RELEASE_PLAN_ID: ${{ parameters.ReleasePlanId }}'))
         $template | Should -Match '-SdkPullRequest.+parameters\.SdkPullRequest'
         $template | Should -Match ([regex]::Escape('-PipelineUrl "$(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)"'))
         $template | Should -Not -Match 'ApiVersion|api-version'
@@ -258,6 +260,30 @@ Describe 'Optional auto-release SDK PR in the shared completion template' -Tag '
         $templatePath = Join-Path $PSScriptRoot '../../common/pipelines/templates/steps/mark-release-completion.yml'
         $script:completionTemplate = CompatibleConvertFrom-Yaml -Content (Get-Content -LiteralPath $templatePath -Raw)
         $script:optionalPrGuard = '${{ if eq(parameters.SdkPullRequest, '''') }}'
+    }
+
+    It 'transports the manual ID as literal data: <Value>' -TestCases @(
+        @{ Value = '0' }, @{ Value = '35307' }, @{ Value = '2147483647' },
+        @{ Value = '100.6' }, @{ Value = 'not-an-id' },
+        @{ Value = "0'; Write-Output 'probe'; #" }, @{ Value = '$(Write-Output probe)' }
+    ) {
+        param($Value)
+        $task = $completionTemplate.steps[-1]
+        $task.env.AZSDK_RELEASE_PLAN_ID | Should -BeExactly '${{ parameters.ReleasePlanId }}'
+        $task.inputs.arguments | Should -Not -Match 'parameters\.ReleasePlanId'
+        $argument = [regex]::Match($task.inputs.arguments, '-ReleasePlanId\s+("[^"\r\n]*")').Value
+        $argument | Should -BeExactly '-ReleasePlanId "$env:AZSDK_RELEASE_PLAN_ID"'
+        $previousValue = $env:AZSDK_RELEASE_PLAN_ID
+        try {
+            $env:AZSDK_RELEASE_PLAN_ID = $Value
+            $capture = [scriptblock]::Create('& { param([string]$ReleasePlanId) $ReleasePlanId } ' + $argument)
+            $actual = @(& $capture)
+            $actual.Count | Should -Be 1
+            $actual[0] | Should -BeExactly $Value
+        }
+        finally {
+            $env:AZSDK_RELEASE_PLAN_ID = $previousValue
+        }
     }
 
     It 'keeps an empty parameter default and initializes only a missing runtime variable before use' {

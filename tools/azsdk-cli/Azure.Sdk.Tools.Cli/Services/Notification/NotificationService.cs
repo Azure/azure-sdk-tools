@@ -9,7 +9,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services.Notification
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum NotificationStatus
     {
         Sent,
@@ -22,7 +21,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
     {
         public static NotificationResult Sent { get; } = new(NotificationStatus.Sent);
 
-        [JsonIgnore]
         public bool IsFailure => Status == NotificationStatus.Failed;
     }
 

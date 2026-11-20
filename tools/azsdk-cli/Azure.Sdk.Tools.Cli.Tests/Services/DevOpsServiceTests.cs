@@ -1079,6 +1079,126 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #region GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync Tests
 
+        [TestCase("", "", "In Progress", true)]
+        [TestCase("", "", "Finished", true)]
+        [TestCase("2026-01-01", "", "In Progress", false)]
+        [TestCase("2026-01-01", "2025-01-01", "In Progress", false)]
+        public async Task VersionLookup_EmptyIsAnExactIdentityNotAWildcard(
+            string requested, string stored, string status, bool matches)
+        {
+            const string path = "specification/contoso/Contoso.Management";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, status, 200);
+            plan.Fields["Custom.ApiSpecProjectPath"] = path;
+            plan.Fields["Custom.ReleasePlanType"] = "GA";
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItemWithVersion(200,
+                "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", stored, 100));
+
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                path, requested, ApiReleaseType.GA, CancellationToken.None);
+
+            Assert.That(result != null, Is.EqualTo(matches));
+        }
+
+        [Test]
+        public void VersionLookup_ExistingSameTypeVersionedPlanPreventsAnotherUnversionedPlan()
+        {
+            const string path = "specification/contoso/Contoso.Management";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.ApiSpecProjectPath"] = path;
+            plan.Fields["Custom.ReleasePlanType"] = "GA";
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItemWithVersion(200,
+                "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", "2026-01-01", 100));
+
+            var error = Assert.ThrowsAsync<Exception>(async () =>
+                await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                    path, "", ApiReleaseType.GA, CancellationToken.None));
+
+            Assert.That(error!.GetBaseException().Message, Does.Contain("No additional unversioned plan"));
+        }
+
+        [TestCase(ApiReleaseType.GA, "In Progress")]
+        [TestCase(ApiReleaseType.GA, "Finished")]
+        [TestCase(ApiReleaseType.PublicPreview, "In Progress")]
+        [TestCase(ApiReleaseType.PublicPreview, "Finished")]
+        [TestCase(ApiReleaseType.PrivatePreview, "In Progress")]
+        [TestCase(ApiReleaseType.PrivatePreview, "Finished")]
+        [TestCase(ApiReleaseType.GA, "In Progress", "")]
+        [TestCase(ApiReleaseType.GA, "Finished", "")]
+        [TestCase(ApiReleaseType.PublicPreview, "In Progress", "")]
+        [TestCase(ApiReleaseType.PublicPreview, "Finished", "")]
+        [TestCase(ApiReleaseType.PrivatePreview, "In Progress", "")]
+        [TestCase(ApiReleaseType.PrivatePreview, "Finished", "")]
+        public void GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_UnreadableSpecChildFailsLookup(
+            ApiReleaseType releaseType, string status, string version = "2026-01-01")
+        {
+            const string path = "specification/contoso/Contoso.Management";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, status, 200);
+            plan.Fields["Custom.ApiSpecProjectPath"] = path;
+            plan.Fields["Custom.ReleasePlanType"] = releaseType.ToAdoFieldValue();
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+
+            var error = Assert.ThrowsAsync<Exception>(async () =>
+                await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                    path, version, releaseType, CancellationToken.None));
+
+            Assert.That(error!.GetBaseException().Message, Does.Contain("Work item 200 not found"));
+        }
+
+        [TestCase("In Progress", true)]
+        [TestCase("Finished", true)]
+        [TestCase("Closed", false)]
+        [TestCase("Abandoned", false)]
+        [TestCase("Duplicate", false)]
+        [TestCase("New", false)]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_RequiresSupportedStatus(string status, bool matches)
+        {
+            const string path = "specification/contoso/Contoso.Management";
+            const string version = "2026-01-01";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, status, 200);
+            plan.Fields["Custom.ApiSpecProjectPath"] = path;
+            plan.Fields["Custom.ReleasePlanType"] = "GA";
+            var spec = CreateApiSpecWorkItemWithVersion(200,
+                "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", version, 100);
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(spec);
+
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                path, version, ApiReleaseType.GA, CancellationToken.None);
+
+            Assert.That(result != null, Is.EqualTo(matches));
+        }
+
+        [Test]
+        public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_DoesNotHideAnOlderFinishedMatch()
+        {
+            const string path = "specification/contoso/Contoso.Management";
+            const string version = "2026-01-01";
+            var unsupported = CreateReleasePlanWorkItemWithApiSpecChild(101, "New", 201);
+            var finished = CreateReleasePlanWorkItemWithApiSpecChild(100, "Finished", 200);
+            foreach (var plan in new[] { unsupported, finished })
+            {
+                plan.Fields["Custom.ApiSpecProjectPath"] = path;
+                plan.Fields["Custom.ReleasePlanType"] = "GA";
+                _connection.AddWorkItemToQuery(plan);
+                _connection.AddWorkItem(plan);
+            }
+            _connection.AddWorkItem(CreateApiSpecWorkItemWithVersion(201,
+                "https://github.com/Azure/azure-rest-api-specs/pull/12346", "Active", version, 101));
+            _connection.AddWorkItem(CreateApiSpecWorkItemWithVersion(200,
+                "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", version, 100));
+
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                path, version, ApiReleaseType.GA, CancellationToken.None);
+
+            Assert.That(result?.WorkItemId, Is.EqualTo(100));
+        }
+
         [Test]
         public async Task GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_ReturnsNullWhenNoReleasePlanExists()
         {

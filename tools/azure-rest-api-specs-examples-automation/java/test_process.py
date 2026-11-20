@@ -2,15 +2,45 @@ import sys
 import tempfile
 import unittest
 from os import path, makedirs
+from unittest.mock import patch
+import main
 
 from main import process_java_example_content
 from main import _set_paths
 
 sys.path.append(path.abspath("../directory"))
-from test_examples_dir import create_mock_test_folder
+from test_examples_dir import create_mock_test_folder, create_mock_unified_test_folder
 
 
 class TestProcess(unittest.TestCase):
+
+    def test_unified_example_preserves_nested_output_path(self):
+        code = """package com.azure.generated;
+public class Samples {
+    /*
+     * x-ms-original-file: Compute/examples/VirtualMachines.yaml#virtualMachineExamples/Foo
+     */
+    public static void example() {
+        System.out.println("sample");
+    }
+}
+"""
+        metadata_file = "src/main/resources/META-INF/azure-resourcemanager-compute_metadata.json"
+        with create_mock_unified_test_folder(metadata_file) as temporary:
+            with patch.multiple(
+                main,
+                specs_path=path.join(temporary, "specs"),
+                sdk_package_path=path.join(temporary, "sdk"),
+                create=True,
+            ):
+                examples = process_java_example_content(code.splitlines(keepends=True), "Samples")
+            self.assertEqual(1, len(examples))
+            self.assertEqual("Foo", examples[0].target_filename)
+            self.assertEqual(
+                "specification/compute/resource-manager/Microsoft.Compute/Compute/"
+                "stable/2026-04-01/examples-java/virtualMachineExamples",
+                examples[0].target_dir,
+            )
 
     def test_process_java_example(self):
         java_code = """

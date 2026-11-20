@@ -54,21 +54,19 @@ def parse_python_example(lines: List[str]) -> Optional[PythonExample]:
 
     example = None
     if example_relative_path:
-        example_dir, example_filename = path.split(example_relative_path)
-
         try:
-            example_dir = examples_dir.try_find_resource_manager_example(
-                specs_path, sdk_package_path, example_dir, example_filename
+            example_dir, example_filename = examples_dir.resolve_example_path(
+                specs_path, sdk_package_path, example_relative_path
             )
         except NameError:
-            pass
+            example_dir, example_filename = path.split(example_relative_path)
 
         target_dir = (
             (example_dir + "-python")
             if example_dir.endswith("/examples")
             else example_dir.replace("/examples/", "/examples-python/")
         )
-        filename = example_filename.split(".")[0]
+        filename = path.splitext(example_filename)[0]
 
         first_line_index = 0
         for index, line in enumerate(lines):

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net;
 using System;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Net.Http;
@@ -29,6 +30,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     public class GitStore : IAssetsStore
     {
         private const string RepositoryConfigurationMarker = "test-proxy-config-v1";
+        // Exists in a new repository's git directory until its first checkout succeeds.
+        private const string IncompleteInitializationMarker = "test-proxy-initializing";
+        private static readonly TimeSpan RepositoryLockTimeout = TimeSpan.FromMinutes(10);
+        private static readonly TimeSpan RepositoryLockRetryInterval = TimeSpan.FromMilliseconds(250);
 
         private HttpClient httpClient = new HttpClient();
         private IConsoleWrapper _consoleWrapper;
@@ -141,6 +146,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task<int> Push(string pathToAssetsJson, bool ignoreSecretProtection = false) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
+            using var repositoryLock = await LockRepositoryAsync(config);
 
             var initialized = IsAssetsRepoInitialized(config);
 
@@ -283,11 +289,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             await restoreQueue.EnqueueAsync(async () =>
             {
+                using var repositoryLock = await LockRepositoryAsync(config);
+
                 var initialized = IsAssetsRepoInitialized(config);
 
                 if (!initialized)
                 {
-                    InitializeAssetsRepo(config);
+                    InitializeAssetsRepoCore(config);
                 }
 
                 CheckoutRepoAtConfig(config, cleanEnabled: true);
@@ -306,16 +314,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task Reset(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var initialized = IsAssetsRepoInitialized(config);
             var allowReset = false;
+            string[] pendingChanges;
 
-            if (!initialized)
+            // The lock isn't held while waiting for an answer, so that other processes can use the repository meanwhile.
+            using (await LockRepositoryAsync(config))
             {
-                InitializeAssetsRepo(config);
-            }
+                var initialized = IsAssetsRepoInitialized(config);
 
-            SetOrigin(config);
-            var pendingChanges = DetectPendingChanges(config);
+                if (!initialized)
+                {
+                    InitializeAssetsRepoCore(config);
+                }
+
+                SetOrigin(config);
+                pendingChanges = DetectPendingChanges(config);
+            }
 
             if (pendingChanges.Length > 0)
             {
@@ -341,17 +355,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
             }
 
-            if (allowReset)
+            using (await LockRepositoryAsync(config))
             {
-                if (!string.IsNullOrWhiteSpace(config.Tag))
+                if (allowReset)
                 {
-                    Clean(config);
-                    CheckoutRepoAtConfig(config, cleanEnabled: false);
-                    await BreadCrumb.Update(config);
+                    if (!string.IsNullOrWhiteSpace(config.Tag))
+                    {
+                        Clean(config);
+                        CheckoutRepoAtConfig(config, cleanEnabled: false);
+                        await BreadCrumb.Update(config);
+                    }
                 }
-            }
 
-            HideOrigin(config);
+                HideOrigin(config);
+            }
         }
 
         private void Clean(GitAssetsConfiguration config)
@@ -453,10 +470,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// clone looks the same as being on the wrong tag. This variable allows us to prevent over-active cleaning that would result in exceptions.</param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled = true)
         {
-            CheckoutRepoAtConfig(config, cleanEnabled, settingsConfiguredDuringClone: false);
+            CheckoutRepoAtConfig(config, cleanEnabled, initializing: false);
         }
 
-        private void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled, bool settingsConfiguredDuringClone)
+        private void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled, bool initializing, bool tagFetched = false)
         {
             bool alreadyCheckedOut = Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag;
             string repositoryLocation = config.AssetsRepoLocation.ToString();
@@ -489,7 +506,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
                 SetOrigin(config);
 
-                if (configureRepository && !settingsConfiguredDuringClone)
+                if (configureRepository && !initializing)
                 {
                     GitHandler.Run(config,
                         "config --local remote.origin.partialCloneFilter blob:none",
@@ -505,7 +522,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         Clean(config);
                     }
 
-                    if (!string.IsNullOrEmpty(config.Tag))
+                    if (!string.IsNullOrEmpty(config.Tag) && !tagFetched)
                     {
                         // Fetch once per tag change; later restores use the cached checkout.
                         GitHandler.Run($"fetch origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
@@ -525,9 +542,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 if (!alreadyCheckedOut)
                 {
                     GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
+
+                    if (initializing)
+                    {
+                        // The repository is complete now, so a later failure mustn't get it discarded.
+                        Directory.Delete(GetIncompleteInitializationMarker(config));
+                    }
                 }
 
-                if (configureRepository && !settingsConfiguredDuringClone)
+                if (configureRepository && !initializing)
                 {
                     // index.version only affects new indexes, so convert existing caches explicitly.
                     GitHandler.Run("update-index --index-version=4", config);
@@ -666,12 +689,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
             }
 
-            if (Assets.ContainsKey(config.AssetsJsonRelativeLocation.ToString()))
+            // The cache only records which tag was checked out; the repository can have been deleted or left incomplete since.
+            if (config.IsAssetsRepoInitialized() && !Directory.Exists(GetIncompleteInitializationMarker(config)))
             {
                 return true;
             }
 
-            return config.IsAssetsRepoInitialized();
+            Assets.TryRemove(config.AssetsJsonRelativeLocation.ToString(), out _);
+            return false;
         }
 
         /// <summary>
@@ -682,6 +707,21 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
         {
+            // Waiting synchronously can't deadlock, because the lock's retries don't resume on the caller's context.
+            using (LockRepositoryAsync(config).GetAwaiter().GetResult())
+            {
+                return InitializeAssetsRepoCore(config, forceInit);
+            }
+        }
+
+        /// <summary>
+        /// Initializes an asset repo for a given configuration. The caller must hold the repository's lock, which isn't reentrant.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="forceInit"></param>
+        /// <returns></returns>
+        private bool InitializeAssetsRepoCore(GitAssetsConfiguration config, bool forceInit = false)
+        {
             var workCompleted = false;
             var initQueue = InitTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
 
@@ -690,7 +730,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 var assetRepo = config.AssetsRepoLocation;
                 var initialized = IsAssetsRepoInitialized(config);
 
-                if (forceInit)
+                // An interrupted initialization has no recordings worth keeping, but its files would get in the way of the
+                // new repository, so it's discarded entirely.
+                if (forceInit || Directory.Exists(GetIncompleteInitializationMarker(config)))
                 {
                     DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
                     Directory.CreateDirectory(assetRepo.ToString());
@@ -699,31 +741,132 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 if (!initialized)
                 {
+                    // Like git clone, don't create a repository among other files, which can be recordings worth keeping. Only
+                    // a .git directory without a repository, which earlier versions could leave behind, is discarded.
+                    if (Directory.EnumerateFileSystemEntries(assetRepo).Any(entry => Path.GetFileName(entry) != ".git"))
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Unable to restore recordings to \"{assetRepo}\", because it " +
+                            "contains files but no git repository. Move out any recordings you want to keep, delete the directory, and restore again.");
+                    }
+
+                    string gitDirectory = Path.Join(assetRepo, ".git");
+                    if (Directory.Exists(gitDirectory))
+                    {
+                        DirectoryHelper.DeleteGitDirectory(gitDirectory);
+                    }
+
                     Assets.TryRemove(config.AssetsJsonRelativeLocation.ToString(), out _);
                     _configuredRepositories.TryRemove(assetRepo.ToString(), out _);
 
+                    bool tagFetched = false;
                     try
                     {
                         var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-                        string revision = string.IsNullOrEmpty(config.Tag)
-                            ? "--single-branch"
-                            : $"--revision=refs/tags/{config.Tag}";
-                        // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                        GitHandler.Run("-c protocol.version=2 clone -c core.longpaths=true -c core.safecrlf=false " +
-                            "-c protocol.version=2 -c index.version=4 -c core.untrackedCache=true " +
-                            $"--no-checkout --filter=blob:none --no-tags {revision} {cloneUrl} .", config);
+                        if (string.IsNullOrEmpty(config.Tag) || GitHandler.SupportsCloneRevision)
+                        {
+                            string revision = string.IsNullOrEmpty(config.Tag)
+                                ? "--single-branch"
+                                : $"--revision=refs/tags/{config.Tag}";
+                            // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
+                            GitHandler.Run("-c protocol.version=2 clone -c core.longpaths=true -c core.safecrlf=false " +
+                                "-c protocol.version=2 -c index.version=4 -c core.untrackedCache=true " +
+                                $"--no-checkout --filter=blob:none --no-tags {revision} {cloneUrl} .", config);
+                            Directory.CreateDirectory(GetIncompleteInitializationMarker(config));
+                        }
+                        else
+                        {
+                            InitializeAssetsRepoAtTag(config, cloneUrl);
+                            tagFetched = true;
+                        }
                     }
                     catch (GitProcessException e)
                     {
                         throw GenerateInvokeException(e.Result);
                     }
 
-                    CheckoutRepoAtConfig(config, cleanEnabled: false, settingsConfiguredDuringClone: true);
+                    CheckoutRepoAtConfig(config, cleanEnabled: false, initializing: true, tagFetched);
                     workCompleted = true;
                 }
             });
 
             return workCompleted;
+        }
+
+        /// <summary>
+        /// Creates the same blobless repository as "clone --revision=refs/tags/{tag}", for git versions that can't use it.
+        /// "clone --branch" isn't equivalent, because it prefers a branch with the same name as the tag.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="cloneUrl"></param>
+        private void InitializeAssetsRepoAtTag(GitAssetsConfiguration config, string cloneUrl)
+        {
+            // Unlike clone, the commands below run inside the new repository, so they're subject to ownership checks.
+            SetSafeDirectory(config);
+            GitHandler.Run("init --quiet", config);
+            Directory.CreateDirectory(GetIncompleteInitializationMarker(config));
+            GitHandler.Run(config,
+                "config core.longpaths true",
+                "config core.safecrlf false",
+                "config protocol.version 2",
+                "config index.version 4",
+                "config core.untrackedCache true",
+                // Added last, so that only the fetch below can fail while the URL, which can contain a token, is stored.
+                $"remote add --no-tags origin {cloneUrl}");
+
+            // Fetching with a filter registers origin as a blobless partial clone remote, as cloning with one does.
+            // Unlike Run, TryRun doesn't exit the process when git fails, so the repository can be removed first.
+            string fetch = $"fetch --filter=blob:none origin refs/tags/{config.Tag}:refs/tags/{config.Tag}";
+            if (!GitHandler.TryRun(fetch, config.AssetsRepoLocation, out var fetchResult))
+            {
+                // Like a failed clone, leave nothing behind, including the URL's token.
+                DirectoryHelper.DeleteGitDirectory(config.AssetsRepoLocation.ToString());
+                Directory.CreateDirectory(config.AssetsRepoLocation.ToString());
+                GitHandler.HandleUnrecoverableError(fetchResult);
+            }
+        }
+
+        private static string GetIncompleteInitializationMarker(GitAssetsConfiguration config)
+        {
+            return Path.Join(config.AssetsRepoLocation, ".git", IncompleteInitializationMarker);
+        }
+
+        /// <summary>
+        /// Waits for exclusive use of an assets repository, across Test Proxy processes. Operations hold the lock from before
+        /// they inspect the repository until they're done with it.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns>The lock, which is released when disposed. It isn't reentrant.</returns>
+        /// <exception cref="TimeoutException">Thrown if the repository is still in use after the timeout.</exception>
+        private async Task<FileStream> LockRepositoryAsync(GitAssetsConfiguration config)
+        {
+            // The lock file is next to the repository, rather than in it, because recovery deletes the repository's directory.
+            string lockPath = Path.Join(config.ResolveAssetsStoreLocation(), $"{config.AssetRepoShortHash}.lock");
+            Stopwatch waitTime = null;
+
+            while (true)
+            {
+                try
+                {
+                    // FileShare.None is a share-mode lock on Windows and an exclusive flock on Unix, which the OS releases
+                    // when the process exits. Read access lets processes running as other users open a lock file that root created.
+                    return new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.None);
+                }
+                catch (IOException e)
+                {
+                    if (waitTime == null)
+                    {
+                        waitTime = Stopwatch.StartNew();
+                        _consoleWrapper.WriteLine($"Waiting for another Test Proxy operation to finish with \"{config.AssetsRepoLocation}\"...");
+                    }
+                    else if (waitTime.Elapsed >= RepositoryLockTimeout)
+                    {
+                        throw new TimeoutException($"Another Test Proxy operation was still using \"{config.AssetsRepoLocation}\" after " +
+                            $"{RepositoryLockTimeout.TotalMinutes} minutes, holding the lock file \"{lockPath}\".", e);
+                    }
+                }
+
+                await Task.Delay(RepositoryLockRetryInterval).ConfigureAwait(false);
+            }
         }
 
         /// <summary>

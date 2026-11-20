@@ -127,7 +127,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var location = Path.Join(ResolveAssetRepoLocation().ToString(), ".git");
 
-            return Directory.Exists(location) || File.Exists(location);
+            // A .git file links a worktree to its repository. A .git directory is only a repository if it has a HEAD;
+            // earlier versions could leave one containing only Test Proxy's configuration marker.
+            return File.Exists(location) || File.Exists(Path.Join(location, "HEAD"));
         }
     }
 }

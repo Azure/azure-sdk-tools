@@ -1,12 +1,15 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Console;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -15,6 +18,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class GitStoreCheckoutTests : IDisposable
     {
+        private static readonly TimeSpan ConcurrencyTimeout = TimeSpan.FromMinutes(1);
         private readonly string _testFolder = TestHelpers.GetTmpPath();
         private readonly string _remotePath;
         private readonly string _languageRepo;
@@ -58,9 +62,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             _git.Run($"remote add origin git@github.com:{_repositoryName}.git", _languageRepo);
         }
 
-        [Fact]
-        public async Task RestoreUsesBloblessConeCheckoutAndSparseIndex()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestoreUsesBloblessConeCheckoutAndSparseIndex(string gitVersion)
         {
+            EmulateGitVersion(gitVersion);
             var config = await CreateConfiguration();
             _git.Commands.Clear();
 
@@ -69,12 +76,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.DoesNotContain(_git.Commands, command =>
                 command.StartsWith("config --local ", StringComparison.Ordinal) ||
                 command.StartsWith("update-index ", StringComparison.Ordinal));
-            string clone = Assert.Single(_git.Commands.Where(command => command.Contains(" clone ", StringComparison.Ordinal)));
-            Assert.Contains("-c core.safecrlf=false", clone);
-            Assert.Contains("-c protocol.version=2", clone);
-            Assert.Contains("-c index.version=4", clone);
-            Assert.Contains("-c core.untrackedCache=true", clone);
+            if (_git.SupportsCloneRevision)
+            {
+                string clone = Assert.Single(_git.Commands.Where(command => command.Contains(" clone ", StringComparison.Ordinal)));
+                Assert.Contains("-c core.safecrlf=false", clone);
+                Assert.Contains("-c protocol.version=2", clone);
+                Assert.Contains("-c index.version=4", clone);
+                Assert.Contains("-c core.untrackedCache=true", clone);
+            }
+            else
+            {
+                Assert.DoesNotContain(_git.Commands, command => command.Contains(" clone ", StringComparison.Ordinal));
+                // The tag is fetched only once, while creating the repository.
+                Assert.Equal(
+                    "fetch --filter=blob:none origin refs/tags/recordings_v1:refs/tags/recordings_v1",
+                    Assert.Single(_git.Commands.Where(command => command.StartsWith("fetch ", StringComparison.Ordinal))));
+            }
             AssertOptimized(config);
+            Assert.Equal("true", _git.Run("config --get remote.origin.promisor", config).StdOut.Trim());
             Assert.Equal("false", _git.Run("config --get core.safecrlf", config).StdOut.Trim());
             Assert.Equal("true", _git.Run("config --get core.longpaths", config).StdOut.Trim());
             Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
@@ -102,9 +121,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Empty(_git.Commands);
         }
 
-        [Fact]
-        public async Task RestorePreservesSelectedTagHistoryWithoutShallowCloning()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestorePreservesSelectedTagHistoryWithoutShallowCloning(string gitVersion)
         {
+            EmulateGitVersion(gitVersion);
             var config = await CreateConfiguration();
             await _store.UpdateAssetsJson("recordings_v2", config);
             await _store.Restore(config.AssetsJsonLocation);
@@ -115,9 +137,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 _git.Run("rev-parse HEAD^", config).StdOut.Trim());
         }
 
-        [Fact]
-        public async Task RestoreSupportsAnnotatedTags()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestoreSupportsAnnotatedTags(string gitVersion)
         {
+            EmulateGitVersion(gitVersion);
             _git.Run("tag --no-sign --annotate recordings_annotated --message annotated recordings_v1", _remotePath);
             var config = await CreateConfiguration();
             await _store.UpdateAssetsJson("recordings_annotated", config);
@@ -127,16 +152,173 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
         }
 
-        [Fact]
-        public async Task RestoreReportsMissingTagDuringTargetedClone()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestoreReportsMissingTagDuringTargetedClone(string gitVersion)
         {
+            EmulateGitVersion(gitVersion);
             var config = await CreateConfiguration();
             await _store.UpdateAssetsJson("INVALID_TAG", config);
 
             var error = await Assert.ThrowsAsync<HttpException>(() => _store.Restore(config.AssetsJsonLocation));
 
-            Assert.Contains("--revision=refs/tags/INVALID_TAG", error.Message);
+            Assert.Contains("refs/tags/INVALID_TAG", error.Message);
             Assert.Contains("had a non-zero exit code 128", error.Message);
+            // Like a failed clone, a failed initialization leaves nothing behind, including a remote URL with a token.
+            Assert.Empty(Directory.GetFileSystemEntries(config.AssetsRepoLocation));
+            await _store.UpdateAssetsJson("recordings_v1", config);
+            await _store.Restore(config.AssetsJsonLocation);
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestoreInitializesAgainAfterInterruptedInitialCheckout(string gitVersion)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            _git.FailCommandOnce = "-c advice.detachedHead=false checkout recordings_v1";
+            await Assert.ThrowsAsync<HttpException>(() => _store.Restore(config.AssetsJsonLocation));
+            // An interrupted checkout can leave files behind, including ones of a tag that's no longer targeted.
+            string recordingPath = Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json");
+            TestHelpers.WriteTestFile("partial recording", recordingPath);
+            TestHelpers.WriteTestFile("partial recording", Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "partial.json"));
+
+            await new GitStore { GitHandler = _git }.Restore(config.AssetsJsonLocation);
+
+            AssertOptimized(config);
+            Assert.Equal("recording version 1", File.ReadAllText(recordingPath));
+            Assert.Empty(_store.DetectPendingChanges(config));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestoreWaitsWhileAnotherProcessInitializesRepository(string gitVersion)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            // Stores with separate git handlers share only the file system, like separate processes.
+            var otherGit = new LocalGitProcessHandler(_remotePath, _repositoryName) { GitVersion = _git.GitVersion };
+            var otherConsole = new RecordingConsoleWrapper();
+            var otherStore = new GitStore(otherConsole) { GitHandler = otherGit };
+            string incompleteMarker = Path.Join(config.AssetsRepoLocation, ".git", "test-proxy-initializing");
+            _git.PauseBeforeCommand = "-c advice.detachedHead=false checkout recordings_v1";
+
+            var restores = new List<Task> { Task.Run(() => _store.Restore(config.AssetsJsonLocation)) };
+            try
+            {
+                Assert.True(_git.Paused.Wait(ConcurrencyTimeout), "The first restore didn't reach its initial checkout.");
+                Assert.True(Directory.Exists(incompleteMarker));
+                restores.Add(Task.Run(() => otherStore.Restore(config.AssetsJsonLocation)));
+                Assert.True(otherConsole.WaitForLine("Waiting for another Test Proxy operation", ConcurrencyTimeout),
+                    "The second restore didn't wait for the first.");
+            }
+            finally
+            {
+                _git.Resume.Set();
+                await Task.WhenAny(Task.WhenAll(restores), Task.Delay(ConcurrencyTimeout));
+            }
+
+            var allRestores = Task.WhenAll(restores);
+            Assert.True(allRestores.IsCompleted, "The restores didn't finish.");
+            await allRestores;
+            Assert.DoesNotContain(otherGit.Commands, command =>
+                command.Contains(" clone ", StringComparison.Ordinal) || command.StartsWith("init ", StringComparison.Ordinal));
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+            Assert.False(Directory.Exists(incompleteMarker));
+            Assert.Empty(_store.DetectPendingChanges(config));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestoreRecoversInterruptedInitializationDespiteStaleBreadcrumb(string gitVersion)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            await _store.Restore(config.AssetsJsonLocation);
+            _git.FailCommandOnce = "-c advice.detachedHead=false checkout recordings_v1";
+            Assert.Throws<HttpException>(() => _store.InitializeAssetsRepo(config, forceInit: true));
+
+            // The breadcrumb still records the tag as checked out.
+            await new GitStore { GitHandler = _git }.Restore(config.AssetsJsonLocation);
+
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+            Assert.Empty(_store.DetectPendingChanges(config));
+        }
+
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData("2.45.4", false)]
+        [InlineData(null, true)]
+        [InlineData("2.45.4", true)]
+        public async Task RestoreRecreatesDeletedRepositoryWithoutChangingLanguageRepository(string gitVersion, bool leftoverGitDirectory)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            await _store.Restore(config.AssetsJsonLocation);
+            DirectoryHelper.DeleteGitDirectory(config.AssetsRepoLocation);
+            if (leftoverGitDirectory)
+            {
+                // Earlier versions left this behind after running their setup commands in the language repository instead.
+                Directory.CreateDirectory(Path.Join(config.AssetsRepoLocation, ".git", "test-proxy-config-v1"));
+            }
+
+            // The breadcrumb still records the tag as checked out.
+            await new GitStore { GitHandler = _git }.Restore(config.AssetsJsonLocation);
+
+            Assert.False(_git.TryRun("config --local --get-regexp \"^(remote\\.origin\\.partialclonefilter|protocol\\.version|index\\.version|core\\.sparsecheckout)\"",
+                _languageRepo, out var languageConfig), languageConfig.StdOut);
+            Assert.Equal($"git@github.com:{_repositoryName}.git", _git.Run("config --local --get remote.origin.url", _languageRepo).StdOut.Trim());
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
+            AssertOptimized(config);
+        }
+
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData("2.45.4", false)]
+        [InlineData(null, true)]
+        [InlineData("2.45.4", true)]
+        public async Task RestoreRefusesToCreateRepositoryAmongExistingFiles(string gitVersion, bool leftoverGitDirectory)
+        {
+            EmulateGitVersion(gitVersion);
+            var config = await CreateConfiguration();
+            // For example, recordings that were kept after deleting only the repository's .git directory.
+            string recordingPath = Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json");
+            TestHelpers.WriteTestFile("unpublished recording", recordingPath);
+            if (leftoverGitDirectory)
+            {
+                // Earlier versions could leave this behind when the repository's .git directory was missing.
+                Directory.CreateDirectory(Path.Join(config.AssetsRepoLocation, ".git", "test-proxy-config-v1"));
+            }
+            string[] entries = ListEntries(config.AssetsRepoLocation);
+
+            // Retrying mustn't delete anything either, for example because the failed attempt left a repository behind.
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                var error = await Assert.ThrowsAsync<HttpException>(() => new GitStore { GitHandler = _git }.Restore(config.AssetsJsonLocation));
+
+                Assert.Contains(config.AssetsRepoLocation.ToString(), error.Message);
+                Assert.Equal(entries, ListEntries(config.AssetsRepoLocation));
+                Assert.Equal("unpublished recording", File.ReadAllText(recordingPath));
+            }
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task RestorePrefersTagOverBranchWithSameName(string gitVersion)
+        {
+            EmulateGitVersion(gitVersion);
+            _git.Run("branch recordings_v1 recordings_v2", _remotePath);
+            var config = await CreateConfiguration();
+
+            await _store.Restore(config.AssetsJsonLocation);
+
+            Assert.Equal("recording version 1", File.ReadAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json")));
         }
 
         [Fact]
@@ -369,9 +551,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             AssertOptimized(config);
         }
 
-        [Fact]
-        public async Task PushPreservesHistoryOutsideSparseCheckout()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("2.45.4")]
+        public async Task PushPreservesHistoryOutsideSparseCheckout(string gitVersion)
         {
+            EmulateGitVersion(gitVersion);
             var config = await CreateConfiguration();
             await _store.Restore(config.AssetsJsonLocation);
             File.WriteAllText(Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json"), "updated recording");
@@ -434,6 +619,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             TestHelpers.WriteTestFile(content, Path.Join(_remotePath, relativePath));
         }
 
+        // null uses the installed git; older versions create repositories without "clone --revision".
+        private void EmulateGitVersion(string gitVersion)
+        {
+            if (gitVersion != null)
+            {
+                _git.GitVersion = Version.Parse(gitVersion);
+            }
+        }
+
+        private static string[] ListEntries(string directory)
+        {
+            return Directory.GetFileSystemEntries(directory, "*", SearchOption.AllDirectories).OrderBy(entry => entry, StringComparer.Ordinal).ToArray();
+        }
+
         private void AssertOptimized(GitAssetsConfiguration config, bool sparseIndex = true)
         {
             Assert.Equal("blob:none", _git.Run("config --get remote.origin.partialCloneFilter", config).StdOut.Trim());
@@ -466,6 +665,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             public List<string> Commands { get; } = new List<string>();
             public string FailCommandOnce { get; set; }
+            public string PauseBeforeCommand { get; set; }
+            public ManualResetEventSlim Paused { get; } = new ManualResetEventSlim();
+            public ManualResetEventSlim Resume { get; } = new ManualResetEventSlim();
             public string GlobalConfigPath { get; set; }
             public bool AssumeDifferentOwner { get; set; }
 
@@ -500,6 +702,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             public override CommandResult Run(string arguments, string workingDirectory)
             {
                 Commands.Add(arguments);
+                if (arguments == PauseBeforeCommand)
+                {
+                    PauseBeforeCommand = null;
+                    Paused.Set();
+                    Resume.Wait(ConcurrencyTimeout);
+                }
                 if (arguments == FailCommandOnce)
                 {
                     FailCommandOnce = null;
@@ -512,6 +720,26 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
                 return base.Run(arguments, workingDirectory);
             }
+
+            public override bool TryRun(string arguments, string workingDirectory, out CommandResult result)
+            {
+                Commands.Add(arguments);
+                return base.TryRun(arguments, workingDirectory, out result);
+            }
+        }
+
+        private class RecordingConsoleWrapper : IConsoleWrapper
+        {
+            private readonly ConcurrentQueue<string> _lines = new ConcurrentQueue<string>();
+
+            public void Write(string message) => _lines.Enqueue(message);
+
+            public void WriteLine(string message) => _lines.Enqueue(message);
+
+            public string ReadLine() => throw new NotSupportedException();
+
+            public bool WaitForLine(string text, TimeSpan timeout) =>
+                SpinWait.SpinUntil(() => _lines.Any(line => line.Contains(text, StringComparison.Ordinal)), timeout);
         }
     }
 }

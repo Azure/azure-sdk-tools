@@ -18,7 +18,7 @@ namespace PipelineGenerator
 
         private ILogger<SdkComponentScanner> Logger { get; }
 
-        public IEnumerable<SdkComponent> Scan(DirectoryInfo path, string searchPattern)
+        public IEnumerable<SdkComponent> Scan(DirectoryInfo path, string searchPattern, string repositoryRoot = null)
         {
             string variantPattern = searchPattern.Replace(".yml", "\\.(?<variant>(\\w+))\\.yml");
             Regex variantExtractionExpression = new Regex($"^{variantPattern}$");
@@ -37,9 +37,16 @@ namespace PipelineGenerator
                 Logger.LogWarning("Did not find any YAML files with search pattern '{0}' in path '{1}'.", searchPattern, path.FullName);
             }
 
-            Logger.LogDebug("Finding repository root from '{0}'.", path.FullName);
-            var repositoryHelper = new RepositoryHelper();
-            var root = repositoryHelper.GetRepositoryRoot(path);
+            Logger.LogDebug("Resolving repository root from '{0}'.", path.FullName);
+            var root = repositoryRoot == null
+                ? new RepositoryHelper().GetRepositoryRoot(path)
+                : Path.GetFullPath(repositoryRoot);
+            var relativeDirectory = Path.GetRelativePath(root, path.FullName);
+            if (Path.IsPathRooted(relativeDirectory) || relativeDirectory == ".." ||
+                relativeDirectory.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            {
+                throw new ArgumentException("Scan directory must be within the repository root.", nameof(path));
+            }
             Logger.LogDebug("Found repository root at: {0}", root);
 
             foreach (var pipelineYamlFile in pipelineYamlFiles)

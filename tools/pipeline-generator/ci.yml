@@ -9,6 +9,9 @@ trigger:
   paths:
     include:
       - tools/pipeline-generator
+      - eng/scripts/Initialize-PostMergeSdk.ps1
+      - eng/scripts/tests/Initialize-PostMergeSdk.Tests.ps1
+      - eng/pipelines/pipeline-generation-post-merge.yml
 
 pr:
   branches:
@@ -20,8 +23,19 @@ pr:
   paths:
     include:
       - tools/pipeline-generator
+      - eng/scripts/Initialize-PostMergeSdk.ps1
+      - eng/scripts/tests/Initialize-PostMergeSdk.Tests.ps1
+      - eng/pipelines/pipeline-generation-post-merge.yml
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/pipeline-generator
+    TestPostSteps:
+      - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
+        parameters:
+          TargetDirectory: eng/scripts/tests
+          CustomTestSteps:
+            - pwsh: Invoke-Pester -Path Initialize-PostMergeSdk.Tests.ps1 -CI
+              displayName: Test trusted SDK checkout step
+              workingDirectory: $(Build.SourcesDirectory)/eng/scripts/tests

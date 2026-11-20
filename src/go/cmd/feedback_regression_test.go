@@ -149,6 +149,98 @@ type Public = amqp.Data
 	require.Equal(t, "typePublic=[]byte", withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "importer.Public"))))
 }
 
+func TestUnnamedImportNameIgnoresHostBuildConstraints(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GOOS", "linux")
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/importer\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "alias.go"), []byte(`
+package importer
+import "syscall/js"
+type Public = js.Value
+`), 0644))
+
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	require.Equal(t, "typePublic=syscall/js.Value", withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "importer.Public"))))
+}
+
+func TestDependencyPackageNameUsesReviewedModuleResolution(t *testing.T) {
+	dir := t.TempDir()
+	reviewed := filepath.Join(dir, "exporter")
+	dependency := filepath.Join(dir, "source")
+	other := filepath.Join(dir, "go-amqp")
+	write := func(name, content string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(filepath.Dir(name), 0755))
+		require.NoError(t, os.WriteFile(name, []byte(content), 0644))
+	}
+	t.Setenv("GOPROXY", "off")
+	write(filepath.Join(other, "go.mod"), "module example.com/go-amqp\n\ngo 1.21\n")
+	write(filepath.Join(other, "types.go"), "package amqp\ntype Value struct{}\n")
+	write(filepath.Join(dependency, "go.mod"), "module example.com/sdk/source\n\ngo 1.21\nrequire example.com/go-amqp v1.0.0\n")
+	write(filepath.Join(dependency, "types.go"), `
+package source
+import "example.com/go-amqp"
+type Data []byte
+func (Data) Use(amqp.Value) {}
+`)
+	write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire (\n\texample.com/sdk/source v1.0.0\n\texample.com/go-amqp v1.0.0\n)\nreplace example.com/sdk/source => "+filepath.ToSlash(dependency)+"\nreplace example.com/go-amqp => "+filepath.ToSlash(other)+"\n")
+	write(filepath.Join(reviewed, "alias.go"), "package exporter\nimport \"example.com/sdk/source\"\ntype Public = source.Data\n")
+
+	review, err := createReview(reviewed)
+	require.NoError(t, err)
+	method := feedbackMethod(t, feedbackLine(t, review, "exporter.Public"), "Public", "Use")
+	require.Contains(t, feedbackLineText(method), "example.com/go-amqp.Value")
+}
+
+func TestHoistedMethodTypesUseExposedAliasesAndImportPaths(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GOPROXY", "off")
+	reviewed := filepath.Join(dir, "exporter")
+	dependency := filepath.Join(dir, "source")
+	write := func(name, content string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(filepath.Dir(name), 0755))
+		require.NoError(t, os.WriteFile(name, []byte(content), 0644))
+	}
+	write(filepath.Join(dependency, "go.mod"), "module example.com/sdk/source\n\ngo 1.21\n")
+	sourceFile := filepath.Join(dependency, "types", "types.go")
+	write(sourceFile, `
+package types
+import other "example.com/old"
+type Data []byte
+type Record struct{}
+func (Data) Get() Record { return Record{} }
+func (Data) Use(values ...other.Value) other.Value { return other.Value{} }
+`)
+	write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire example.com/sdk/source v1.0.0\nreplace example.com/sdk/source => "+filepath.ToSlash(dependency)+"\n")
+	write(filepath.Join(reviewed, "alias.go"), `
+package exporter
+import "example.com/sdk/source/types"
+type Public = types.Data
+type Entry = types.Record
+`)
+
+	review, err := createReview(reviewed)
+	require.NoError(t, err)
+	line := feedbackLine(t, review, "exporter.Public")
+	get := feedbackLineText(feedbackMethod(t, line, "Public", "Get"))
+	require.Contains(t, get, "Entry")
+	require.NotContains(t, get, "Record")
+	use := feedbackLineText(feedbackMethod(t, line, "Public", "Use"))
+	require.Contains(t, use, "example.com/old.Value")
+	require.NotContains(t, use, "other.Value")
+
+	source, err := os.ReadFile(sourceFile)
+	require.NoError(t, err)
+	write(sourceFile, strings.ReplaceAll(string(source), "example.com/old", "example.com/new"))
+	changed, err := createReview(reviewed)
+	require.NoError(t, err)
+	changedUse := feedbackLineText(feedbackMethod(t, feedbackLine(t, changed, "exporter.Public"), "Public", "Use"))
+	require.Contains(t, changedUse, "example.com/new.Value")
+	require.NotContains(t, changedUse, "example.com/old.Value")
+}
+
 func TestUnnamedImportNameLookupFailureIsReported(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("GOPROXY", "off")

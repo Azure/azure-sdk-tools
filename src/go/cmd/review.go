@@ -337,12 +337,13 @@ func (r *Review) resolveTypeDefinition(m *Module, def typeDef, seen map[string]b
 	if def.n == nil || def.p == nil {
 		return def, "", nil
 	}
-	if !def.n.Assign.IsValid() {
-		if def.methodPackage == nil {
-			def.methodPackage = def.p
-			def.methodName = def.n.Name.Name
-		}
+	if def.underlyingType != "" {
 		return def, "", nil
+	}
+	isDefined := !def.n.Assign.IsValid()
+	methodPackage, methodName := def.methodPackage, def.methodName
+	if isDefined && methodPackage == nil {
+		methodPackage, methodName = def.p, def.n.Name.Name
 	}
 	selector, ok := unparenType(def.n.Type).(*ast.SelectorExpr)
 	if !ok {
@@ -367,6 +368,12 @@ func (r *Review) resolveTypeDefinition(m *Module, def typeDef, seen map[string]b
 		strings.HasPrefix(importPath, strings.TrimSuffix(m.ModFile.Module.Mod.Path, "/")+"/") {
 		resolved, terminal, err = r.resolveModuleType(m, qualifiedName, seen)
 	} else if isStandardLibraryImportPath(importPath) {
+		if isDefined {
+			def.underlyingType = qualifiedName
+			def.methodPackage = methodPackage
+			def.methodName = methodName
+			return def, "", nil
+		}
 		return typeDef{}, qualifiedName, nil
 	} else {
 		return typeDef{}, "", fmt.Errorf("couldn't resolve dependency for type %s", qualifiedName)
@@ -374,9 +381,15 @@ func (r *Review) resolveTypeDefinition(m *Module, def typeDef, seen map[string]b
 	if err != nil {
 		return typeDef{}, "", err
 	}
-	if !def.n.Assign.IsValid() && resolved.methodPackage == nil {
-		resolved.methodPackage = def.p
-		resolved.methodName = def.n.Name.Name
+	if isDefined {
+		if terminal != "" {
+			def.underlyingType = terminal
+			def.methodPackage = methodPackage
+			def.methodName = methodName
+			return def, "", nil
+		}
+		resolved.methodPackage = methodPackage
+		resolved.methodName = methodName
 	}
 	return resolved, terminal, nil
 }
@@ -432,16 +445,16 @@ func (r *Review) externalModule(mod module.Version) (*Module, error) {
 	var err error
 	if replacement != nil {
 		if replacement.New.Version != "" {
-			m, err = GetExternalModuleForDependency(replacement.New)
+			m, err = getExternalModuleForDependencyInContext(replacement.New, r.path)
 		} else {
 			dir := filepath.FromSlash(replacement.New.Path)
 			if !filepath.IsAbs(dir) {
 				dir = filepath.Join(r.path, dir)
 			}
-			m, err = NewModuleForDependency(dir)
+			m, err = newModuleForDependencyInContext(dir, r.path)
 		}
 	} else {
-		m, err = GetExternalModuleForDependency(mod)
+		m, err = getExternalModuleForDependencyInContext(mod, r.path)
 	}
 	if err != nil {
 		return nil, err

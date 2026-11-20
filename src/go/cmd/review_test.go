@@ -104,7 +104,7 @@ type Result = middle.Result
 	write(filepath.Join(middleDir, "types.go"), "package middle\ntype Result []rune\n")
 	write(filepath.Join(selectedMiddleDir, "go.mod"), "module "+middleModule+"\n\ngo 1.21\n")
 	write(filepath.Join(selectedMiddleDir, "types.go"), "package middle\ntype Result []complex64\n")
-	write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire (\n\t"+sourceModule+" v1.0.0\n\t"+bridgeModule+" v1.0.0\n)\nreplace "+sourceModule+" => "+filepath.ToSlash(sourceDir)+"\nreplace "+bridgeModule+" => "+filepath.ToSlash(bridgeDir)+"\nreplace "+middleModule+" => "+filepath.ToSlash(selectedMiddleDir)+"\nreplace "+unrelatedModule+" => "+filepath.ToSlash(unrelatedDir)+"\n")
+	write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire (\n\t"+sourceModule+" v1.0.0\n\t"+bridgeModule+" v1.0.0\n\t"+middleModule+" v1.1.0\n\t"+unrelatedModule+" v1.0.0\n)\nreplace "+sourceModule+" => "+filepath.ToSlash(sourceDir)+"\nreplace "+bridgeModule+" => "+filepath.ToSlash(bridgeDir)+"\nreplace "+middleModule+" => "+filepath.ToSlash(selectedMiddleDir)+"\nreplace "+unrelatedModule+" => "+filepath.ToSlash(unrelatedDir)+"\n")
 	write(filepath.Join(reviewed, "alias.go"), "package exporter\nimport \""+sourceModule+"\"\ntype Public = source.Data\n")
 	review, err := createReview(reviewed)
 	require.NoError(t, err)
@@ -161,7 +161,25 @@ func (MyDuration) Add(time.Duration) MyDuration { return 0 }
 	review, err := createReview(dir)
 	require.NoError(t, err)
 	line := feedbackLine(t, review, "duration.Public")
-	require.Contains(t, withoutAliasTarget(feedbackLineText(line)), "internal/types.MyDuration")
+	require.Equal(t, "typePublic=time.Duration", withoutAliasTarget(feedbackLineText(line)))
+	require.Contains(t, feedbackLineText(line), "alias of example.com/duration/internal/types.MyDuration")
+	require.Contains(t, feedbackLineText(feedbackMethod(t, line, "Public", "Add")), "time.Duration")
+}
+
+func TestPrivateDefinedSelectorAliasPreservesUnderlyingAndMethods(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/duration\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "types.go"), []byte(`
+package duration
+import "time"
+type hidden time.Duration
+func (hidden) Add(time.Duration) hidden { return 0 }
+type Public = hidden
+`), 0644))
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	line := feedbackLine(t, review, "duration.Public")
+	require.Equal(t, "typePublic=time.Duration", withoutAliasTarget(feedbackLineText(line)))
 	require.Contains(t, feedbackLineText(feedbackMethod(t, line, "Public", "Add")), "time.Duration")
 }
 
@@ -219,6 +237,41 @@ type Public = source.MyDuration
 	review, err := createReview(reviewed)
 	require.NoError(t, err)
 	line := feedbackLine(t, review, "exporter.Public")
-	require.Contains(t, withoutAliasTarget(feedbackLineText(line)), "example.com/sdk/source.MyDuration")
+	require.Equal(t, "typePublic=time.Duration", withoutAliasTarget(feedbackLineText(line)))
+	require.Contains(t, feedbackLineText(line), "alias of example.com/sdk/source.MyDuration")
 	require.Contains(t, feedbackLineText(feedbackMethod(t, line, "Public", "Add")), "time.Duration")
+}
+
+func TestExternalDefinedSelectorAliasTracksUnderlyingType(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GOPROXY", "off")
+	reviewed := filepath.Join(dir, "exporter")
+	dependency := filepath.Join(dir, "source")
+	require.NoError(t, os.MkdirAll(filepath.Join(dependency, "bridge"), 0755))
+	require.NoError(t, os.MkdirAll(filepath.Join(dependency, "types"), 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(dependency, "go.mod"), []byte("module example.com/sdk/source\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dependency, "bridge", "bridge.go"), []byte(`
+package bridge
+import "example.com/sdk/source/types"
+type Defined types.Data
+func (Defined) Method() {}
+`), 0644))
+	dataFile := filepath.Join(dependency, "types", "types.go")
+	require.NoError(t, os.WriteFile(dataFile, []byte("package types\ntype Data []byte\n"), 0644))
+	require.NoError(t, os.MkdirAll(reviewed, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(reviewed, "go.mod"), []byte("module example.com/sdk/exporter\n\ngo 1.21\nrequire example.com/sdk/source v1.0.0\nreplace example.com/sdk/source => "+filepath.ToSlash(dependency)+"\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(reviewed, "alias.go"), []byte(`
+package exporter
+import "example.com/sdk/source/bridge"
+type Public = bridge.Defined
+`), 0644))
+
+	for _, underlying := range []string{"[]byte", "[]rune"} {
+		require.NoError(t, os.WriteFile(dataFile, []byte("package types\ntype Data "+underlying+"\n"), 0644))
+		review, err := createReview(reviewed)
+		require.NoError(t, err)
+		line := feedbackLine(t, review, "exporter.Public")
+		require.Equal(t, "typePublic="+underlying, withoutAliasTarget(feedbackLineText(line)))
+		feedbackMethod(t, line, "Public", "Method")
+	}
 }

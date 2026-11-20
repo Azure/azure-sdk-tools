@@ -33,16 +33,17 @@ var ErrNoPackages = errors.New("no packages found")
 
 // Pkg represents a Go package.
 type Pkg struct {
-	modulePath     string
-	moduleRoot     string
-	c              content
-	diagnostics    []CodeDiagnostic
-	files          map[string][]byte
-	fs             *token.FileSet
-	p              *ast.Package
-	relName        string
-	modulePackages map[string]*Pkg
-	packageNames   map[string]string
+	modulePath      string
+	moduleRoot      string
+	packageNameRoot string
+	c               content
+	diagnostics     []CodeDiagnostic
+	files           map[string][]byte
+	fs              *token.FileSet
+	p               *ast.Package
+	relName         string
+	modulePackages  map[string]*Pkg
+	packageNames    map[string]string
 
 	// TypeAliases are types exported from this package but defined in another. For
 	// example, package "azcore" may export TokenCredential from azcore/internal/shared
@@ -67,11 +68,12 @@ func NewPkg(dir, modulePath, moduleRoot string) (*Pkg, error) {
 	moduleRoot = filepath.ToSlash(moduleRoot)
 
 	pk := &Pkg{
-		modulePath:  modulePath,
-		moduleRoot:  moduleRoot,
-		c:           newContent(),
-		diagnostics: []CodeDiagnostic{},
-		types:       map[string]typeDef{},
+		modulePath:      modulePath,
+		moduleRoot:      moduleRoot,
+		packageNameRoot: moduleRoot,
+		c:               newContent(),
+		diagnostics:     []CodeDiagnostic{},
+		types:           map[string]typeDef{},
 	}
 	modulePathWithoutVersion := strings.TrimSuffix(versionReg.ReplaceAllString(modulePath, "/"), "/")
 	moduleName := filepath.Base(modulePathWithoutVersion)
@@ -241,6 +243,9 @@ func (p *Pkg) indexFile(f *ast.File) error {
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := imports[ident.Name]; ok {
+						if !x.Assign.IsValid() {
+							p.types[x.Name.Name] = typeDef{n: x, p: p, imports: imports}
+						}
 						// alias in the same module could use type navigator directly
 						if _, _, found := strings.Cut(impPath, p.unversionedModulePath()); found && !strings.Contains(impPath, "internal") {
 							expr := p.getText(t.Pos(), t.End())
@@ -295,19 +300,58 @@ func (p *Pkg) packageName(importPath string) (string, error) {
 	if imported, ok := p.modulePackages[importPath]; ok && imported.p != nil {
 		return imported.p.Name, nil
 	}
-	cmd := newGoCommand(p.moduleRoot, "list", "-mod=readonly", "-f", "{{.Name}}", importPath)
+	cmd := newGoCommand(p.packageNameRoot, "list", "-e", "-mod=readonly", "-f", "{{.Dir}}", importPath)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	output, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("resolving Go package name for %s: %w: %s", importPath, err, strings.TrimSpace(stderr.String()))
 	}
-	name := strings.TrimSpace(string(output))
-	if name == "" || strings.ContainsAny(name, "\r\n") {
-		return "", fmt.Errorf("go list returned an invalid package name for %s", importPath)
+	dir := strings.TrimSpace(string(output))
+	if dir == "" || strings.ContainsAny(dir, "\r\n") {
+		return "", fmt.Errorf("go list returned no directory for package %s: %s", importPath, strings.TrimSpace(stderr.String()))
+	}
+	name, err := packageNameFromDir(dir)
+	if err != nil {
+		return "", fmt.Errorf("resolving Go package name for %s in %s: %w", importPath, dir, err)
 	}
 	if p.packageNames != nil {
 		p.packageNames[importPath] = name
+	}
+	return name, nil
+}
+
+func packageNameFromDir(dir string) (string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+	name := ""
+	hasMain := false
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		file := filepath.Join(dir, entry.Name())
+		f, err := parser.ParseFile(token.NewFileSet(), file, nil, parser.PackageClauseOnly)
+		if err != nil {
+			return "", fmt.Errorf("parsing package clause in %s: %w", file, err)
+		}
+		if f.Name.Name == "main" {
+			// Tool and generator files may share a directory with the importable package.
+			hasMain = true
+			continue
+		}
+		if name != "" && name != f.Name.Name {
+			return "", fmt.Errorf("found multiple package names %q and %q in %s", name, f.Name.Name, dir)
+		}
+		name = f.Name.Name
+	}
+	if name == "" {
+		if hasMain {
+			return "main", nil
+		}
+		return "", fmt.Errorf("no Go package files found in %s", dir)
 	}
 	return name, nil
 }
@@ -448,6 +492,13 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	var t TokenMaker
 	if def.n == nil || def.p == nil {
 		t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), a.QualifiedName, nil)
+	} else if def.underlyingType != "" {
+		simple := NewSimpleType(a.Name, a.Package.Name(), def.underlyingType)
+		a.Package.c.SimpleTypes[a.Name] = simple
+		t = simple
+		if err := a.hoistMethods(def); err != nil {
+			return err
+		}
 	} else {
 		switch n := unparenType(def.n.Type).(type) {
 		case *ast.InterfaceType:
@@ -547,6 +598,11 @@ func (a *TypeAlias) cacheDefinition(def typeDef) {
 		def.methodPackage = a.Package
 		def.methodName = a.Name
 	}
+	if a.isAlias {
+		if existing, ok := a.Package.types[a.Name]; ok && existing.n != nil && existing.n.Assign.IsValid() {
+			return
+		}
+	}
 	a.Package.types[a.Name] = def
 }
 
@@ -568,7 +624,8 @@ type typeDef struct {
 	// p is the package defining the type
 	p *Pkg
 	// methodPackage and methodName identify a defined type whose underlying type is n.
-	methodPackage *Pkg
-	methodName    string
-	imports       map[string]string
+	methodPackage  *Pkg
+	methodName     string
+	underlyingType string
+	imports        map[string]string
 }

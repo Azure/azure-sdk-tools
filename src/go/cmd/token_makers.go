@@ -147,7 +147,9 @@ type Func struct {
 	// paramNames lists the func's parameters name
 	paramNames []string
 	// paramTypes lists the func's parameters type
-	paramTypes []string
+	paramTypes        []string
+	paramTypeSources  []string
+	returnTypeSources []string
 	// typeParamNames lists the func's type parameters name
 	typeParamNames []string
 	// typeParamConstraints lists the func's type parameters constraint
@@ -194,6 +196,7 @@ func newFunc(pkg Pkg, f *ast.FuncType, imports map[string]string) Func {
 	if f.Params.List != nil {
 		fn.paramNames = make([]string, 0, len(f.Params.List))
 		fn.paramTypes = make([]string, 0, len(f.Params.List))
+		fn.paramTypeSources = make([]string, 0, len(f.Params.List))
 		pkg.translateFieldList(f.Params.List, func(n *string, t string) {
 			if n != nil {
 				fn.paramNames = append(fn.paramNames, *n)
@@ -201,12 +204,15 @@ func newFunc(pkg Pkg, f *ast.FuncType, imports map[string]string) Func {
 				fn.paramNames = append(fn.paramNames, "")
 			}
 			fn.paramTypes = append(fn.paramTypes, pkg.translateSignatureType(t, imports))
+			fn.paramTypeSources = append(fn.paramTypeSources, t)
 		})
 	}
 	if f.Results != nil {
 		fn.Returns = make([]string, 0, len(f.Results.List))
+		fn.returnTypeSources = make([]string, 0, len(f.Results.List))
 		pkg.translateFieldList(f.Results.List, func(n *string, t string) {
 			fn.Returns = append(fn.Returns, pkg.translateSignatureType(t, imports))
+			fn.returnTypeSources = append(fn.returnTypeSources, t)
 		})
 	}
 	return fn
@@ -282,7 +288,7 @@ func (f Func) signature() string {
 	return fmt.Sprintf("(%s %s) %s", f.ReceiverName, f.ReceiverType, f.name)
 }
 
-func (f Func) ForAlias(sourcePkg, pkg, typeName, aliasName string, sourceNames []string) Func {
+func (f Func) ForAlias(source, target *Pkg, typeName, aliasName string, sourceNames []string) Func {
 	clone := f
 	prefix := ""
 	receiver, pointer := normalizeReceiverType(clone.ReceiverType)
@@ -290,26 +296,129 @@ func (f Func) ForAlias(sourcePkg, pkg, typeName, aliasName string, sourceNames [
 		prefix = "*"
 	}
 	clone.ReceiverType = prefix + aliasName + strings.TrimPrefix(receiver, typeName)
-	clone.id = pkg + "-" + clone.signature()
+	clone.id = target.Name() + "-" + clone.signature()
 	clone.exported = ast.IsExported(aliasName) && ast.IsExported(clone.name)
-
-	// Match navigation markers as well as names to avoid rewriting unrelated types.
-	replacements := make([]string, 0, len(sourceNames)*2)
-	for _, name := range sourceNames {
-		replacements = append(replacements,
-			fmt.Sprintf("<%s.%s>%s", sourcePkg, name, name),
-			fmt.Sprintf("<%s.%s>%s", pkg, aliasName, aliasName))
-	}
-	replacer := strings.NewReplacer(replacements...)
 	clone.paramTypes = append([]string(nil), f.paramTypes...)
 	for i, typ := range clone.paramTypes {
-		clone.paramTypes[i] = replacer.Replace(typ)
+		if i < len(f.paramTypeSources) {
+			clone.paramTypes[i] = f.translateAliasSignatureType(source, target, f.paramTypeSources[i], typ, aliasName, sourceNames)
+		}
 	}
 	clone.Returns = append([]string(nil), f.Returns...)
 	for i, typ := range clone.Returns {
-		clone.Returns[i] = replacer.Replace(typ)
+		if i < len(f.returnTypeSources) {
+			clone.Returns[i] = f.translateAliasSignatureType(source, target, f.returnTypeSources[i], typ, aliasName, sourceNames)
+		}
 	}
 	return clone
+}
+
+func (f Func) translateAliasSignatureType(source, target *Pkg, sourceType, translated, aliasName string, sourceNames []string) string {
+	replacements := []string{}
+	sourceAliases := make(map[string]bool, len(sourceNames))
+	for _, name := range sourceNames {
+		sourceAliases[name] = true
+	}
+
+	localNames := make(map[string]bool, len(source.types)+len(source.TypeAliases))
+	for name := range source.types {
+		localNames[name] = true
+	}
+	for _, alias := range source.TypeAliases {
+		localNames[alias.Name] = true
+	}
+	names := make([]string, 0, len(localNames))
+	for name := range localNames {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		endpoint, exposedName, found := findExposedSignatureType(target, source.importPath()+"."+name)
+		if sourceAliases[name] {
+			endpoint, exposedName, found = target, aliasName, true
+		}
+		if !found {
+			continue
+		}
+		displayName := exposedName
+		if endpoint != target {
+			displayName = endpoint.p.Name + "." + exposedName
+		}
+		replacements = append(replacements,
+			fmt.Sprintf("<%s.%s>%s", source.Name(), name, name),
+			fmt.Sprintf("<%s.%s>%s", endpoint.Name(), exposedName, displayName))
+	}
+
+	parseType := sourceType
+	offset := 0
+	if strings.HasPrefix(parseType, "...") {
+		parseType = strings.TrimPrefix(parseType, "...")
+		offset = 3
+	}
+	fset := token.NewFileSet()
+	expr, err := parser.ParseExprFrom(fset, "", parseType, 0)
+	if err == nil {
+		ast.Inspect(expr, func(n ast.Node) bool {
+			selector, ok := n.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+			packageName, ok := selector.X.(*ast.Ident)
+			if !ok {
+				return true
+			}
+			importPath, ok := f.imports[packageName.Name]
+			if !ok {
+				return true
+			}
+			start := fset.Position(selector.Pos()).Offset + offset
+			end := fset.Position(selector.End()).Offset + offset
+			original := sourceType[start:end]
+			sourceExpr := source.translateType(original, f.imports)
+			targetExpr := importPath + "." + selector.Sel.Name
+			if endpoint, exposedName, found := findExposedSignatureType(target, targetExpr); found {
+				if target.modulePackages[importPath] == endpoint && exposedName == selector.Sel.Name {
+					targetExpr = sourceExpr
+				} else {
+					displayName := exposedName
+					if endpoint != target {
+						displayName = endpoint.p.Name + "." + exposedName
+					}
+					targetExpr = fmt.Sprintf("<%s.%s>%s", endpoint.Name(), exposedName, displayName)
+				}
+			}
+			replacements = append(replacements, sourceExpr, targetExpr)
+			return true
+		})
+	}
+	if len(replacements) == 0 {
+		return translated
+	}
+	return strings.NewReplacer(replacements...).Replace(translated)
+}
+
+func findExposedSignatureType(target *Pkg, qualifiedName string) (*Pkg, string, bool) {
+	if pkg, name, found := findExposedQualifiedType(target, qualifiedName); found {
+		return pkg, name, true
+	}
+	dot := strings.LastIndex(qualifiedName, ".")
+	if dot < 1 {
+		return nil, "", false
+	}
+	importPath, name := qualifiedName[:dot], qualifiedName[dot+1:]
+	packages := target.modulePackages
+	if packages == nil {
+		packages = map[string]*Pkg{target.importPath(): target}
+	}
+	pkg, found := packages[importPath]
+	if !found || isInternalPackage(pkg) || !ast.IsExported(name) {
+		return nil, "", false
+	}
+	def, found := pkg.types[name]
+	if !found || def.n == nil {
+		return nil, "", false
+	}
+	return pkg, name, true
 }
 
 func (f Func) MakeReviewLine() ReviewLine {

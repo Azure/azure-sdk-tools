@@ -306,7 +306,7 @@ func (Entry) Valid() bool { return true }
 		{"Status", "=string", []string{"Label"}, nil},
 		{"Record", "", []string{"Valid"}, nil},
 		{"Defined", "[]byte", []string{"Local"}, []string{"Len", "Reset"}},
-		{"Indirect", "=internal/bridge.Defined", []string{"BridgeOnly"}, []string{"Len", "Reset"}},
+		{"Indirect", "=[]byte", []string{"BridgeOnly"}, []string{"Len", "Reset"}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			line := findLine(t, review, "aliastest."+test.name)
@@ -326,6 +326,9 @@ func (Entry) Valid() bool { return true }
 			}
 		})
 	}
+	require.True(t, searchTokens([]ReviewLine{findLine(t, review, "aliastest.Indirect")}, func(token ReviewToken) bool {
+		return token.Value == "/* alias of example.com/aliastest/internal/bridge.Defined */"
+	}))
 
 	sourcePath := filepath.Join(dir, "internal", "types", "types.go")
 	changed := strings.Replace(files["internal/types/types.go"], "[]byte", "[]rune", 1)
@@ -334,6 +337,7 @@ func (Entry) Valid() bool { return true }
 	changedReview, err := createReview(dir)
 	require.NoError(t, err)
 	require.Equal(t, "typeSlice=[]rune", typeText(findLine(t, changedReview, "aliastest.Slice")))
+	require.Equal(t, "typeIndirect=[]rune", typeText(findLine(t, changedReview, "aliastest.Indirect")))
 	require.Equal(t, "typeMap=map[string]int64", typeText(findLine(t, changedReview, "aliastest.Map")))
 	require.True(t, searchTokens([]ReviewLine{findLine(t, changedReview, "aliastest.Slice")}, func(token ReviewToken) bool {
 		return token.Value == "/* alias of example.com/aliastest/internal/types.Data */"
@@ -380,7 +384,6 @@ func TestAliasAdditionalDefinitions(t *testing.T) {
 			require.Equal(t, "typePublic="+test.changedType, withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "aliastest.Public"))))
 		})
 	}
-
 	for _, typ := range []string{"*int", "(*int)"} {
 		t.Run("unsupported pointer "+typ, func(t *testing.T) {
 			dir := aliasFeedbackFixture(t, "type Public = types.Data\n", "type Data "+typ+"\n", nil)

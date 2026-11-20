@@ -63,15 +63,22 @@ func getPackageNameFromModPath(modPath string) string {
 
 // NewModule indexes a module's ASTs
 func NewModule(dir string) (*Module, error) {
-	return newModule(dir, false)
+	return newModule(dir, false, dir)
 }
 
 func NewModuleForDependency(dir string) (*Module, error) {
-	return newModule(dir, true)
+	return newModule(dir, true, dir)
 }
 
-func newModule(dir string, deferAliases bool) (*Module, error) {
+func newModuleForDependencyInContext(dir, packageNameRoot string) (*Module, error) {
+	return newModule(dir, true, packageNameRoot)
+}
+
+func newModule(dir string, deferAliases bool, packageNameRoot string) (*Module, error) {
 	fmt.Println("Indexing", dir)
+	if packageNameRoot == "" {
+		packageNameRoot = dir
+	}
 	mf, err := parseModFile(dir)
 	if err != nil {
 		return nil, err
@@ -118,6 +125,7 @@ func newModule(dir string, deferAliases bool) (*Module, error) {
 			}
 			p, err := NewPkg(path, m.ModFile.Module.Mod.Path, dir)
 			if err == nil {
+				p.packageNameRoot = filepath.ToSlash(packageNameRoot)
 				m.Packages[baseImportPath+p.Name()] = p
 			} else if !errors.Is(err, ErrNoPackages) {
 				return err
@@ -171,7 +179,7 @@ func newModule(dir string, deferAliases bool) (*Module, error) {
 	// resolve cross-package references by adding the definitions of types exported by alias to the exporting package
 	for _, p := range m.Packages {
 		for _, alias := range p.TypeAliases {
-			def, found, err := findTypeDef(alias.Name, p, m.Packages, map[typeDefRef]bool{}, alias.isAlias)
+			def, found, err := findTypeDef(alias.Name, p, m.Packages, map[typeDefRef]bool{}, true)
 			alias.SourceMod = sourceModuleForAlias(alias.QualifiedName, m.ModFile.Require)
 			if deferAliases {
 				if alias.SourceMod != (module.Version{}) {
@@ -179,11 +187,27 @@ func newModule(dir string, deferAliases bool) (*Module, error) {
 				}
 				continue
 			}
+			if alias.SourceMod != (module.Version{}) {
+				m.ExternalAliases = append(m.ExternalAliases, alias)
+				continue
+			}
 			if strings.Contains(p.relName, "/internal") {
 				if err == nil && found {
 					alias.cacheDefinition(def)
 				}
 				continue
+			}
+			if !alias.isAlias && alias.definition.n != nil && def.n == alias.definition.n && def.underlyingType == "" {
+				dot := strings.LastIndex(alias.QualifiedName, ".")
+				if dot > 0 {
+					importPath := alias.QualifiedName[:dot]
+					modulePath := p.unversionedModulePath()
+					if importPath == modulePath || strings.HasPrefix(importPath, modulePath+"/") {
+						alias.SourceMod = module.Version{Path: m.ModFile.Module.Mod.Path}
+						m.ExternalAliases = append(m.ExternalAliases, alias)
+						continue
+					}
+				}
 			}
 			if err != nil {
 				return nil, fmt.Errorf("resolving alias %s.%s: %w", p.Name(), alias.Name, err)
@@ -300,7 +324,7 @@ func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg, aliasName strin
 		}
 	}
 	for _, method := range methods {
-		alias := method.fn.ForAlias(pkg.Name(), target.Name(), method.receiver, aliasName, names)
+		alias := method.fn.ForAlias(pkg, target, method.receiver, aliasName, names)
 		target.c.Funcs[alias.signature()] = alias
 	}
 	return nil
@@ -367,7 +391,7 @@ func parseModFile(dir string) (*modfile.File, error) {
 //   - packages is the collection of Pkgs to search. Its keys are import paths e.g.
 //     "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) (typeDef, bool, error) {
-	return findTypeDef(typeName, source, packages, map[typeDefRef]bool{}, false)
+	return findTypeDef(typeName, source, packages, map[typeDefRef]bool{}, true)
 }
 
 type typeDefRef struct {
@@ -384,16 +408,18 @@ func findTypeDef(typeName string, source *Pkg, packages map[string]*Pkg, seen ma
 	if preserveDefinedTypes {
 		for _, alias := range source.TypeAliases {
 			if alias.Name == typeName && !alias.isAlias && alias.definition.n != nil {
-				def := alias.definition
-				def.methodPackage = source
-				def.methodName = alias.Name
-				return def, true, nil
+				return resolveDefinedSelector(alias.definition, source, packages, seen)
 			}
 		}
 	}
 	def, ok := source.types[typeName]
 	if ok {
 		if def.p == source && def.n.Name.Name == typeName {
+			if preserveDefinedTypes && !def.n.Assign.IsValid() {
+				if _, ok := unparenType(def.n.Type).(*ast.SelectorExpr); ok {
+					return resolveDefinedSelector(def, source, packages, seen)
+				}
+			}
 			if ident, ok := unparenType(def.n.Type).(*ast.Ident); ok {
 				underlying, found, err := findTypeDef(ident.Name, source, packages, seen, preserveDefinedTypes)
 				if err != nil {
@@ -435,4 +461,38 @@ func findTypeDef(typeName string, source *Pkg, packages map[string]*Pkg, seen ma
 		}
 	}
 	return typeDef{}, false, nil
+}
+
+func resolveDefinedSelector(def typeDef, source *Pkg, packages map[string]*Pkg, seen map[typeDefRef]bool) (typeDef, bool, error) {
+	def.methodPackage = source
+	def.methodName = def.n.Name.Name
+	selector, ok := unparenType(def.n.Type).(*ast.SelectorExpr)
+	if !ok {
+		return def, true, nil
+	}
+	name, ok := selector.X.(*ast.Ident)
+	if !ok {
+		return typeDef{}, false, fmt.Errorf("unsupported selector in type %s", def.n.Name.Name)
+	}
+	importPath, ok := def.imports[name.Name]
+	if !ok {
+		return typeDef{}, false, fmt.Errorf("unknown import name %s in type %s", name.Name, def.n.Name.Name)
+	}
+	qualifiedName := importPath + "." + selector.Sel.Name
+	if pkg, ok := packages[importPath]; ok {
+		resolved, found, err := findTypeDef(selector.Sel.Name, pkg, packages, seen, true)
+		if err != nil {
+			return typeDef{}, false, err
+		}
+		if !found {
+			return def, true, nil
+		}
+		resolved.methodPackage = source
+		resolved.methodName = def.n.Name.Name
+		return resolved, true, nil
+	}
+	if isStandardLibraryImportPath(importPath) {
+		def.underlyingType = qualifiedName
+	}
+	return def, true, nil
 }

@@ -13,9 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     internal class MockDevOpsService : IDevOpsService
     {
-        public Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct) =>
-            throw new NotImplementedException();
-
         // Configurable properties for testing
         public Build? ConfiguredPipelineRun { get; set; }
         public ReleasePlanWorkItem? ConfiguredReleasePlanForWorkItem { get; set; }

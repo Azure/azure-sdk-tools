@@ -121,24 +121,25 @@ the skips, keyed by work-item ID. Cleanup failures retain their plan IDs in
 `response_errors`. Logs print both the release-plan and backing work-item IDs.
 
 `preview_summary` remains the read-only scan summary. Actual cleanup adds
-`cleanup_summary`, with scanned and eligible-candidate counts, successfully
-`abandoned`, `skipped`, and `failed` counts, and evaluation-error details.
+`plan_cleanup_summary`, with scanned and eligible-candidate counts, successfully
+`abandoned_plan_count`, `skipped`, and `failed_item_count` counts, and
+evaluation-error details.
 
-`reminder_notifications` and `abandonment_notifications` are flat maps keyed by
+`reminder_email_results` and `abandonment_email_results` are flat maps keyed by
 work-item ID, using the existing notification result. Each value has a `Status`
 and optional `ErrorMessage`. `Sent` means the notification service accepted the
 request, not that inbox delivery was verified. `Disabled` and
 `SkippedNoRecipients` are skips; `Failed` is an unsuccessful delivery attempt.
 The reason explains intentional skips, such as a merged Private Preview spec.
 
-`reminder_summary` and `abandonment_notification_summary` contain typed
-`delivered`, `skipped`, and `failed` counts. Completed empty scans report zeros;
+`reminder_email_summary` and `abandonment_email_summary` contain typed
+`accepted_email_count`, `skipped`, and `failed_item_count` counts. Completed empty scans report zeros;
 initial retrieval failures do not contain a successful scan or delivery summary.
 The text summary includes zero counts:
 
 ```text
-Cleanup: Abandoned: 2; Skipped: 1; Failed: 0
-Confirmation: Delivered: 1; Skipped: 0; Failed: 1
+Plan cleanup: Abandoned plans: 2; Skipped: 1; Failed: 0
+Abandonment emails: Accepted: 1; Skipped: 0; Failed: 1
 ```
 
 - Cleanup and confirmation are independent outcomes. A successfully abandoned

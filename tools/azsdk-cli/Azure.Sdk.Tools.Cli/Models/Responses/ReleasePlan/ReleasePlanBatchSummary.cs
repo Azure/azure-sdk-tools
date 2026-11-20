@@ -5,9 +5,9 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 
 /// <summary>
-/// Scan counts with optional cleanup and notification outcomes.
+/// Counts for a release-plan scan, cleanup, or email batch.
 /// </summary>
-public class ReleasePlanPreviewSummary
+public class ReleasePlanBatchSummary
 {
     [JsonPropertyName("scanned")]
     public int Scanned { get; init; }
@@ -15,17 +15,20 @@ public class ReleasePlanPreviewSummary
     [JsonPropertyName("eligible")]
     public int Eligible { get; init; }
 
-    [JsonPropertyName("abandoned")]
+    // Plans marked Abandoned by actual cleanup; omitted in previews and email-only batches.
+    [JsonPropertyName("abandoned_plan_count")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public int? Abandoned { get; init; }
+    public int? AbandonedPlanCount { get; init; }
 
-    [JsonPropertyName("delivered")]
+    // Accepted email requests, not inbox delivery; omitted when no email batch was requested.
+    [JsonPropertyName("accepted_email_count")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public int? Delivered { get; init; }
+    public int? AcceptedEmailCount { get; init; }
 
-    [JsonPropertyName("failed")]
+    // Failed cleanup or email items; previews use EvaluationErrors instead.
+    [JsonPropertyName("failed_item_count")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public int? Failed { get; init; }
+    public int? FailedItemCount { get; init; }
 
     [JsonPropertyName("skipped")]
     public int Skipped { get; init; }

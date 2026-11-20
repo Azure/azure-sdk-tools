@@ -2761,10 +2761,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             using var actualJson = JsonDocument.Parse(JsonSerializer.Serialize(actual));
             Assert.That(actualJson.RootElement.TryGetProperty("preview_summary", out _), Is.False);
             Assert.That(actualJson.RootElement.GetProperty("skipped_plans").GetProperty("50").GetString(), Is.EqualTo(plan.ReleasePlanLink));
-            Assert.That(actual.CleanupSummary!.Scanned, Is.EqualTo(1));
-            Assert.That(actual.CleanupSummary.Abandoned, Is.Zero);
-            Assert.That(actual.CleanupSummary.Skipped, Is.EqualTo(1));
-            Assert.That(actual.CleanupSummary.Failed, Is.Zero);
+            Assert.That(actual.PlanCleanupSummary!.Scanned, Is.EqualTo(1));
+            Assert.That(actual.PlanCleanupSummary.AbandonedPlanCount, Is.Zero);
+            Assert.That(actual.PlanCleanupSummary.Skipped, Is.EqualTo(1));
+            Assert.That(actual.PlanCleanupSummary.FailedItemCount, Is.Zero);
             Assert.That(actual.EligibilityReasons, Is.EquivalentTo(preview.EligibilityReasons));
             service.Verify(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
             service.VerifyNoOtherCalls();
@@ -2888,27 +2888,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var counts = operation switch
             {
                 "Preview" => response.PreviewSummary,
-                "Cleanup" => response.CleanupSummary,
-                _ => response.ReminderSummary
+                "Cleanup" => response.PlanCleanupSummary,
+                _ => response.ReminderEmailSummary
             };
             Assert.That(counts, Is.Not.Null);
             Assert.That(counts!.Scanned, Is.Zero);
             Assert.That(counts.Skipped, Is.Zero);
-            var primaryOutcome = operation switch
-            {
-                "Preview" => "Eligible",
-                "Cleanup" => "Abandoned",
-                _ => "Delivered"
-            };
             if (operation != "Preview")
             {
-                Assert.That(counts.Failed, Is.Zero);
-                Assert.That(response.ToString(), Does.Contain($"{operation}: {primaryOutcome}: 0; Skipped: 0; Failed: 0"));
+                Assert.That(counts.FailedItemCount, Is.Zero);
+                var summaryLabel = operation == "Cleanup" ? "Plan cleanup: Abandoned plans" : "Reminder emails: Accepted";
+                Assert.That(response.ToString(), Does.Contain($"{summaryLabel}: 0; Skipped: 0; Failed: 0"));
             }
             Assert.That(captured, Is.Empty);
             using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
-            var summaryName = operation switch { "Preview" => "preview_summary", "Cleanup" => "cleanup_summary", _ => "reminder_summary" };
-            Assert.That(json.RootElement.GetProperty(summaryName).GetProperty(primaryOutcome.ToLowerInvariant()).GetInt32(), Is.Zero);
+            var summaryName = operation switch { "Preview" => "preview_summary", "Cleanup" => "plan_cleanup_summary", _ => "reminder_email_summary" };
+            var primaryProperty = operation switch
+            {
+                "Cleanup" => "abandoned_plan_count",
+                "Reminder" => "accepted_email_count",
+                _ => "eligible"
+            };
+            Assert.That(json.RootElement.GetProperty(summaryName).GetProperty(primaryProperty).GetInt32(), Is.Zero);
             if (operation == "Preview")
             {
                 Assert.That(response.EligibilityReasons, Is.Empty);
@@ -2937,9 +2938,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ExitCode, Is.EqualTo(1));
             Assert.That(response.DryRun, Is.EqualTo(operation == "Preview"));
             Assert.That(response.ReleasePlanDetailsList, Is.Null);
-            Assert.That(response.CleanupSummary, Is.Null);
-            Assert.That(response.ReminderSummary, Is.Null);
-            Assert.That(response.ToString(), Does.Not.Contain("Cleanup: Abandoned:").And.Not.Contain("Reminder: Delivered:"));
+            Assert.That(response.PlanCleanupSummary, Is.Null);
+            Assert.That(response.ReminderEmailSummary, Is.Null);
+            Assert.That(response.ToString(), Does.Not.Contain("Plan cleanup: Abandoned plans:").And.Not.Contain("Reminder emails: Accepted:"));
             if (operation == "Preview")
             {
                 Assert.That(response.ToString(), Does.Contain("Dry run failed").And.Contain("No plans were changed or notifications sent"));
@@ -2947,8 +2948,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ResponseError, Does.Contain("Work item 200 not found"));
             using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
             Assert.That(json.RootElement.TryGetProperty("preview_summary", out _), Is.False, "Do not imply a completed empty scan after an initial failure.");
-            Assert.That(json.RootElement.TryGetProperty("cleanup_summary", out _), Is.False);
-            Assert.That(json.RootElement.TryGetProperty("reminder_summary", out _), Is.False);
+            Assert.That(json.RootElement.TryGetProperty("plan_cleanup_summary", out _), Is.False);
+            Assert.That(json.RootElement.TryGetProperty("reminder_email_summary", out _), Is.False);
             Assert.That(json.RootElement.TryGetProperty("skipped_plans", out _), Is.False);
             AssertDryRunHasNoSideEffects(service, notification);
         }
@@ -3268,7 +3269,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ExitCode, Is.EqualTo(failFirstSend ? 1 : 0));
             Assert.That(response.ResponseErrors ?? [], Has.Count.EqualTo(failFirstSend ? 1 : 0));
             Assert.That(response.Warnings, Has.Some.Contains("381"));
-            Assert.That(response.ReminderNotifications![381].Status,
+            Assert.That(response.ReminderEmailResults![381].Status,
                 Is.EqualTo(failFirstSend ? NotificationStatus.Failed : NotificationStatus.Sent));
             Assert.That(captured, Has.Count.EqualTo(2));
             var genericBody = captured[0].GetProperty("Body").GetString()!;
@@ -3521,7 +3522,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var reminder = await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
             Assert.That(reminder.ExitCode, Is.Zero);
             Assert.That(reminder.Warnings, Has.Some.Contains("601"));
-            Assert.That(reminder.ReminderNotifications![601].Status, Is.EqualTo(NotificationStatus.Sent));
+            Assert.That(reminder.ReminderEmailResults![601].Status, Is.EqualTo(NotificationStatus.Sent));
             Assert.That(captured.Single().GetProperty("Body").GetString(), Does.Contain("verification issue").And.Not.Contain("eligible for automatic abandonment now"));
         }
 
@@ -3795,7 +3796,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ToString(), Does.Contain("Abandoned 1").And.Contain("Status: Abandoned"));
             Assert.That(response.ToString(), Does.Contain(plan.ReleasePlanLink).And.Contain("Abandonment Reason:"));
             Assert.That(response.Warnings, Has.One.Contains("404").And.Contains("Notification failed."));
-            Assert.That(response.ToString(), Does.Contain("Confirmation: Delivered: 0; Skipped: 0; Failed: 1").And.Contain("[WARNING]"));
+            Assert.That(response.ToString(), Does.Contain("Abandonment emails: Accepted: 0; Skipped: 0; Failed: 1").And.Contain("[WARNING]"));
         }
 
         [TestCase(NotificationStatus.Sent)]
@@ -3824,10 +3825,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ExitCode, Is.Zero);
             Assert.That(plan.Status, Is.EqualTo("Abandoned"));
             Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { plan }));
-            Assert.That(response.CleanupSummary!.Abandoned, Is.EqualTo(1));
-            Assert.That(response.CleanupSummary.Failed, Is.Zero);
-            Assert.That(response.AbandonmentNotifications, Has.Count.EqualTo(1));
-            Assert.That(response.AbandonmentNotifications![405].Status, Is.EqualTo(status));
+            Assert.That(response.PlanCleanupSummary!.AbandonedPlanCount, Is.EqualTo(1));
+            Assert.That(response.PlanCleanupSummary.FailedItemCount, Is.Zero);
+            Assert.That(response.AbandonmentEmailResults, Has.Count.EqualTo(1));
+            Assert.That(response.AbandonmentEmailResults![405].Status, Is.EqualTo(status));
             Assert.That(response.ToString(), Does.Contain("Release Plan ID: 45 | Work Item ID: 405").And.Contain(plan.ReleasePlanLink));
             Assert.That(response.Warnings ?? [], Has.Count.EqualTo(status == NotificationStatus.Sent ? 0 : 1));
             if (status != NotificationStatus.Sent)
@@ -3873,7 +3874,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.SkippedPlans[82], Is.EqualTo(grace.ReleasePlanLink));
             Assert.That(response.EligibilityReasons![802], Does.Contain("grace period"));
             Assert.That(response.ResponseErrors, Has.One.Contains("803"));
-            var summary = dryRun ? response.PreviewSummary : response.CleanupSummary;
+            var summary = dryRun ? response.PreviewSummary : response.PlanCleanupSummary;
             Assert.That(summary!.Scanned, Is.EqualTo(3));
             Assert.That(summary.Eligible, Is.EqualTo(1));
             Assert.That(summary.Skipped, Is.EqualTo(1));
@@ -3917,12 +3918,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(captured, Has.Count.EqualTo(2));
             Assert.That(response.ResponseErrors, Has.One.Contains("901"));
             Assert.That(response.Warnings, Has.One.Contains("92").And.Contains("902").And.Contains("missing or invalid"));
-            Assert.That(response.ReminderNotifications, Has.Count.EqualTo(4));
-            Assert.That(response.ReminderNotifications![901].Status, Is.EqualTo(NotificationStatus.Failed));
-            Assert.That(response.ReminderNotifications[902].Status, Is.EqualTo(NotificationStatus.SkippedNoRecipients));
-            Assert.That(response.ReminderNotifications[903].Status, Is.EqualTo(NotificationStatus.Disabled));
-            Assert.That(response.ReminderNotifications[904].Status, Is.EqualTo(NotificationStatus.Sent));
-            Assert.That(response.ToString(), Does.Contain("Reminder: Delivered: 1; Skipped: 2; Failed: 1"));
+            Assert.That(response.ReminderEmailResults, Has.Count.EqualTo(4));
+            Assert.That(response.ReminderEmailResults![901].Status, Is.EqualTo(NotificationStatus.Failed));
+            Assert.That(response.ReminderEmailResults[902].Status, Is.EqualTo(NotificationStatus.SkippedNoRecipients));
+            Assert.That(response.ReminderEmailResults[903].Status, Is.EqualTo(NotificationStatus.Disabled));
+            Assert.That(response.ReminderEmailResults[904].Status, Is.EqualTo(NotificationStatus.Sent));
+            Assert.That(response.ToString(), Does.Contain("Reminder emails: Accepted: 1; Skipped: 2; Failed: 1"));
             Assert.That(response.ToString(), Does.Contain("Release Plan ID: 93 | Work Item ID: 903").And.Contain("has been merged"));
             AssertDryRunHasNoSideEffects(service, new Mock<INotificationService>(MockBehavior.Strict));
         }

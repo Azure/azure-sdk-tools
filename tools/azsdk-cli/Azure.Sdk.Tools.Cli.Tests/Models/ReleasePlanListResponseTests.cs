@@ -15,14 +15,14 @@ public class ReleasePlanListResponseTests
     {
         var response = new ReleasePlanListResponse
         {
-            CleanupSummary = new ReleasePlanPreviewSummary { Scanned = 1, Abandoned = 1, Failed = 0 },
-            ReminderNotifications = new Dictionary<int, NotificationResult>
+            PlanCleanupSummary = new ReleasePlanBatchSummary { Scanned = 1, AbandonedPlanCount = 1, FailedItemCount = 0 },
+            ReminderEmailResults = new Dictionary<int, NotificationResult>
             {
                 [400] = NotificationResult.Sent,
                 [401] = new(NotificationStatus.SkippedNoRecipients, "Owner email is missing."),
                 [402] = new(NotificationStatus.Failed, "HTTP 503")
             },
-            AbandonmentNotifications = new Dictionary<int, NotificationResult>
+            AbandonmentEmailResults = new Dictionary<int, NotificationResult>
             {
                 [400] = new(NotificationStatus.Failed, "Confirmation was not accepted.")
             },
@@ -30,26 +30,26 @@ public class ReleasePlanListResponseTests
         };
 
         Assert.That(response.ExitCode, Is.Zero);
-        Assert.That(response.CleanupSummary.Abandoned, Is.EqualTo(1));
-        Assert.That(response.ReminderSummary!.Delivered, Is.EqualTo(1));
-        Assert.That(response.ReminderSummary.Skipped, Is.EqualTo(1));
-        Assert.That(response.ReminderSummary.Failed, Is.EqualTo(1));
-        Assert.That(response.AbandonmentNotificationSummary!.Failed, Is.EqualTo(1));
+        Assert.That(response.PlanCleanupSummary.AbandonedPlanCount, Is.EqualTo(1));
+        Assert.That(response.ReminderEmailSummary!.AcceptedEmailCount, Is.EqualTo(1));
+        Assert.That(response.ReminderEmailSummary.Skipped, Is.EqualTo(1));
+        Assert.That(response.ReminderEmailSummary.FailedItemCount, Is.EqualTo(1));
+        Assert.That(response.AbandonmentEmailSummary!.FailedItemCount, Is.EqualTo(1));
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
-        Assert.That(json.RootElement.GetProperty("reminder_notifications").GetProperty("400").GetProperty("Status").GetString(), Is.EqualTo("Sent"));
-        Assert.That(json.RootElement.GetProperty("cleanup_summary").GetProperty("abandoned").GetInt32(), Is.EqualTo(1));
+        Assert.That(json.RootElement.GetProperty("reminder_email_results").GetProperty("400").GetProperty("Status").GetString(), Is.EqualTo("Sent"));
+        Assert.That(json.RootElement.GetProperty("plan_cleanup_summary").GetProperty("abandoned_plan_count").GetInt32(), Is.EqualTo(1));
     }
 
     [Test]
     public void NotificationSummaries_EmptyCollectionReportsZerosButMissingCollectionHasNoSummary()
     {
-        var response = new ReleasePlanListResponse { ReminderNotifications = [] };
+        var response = new ReleasePlanListResponse { ReminderEmailResults = [] };
 
-        Assert.That(response.ReminderSummary!.Scanned, Is.Zero);
-        Assert.That(response.ReminderSummary.Delivered, Is.Zero);
-        Assert.That(response.ReminderSummary.Skipped, Is.Zero);
-        Assert.That(response.ReminderSummary.Failed, Is.Zero);
-        Assert.That(response.AbandonmentNotificationSummary, Is.Null);
+        Assert.That(response.ReminderEmailSummary!.Scanned, Is.Zero);
+        Assert.That(response.ReminderEmailSummary.AcceptedEmailCount, Is.Zero);
+        Assert.That(response.ReminderEmailSummary.Skipped, Is.Zero);
+        Assert.That(response.ReminderEmailSummary.FailedItemCount, Is.Zero);
+        Assert.That(response.AbandonmentEmailSummary, Is.Null);
     }
 
     [TestCase(false, 0)]
@@ -122,10 +122,10 @@ public class ReleasePlanListResponseTests
         Assert.That(json.RootElement.TryGetProperty("eligibility_reasons", out _), Is.False);
         Assert.That(json.RootElement.TryGetProperty("preview_summary", out _), Is.False);
         Assert.That(json.RootElement.TryGetProperty("skipped_plans", out _), Is.False);
-        Assert.That(json.RootElement.TryGetProperty("cleanup_summary", out _), Is.False);
-        Assert.That(json.RootElement.TryGetProperty("reminder_notifications", out _), Is.False);
-        Assert.That(json.RootElement.TryGetProperty("reminder_summary", out _), Is.False);
-        Assert.That(json.RootElement.TryGetProperty("abandonment_notifications", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("plan_cleanup_summary", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("reminder_email_results", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("reminder_email_summary", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("abandonment_email_results", out _), Is.False);
     }
 
     [TestCase(false)]
@@ -136,8 +136,8 @@ public class ReleasePlanListResponseTests
         var response = new ReleasePlanListResponse
         {
             ReleasePlanDetailsList = [plan],
-            CleanupSummary = new ReleasePlanPreviewSummary { Scanned = 1, Eligible = 1, Abandoned = 1, Failed = 0 },
-            AbandonmentNotifications = new Dictionary<int, NotificationResult>
+            PlanCleanupSummary = new ReleasePlanBatchSummary { Scanned = 1, Eligible = 1, AbandonedPlanCount = 1, FailedItemCount = 0 },
+            AbandonmentEmailResults = new Dictionary<int, NotificationResult>
             {
                 [400] = new(NotificationStatus.Failed, "Notification service unavailable.")
             },
@@ -148,17 +148,17 @@ public class ReleasePlanListResponseTests
         var text = response.ToString();
 
         Assert.That(response.ExitCode, Is.EqualTo(hasError ? 1 : 0));
-        Assert.That(text, Does.Contain("Cleanup: Abandoned: 1"));
-        Assert.That(text, Does.Contain("Confirmation: Delivered: 0; Skipped: 0; Failed: 1"));
-        Assert.That(text, Does.Contain("[FAILED] Confirmation | Release Plan ID: 42 | Work Item ID: 400"));
+        Assert.That(text, Does.Contain("Plan cleanup: Abandoned plans: 1"));
+        Assert.That(text, Does.Contain("Abandonment emails: Accepted: 0; Skipped: 0; Failed: 1"));
+        Assert.That(text, Does.Contain("[FAILED] Abandonment email | Release Plan ID: 42 | Work Item ID: 400"));
         Assert.That(text, Does.Contain(plan.ReleasePlanLink).And.Contain("[WARNING] Release Plan ID 42"));
-        Assert.That(text.IndexOf("Cleanup: Abandoned:", StringComparison.Ordinal),
-            Is.EqualTo(text.LastIndexOf("Cleanup: Abandoned:", StringComparison.Ordinal)));
+        Assert.That(text.IndexOf("Plan cleanup: Abandoned plans:", StringComparison.Ordinal),
+            Is.EqualTo(text.LastIndexOf("Plan cleanup: Abandoned plans:", StringComparison.Ordinal)));
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
-        Assert.That(json.RootElement.GetProperty("abandonment_notifications").GetProperty("400").GetProperty("Status").GetString(), Is.EqualTo("Failed"));
-        Assert.That(json.RootElement.GetProperty("cleanup_summary").GetProperty("abandoned").GetInt32(), Is.EqualTo(1));
-        Assert.That(json.RootElement.GetProperty("cleanup_summary").GetProperty("failed").GetInt32(), Is.Zero);
-        Assert.That(json.RootElement.GetProperty("abandonment_notification_summary").GetProperty("failed").GetInt32(), Is.EqualTo(1));
+        Assert.That(json.RootElement.GetProperty("abandonment_email_results").GetProperty("400").GetProperty("Status").GetString(), Is.EqualTo("Failed"));
+        Assert.That(json.RootElement.GetProperty("plan_cleanup_summary").GetProperty("abandoned_plan_count").GetInt32(), Is.EqualTo(1));
+        Assert.That(json.RootElement.GetProperty("plan_cleanup_summary").GetProperty("failed_item_count").GetInt32(), Is.Zero);
+        Assert.That(json.RootElement.GetProperty("abandonment_email_summary").GetProperty("failed_item_count").GetInt32(), Is.EqualTo(1));
         Assert.That(json.RootElement.GetProperty("warnings")[0].GetString(), Does.Contain("42"));
     }
 
@@ -178,7 +178,7 @@ public class ReleasePlanListResponseTests
             ReleasePlanDetailsList = [],
             EligibilityReasons = [],
             SkippedPlans = new Dictionary<int, string> { [displayId] = plan.ReleasePlanLink },
-            PreviewSummary = new ReleasePlanPreviewSummary
+            PreviewSummary = new ReleasePlanBatchSummary
             {
                 Scanned = 2, Eligible = 0, Skipped = 1, EvaluationErrors = 1,
                 SkippedByReason = new Dictionary<string, int> { ["grace_period"] = 1 }
@@ -211,7 +211,7 @@ public class ReleasePlanListResponseTests
         Assert.That(response.ToString(), Does.Contain("[ERROR] Initial scan failed."));
         Assert.That(response.ToString(), Does.Not.Contain("Total Release Plans:").And.Not.Contain("Release Plan ID:"));
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(response));
-        Assert.That(json.RootElement.TryGetProperty("cleanup_summary", out _), Is.False);
-        Assert.That(json.RootElement.TryGetProperty("reminder_summary", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("plan_cleanup_summary", out _), Is.False);
+        Assert.That(json.RootElement.TryGetProperty("reminder_email_summary", out _), Is.False);
     }
 }

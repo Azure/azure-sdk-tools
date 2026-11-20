@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
 
         [JsonPropertyName("preview_summary")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ReleasePlanPreviewSummary? PreviewSummary { get; set; }
+        public ReleasePlanBatchSummary? PreviewSummary { get; set; }
 
         /// <summary>
         /// Skipped-plan dashboard links keyed by release plan ID, falling back to work item ID.
@@ -40,44 +40,51 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Dictionary<int, string>? SkippedPlans { get; set; }
 
-        [JsonPropertyName("cleanup_summary")]
+        // Counts of abandoned, skipped, and failed plans from actual cleanup.
+        [JsonPropertyName("plan_cleanup_summary")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ReleasePlanPreviewSummary? CleanupSummary { get; set; }
+        public ReleasePlanBatchSummary? PlanCleanupSummary { get; set; }
 
-        [JsonPropertyName("reminder_notifications")]
+        // One overdue-reminder email result per backing Azure DevOps work-item ID.
+        [JsonPropertyName("reminder_email_results")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Dictionary<int, NotificationResult>? ReminderNotifications { get; set; }
+        public Dictionary<int, NotificationResult>? ReminderEmailResults { get; set; }
 
-        [JsonPropertyName("abandonment_notifications")]
+        // One confirmation-email result per successfully abandoned work item.
+        [JsonPropertyName("abandonment_email_results")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Dictionary<int, NotificationResult>? AbandonmentNotifications { get; set; }
+        public Dictionary<int, NotificationResult>? AbandonmentEmailResults { get; set; }
 
-        [JsonPropertyName("reminder_summary")]
+        // Accepted, skipped, and failed reminder-email counts derived from the results.
+        [JsonPropertyName("reminder_email_summary")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ReleasePlanPreviewSummary? ReminderSummary => SummarizeNotifications(ReminderNotifications);
+        public ReleasePlanBatchSummary? ReminderEmailSummary => CountEmailResults(ReminderEmailResults);
 
-        [JsonPropertyName("abandonment_notification_summary")]
+        // Confirmation-email counts, independent of successful state changes.
+        [JsonPropertyName("abandonment_email_summary")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ReleasePlanPreviewSummary? AbandonmentNotificationSummary => SummarizeNotifications(AbandonmentNotifications);
+        public ReleasePlanBatchSummary? AbandonmentEmailSummary => CountEmailResults(AbandonmentEmailResults);
 
+        // Plan-specific follow-up information that does not fail the command.
         [JsonPropertyName("warnings")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<string>? Warnings { get; set; }
 
-        private static ReleasePlanPreviewSummary? SummarizeNotifications(Dictionary<int, NotificationResult>? notifications) =>
-            notifications == null ? null : new ReleasePlanPreviewSummary
+        // A missing collection means no completed scan; an empty one reports zero counts.
+        private static ReleasePlanBatchSummary? CountEmailResults(Dictionary<int, NotificationResult>? notifications) =>
+            notifications == null ? null : new ReleasePlanBatchSummary
             {
                 Scanned = notifications.Count,
-                Delivered = notifications.Values.Count(result => result.Status == NotificationStatus.Sent),
+                AcceptedEmailCount = notifications.Values.Count(result => result.Status == NotificationStatus.Sent),
                 Skipped = notifications.Values.Count(result => result.Status is NotificationStatus.Disabled or NotificationStatus.SkippedNoRecipients),
-                Failed = notifications.Values.Count(result => result.IsFailure)
+                FailedItemCount = notifications.Values.Count(result => result.IsFailure)
             };
 
         public override string ToString()
         {
             // Preserve partial results and summaries alongside errors in either mode.
             return OperationStatus == Status.Failed && (ReleasePlanDetailsList != null || !string.IsNullOrWhiteSpace(Message)
-                || CleanupSummary != null || ReminderNotifications != null || AbandonmentNotifications != null || Warnings?.Count > 0)
+                || PlanCleanupSummary != null || ReminderEmailResults != null || AbandonmentEmailResults != null || Warnings?.Count > 0)
                 ? Format() + Environment.NewLine + base.ToString()
                 : base.ToString();
         }
@@ -89,13 +96,13 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
             {
                 result.AppendLine(Message);
             }
-            if (CleanupSummary != null)
+            if (PlanCleanupSummary != null)
             {
-                result.AppendLine($"Cleanup: Abandoned: {CleanupSummary.Abandoned}; Skipped: {CleanupSummary.Skipped}; Failed: {CleanupSummary.Failed}");
-                result.AppendLine($"Scanned: {CleanupSummary.Scanned}; Eligible candidates: {CleanupSummary.Eligible}; Evaluation errors: {CleanupSummary.EvaluationErrors}");
+                result.AppendLine($"Plan cleanup: Abandoned plans: {PlanCleanupSummary.AbandonedPlanCount}; Skipped: {PlanCleanupSummary.Skipped}; Failed: {PlanCleanupSummary.FailedItemCount}");
+                result.AppendLine($"Scanned: {PlanCleanupSummary.Scanned}; Eligible candidates: {PlanCleanupSummary.Eligible}; Evaluation errors: {PlanCleanupSummary.EvaluationErrors}");
             }
-            AppendNotificationResults(result, "Reminder", ReminderNotifications, ReminderSummary);
-            AppendNotificationResults(result, "Confirmation", AbandonmentNotifications, AbandonmentNotificationSummary);
+            AppendEmailResults(result, "Reminder email", ReminderEmailResults, ReminderEmailSummary);
+            AppendEmailResults(result, "Abandonment email", AbandonmentEmailResults, AbandonmentEmailSummary);
             foreach (var warning in Warnings ?? [])
             {
                 result.AppendLine($"[WARNING] {warning}");
@@ -147,14 +154,15 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
             return result.ToString();
         }
 
-        private void AppendNotificationResults(StringBuilder text, string notification,
-            Dictionary<int, NotificationResult>? notifications, ReleasePlanPreviewSummary? summary)
+        // Show both plan IDs for every accepted, skipped, or failed email.
+        private void AppendEmailResults(StringBuilder text, string notification,
+            Dictionary<int, NotificationResult>? notifications, ReleasePlanBatchSummary? summary)
         {
             if (notifications == null || summary == null)
             {
                 return;
             }
-            text.AppendLine($"{notification}: Delivered: {summary.Delivered}; Skipped: {summary.Skipped}; Failed: {summary.Failed}");
+            text.AppendLine($"{notification}s: Accepted: {summary.AcceptedEmailCount}; Skipped: {summary.Skipped}; Failed: {summary.FailedItemCount}");
             foreach (var (workItemId, result) in notifications)
             {
                 var plan = ReleasePlanDetailsList?.FirstOrDefault(plan => plan.WorkItemId == workItemId);

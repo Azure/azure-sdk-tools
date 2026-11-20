@@ -1244,13 +1244,14 @@ public class ServiceApiReadinessServiceTests
         Assert.That(_requests.Count(request => request.Uri.AbsolutePath.EndsWith("/example.json", StringComparison.Ordinal)), Is.LessThanOrEqualTo(32));
     }
 
-    [Test]
-    public async Task LargeSwaggerUsesBoundedRawContentOnTheSamePinnedApiHost()
+    [TestCase(2 * 1024 * 1024)]
+    [TestCase(4 * 1024 * 1024 + 1)]
+    public async Task LargeSwaggerUsesRawContentOnTheSamePinnedApiHost(int descriptionLength)
     {
         SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
         var path = $"{SwaggerDirectory}/stable/{Version}/example.json";
         var document = JsonNode.Parse(_files[Key(SpecRepository, SpecCommit, path)])!.AsObject();
-        document["description"] = new string('x', 2 * 1024 * 1024);
+        document["description"] = new string('x', descriptionLength);
         SetFile(SpecRepository, SpecCommit, path, document.ToJsonString());
         _rawFiles.Add(Key(SpecRepository, SpecCommit, path));
         var response = await CheckAsync();
@@ -1273,19 +1274,6 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
         Assert.That(ArmRequests(), Is.Empty);
         Assert.That(JsonSerializer.Serialize(response), Does.Not.Contain("private transport details"));
-    }
-
-    [Test]
-    public async Task OversizedRawSwaggerIsRejectedBeforeDownload()
-    {
-        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new { apiVersion = Version }));
-        var path = $"{SwaggerDirectory}/stable/{Version}/example.json";
-        SetFile(SpecRepository, SpecCommit, path, new string('x', 4 * 1024 * 1024 + 1));
-        _rawFiles.Add(Key(SpecRepository, SpecCommit, path));
-        var response = await CheckAsync();
-        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
-        Assert.That(_requests.Count(request => Uri.UnescapeDataString(request.Uri.AbsolutePath).EndsWith(path, StringComparison.Ordinal)), Is.EqualTo(1));
-        Assert.That(ArmRequests(), Is.Empty);
     }
 
     [Test]

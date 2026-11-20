@@ -407,13 +407,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         {
             return null;
         }
-        await using var stream = File.OpenRead(path);
-        if (stream.Length > HttpResponseHelper.MaxEvidenceBytes)
-        {
-            throw new InvalidOperationException("SDK metadata exceeded the evidence size limit.");
-        }
-        using var reader = new StreamReader(stream);
-        return await reader.ReadToEndAsync(ct);
+        return await File.ReadAllTextAsync(path, ct);
     }
 
     private static string Text(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";

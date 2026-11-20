@@ -208,10 +208,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException("Expected a checked-in metadata file.");
             }
-            if (file["size"] is JsonValue size && size.TryGetValue<long>(out var bytes) && bytes > HttpResponseHelper.MaxEvidenceBytes)
-            {
-                throw new InvalidOperationException("File exceeded the evidence size limit.");
-            }
             // Large files lack inline content; fetch raw content from this same pinned API path.
             return ReadString(file["encoding"]) switch
             {
@@ -229,7 +225,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));
             request.Headers.UserAgent.ParseAdd("azsdk-service-api-readiness");
             request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
-            return await HttpResponseHelper.ReadBoundedResponseAsync(http, request, ct);
+            using var response = await http.SendAsync(request, ct);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync(ct);
         }
 
         private static string ReadString(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";

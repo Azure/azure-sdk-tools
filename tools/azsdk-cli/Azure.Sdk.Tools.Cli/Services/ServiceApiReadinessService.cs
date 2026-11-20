@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -325,8 +326,13 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         using var request = new HttpRequestMessage(HttpMethod.Get,
             $"https://management.azure.com/providers/{Uri.EscapeDataString(providerNamespace)}?api-version={ArmMetadataApiVersion}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.Token);
-        var text = await HttpResponseHelper.ReadBoundedResponseAsync(_http, request, ct);
-        return text is null ? null : JsonNode.Parse(text);
+        using var response = await _http.SendAsync(request, ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+        response.EnsureSuccessStatusCode();
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync(ct));
     }
 
     private static string SafeError(Exception exception) => exception is OperationCanceledException ? "The readiness check was canceled or exceeded its time budget." :

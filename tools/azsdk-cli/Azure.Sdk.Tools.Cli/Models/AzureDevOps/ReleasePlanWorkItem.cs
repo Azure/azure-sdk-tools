@@ -47,6 +47,16 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName(SpecCommitSHAField)]
         public string SpecCommitSHA { get; set; } = string.Empty;
 
+        public const string ServiceReadinessStatusField = "Custom.ServiceApiVersionReadinessStatus";
+        public const string ServiceReadinessCheckedAtField = "Custom.ServiceApiVersionReadinessCheckedAt";
+        public const string ServiceReadinessDetailsField = "Custom.ServiceReadinessDetails";
+
+        public string ServiceReadinessStatus { get; set; } = string.Empty;
+
+        public DateTimeOffset? ServiceReadinessCheckedAt { get; set; }
+
+        public string ServiceReadinessDetails { get; set; } = string.Empty;
+
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
 
@@ -85,7 +95,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         public string LanguageExclusionApproverNote { get; set; } = string.Empty;
 
-        [FieldName("Custom.ApiSpecProjectPath")]
+        public const string ApiSpecProjectPathField = "Custom.ApiSpecProjectPath";
+
+        [FieldName(ApiSpecProjectPathField)]
         public string APISpecProjectPath { get; set; } = string.Empty;
 
         [FieldName("Custom.AttestationStatus")]

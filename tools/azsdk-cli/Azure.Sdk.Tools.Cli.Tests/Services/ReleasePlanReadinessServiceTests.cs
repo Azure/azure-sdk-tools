@@ -3,6 +3,7 @@ using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
 
@@ -105,7 +106,7 @@ public class ReleasePlanReadinessServiceTests
                 var specification = items.Single(item => item.Id == plans[0].ApiSpecWorkItemId);
                 var planUpdates = await _ado.Object.GetWorkItemUpdatesAsync(plan.Id!.Value, ct);
                 var specificationUpdates = await _ado.Object.GetWorkItemUpdatesAsync(specification.Id!.Value, ct);
-                return (plan, specification, planUpdates, specificationUpdates);
+                return await MapSnapshot(plan, specification, planUpdates, specificationUpdates);
             });
         _readiness = new Mock<IServiceApiReadinessService>(MockBehavior.Strict);
         _readiness.Setup(service => service.GetPackageMetadataAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()))
@@ -165,7 +166,7 @@ public class ReleasePlanReadinessServiceTests
         var specificationUpdates = await _ado.Object.GetWorkItemUpdatesAsync(456);
         _ado.Invocations.Clear();
         _ado.Setup(service => service.GetReleasePlanReadinessAsync(It.IsAny<string>(), "Java", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((_plan, _specification, planUpdates, specificationUpdates));
+            .ReturnsAsync(await MapSnapshot(_plan, _specification, planUpdates, specificationUpdates));
 
         var result = await Check(false);
 
@@ -407,7 +408,8 @@ public class ReleasePlanReadinessServiceTests
 
         Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(result.Detail, Does.Not.Contain("Reused"));
-        _readiness.Verify(service => service.ValidateAsync(result, It.IsAny<CancellationToken>()), Times.Once);
+        _readiness.Verify(service => service.ValidateAsync(result, It.IsAny<CancellationToken>()), missingHistory ? Times.Once() : Times.Never());
+        _readiness.Verify(service => service.CheckAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()), missingHistory ? Times.Never() : Times.Once());
         _ado.Verify(service => service.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -688,6 +690,26 @@ public class ReleasePlanReadinessServiceTests
         Assert.That(written!.ContainsKey(Field), Is.True);
         Assert.That(written.ContainsKey(oldField), Is.False);
         Assert.That(_plan.Fields[oldField], Is.EqualTo(oldValue));
+    }
+
+    private async Task<(ReleasePlanWorkItem Plan, ApiSpecWorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?> MapSnapshot(
+        WorkItem plan, WorkItem specification, List<WorkItemUpdate> planUpdates, List<WorkItemUpdate> specificationUpdates)
+    {
+        if (plan.Fields["System.WorkItemType"]?.ToString() != "Release Plan" ||
+            specification.Fields["System.WorkItemType"]?.ToString() != "API Spec" ||
+            plan.Relations?.Any(relation => relation.Rel == "System.LinkTypes.Hierarchy-Forward" &&
+                relation.Url.TrimEnd('/').EndsWith($"/{specification.Id}", StringComparison.Ordinal)) != true)
+        {
+            return null;
+        }
+        var connection = new DevOpsServiceTests.TestDevOpsConnection();
+        connection.AddWorkItemToQuery(plan);
+        connection.AddWorkItem(plan);
+        connection.AddWorkItem(specification);
+        connection.SetWorkItemUpdates(plan.Id!.Value, planUpdates);
+        connection.SetWorkItemUpdates(specification.Id!.Value, specificationUpdates);
+        var mapper = new DevOpsService(new TestLogger<DevOpsService>(), connection);
+        return await mapper.GetReleasePlanReadinessAsync("https://github.com/Azure/azure-sdk-for-java/pull/12", "Java");
     }
 
     private void SetStored(string status, string environment, string resourceType, DateTimeOffset checkedAt)

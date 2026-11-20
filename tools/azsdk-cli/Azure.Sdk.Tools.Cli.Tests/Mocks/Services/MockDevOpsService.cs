@@ -102,10 +102,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public Dictionary<string, string>? LastRunPipelineTemplateParams { get; private set; }
 
-        public Task<(WorkItem Plan, WorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?> GetReleasePlanReadinessAsync(
+        public Task<(ReleasePlanWorkItem Plan, ApiSpecWorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?> GetReleasePlanReadinessAsync(
             string sdkPullRequest, string language, CancellationToken ct = default)
         {
-            return Task.FromResult<(WorkItem Plan, WorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?>(null);
+            return Task.FromResult<(ReleasePlanWorkItem Plan, ApiSpecWorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?>(null);
         }
 
         Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus, CancellationToken ct)

@@ -104,6 +104,110 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(result.SpecCommitSHA, Is.EqualTo(sha));
         }
 
+        [TestCase("missing")]
+        [TestCase("invalid")]
+        [TestCase("string")]
+        [TestCase("dateTime")]
+        [TestCase("offset")]
+        public async Task GetReleasePlanForWorkItemAsync_MapsReadinessWithoutGenericWrites(string timeKind)
+        {
+            const string details = "{&quot;schemaVersion&quot;:4,&quot;results&quot;:[]}";
+            var checkedAt = new DateTimeOffset(2026, 11, 19, 12, 34, 56, TimeSpan.Zero).AddMilliseconds(123);
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Rev = 7;
+            plan.Fields[ReleasePlanWorkItem.ServiceReadinessStatusField] = "Ready";
+            plan.Fields[ReleasePlanWorkItem.ServiceReadinessDetailsField] = details;
+            if (timeKind != "missing")
+            {
+                plan.Fields[ReleasePlanWorkItem.ServiceReadinessCheckedAtField] = timeKind switch
+                {
+                    "string" => checkedAt.ToString("O"),
+                    "dateTime" => DateTime.SpecifyKind(checkedAt.UtcDateTime, DateTimeKind.Unspecified),
+                    "offset" => checkedAt,
+                    _ => "not a timestamp"
+                };
+            }
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, "https://github.com/Azure/azure-rest-api-specs/pull/42", "New"));
+
+            var result = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
+
+            Assert.That(result.ServiceReadinessStatus, Is.EqualTo("Ready"));
+            Assert.That(result.ServiceReadinessDetails, Is.EqualTo(details));
+            Assert.That(result.ServiceReadinessCheckedAt, Is.EqualTo(timeKind is "missing" or "invalid" ? (DateTimeOffset?)null : checkedAt));
+            Assert.That(result.Revision, Is.EqualTo(7));
+            var paths = result.GetPatchDocument().Select(operation => operation.Path).ToArray();
+            Assert.That(paths, Does.Not.Contain($"/fields/{ReleasePlanWorkItem.ServiceReadinessStatusField}"));
+            Assert.That(paths, Does.Not.Contain($"/fields/{ReleasePlanWorkItem.ServiceReadinessCheckedAtField}"));
+            Assert.That(paths, Does.Not.Contain($"/fields/{ReleasePlanWorkItem.ServiceReadinessDetailsField}"));
+        }
+
+        [TestCase("DotNet", "net", "Dotnet")]
+        [TestCase("Java", "java", "Java")]
+        [TestCase("JavaScript", "js", "JavaScript")]
+        [TestCase("Python", "python", "Python")]
+        [TestCase("Go", "go", "Go")]
+        public async Task GetReleasePlanReadinessAsync_ReusesMappedModelsWithoutRefetchingChild(string language, string repository, string fieldLanguage)
+        {
+            var url = $"https://github.com/Azure/azure-sdk-for-{repository}/pull/12";
+            var checkedAt = new DateTimeOffset(2026, 11, 19, 12, 0, 0, TimeSpan.Zero);
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Rev = 7;
+            plan.Fields[$"Custom.SDKPullRequestFor{fieldLanguage}"] = url;
+            plan.Fields[ReleasePlanWorkItem.ServiceReadinessStatusField] = "Ready";
+            plan.Fields[ReleasePlanWorkItem.ServiceReadinessCheckedAtField] = checkedAt;
+            plan.Fields[ReleasePlanWorkItem.ServiceReadinessDetailsField] = "{&quot;schemaVersion&quot;:4,&quot;results&quot;:[]}";
+            var specification = CreateApiSpecWorkItemWithVersion(200, "https://github.com/Azure/azure-rest-api-specs/pull/42", "New", "2026-04-01");
+            specification.Rev = 3;
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(specification);
+            _connection.SetWorkItemUpdates(100, [new WorkItemUpdate { Rev = 7 }]);
+            _connection.SetWorkItemUpdates(200, [new WorkItemUpdate { Rev = 3 }]);
+
+            var result = await _devOpsService.GetReleasePlanReadinessAsync(url, language);
+
+            Assert.That(result.HasValue, Is.True);
+            var snapshot = result!.Value;
+            Assert.That(snapshot.Plan.WorkItemId, Is.EqualTo(100));
+            Assert.That(snapshot.Plan.Revision, Is.EqualTo(7));
+            Assert.That(snapshot.Plan.ServiceReadinessStatus, Is.EqualTo("Ready"));
+            Assert.That(snapshot.Plan.ServiceReadinessCheckedAt, Is.EqualTo(checkedAt));
+            Assert.That(snapshot.Plan.ApiSpecWorkItemId, Is.EqualTo(200));
+            Assert.That(snapshot.Specification.WorkItemId, Is.EqualTo(200));
+            Assert.That(snapshot.Specification.Revision, Is.EqualTo(3));
+            Assert.That(snapshot.Specification.SpecAPIVersion, Is.EqualTo("2026-04-01"));
+            Assert.That(snapshot.Plan.SDKInfo.Single(sdk => sdk.Language == DevOpsService.MapLanguageIdToName(language)).SdkPullRequestUrl, Is.EqualTo(url));
+            Assert.That(snapshot.PlanUpdates.Single().Rev, Is.EqualTo(7));
+            Assert.That(snapshot.SpecificationUpdates.Single().Rev, Is.EqualTo(3));
+            Assert.That(_connection.FetchedWorkItemIds, Is.EqualTo(new[] { 200 }));
+        }
+
+        [Test]
+        public async Task UpdateWorkItemAsync_ReadinessWritesOnlySelectedFields()
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Rev = 7;
+            plan.Fields["Custom.ProductName"] = "Existing product";
+            _connection.AddWorkItem(plan);
+            var fields = new Dictionary<string, string>
+            {
+                [ReleasePlanWorkItem.ServiceReadinessStatusField] = "Ready",
+                [ReleasePlanWorkItem.ServiceReadinessCheckedAtField] = "2026-11-19T12:00:00Z",
+                [ReleasePlanWorkItem.ServiceReadinessDetailsField] = "{&quot;schemaVersion&quot;:4,&quot;results&quot;:[]}"
+            };
+
+            await _devOpsService.UpdateWorkItemAsync(100, fields, 7, CancellationToken.None);
+
+            var patch = _connection.LastCapturedPatchDocument!;
+            Assert.That(patch, Has.Count.EqualTo(4));
+            Assert.That(patch[0].Path, Is.EqualTo("/rev"));
+            Assert.That(patch[0].Value, Is.EqualTo(7));
+            Assert.That(patch.Skip(1).Select(operation => operation.Path), Is.EquivalentTo(fields.Keys.Select(field => $"/fields/{field}")));
+            Assert.That(plan.Fields["System.State"], Is.EqualTo("In Progress"));
+            Assert.That(plan.Fields["Custom.ProductName"], Is.EqualTo("Existing product"));
+        }
+
         [TestCase("January 2020")]
         [TestCase("Jan 2020")]
         public async Task ListOverdueReleasePlansAsync_PrivatePreviewWithoutSpecChild_IsMissing(string targetMonth)
@@ -1610,7 +1714,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #region TestDevOpsConnection
 
-        private class TestDevOpsConnection : IDevOpsConnection
+        internal class TestDevOpsConnection : IDevOpsConnection
         {
             private readonly TestWorkItemClient _workItemClient = new();
 
@@ -1621,6 +1725,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public int WorkItemUpdateCount => _workItemClient.UpdateCount;
 
             public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches => _workItemClient.CapturedPatches;
+
+            public List<int> FetchedWorkItemIds => _workItemClient.FetchedWorkItemIds;
+
+            public void SetWorkItemUpdates(int id, List<WorkItemUpdate> updates) => _workItemClient.SetWorkItemUpdates(id, updates);
 
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
@@ -1678,6 +1786,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         {
             private readonly List<WorkItem> _queryWorkItems = new();
             private readonly Dictionary<int, WorkItem> _workItems = new();
+            private readonly Dictionary<int, List<WorkItemUpdate>> _updates = new();
+
+            public List<int> FetchedWorkItemIds { get; } = [];
+
+            public void SetWorkItemUpdates(int id, List<WorkItemUpdate> updates) => _updates[id] = updates;
 
             public string? LastCapturedQuery { get; private set; }
 
@@ -1763,6 +1876,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public override Task<WorkItem> GetWorkItemAsync(string project, int id, IEnumerable<string>? fields = null, DateTime? asOf = null, WorkItemExpand? expand = null, object? userState = null, CancellationToken cancellationToken = default(CancellationToken))
             {
+                FetchedWorkItemIds.Add(id);
                 if (_workItems.TryGetValue(id, out var workItem))
                 {
                     return Task.FromResult(workItem);
@@ -1783,11 +1897,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 {
                     return Task.FromCanceled<WorkItem>(cancellationToken);
                 }
+                FetchedWorkItemIds.Add(id);
                 if (_workItems.TryGetValue(id, out var workItem))
                 {
                     return Task.FromResult(workItem);
                 }
                 throw new InvalidOperationException($"Work item {id} not found");
+            }
+
+            public override Task<List<WorkItemUpdate>> GetUpdatesAsync(int id, int? top = null, int? skip = null,
+                object? userState = null, CancellationToken cancellationToken = default)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!_updates.TryGetValue(id, out var updates))
+                {
+                    return Task.FromResult(new List<WorkItemUpdate>());
+                }
+                return Task.FromResult(updates.Skip(skip.GetValueOrDefault()).Take(top ?? int.MaxValue).ToList());
             }
 
             public override Task<WorkItem> UpdateWorkItemAsync(

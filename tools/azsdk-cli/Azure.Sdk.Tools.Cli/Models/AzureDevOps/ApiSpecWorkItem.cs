@@ -8,7 +8,11 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class ApiSpecWorkItem : WorkItemBase
     {
-        [FieldName("Custom.APISpecversion")]
+        public const string SpecAPIVersionField = "Custom.APISpecversion";
+
+        public int Revision { get; set; }
+
+        [FieldName(SpecAPIVersionField)]
         public string SpecAPIVersion { get; set; } = string.Empty;
 
         [FieldName("Custom.APISpecDefinitionType")]

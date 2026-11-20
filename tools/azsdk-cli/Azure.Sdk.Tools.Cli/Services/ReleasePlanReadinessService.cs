@@ -13,11 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceApiReadinessService readiness,
     TimeProvider? timeProvider = null)
 {
-    private const string ProjectField = "Custom.ApiSpecProjectPath";
-    private const string VersionField = "Custom.APISpecversion";
-    private const string StatusField = "Custom.ServiceApiVersionReadinessStatus";
-    private const string CheckedAtField = "Custom.ServiceApiVersionReadinessCheckedAt";
-    private const string DetailsField = "Custom.ServiceReadinessDetails";
     private const int MaxObservations = 128;
     private const int MaxJsonLength = 262144;
     private const int MaxHtmlLength = 1000000;
@@ -46,9 +41,9 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         ct = budget.Token;
         var url = $"https://github.com/{owner}/{repository}/pull/{pullRequest}";
         var language = SdkLanguageHelpers.GetLanguageForRepo(repository).ToString();
-        WorkItem? plan = null;
-        WorkItem? specification = null;
-        (WorkItem Plan, WorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)? snapshot = null;
+        ReleasePlanWorkItem? plan = null;
+        ApiSpecWorkItem? specification = null;
+        (ReleasePlanWorkItem Plan, ApiSpecWorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)? snapshot = null;
         ServiceApiReadinessResponse? metadata = null;
         try
         {
@@ -106,9 +101,6 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         return result;
     }
 
-    private static string Text(WorkItem item, string field) =>
-        item.Fields.TryGetValue(field, out var value) ? Convert.ToString(value, CultureInfo.InvariantCulture) ?? "" : "";
-
     private static string ToAdoStatus(string status) => status switch
     {
         ServiceApiReadinessResponse.Passed => "Ready",
@@ -116,24 +108,23 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         _ => "Unknown"
     };
 
-    private static bool MatchesPlan(WorkItem plan, WorkItem specification, ServiceApiReadinessResponse result, string url, string language)
+    private static bool MatchesPlan(ReleasePlanWorkItem plan, ApiSpecWorkItem specification, ServiceApiReadinessResponse result, string url, string language)
     {
-        var fieldLanguage = language.Equals("DotNet", StringComparison.OrdinalIgnoreCase) ? "Dotnet" : language;
-        return Text(plan, "System.WorkItemType") == "Release Plan" && Text(plan, "System.State") != "Abandoned" &&
-            Text(specification, "System.WorkItemType") == "API Spec" &&
-            plan.Relations?.Any(relation => relation.Rel == "System.LinkTypes.Hierarchy-Forward" &&
-                relation.Url.TrimEnd('/').EndsWith($"/{specification.Id}", StringComparison.Ordinal)) == true &&
-            Text(plan, $"Custom.SDKPullRequestFor{fieldLanguage}").TrimEnd('/').Equals(url, StringComparison.OrdinalIgnoreCase) &&
-            result.Projects.Count > 0 && result.Projects.All(project => project.ApiVersion.Version == Text(specification, VersionField).Trim()) &&
+        var planLanguage = language.Equals("DotNet", StringComparison.OrdinalIgnoreCase) ? ".NET" : language;
+        return plan.WorkItemId > 0 && specification.WorkItemId > 0 && plan.Status != "Abandoned" &&
+            plan.ApiSpecWorkItemId == specification.WorkItemId &&
+            plan.SDKInfo.Any(sdk => sdk.Language.Equals(planLanguage, StringComparison.OrdinalIgnoreCase) &&
+                sdk.SdkPullRequestUrl.TrimEnd('/').Equals(url, StringComparison.OrdinalIgnoreCase)) &&
+            result.Projects.Count > 0 && result.Projects.All(project => project.ApiVersion.Version == specification.SpecAPIVersion.Trim()) &&
             result.Packages.Count > 0 && result.Packages.All(package =>
                 package.MetadataIssues.Length == 0 && package.TypeSpecLocation is { } location &&
-                location.Directory == Text(plan, ProjectField).Replace('\\', '/').TrimEnd('/') &&
-                location.Commit == Text(plan, ReleasePlanWorkItem.SpecCommitSHAField).Trim());
+                location.Directory == plan.APISpecProjectPath.Replace('\\', '/').TrimEnd('/') &&
+                location.Commit == plan.SpecCommitSHA.Trim());
     }
 
-    private static Observation[] ReadObservations(WorkItem plan)
+    private static Observation[] ReadObservations(ReleasePlanWorkItem plan)
     {
-        var html = Text(plan, DetailsField);
+        var html = plan.ServiceReadinessDetails;
         if (string.IsNullOrEmpty(html))
         {
             return [];
@@ -176,23 +167,25 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         return observations;
     }
 
-    private static DateTimeOffset? ReadScopeChangedAt(WorkItem plan, WorkItem specification,
+    private static DateTimeOffset? ReadScopeChangedAt(ReleasePlanWorkItem plan, ApiSpecWorkItem specification,
         IReadOnlyList<WorkItemUpdate> planUpdates, IReadOnlyList<WorkItemUpdate> specificationUpdates)
     {
-        var planChangedAt = ReadFieldsChangedAt(plan, planUpdates, [ProjectField, ReleasePlanWorkItem.SpecCommitSHAField]);
-        var versionChangedAt = ReadFieldsChangedAt(specification, specificationUpdates, [VersionField]);
+        var planChangedAt = ReadFieldsChangedAt(plan.WorkItemId, plan.Revision, planUpdates,
+            [ReleasePlanWorkItem.ApiSpecProjectPathField, ReleasePlanWorkItem.SpecCommitSHAField]);
+        var versionChangedAt = ReadFieldsChangedAt(specification.WorkItemId, specification.Revision, specificationUpdates,
+            [ApiSpecWorkItem.SpecAPIVersionField]);
         return planChangedAt.HasValue && versionChangedAt.HasValue
             ? planChangedAt.Value > versionChangedAt.Value ? planChangedAt : versionChangedAt
             : null;
     }
 
-    private static DateTimeOffset? ReadFieldsChangedAt(WorkItem item, IReadOnlyList<WorkItemUpdate> updates, string[] fields)
+    private static DateTimeOffset? ReadFieldsChangedAt(int workItemId, int revision, IReadOnlyList<WorkItemUpdate> updates, string[] fields)
     {
-        if (item.Id is null or <= 0 || item.Rev is null or <= 0)
+        if (workItemId <= 0 || revision <= 0)
         {
             return null;
         }
-        if (updates.Count == 0 || updates.Max(update => update.Rev) < item.Rev)
+        if (updates.Count == 0 || updates.Max(update => update.Rev) < revision)
         {
             return null;
         }
@@ -218,7 +211,7 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
     }
 
     private bool TryReuse(ServiceApiReadinessResponse result, Observation[] observations, string environment,
-        DateTimeOffset scopeChangedAt, WorkItem plan)
+        DateTimeOffset scopeChangedAt, ReleasePlanWorkItem plan)
     {
         if (result.Projects.Count == 0 || result.Projects.Any(project => project.ReadinessStatus == ServiceApiReadinessResponse.Error))
         {
@@ -240,8 +233,8 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
             matches.Add((project, observation));
         }
         var summary = Summarize(matches.Select(match => match.Observation));
-        var checkedAt = ReadCheckedAt(plan);
-        var storedStatus = Text(plan, StatusField);
+        var checkedAt = plan.ServiceReadinessCheckedAt;
+        var storedStatus = plan.ServiceReadinessStatus;
         var matchesStatus = summary.Status == ServiceApiReadinessResponse.NotDetected
             ? storedStatus.Equals("Not ready", StringComparison.OrdinalIgnoreCase) || storedStatus == "Note Ready"
             : storedStatus == ToAdoStatus(summary.Status);
@@ -267,18 +260,6 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         return true;
     }
 
-    private static DateTimeOffset? ReadCheckedAt(WorkItem plan)
-    {
-        plan.Fields.TryGetValue(CheckedAtField, out var value);
-        return value switch
-        {
-            DateTimeOffset time => time,
-            DateTime time => new DateTimeOffset(time.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(time, DateTimeKind.Utc) : time),
-            _ => DateTimeOffset.TryParse(Text(plan, CheckedAtField), CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeUniversal, out var time) ? time : null
-        };
-    }
-
     private static (string Status, DateTimeOffset CheckedAt) Summarize(IEnumerable<Observation> observations)
     {
         var items = observations.ToArray();
@@ -296,7 +277,7 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         return (result.ReadinessStatus, timedItems.Min(item => item.CheckedAt));
     }
 
-    private async Task RecordAsync(WorkItem plan, WorkItem specification, ServiceApiReadinessResponse result, string environment,
+    private async Task RecordAsync(ReleasePlanWorkItem plan, ApiSpecWorkItem specification, ServiceApiReadinessResponse result, string environment,
         string url, string language, CancellationToken ct)
     {
         for (var attempt = 0; attempt < 2; attempt++)
@@ -308,7 +289,7 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
             }
             var current = snapshot.Value.Plan;
             var currentSpecification = snapshot.Value.Specification;
-            if (current.Id != plan.Id || currentSpecification.Id != specification.Id || !MatchesPlan(current, currentSpecification, result, url, language))
+            if (current.WorkItemId != plan.WorkItemId || currentSpecification.WorkItemId != specification.WorkItemId || !MatchesPlan(current, currentSpecification, result, url, language))
             {
                 return;
             }
@@ -357,21 +338,21 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
             var summary = Summarize(result.Projects.Select(project => observations.Single(item =>
                 item.ResourceProvider.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) &&
                 item.ValidationEnvironment == environment)));
-            var expectedRevision = current.Rev!.Value;
+            var expectedRevision = current.Revision;
             try
             {
-                await devOps.UpdateWorkItemAsync(current.Id!.Value, new Dictionary<string, string>
+                await devOps.UpdateWorkItemAsync(current.WorkItemId, new Dictionary<string, string>
                 {
-                    [StatusField] = ToAdoStatus(summary.Status),
-                    [CheckedAtField] = summary.CheckedAt.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-                    [DetailsField] = html
+                    [ReleasePlanWorkItem.ServiceReadinessStatusField] = ToAdoStatus(summary.Status),
+                    [ReleasePlanWorkItem.ServiceReadinessCheckedAtField] = summary.CheckedAt.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+                    [ReleasePlanWorkItem.ServiceReadinessDetailsField] = html
                 }, expectedRevision, ct);
                 return;
             }
             catch (Exception exception) when (attempt == 0 && exception is not OutOfMemoryException && !ct.IsCancellationRequested)
             {
                 var latest = await devOps.GetReleasePlanReadinessAsync(url, language, ct);
-                if (!latest.HasValue || latest.Value.Plan.Id != current.Id || latest.Value.Plan.Rev == expectedRevision)
+                if (!latest.HasValue || latest.Value.Plan.WorkItemId != current.WorkItemId || latest.Value.Plan.Revision == expectedRevision)
                 {
                     throw;
                 }

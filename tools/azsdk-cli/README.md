@@ -177,6 +177,12 @@ project/commit scope; its API-spec child supplies `Custom.APISpecversion`.
 Missing associations or incomplete histories prevent reuse. Other API versions
 are checked directly and are not recorded under that plan.
 
+The lookup maps ADO items through the existing `ReleasePlanWorkItem` and
+`ApiSpecWorkItem` models before returning them to the coordinator. Readiness
+status/time/details are mapped in the existing release-plan mapper; API version
+remains mapped from the linked API-spec item. Generic model patches exclude the
+readiness fields. Only the explicit revision-checked three-field update writes them.
+
 | Fixed ADO field | Type | Meaning |
 | --- | --- | --- |
 | `Custom.ServiceApiVersionReadinessStatus` | `string` | Recorded readiness summary. |

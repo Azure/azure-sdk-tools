@@ -4,8 +4,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"slices"
@@ -14,6 +16,7 @@ import (
 
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
+	"golang.org/x/mod/semver"
 )
 
 // Review represents an apiview review of an Azure SDK for Go module
@@ -23,6 +26,7 @@ type Review struct {
 	// more when the reviewed module exports types defined in another module.
 	modules         map[string]*Module
 	externalModules map[string]*Module
+	selectedModules map[string]module.Version
 	// name of the APIView review e.g. "sdk/azcore"
 	name string
 	// path on disk to the reviewed module
@@ -40,6 +44,7 @@ func NewReview(p string) (*Review, error) {
 	r := &Review{
 		modules:         map[string]*Module{},
 		externalModules: map[string]*Module{},
+		selectedModules: map[string]module.Version{},
 		name:            getPackageNameFromModPath(m.ModFile.Module.Mod.Path),
 		path:            p,
 	}
@@ -192,6 +197,11 @@ func (r *Review) resolveAliases() error {
 }
 
 func (r *Review) resolveExternalType(mod module.Version, qualifiedName string, seen map[string]bool) (typeDef, string, error) {
+	var err error
+	mod, err = r.selectedModuleVersion(mod)
+	if err != nil {
+		return typeDef{}, "", err
+	}
 	key := mod.Path + "@" + mod.Version + ":" + qualifiedName
 	if seen[key] {
 		return typeDef{}, "", fmt.Errorf("cyclic external type alias %s", qualifiedName)
@@ -226,14 +236,18 @@ func (r *Review) resolveExternalType(mod module.Version, qualifiedName string, s
 		return typeDef{}, "", err
 	}
 	if found {
-		return def, "", nil
+		return r.resolveTypeDefinition(m, def, seen)
 	}
 	for _, alias := range p.TypeAliases {
 		if alias.Name != typeName {
 			continue
 		}
 		if alias.SourceMod == (module.Version{}) {
-			aliasImportPath := alias.QualifiedName[:strings.LastIndex(alias.QualifiedName, ".")]
+			aliasDot := strings.LastIndex(alias.QualifiedName, ".")
+			if aliasDot < 1 {
+				return typeDef{}, "", fmt.Errorf("invalid qualified type %q", alias.QualifiedName)
+			}
+			aliasImportPath := alias.QualifiedName[:aliasDot]
 			modulePath := m.ModFile.Module.Mod.Path
 			if versionReg.MatchString(modulePath) {
 				modulePath = path.Dir(modulePath)
@@ -241,7 +255,10 @@ func (r *Review) resolveExternalType(mod module.Version, qualifiedName string, s
 			if strings.HasPrefix(aliasImportPath, modulePath+"/") {
 				return r.resolveModuleType(m, alias.QualifiedName, seen)
 			}
-			return typeDef{}, alias.QualifiedName, nil
+			if isStandardLibraryImportPath(aliasImportPath) {
+				return typeDef{}, alias.QualifiedName, nil
+			}
+			return typeDef{}, "", fmt.Errorf("couldn't resolve dependency for alias %s", alias.QualifiedName)
 		}
 		return r.resolveExternalType(alias.SourceMod, alias.QualifiedName, seen)
 	}
@@ -276,7 +293,7 @@ func (r *Review) resolveModuleType(m *Module, qualifiedName string, seen map[str
 		return typeDef{}, "", err
 	}
 	if found {
-		return def, "", nil
+		return r.resolveTypeDefinition(m, def, seen)
 	}
 	for _, alias := range p.TypeAliases {
 		if alias.Name != typeName {
@@ -285,9 +302,142 @@ func (r *Review) resolveModuleType(m *Module, qualifiedName string, seen map[str
 		if alias.SourceMod != (module.Version{}) {
 			return r.resolveExternalType(alias.SourceMod, alias.QualifiedName, seen)
 		}
-		return r.resolveModuleType(m, alias.QualifiedName, seen)
+		aliasDot := strings.LastIndex(alias.QualifiedName, ".")
+		if aliasDot < 1 {
+			return typeDef{}, "", fmt.Errorf("invalid qualified type %q", alias.QualifiedName)
+		}
+		aliasImportPath := alias.QualifiedName[:aliasDot]
+		modulePath := m.ModFile.Module.Mod.Path
+		if versionReg.MatchString(modulePath) {
+			modulePath = path.Dir(modulePath)
+		}
+		if strings.HasPrefix(aliasImportPath, modulePath+"/") || aliasImportPath == modulePath {
+			return r.resolveModuleType(m, alias.QualifiedName, seen)
+		}
+		if isStandardLibraryImportPath(aliasImportPath) {
+			return typeDef{}, alias.QualifiedName, nil
+		}
+		return typeDef{}, "", fmt.Errorf("couldn't resolve dependency for alias %s", alias.QualifiedName)
 	}
 	return typeDef{}, "", fmt.Errorf("couldn't resolve internal type %s", qualifiedName)
+}
+
+func (r *Review) resolveTypeDefinition(m *Module, def typeDef, seen map[string]bool) (typeDef, string, error) {
+	if def.n == nil || def.p == nil {
+		return def, "", nil
+	}
+	selector, ok := unparenType(def.n.Type).(*ast.SelectorExpr)
+	if !ok {
+		return def, "", nil
+	}
+	name, ok := selector.X.(*ast.Ident)
+	if !ok {
+		return typeDef{}, "", fmt.Errorf("unsupported selector in type %s", def.n.Name.Name)
+	}
+	importPath, ok := def.imports[name.Name]
+	if !ok {
+		return typeDef{}, "", fmt.Errorf("unknown import name %s in type %s", name.Name, def.n.Name.Name)
+	}
+	qualifiedName := importPath + "." + selector.Sel.Name
+	mod := sourceModuleForAlias(qualifiedName, m.ModFile.Require)
+	var resolved typeDef
+	var terminal string
+	var err error
+	if mod != (module.Version{}) {
+		resolved, terminal, err = r.resolveExternalType(mod, qualifiedName, seen)
+	} else if importPath == m.ModFile.Module.Mod.Path ||
+		strings.HasPrefix(importPath, strings.TrimSuffix(m.ModFile.Module.Mod.Path, "/")+"/") {
+		resolved, terminal, err = r.resolveModuleType(m, qualifiedName, seen)
+	} else if isStandardLibraryImportPath(importPath) {
+		return typeDef{}, qualifiedName, nil
+	} else {
+		return typeDef{}, "", fmt.Errorf("couldn't resolve dependency for type %s", qualifiedName)
+	}
+	if err != nil {
+		return typeDef{}, "", err
+	}
+	if !def.n.Assign.IsValid() && resolved.methodPackage == nil {
+		resolved.methodPackage = def.p
+		resolved.methodName = def.n.Name.Name
+	}
+	return resolved, terminal, nil
+}
+
+func isStandardLibraryImportPath(importPath string) bool {
+	first, _, _ := strings.Cut(importPath, "/")
+	return first != "" && !strings.Contains(first, ".")
+}
+
+func (r *Review) selectedModuleVersion(mod module.Version) (module.Version, error) {
+	if mod.Path == "" || mod.Path == r.reviewed.ModFile.Module.Mod.Path {
+		return mod, nil
+	}
+	if selected, ok := r.selectedModules[mod.Path]; ok {
+		return selected, nil
+	}
+	cmd := exec.Command("go", "list", "-mod=readonly", "-m", "-json", mod.Path)
+	cmd.Dir = r.path
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if selected, ok, graphErr := r.selectedModuleVersionFromGraph(mod.Path); ok {
+			r.selectedModules[mod.Path] = selected
+			return selected, nil
+		} else if graphErr != nil {
+			return module.Version{}, fmt.Errorf("resolving selected version for module %s: %w (go list: %s)", mod.Path, graphErr, strings.TrimSpace(string(output)))
+		}
+		return module.Version{}, fmt.Errorf("resolving selected version for module %s: %w: %s", mod.Path, err, strings.TrimSpace(string(output)))
+	}
+	var selected struct {
+		Path    string
+		Version string
+	}
+	if err := json.Unmarshal(output, &selected); err != nil {
+		return module.Version{}, fmt.Errorf("decoding selected module %s: %w", mod.Path, err)
+	}
+	if selected.Path != mod.Path || selected.Version == "" {
+		return module.Version{}, fmt.Errorf("go list returned no selected version for module %s", mod.Path)
+	}
+	resolved := module.Version{Path: selected.Path, Version: selected.Version}
+	r.selectedModules[mod.Path] = resolved
+	return resolved, nil
+}
+
+func (r *Review) selectedModuleVersionFromGraph(target string) (module.Version, bool, error) {
+	selected := map[string]module.Version{}
+	processed := map[string]module.Version{}
+	queue := []module.Version{}
+	for _, requirement := range r.reviewed.ModFile.Require {
+		queue = append(queue, module.Version{Path: requirement.Mod.Path, Version: requirement.Mod.Version})
+	}
+	for len(queue) > 0 {
+		requirement := queue[0]
+		queue = queue[1:]
+		if requirement.Path == "" || requirement.Path == r.reviewed.ModFile.Module.Mod.Path {
+			continue
+		}
+		current, found := selected[requirement.Path]
+		if !found || semver.Compare(requirement.Version, current.Version) > 0 {
+			selected[requirement.Path] = requirement
+		}
+		current = selected[requirement.Path]
+		if previous, ok := processed[requirement.Path]; ok &&
+			semver.Compare(current.Version, previous.Version) <= 0 {
+			continue
+		}
+		dependency, err := r.externalModule(current)
+		if err != nil {
+			if current.Path == target {
+				return module.Version{}, false, err
+			}
+			continue
+		}
+		processed[current.Path] = current
+		for _, dependencyRequirement := range dependency.ModFile.Require {
+			queue = append(queue, module.Version{Path: dependencyRequirement.Mod.Path, Version: dependencyRequirement.Mod.Version})
+		}
+	}
+	version, ok := selected[target]
+	return version, ok, nil
 }
 
 func (r *Review) replacementImportPath(mod module.Version, resolvedModulePath, importPath string) string {
@@ -354,10 +504,11 @@ func (r *Review) resolveLocalTypes() error {
 			}
 			typ := unparenType(def.n.Type)
 			if def.n.Assign.IsValid() {
-				if _, genericInstantiation := typ.(*ast.IndexExpr); !genericInstantiation {
-					if _, genericInstantiation = typ.(*ast.IndexListExpr); !genericInstantiation {
-						continue
-					}
+				switch typ.(type) {
+				case *ast.IndexExpr, *ast.IndexListExpr:
+					return fmt.Errorf("generic instantiation alias %s.%s cannot be represented", p.Name(), name)
+				default:
+					continue
 				}
 			}
 			switch typ.(type) {

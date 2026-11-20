@@ -10,6 +10,7 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -31,13 +32,16 @@ var ErrNoPackages = errors.New("no packages found")
 
 // Pkg represents a Go package.
 type Pkg struct {
-	modulePath  string
-	c           content
-	diagnostics []CodeDiagnostic
-	files       map[string][]byte
-	fs          *token.FileSet
-	p           *ast.Package
-	relName     string
+	modulePath     string
+	moduleRoot     string
+	c              content
+	diagnostics    []CodeDiagnostic
+	files          map[string][]byte
+	fs             *token.FileSet
+	p              *ast.Package
+	relName        string
+	modulePackages map[string]*Pkg
+	packageNames   map[string]string
 
 	// TypeAliases are types exported from this package but defined in another. For
 	// example, package "azcore" may export TokenCredential from azcore/internal/shared
@@ -63,6 +67,7 @@ func NewPkg(dir, modulePath, moduleRoot string) (*Pkg, error) {
 
 	pk := &Pkg{
 		modulePath:  modulePath,
+		moduleRoot:  moduleRoot,
 		c:           newContent(),
 		diagnostics: []CodeDiagnostic{},
 		types:       map[string]typeDef{},
@@ -148,7 +153,11 @@ func (p *Pkg) indexFile(f *ast.File) {
 		if imp.Name != nil {
 			imports[imp.Name.String()] = pkgPath
 		} else {
-			imports[filepath.Base(pkgPath)] = pkgPath
+			name := filepath.Base(pkgPath)
+			if resolved, err := p.packageName(pkgPath); err == nil {
+				name = resolved
+			}
+			imports[name] = pkgPath
 		}
 	}
 
@@ -252,6 +261,29 @@ func (p *Pkg) indexFile(f *ast.File) {
 		}
 		return true
 	})
+}
+
+func (p *Pkg) packageName(importPath string) (string, error) {
+	if name, ok := p.packageNames[importPath]; ok {
+		return name, nil
+	}
+	if imported, ok := p.modulePackages[importPath]; ok && imported.p != nil {
+		return imported.p.Name, nil
+	}
+	cmd := exec.Command("go", "list", "-mod=readonly", "-f", "{{.Name}}", importPath)
+	cmd.Dir = filepath.FromSlash(p.moduleRoot)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("resolving Go package name for %s: %w: %s", importPath, err, strings.TrimSpace(string(output)))
+	}
+	name := strings.TrimSpace(string(output))
+	if name == "" || strings.ContainsAny(name, "\r\n") {
+		return "", fmt.Errorf("go list returned an invalid package name for %s", importPath)
+	}
+	if p.packageNames != nil {
+		p.packageNames[importPath] = name
+	}
+	return name, nil
 }
 
 // returns the text between [start, end]

@@ -766,12 +766,12 @@ func parseAndMakeTypeTokens(val string) []ReviewToken {
 	now := ""
 	for _, r := range val {
 		switch s := string(r); s {
-		case "*", "[", "]", " ", "(", ")", "{", "}", ",":
+		case "*", "[", "]", " ", "\t", "\r", "\n", ";", "(", ")", "{", "}", ",":
 			if now != "" {
 				toks = append(toks, makeTypeSectionToken(now))
 				now = ""
 			}
-			if s == " " && len(toks) > 0 {
+			if (s == " " || s == "\t" || s == "\r" || s == "\n") && len(toks) > 0 {
 				toks[len(toks)-1].HasSuffixSpace = true
 			} else {
 				toks = append(toks, ReviewToken{Kind: TokenKindPunctuation, Value: s})
@@ -803,7 +803,7 @@ func makeTypeSectionToken(section string) ReviewToken {
 	case slices.Contains(internalTypes, section):
 		return ReviewToken{Kind: TokenKindTypeName, Value: section}
 	default:
-		if strings.HasPrefix(section, "<") {
+		if strings.HasPrefix(section, "<") && strings.Contains(section, ">") {
 			splits := strings.Split(section[1:], ">")
 			return ReviewToken{Kind: TokenKindTypeName, NavigateToID: splits[0], Value: splits[1]}
 		}

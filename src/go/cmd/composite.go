@@ -8,7 +8,6 @@ import (
 	"go/ast"
 	"go/token"
 	"path"
-	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -40,23 +39,16 @@ func validateCompositeType(expr ast.Expr, source, target *Pkg, imports map[strin
 		case *ast.ParenExpr:
 			return walk(n.X)
 		case *ast.Ident:
-			reachable := !strings.Contains(source.relName, "/internal") && ast.IsExported(n.Name)
-			if targetExportsType(target, source, n.Name) {
-				reachable = true
-			}
-			for targetName, def := range target.types {
-				if ast.IsExported(targetName) && def.p == source && def.n != nil && def.n.Name.Name == n.Name {
-					reachable = true
-					break
-				}
-			}
-			if _, found := source.types[n.Name]; found && !reachable {
-				return fmt.Errorf("hidden component type %s.%s", source.Name(), n.Name)
-			}
+			reachable := ast.IsExported(n.Name) && !isInternalPackage(source)
+			reachable = reachable || targetExportsType(target, source, n.Name)
 			for _, alias := range source.TypeAliases {
-				if alias.Name == n.Name && !reachable {
-					return fmt.Errorf("hidden component type %s.%s", source.Name(), n.Name)
+				if alias.Name == n.Name && alias.isAlias {
+					reachable = reachable || targetExportsQualifiedType(target, alias.QualifiedName)
 				}
+			}
+			_, found := source.types[n.Name]
+			if (found || hasTypeAlias(source, n.Name)) && !reachable {
+				return fmt.Errorf("hidden component type %s.%s", source.Name(), n.Name)
 			}
 		case *ast.SelectorExpr:
 			name, ok := n.X.(*ast.Ident)
@@ -102,8 +94,20 @@ func validateCompositeType(expr ast.Expr, source, target *Pkg, imports map[strin
 			return fields(n.Fields, false)
 		case *ast.InterfaceType:
 			return fields(n.Methods, false)
-		case *ast.IndexExpr, *ast.IndexListExpr:
-			return fmt.Errorf("generic instantiation %s cannot be represented", source.getText(expr.Pos(), expr.End()))
+		case *ast.IndexExpr:
+			if err := walk(n.X); err != nil {
+				return err
+			}
+			return walk(n.Index)
+		case *ast.IndexListExpr:
+			if err := walk(n.X); err != nil {
+				return err
+			}
+			for _, index := range n.Indices {
+				if err := walk(index); err != nil {
+					return err
+				}
+			}
 		default:
 			return fmt.Errorf("unsupported component type %T", n)
 		}
@@ -123,30 +127,15 @@ func (p *Pkg) importPath() string {
 }
 
 func targetExportsType(target, source *Pkg, name string) bool {
-	return targetExportsTypeSeen(target, source, name, map[string]bool{})
-}
-
-func targetExportsTypeSeen(target, source *Pkg, name string, seen map[string]bool) bool {
-	qualifiedName := source.importPath() + "." + name
-	if seen[qualifiedName] {
-		return false
-	}
-	seen[qualifiedName] = true
-	if targetExportsQualifiedType(target, qualifiedName) {
+	qualifiedName := normalizeAliasTarget(target.modulePackages, source.importPath()+"."+name, map[string]bool{})
+	if source == target && ast.IsExported(name) && !isInternalPackage(source) {
 		return true
 	}
-	for _, alias := range source.TypeAliases {
-		if ast.IsExported(alias.Name) && alias.QualifiedName == qualifiedName &&
-			targetExportsTypeSeen(target, source, alias.Name, seen) {
-			return true
-		}
-	}
-	for aliasName, def := range source.types {
-		if !ast.IsExported(aliasName) || def.n == nil || !def.n.Assign.IsValid() {
+	for _, pkg := range target.modulePackages {
+		if isInternalPackage(pkg) {
 			continue
 		}
-		if ident, ok := unparenType(def.n.Type).(*ast.Ident); ok && ident.Name == name &&
-			targetExportsTypeSeen(target, source, aliasName, seen) {
+		if aliasPackageExports(pkg, qualifiedName, map[string]bool{}) {
 			return true
 		}
 	}
@@ -154,50 +143,278 @@ func targetExportsTypeSeen(target, source *Pkg, name string, seen map[string]boo
 }
 
 func targetExportsQualifiedType(target *Pkg, qualifiedName string) bool {
-	for _, alias := range target.TypeAliases {
-		if ast.IsExported(alias.Name) && alias.QualifiedName == qualifiedName {
+	qualifiedName = normalizeAliasTarget(target.modulePackages, qualifiedName, map[string]bool{})
+	for _, pkg := range target.modulePackages {
+		if isInternalPackage(pkg) {
+			continue
+		}
+		if aliasPackageExports(pkg, qualifiedName, map[string]bool{}) {
 			return true
 		}
 	}
 	return false
 }
 
+func isInternalPackage(pkg *Pkg) bool {
+	return pkg != nil && (strings.HasSuffix(pkg.relName, "/internal") || strings.Contains(pkg.relName, "/internal/"))
+}
+
+func aliasPackageExports(pkg *Pkg, qualifiedName string, seen map[string]bool) bool {
+	if seen[qualifiedName] {
+		return false
+	}
+	seen[qualifiedName] = true
+	for _, alias := range pkg.TypeAliases {
+		if alias.isAlias && ast.IsExported(alias.Name) &&
+			normalizeAliasTarget(pkg.modulePackages, aliasTarget(pkg, alias.Name, map[string]bool{}), map[string]bool{}) == qualifiedName {
+			return true
+		}
+	}
+	for name, def := range pkg.types {
+		if !ast.IsExported(name) || def.n == nil || !def.n.Assign.IsValid() {
+			continue
+		}
+		targetName := aliasTarget(pkg, name, map[string]bool{})
+		if normalizeAliasTarget(pkg.modulePackages, targetName, map[string]bool{}) == qualifiedName {
+			return true
+		}
+	}
+	return false
+}
+
+func aliasTarget(pkg *Pkg, name string, seen map[string]bool) string {
+	key := pkg.importPath() + "." + name
+	if seen[key] {
+		return ""
+	}
+	seen[key] = true
+	for _, alias := range pkg.TypeAliases {
+		if alias.Name == name && alias.isAlias {
+			return alias.QualifiedName
+		}
+	}
+	def, ok := pkg.types[name]
+	if !ok || def.n == nil || !def.n.Assign.IsValid() {
+		return ""
+	}
+	switch typ := unparenType(def.n.Type).(type) {
+	case *ast.Ident:
+		if target, ok := pkg.types[typ.Name]; ok {
+			if target.n != nil && target.n.Assign.IsValid() {
+				return aliasTarget(pkg, typ.Name, seen)
+			}
+			if target.n != nil {
+				return pkg.importPath() + "." + typ.Name
+			}
+			return aliasTarget(pkg, typ.Name, seen)
+		}
+		if ast.IsExported(typ.Name) {
+			return pkg.importPath() + "." + typ.Name
+		}
+	case *ast.SelectorExpr:
+		if selector, ok := typ.X.(*ast.Ident); ok {
+			if importPath := def.imports[selector.Name]; importPath != "" {
+				return importPath + "." + typ.Sel.Name
+			}
+		}
+	}
+	return ""
+}
+
+func normalizeAliasTarget(packages map[string]*Pkg, qualifiedName string, seen map[string]bool) string {
+	dot := strings.LastIndex(qualifiedName, ".")
+	if dot < 1 || seen[qualifiedName] {
+		return qualifiedName
+	}
+	seen[qualifiedName] = true
+	pkg, ok := packages[qualifiedName[:dot]]
+	if !ok {
+		return qualifiedName
+	}
+	name := qualifiedName[dot+1:]
+	if _, ok := pkg.types[name]; ok {
+		if target := aliasTarget(pkg, name, map[string]bool{}); target != "" && target != qualifiedName {
+			return normalizeAliasTarget(packages, target, seen)
+		}
+	}
+	for _, alias := range pkg.TypeAliases {
+		if alias.Name == name && alias.isAlias {
+			return normalizeAliasTarget(packages, alias.QualifiedName, seen)
+		}
+	}
+	return qualifiedName
+}
+
 func (a *TypeAlias) compositeType(def typeDef, expr ast.Expr) (string, error) {
 	if err := validateCompositeType(expr, def.p, a.Package, def.imports); err != nil {
 		return "", fmt.Errorf("unsupported composite type for %s.%s: %w", a.Package.Name(), a.Name, err)
 	}
-	var selectors []*ast.SelectorExpr
-	ast.Inspect(expr, func(n ast.Node) bool {
-		if selector, ok := n.(*ast.SelectorExpr); ok {
-			if name, ok := selector.X.(*ast.Ident); ok && def.imports[name.Name] != "" {
-				selectors = append(selectors, selector)
-				return false
-			}
-		}
-		return true
-	})
-	sort.Slice(selectors, func(i, j int) bool { return selectors[i].Pos() < selectors[j].Pos() })
+	references := []ast.Expr{}
+	collectTypeReferences(expr, def.p, &references)
+	sort.Slice(references, func(i, j int) bool { return references[i].Pos() < references[j].Pos() })
 	var result strings.Builder
 	last := expr.Pos()
-	for _, selector := range selectors {
-		result.WriteString(def.p.translateType(def.p.getText(last, selector.Pos()), def.imports))
-		original := def.p.getText(selector.Pos(), selector.End())
-		qualified := def.imports[selector.X.(*ast.Ident).Name] + "." + selector.Sel.Name
-		translated := def.p.translateType(original, def.imports)
-		if def.p.modulePath == a.Package.modulePath &&
-			strings.HasPrefix(def.imports[selector.X.(*ast.Ident).Name], def.p.unversionedModulePath()+"/") {
-			rel := strings.TrimPrefix(def.imports[selector.X.(*ast.Ident).Name], def.p.unversionedModulePath())
-			packageName := path.Base(def.p.unversionedModulePath()) + filepath.ToSlash(rel)
-			translated = fmt.Sprintf("<%s.%s>%s", packageName, selector.Sel.Name, qualified)
+	for _, reference := range references {
+		result.WriteString(def.p.getText(last, reference.Pos()))
+		translated, err := a.translateComponentReference(def, reference)
+		if err != nil {
+			return "", err
 		}
-		prefix := strings.TrimSuffix(translated, original)
-		if prefix == translated {
-			result.WriteString(qualified)
-		} else {
-			result.WriteString(prefix + qualified)
-		}
-		last = selector.End()
+		result.WriteString(translated)
+		last = reference.End()
 	}
-	result.WriteString(def.p.translateType(def.p.getText(last, expr.End()), def.imports))
+	result.WriteString(def.p.getText(last, expr.End()))
 	return result.String(), nil
+}
+
+func collectTypeReferences(expr ast.Expr, source *Pkg, references *[]ast.Expr) {
+	switch n := unparenType(expr).(type) {
+	case *ast.Ident:
+		if _, ok := source.types[n.Name]; ok || hasTypeAlias(source, n.Name) {
+			*references = append(*references, n)
+		}
+	case *ast.SelectorExpr:
+		*references = append(*references, n)
+	case *ast.StarExpr:
+		collectTypeReferences(n.X, source, references)
+	case *ast.Ellipsis:
+		collectTypeReferences(n.Elt, source, references)
+	case *ast.ArrayType:
+		collectTypeReferences(n.Elt, source, references)
+	case *ast.MapType:
+		collectTypeReferences(n.Key, source, references)
+		collectTypeReferences(n.Value, source, references)
+	case *ast.ChanType:
+		collectTypeReferences(n.Value, source, references)
+	case *ast.FuncType:
+		collectFieldTypes(n.Params, source, references)
+		collectFieldTypes(n.Results, source, references)
+	case *ast.StructType:
+		for _, field := range n.Fields.List {
+			if len(field.Names) == 0 || ast.IsExported(field.Names[0].Name) {
+				collectTypeReferences(field.Type, source, references)
+			}
+		}
+	case *ast.InterfaceType:
+		for _, field := range n.Methods.List {
+			if len(field.Names) == 0 || ast.IsExported(field.Names[0].Name) {
+				collectTypeReferences(field.Type, source, references)
+			}
+		}
+	case *ast.IndexExpr:
+		collectTypeReferences(n.X, source, references)
+		collectTypeReferences(n.Index, source, references)
+	case *ast.IndexListExpr:
+		collectTypeReferences(n.X, source, references)
+		for _, index := range n.Indices {
+			collectTypeReferences(index, source, references)
+		}
+	}
+}
+
+func collectFieldTypes(fields *ast.FieldList, source *Pkg, references *[]ast.Expr) {
+	if fields == nil {
+		return
+	}
+	for _, field := range fields.List {
+		collectTypeReferences(field.Type, source, references)
+	}
+}
+
+func (a *TypeAlias) translateComponentReference(def typeDef, reference ast.Expr) (string, error) {
+	switch n := reference.(type) {
+	case *ast.Ident:
+		endpoint, name, ok := findExposedType(a.Package, def.p, n.Name)
+		if !ok {
+			if ast.IsExported(n.Name) && !isInternalPackage(def.p) {
+				return def.p.importPath() + "." + n.Name, nil
+			}
+			return "", fmt.Errorf("hidden component type %s.%s", def.p.Name(), n.Name)
+		}
+		if endpoint == a.Package {
+			return fmt.Sprintf("<%s.%s>%s", endpoint.Name(), name, name), nil
+		}
+		text := endpoint.Name() + "." + name
+		return fmt.Sprintf("<%s.%s>%s", endpoint.Name(), name, text), nil
+	case *ast.SelectorExpr:
+		x, ok := n.X.(*ast.Ident)
+		if !ok {
+			return "", fmt.Errorf("unsupported selector expression %s", def.p.getText(n.Pos(), n.End()))
+		}
+		importPath := def.imports[x.Name]
+		qualified := importPath + "." + n.Sel.Name
+		if endpoint, name, ok := findExposedQualifiedType(a.Package, qualified); ok {
+			text := endpoint.Name() + "." + name
+			if endpoint == a.Package {
+				text = name
+			}
+			return fmt.Sprintf("<%s.%s>%s", endpoint.Name(), name, text), nil
+		}
+		original := def.p.getText(n.Pos(), n.End())
+		translated := def.p.translateType(original, def.imports)
+		prefix := strings.TrimSuffix(translated, original)
+		if prefix != translated {
+			return prefix + qualified, nil
+		}
+		return qualified, nil
+	}
+	return def.p.getText(reference.Pos(), reference.End()), nil
+}
+
+func findExposedType(target, source *Pkg, name string) (*Pkg, string, bool) {
+	for _, alias := range source.TypeAliases {
+		if alias.Name == name && alias.isAlias {
+			if ast.IsExported(name) && !isInternalPackage(source) && target.modulePackages[source.importPath()] == source {
+				return source, name, true
+			}
+			return findExposedQualifiedType(target, alias.QualifiedName)
+		}
+	}
+	if ast.IsExported(name) && !isInternalPackage(source) && target.modulePackages[source.importPath()] == source {
+		return source, name, true
+	}
+	qualifiedName := source.importPath() + "." + name
+	return findExposedQualifiedType(target, qualifiedName)
+}
+
+func hasTypeAlias(pkg *Pkg, name string) bool {
+	for _, alias := range pkg.TypeAliases {
+		if alias.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func findExposedQualifiedType(target *Pkg, qualifiedName string) (*Pkg, string, bool) {
+	packages := target.modulePackages
+	if packages == nil {
+		packages = map[string]*Pkg{target.importPath(): target}
+	}
+	keys := make([]string, 0, len(packages))
+	for key := range packages {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		pkg := packages[key]
+		if isInternalPackage(pkg) {
+			continue
+		}
+		for _, alias := range pkg.TypeAliases {
+			if alias.isAlias && ast.IsExported(alias.Name) &&
+				normalizeAliasTarget(packages, aliasTarget(pkg, alias.Name, map[string]bool{}), map[string]bool{}) ==
+					normalizeAliasTarget(packages, qualifiedName, map[string]bool{}) {
+				return pkg, alias.Name, true
+			}
+		}
+		for name, def := range pkg.types {
+			if ast.IsExported(name) && def.n != nil && def.n.Assign.IsValid() &&
+				normalizeAliasTarget(packages, aliasTarget(pkg, name, map[string]bool{}), map[string]bool{}) ==
+					normalizeAliasTarget(packages, qualifiedName, map[string]bool{}) {
+				return pkg, name, true
+			}
+		}
+	}
+	return nil, "", false
 }

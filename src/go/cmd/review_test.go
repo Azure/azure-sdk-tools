@@ -72,6 +72,7 @@ func TestExternalAliasChainSkipsUnreachableDependencyAliases(t *testing.T) {
 	middleModule := "example.com/sdk/middle"
 	sourceDir := filepath.Join(cache, filepath.FromSlash(sourceModule)) + "@v1.0.0"
 	middleDir := filepath.Join(cache, filepath.FromSlash(middleModule)) + "@v1.0.0"
+	selectedMiddleDir := filepath.Join(cache, filepath.FromSlash(middleModule)) + "@v1.1.0"
 	write(filepath.Join(sourceDir, "go.mod"), "module "+sourceModule+"\n\ngo 1.21\nrequire "+middleModule+" v1.0.0\nrequire example.com/sdk/unrelated v1.0.0\n")
 	write(filepath.Join(sourceDir, "types.go"), `package source
 import (
@@ -87,11 +88,13 @@ type Result = middle.Result
 `)
 	write(filepath.Join(middleDir, "go.mod"), "module "+middleModule+"\n\ngo 1.21\n")
 	write(filepath.Join(middleDir, "types.go"), "package middle\ntype Result []rune\n")
-	write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire "+sourceModule+" v1.0.0\n")
+	write(filepath.Join(selectedMiddleDir, "go.mod"), "module "+middleModule+"\n\ngo 1.21\n")
+	write(filepath.Join(selectedMiddleDir, "types.go"), "package middle\ntype Result []complex64\n")
+	write(filepath.Join(reviewed, "go.mod"), "module example.com/sdk/exporter\n\ngo 1.21\nrequire (\n\t"+sourceModule+" v1.0.0\n\t"+middleModule+" v1.1.0\n)\n")
 	write(filepath.Join(reviewed, "alias.go"), "package exporter\nimport \""+sourceModule+"\"\ntype Public = source.Data\n")
 	review, err := createReview(reviewed)
 	require.NoError(t, err)
-	require.Equal(t, "typePublic=[]rune", withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "exporter.Public"))))
+	require.Equal(t, "typePublic=[]complex64", withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "exporter.Public"))))
 }
 
 func TestReviewedInternalAliasChainToDependency(t *testing.T) {

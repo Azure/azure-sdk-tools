@@ -36,7 +36,7 @@ import "example.com/elsewhere"
 type External = elsewhere.Entry
 `, nil)
 	_, err := createReview(dir)
-	require.ErrorContains(t, err, "couldn't find package example.com/elsewhere")
+	require.ErrorContains(t, err, "couldn't resolve dependency for alias example.com/elsewhere.Entry")
 }
 
 func TestUnsupportedHiddenCompositeTypes(t *testing.T) {
@@ -129,6 +129,80 @@ type Data []model.Item
 	require.Contains(t, feedbackLineText(feedbackLine(t, changed, "aliastest.Public")), "example.com/aliastest/other.Item")
 }
 
+func TestUnnamedImportUsesDeclaredPackageName(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/aliastest\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "alias.go"), []byte(`
+package aliastest
+import "example.com/aliastest/go-amqp"
+type Public = amqp.Data
+`), 0644))
+	packageDir := filepath.Join(dir, "go-amqp")
+	require.NoError(t, os.MkdirAll(packageDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(packageDir, "types.go"), []byte("package amqp\ntype Data []byte\n"), 0644))
+
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	require.Equal(t, "typePublic=[]byte", withoutAliasTarget(feedbackLineText(feedbackLine(t, review, "aliastest.Public"))))
+}
+
+func TestGenericComponentsAndSignaturesAreValidatedRecursively(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/generics\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "types.go"), []byte(`
+package generics
+import "sync/atomic"
+type Box[T any] struct { Value T }
+type Public []Box[int]
+type GenericClient[T any] struct{}
+type BaseClient struct{}
+type Client GenericClient[BaseClient]
+func (Client) Pointer() *atomic.Pointer[int] { return nil }
+`), 0644))
+
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	require.Contains(t, feedbackLineText(feedbackLine(t, review, "generics.Public")), "Box[int]")
+	require.Contains(t, feedbackLineText(feedbackMethod(t, feedbackLine(t, review, "generics.Client"), "Client", "Pointer")), "atomic.Pointer[int]")
+}
+
+func TestCompositeUnqualifiedInternalTypeUsesPublicAlias(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/aliastest\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "alias.go"), []byte(`
+package aliastest
+import "example.com/aliastest/model"
+type Public = model.Data
+`), 0644))
+	modelDir := filepath.Join(dir, "model")
+	require.NoError(t, os.MkdirAll(modelDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "model.go"), []byte(`
+package model
+type hidden struct{}
+type Data []hidden
+type Visible = hidden
+`), 0644))
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	line := feedbackLine(t, review, "aliastest.Public")
+	require.Contains(t, feedbackLineText(line), "aliastest/model.Visible")
+	require.True(t, searchTokens([]ReviewLine{line}, func(token ReviewToken) bool {
+		return token.NavigateToID == "aliastest/model.Visible"
+	}))
+}
+
+func TestDefinedTypeIsNotExposedByAliasToItsUnderlyingType(t *testing.T) {
+	dir := aliasFeedbackFixture(t, "import \"example.com/aliastest/model\"\ntype Visible = model.Hidden\ntype Public = types.Data\n", `
+import "example.com/aliastest/model"
+type Defined model.Hidden
+type Data []Defined
+`, map[string]string{
+		filepath.Join("model", "model.go"): "package model\ntype Hidden int\n",
+	})
+	_, err := createReview(dir)
+	require.ErrorContains(t, err, "hidden component type aliastest/internal/types.Defined")
+}
+
 func TestCompositeTypeRejectsUnknownImportName(t *testing.T) {
 	dir := aliasFeedbackFixture(t, "type Public = types.Data\n", `
 import model "example.com/aliastest/model"
@@ -138,6 +212,19 @@ type Data []missing.Item
 	})
 	_, err := createReview(dir)
 	require.ErrorContains(t, err, "unknown import name missing")
+}
+
+func TestTypeTokensRecognizeGoWhitespaceAndSemicolons(t *testing.T) {
+	tokens := parseAndMakeTypeTokens("Box\tmap[string]int\nOther;Next")
+	require.True(t, searchTokens([]ReviewLine{{Tokens: tokens}}, func(token ReviewToken) bool {
+		return token.Value == "Box" && token.HasSuffixSpace
+	}))
+	require.True(t, searchTokens([]ReviewLine{{Tokens: tokens}}, func(token ReviewToken) bool {
+		return token.Kind == TokenKindPunctuation && token.Value == ";"
+	}))
+	require.True(t, searchTokens([]ReviewLine{{Tokens: tokens}}, func(token ReviewToken) bool {
+		return token.Value == "Next"
+	}))
 }
 
 func TestPrivateReceiverAliasAndComments(t *testing.T) {

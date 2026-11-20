@@ -155,6 +155,14 @@ func newModule(dir string, deferAliases bool) (*Module, error) {
 		return nil, err
 	}
 
+	packageNames := make(map[string]string, len(m.Packages))
+	for importPath, p := range m.Packages {
+		p.modulePackages = m.Packages
+		packageNames[importPath] = p.p.Name
+	}
+	for _, p := range m.Packages {
+		p.packageNames = packageNames
+	}
 	for _, p := range m.Packages {
 		p.Index()
 	}
@@ -214,7 +222,9 @@ func newModule(dir string, deferAliases bool) (*Module, error) {
 func sourceModuleForAlias(qualifiedName string, requirements []*modfile.Require) module.Version {
 	var best module.Version
 	for _, requirement := range requirements {
-		if (qualifiedName == requirement.Mod.Path || strings.HasPrefix(qualifiedName, requirement.Mod.Path+".")) &&
+		if (qualifiedName == requirement.Mod.Path ||
+			strings.HasPrefix(qualifiedName, requirement.Mod.Path+".") ||
+			strings.HasPrefix(qualifiedName, requirement.Mod.Path+"/")) &&
 			len(requirement.Mod.Path) > len(best.Path) {
 			best = requirement.Mod
 		}

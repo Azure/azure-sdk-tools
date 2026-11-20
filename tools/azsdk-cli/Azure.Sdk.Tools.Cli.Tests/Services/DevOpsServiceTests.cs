@@ -1079,6 +1079,29 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #region GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync Tests
 
+        [TestCase(ApiReleaseType.GA, "In Progress")]
+        [TestCase(ApiReleaseType.GA, "Finished")]
+        [TestCase(ApiReleaseType.PublicPreview, "In Progress")]
+        [TestCase(ApiReleaseType.PublicPreview, "Finished")]
+        [TestCase(ApiReleaseType.PrivatePreview, "In Progress")]
+        [TestCase(ApiReleaseType.PrivatePreview, "Finished")]
+        public void GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync_UnreadableSpecChildFailsLookup(
+            ApiReleaseType releaseType, string status)
+        {
+            const string path = "specification/contoso/Contoso.Management";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, status, 200);
+            plan.Fields["Custom.ApiSpecProjectPath"] = path;
+            plan.Fields["Custom.ReleasePlanType"] = releaseType.ToAdoFieldValue();
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+
+            var error = Assert.ThrowsAsync<Exception>(async () =>
+                await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                    path, "2026-01-01", releaseType, CancellationToken.None));
+
+            Assert.That(error!.GetBaseException().Message, Does.Contain("Work item 200 not found"));
+        }
+
         [TestCase("In Progress", true)]
         [TestCase("Finished", true)]
         [TestCase("Closed", false)]

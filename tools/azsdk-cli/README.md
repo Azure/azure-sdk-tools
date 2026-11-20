@@ -148,6 +148,9 @@ When testing is enabled, release plans will be automatically generated in the te
 searches for the same concrete API version and release type in `In Progress` or `Finished`
 status. JSON/MCP output reports `outcome: "existing"` when a plan is found and
 `outcome: "not_found"` when no plan matches. The existing no-match exit code of 1 is preserved.
+If an API Spec child cannot be read, version-specific lookup fails instead of
+reporting `not_found`. Creation uses the same lookup and stops before writing a
+plan when version evidence cannot be read, for all API release types.
 
 `release-plan create` derives its API version from TypeSpec metadata and reports
 `outcome: "created"` or `outcome: "existing"`. A plan linked to the same PR but targeting

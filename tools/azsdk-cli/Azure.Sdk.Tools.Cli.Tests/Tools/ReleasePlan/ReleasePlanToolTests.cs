@@ -1287,6 +1287,49 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(json.RootElement.GetProperty("outcome").GetString(), Is.EqualTo("not_found"));
         }
 
+        [TestCase("GA", ApiReleaseType.GA, false)]
+        [TestCase("GA", ApiReleaseType.GA, true)]
+        [TestCase("Public Preview", ApiReleaseType.PublicPreview, false)]
+        [TestCase("Public Preview", ApiReleaseType.PublicPreview, true)]
+        [TestCase("Private Preview", ApiReleaseType.PrivatePreview, false)]
+        [TestCase("Private Preview", ApiReleaseType.PrivatePreview, true)]
+        public async Task ReleasePlan_SpecReadFailureIsNotANoMatchOrPermissionToCreate(
+            string releaseType, ApiReleaseType apiReleaseType, bool create)
+        {
+            const string path = "specification/testcontoso/Contoso.Management";
+            const string version = "2026-05-02-preview";
+            var service = new Mock<IDevOpsService>();
+            service.Setup(s => s.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                    path, version, apiReleaseType, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("API Spec child could not be read."));
+            var tool = new ReleasePlanTool(service.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(),
+                Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), _timeProvider);
+            var specRepo = apiReleaseType == ApiReleaseType.PrivatePreview
+                ? "azure-rest-api-specs-pr" : "azure-rest-api-specs";
+
+            var response = create
+                ? await tool.CreateReleasePlan(null,
+                    "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025",
+                    releaseType, specPullRequestUrl: $"https://github.com/Azure/{specRepo}/pull/35446",
+                    expectedApiVersion: version)
+                : await tool.GetReleasePlan(typeSpecProjectPath: path, apiReleaseType: releaseType,
+                    apiVersion: version);
+
+            Assert.That(response.ResponseError, Does.Contain("API Spec child could not be read"));
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(response.Outcome, Is.Null);
+            Assert.That(response.ReleasePlanDetails, Is.Null);
+            using var json = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Json).Format(response));
+            Assert.That(json.RootElement.TryGetProperty("outcome", out _), Is.False);
+            service.Verify(s => s.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                path, version, apiReleaseType, It.IsAny<CancellationToken>()), Times.Once);
+            service.Verify(s => s.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+            service.Verify(s => s.GetReleasePlanAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+        }
+
         [TestCase("")]
         [TestCase(" ")]
         [TestCase("all")]

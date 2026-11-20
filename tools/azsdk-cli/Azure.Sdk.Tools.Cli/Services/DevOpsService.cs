@@ -454,7 +454,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             throw new ArgumentException("SDK pull request must be a full HTTPS GitHub PR URL in the Azure SDK repository for the supplied language.", nameof(sdkPullRequest));
         }
 
-        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct, bool requireSpecDetails = false)
+        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(
+            WorkItem workItem, CancellationToken ct, bool requireSpecDetails = false, bool throwOnSpecReadFailure = false)
         {
             var releasePlan = new ReleasePlanWorkItem()
             {
@@ -519,7 +520,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // The overdue query expands relations, so no child link means there is no linked spec.
             // Do not confuse an unreadable child with a missing spec when deciding abandonment.
-            if (requireSpecDetails && releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
+            if (!throwOnSpecReadFailure && requireSpecDetails && releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
                 && workItem.Relations?.Any(relation => relation.Rel == "System.LinkTypes.Hierarchy-Forward") != true)
             {
                 return releasePlan;
@@ -537,6 +538,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
                 else
                 {
+                    if (throwOnSpecReadFailure)
+                    {
+                        throw new InvalidOperationException($"API spec details could not be read for release plan work item {releasePlan.WorkItemId}.");
+                    }
                     logger.LogWarning("API spec work item not found for release plan work item {workItemId}", releasePlan.WorkItemId);
                 }
             }
@@ -547,7 +552,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to get API spec work item for release plan work item {WorkItemId}", releasePlan.WorkItemId);
-                if (requireSpecDetails && releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
+                if (throwOnSpecReadFailure || (requireSpecDetails && releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview))
                 {
                     throw;
                 }
@@ -2437,7 +2442,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 foreach (var workItem in releasePlanWorkItems)
                 {
                     // Map the work item to ReleasePlanWorkItem to populate SpecAPIVersion from child API Spec work item
-                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct, throwOnSpecReadFailure: true);
 
                     // Verify mapped values as well as the WIQL filters before returning a match.
                     if (!string.IsNullOrEmpty(releasePlan.SpecAPIVersion)

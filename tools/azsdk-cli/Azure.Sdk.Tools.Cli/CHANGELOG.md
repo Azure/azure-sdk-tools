@@ -12,6 +12,7 @@
 
 - Concrete-version creation no longer reuses a different version through a PR-only fallback. Version-specific lookups accept only `In Progress` or `Finished` plans.
 - Multi-version aliases and differing metadata versions require manual version selection instead of creating unmatchable blank-version plans.
+- Version-specific lookups propagate API Spec child-read failures for every release type instead of reporting missing plans and allowing duplicate creation.
 - `api-review create`, `package get-approval-status`, and `package mark-released` now accept the same language aliases and normalize them for API Review Hub and APIView. Both `js` and `javascript` are sent to API Review Hub as `javascript`, to APIView as `JavaScript`, and default to `azure-sdk-for-js` when creating a review.
 
 ### Other Changes

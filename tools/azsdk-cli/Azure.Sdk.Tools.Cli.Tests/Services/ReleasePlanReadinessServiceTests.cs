@@ -268,11 +268,30 @@ public class ReleasePlanReadinessServiceTests
         _readiness.Verify(service => service.GetPackageMetadataAsync("Azure", "azure-sdk-for-java", 12, It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
-    [TestCase("Custom.ApiSpecProjectPath")]
-    [TestCase("Custom.APISpecversion")]
-    [TestCase(ReleasePlanWorkItem.SpecCommitSHAField)]
-    public async Task ExistingAdoHistoryInvalidatesEvidenceAfterSpecScopeChanges(string field)
+    [TestCase("Custom.ApiSpecProjectPath", "string")]
+    [TestCase("Custom.ApiSpecProjectPath", "dateTime")]
+    [TestCase("Custom.ApiSpecProjectPath", "unspecified")]
+    [TestCase("Custom.ApiSpecProjectPath", "offset")]
+    [TestCase("Custom.APISpecversion", "string")]
+    [TestCase("Custom.APISpecversion", "dateTime")]
+    [TestCase("Custom.APISpecversion", "unspecified")]
+    [TestCase("Custom.APISpecversion", "offset")]
+    [TestCase(ReleasePlanWorkItem.SpecCommitSHAField, "string")]
+    [TestCase(ReleasePlanWorkItem.SpecCommitSHAField, "dateTime")]
+    [TestCase(ReleasePlanWorkItem.SpecCommitSHAField, "unspecified")]
+    [TestCase(ReleasePlanWorkItem.SpecCommitSHAField, "offset")]
+    public async Task ExistingAdoHistoryInvalidatesEvidenceAfterSpecScopeChanges(string field, string timeKind)
     {
+        var checkedAt = Now.AddMinutes(-1).AddMilliseconds(100);
+        var scopeChangedAt = checkedAt.AddMilliseconds(800);
+        SetStored("Passed", "validation", "widgets", checkedAt);
+        object changedDate = timeKind switch
+        {
+            "dateTime" => scopeChangedAt.UtcDateTime,
+            "unspecified" => DateTime.SpecifyKind(scopeChangedAt.UtcDateTime, DateTimeKind.Unspecified),
+            "offset" => scopeChangedAt.ToOffset(TimeSpan.FromHours(5.5)),
+            _ => scopeChangedAt.ToString("O")
+        };
         var item = field == "Custom.APISpecversion" ? _specification : _plan;
         _ado.Setup(service => service.GetWorkItemUpdatesAsync(item.Id!.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync([new WorkItemUpdate
@@ -281,7 +300,7 @@ public class ReleasePlanReadinessServiceTests
                 Fields = new Dictionary<string, WorkItemFieldUpdate>
                 {
                     [field] = new() { NewValue = item.Fields[field] },
-                    ["System.ChangedDate"] = new() { NewValue = Now.AddMinutes(-5).ToString("O") }
+                    ["System.ChangedDate"] = new() { NewValue = changedDate }
                 }
             }]);
         Assert.That((await Check(false)).Detail, Does.Not.Contain("Reused"));

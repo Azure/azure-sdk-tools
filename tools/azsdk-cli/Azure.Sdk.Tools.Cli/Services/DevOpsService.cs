@@ -231,19 +231,17 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default)
         {
             const int pageSize = 200;
-            const int maxUpdates = 1000;
             var updates = new List<WorkItemUpdate>();
-            for (var skip = 0; skip < maxUpdates; skip += pageSize)
+            while (true)
             {
                 var page = await connection.GetWorkItemClient(ct).GetUpdatesAsync(workItemId,
-                    top: pageSize, skip: skip, cancellationToken: ct);
+                    top: pageSize, skip: updates.Count, cancellationToken: ct);
                 updates.AddRange(page);
                 if (page.Count < pageSize)
                 {
                     return updates;
                 }
             }
-            throw new InvalidOperationException("Work-item history exceeds the bounded readiness lookup.");
         }
 
         private bool IsAgentTesting => Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING") == "true";
@@ -531,7 +529,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 APISpecProjectPath = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ApiSpecProjectPathField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SpecCommitSHA = workItem.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ServiceReadinessStatus = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessStatusField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
-                ServiceReadinessCheckedAt = ReadServiceReadinessCheckedAt(workItem),
+                ServiceReadinessCheckedAt = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessCheckedAtField, out value)
+                    ? ReadWorkItemTimestamp(value) : null,
                 ServiceReadinessDetails = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessDetailsField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ReleasePlanType = workItem.Fields.TryGetValue("Custom.ReleasePlanType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
@@ -623,9 +622,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        private static DateTimeOffset? ReadServiceReadinessCheckedAt(WorkItem workItem)
+        internal static DateTimeOffset? ReadWorkItemTimestamp(object? value)
         {
-            workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessCheckedAtField, out var value);
             return value switch
             {
                 DateTimeOffset time => time,

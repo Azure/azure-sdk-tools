@@ -29,6 +29,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+        [TestCase(0)]
+        [TestCase(199)]
+        [TestCase(200)]
+        [TestCase(999)]
+        [TestCase(1000)]
+        [TestCase(1001)]
+        public async Task GetWorkItemUpdatesAsync_ReturnsCompleteHistory(int updateCount)
+        {
+            var updates = Enumerable.Range(1, updateCount)
+                .Select(revision => new WorkItemUpdate { Rev = revision }).ToList();
+            _connection.SetWorkItemUpdates(123, updates);
+
+            var result = await _devOpsService.GetWorkItemUpdatesAsync(123);
+
+            Assert.That(result.Select(update => update.Rev), Is.EqualTo(Enumerable.Range(1, updateCount)));
+        }
+
         [TestCase(null, false)]
         [TestCase("false", false)]
         [TestCase("true", true)]

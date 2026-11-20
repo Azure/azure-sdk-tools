@@ -14,8 +14,7 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
     private const string ConfigurationSuffix = "/tspconfig.yaml";
 
     public sealed record ResourceTypeEvidence(PackageResourceType[] ResourceTypes, string[] ProviderNamespaces, List<string> MissingEvidence);
-    private sealed record SpecMapping(string? SwaggerPattern, List<string> MissingEvidence);
-    private sealed record ProjectSource(string SpecRepository, string CommitSha, string Configuration, string ApiVersion);
+    private sealed record ProjectSource(string SpecRepository, string CommitSha);
 
     public async Task<ResourceTypeEvidence> ReadPinnedSwaggerResourceTypesAsync(
         string specRepository, string commitSha, string configuration, string apiVersion, CancellationToken ct = default)
@@ -28,56 +27,41 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
         {
             throw new ArgumentException("Provide a pinned Azure specification project configuration.");
         }
-        var source = new ProjectSource(specRepository, commitSha, configuration, apiVersion);
-        var mapping = await ReadPinnedSwaggerMappingAsync(source, ct);
-        var types = new HashSet<PackageResourceType>();
-        var providers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (mapping.SwaggerPattern is null)
+        var source = new ProjectSource(specRepository, commitSha);
+        var configurationText = await ReadFileAsync(source, configuration, ct);
+        if (configurationText is null)
         {
-            return new([], [], mapping.MissingEvidence);
+            return new([], [], ["TypeSpec configuration at spec commit"]);
         }
-        var files = await DiscoverSwaggerFilesAsync(mapping.SwaggerPattern, source, ct);
-        foreach (var file in files)
+        var projectDirectory = configuration[..^ConfigurationSuffix.Length];
+        var swaggerPattern = SwaggerOutputPattern(configurationText, projectDirectory, apiVersion);
+        if (swaggerPattern is null)
         {
-            var text = await ReadFileAsync(source, file, ct);
-            if (text is not null)
+            return new([], [], ["checked-in Swagger output mapping"]);
+        }
+        var resourceTypes = new HashSet<PackageResourceType>();
+        var providerNamespaces = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var missingEvidence = new List<string>();
+        var swaggerFiles = await DiscoverSwaggerFilesAsync(swaggerPattern, source, ct);
+        foreach (var swaggerFile in swaggerFiles)
+        {
+            var swaggerText = await ReadFileAsync(source, swaggerFile, ct);
+            if (swaggerText is not null)
             {
-                AddSwaggerResourceTypes(text, file, source.ApiVersion, types, providers, mapping.MissingEvidence);
+                AddSwaggerResourceTypes(swaggerText, swaggerFile, apiVersion, resourceTypes, providerNamespaces, missingEvidence);
             }
             else
             {
-                mapping.MissingEvidence.Add($"Missing checked-in Swagger: {file}");
+                missingEvidence.Add($"Missing checked-in Swagger: {swaggerFile}");
             }
         }
-        if (types.Count == 0)
+        if (resourceTypes.Count == 0)
         {
-            mapping.MissingEvidence.Add("resource-type mapping");
+            missingEvidence.Add("resource-type mapping");
         }
-        return new([.. types.OrderBy(type => type.Namespace, StringComparer.Ordinal)
+        return new([.. resourceTypes.OrderBy(type => type.Namespace, StringComparer.Ordinal)
             .ThenBy(type => type.ApiVersion, StringComparer.Ordinal).ThenBy(type => type.ResourceType, StringComparer.Ordinal)],
-            [.. providers.Order(StringComparer.Ordinal)], mapping.MissingEvidence);
-    }
-
-    private async Task<SpecMapping> ReadPinnedSwaggerMappingAsync(
-        ProjectSource source, CancellationToken ct)
-    {
-        var project = source.Configuration[..^ConfigurationSuffix.Length];
-        var configText = await ReadFileAsync(source, source.Configuration, ct);
-        var missing = new List<string>();
-        if (configText is null)
-        {
-            missing.Add("TypeSpec configuration at spec commit");
-        }
-        if (missing.Count > 0)
-        {
-            return new(null, missing);
-        }
-        var pattern = SwaggerOutputPattern(configText!, project, source.ApiVersion);
-        if (pattern is null)
-        {
-            missing.Add("checked-in Swagger output mapping");
-        }
-        return new(pattern, missing);
+            [.. providerNamespaces.Order(StringComparer.Ordinal)], missingEvidence);
     }
 
     private async Task<List<string>> DiscoverSwaggerFilesAsync(string pattern, ProjectSource source, CancellationToken ct)

@@ -174,25 +174,25 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         {
             return null;
         }
-        DateTimeOffset? latest = null;
+        DateTimeOffset? latestChangedAt = null;
         foreach (var update in updates)
         {
             if (update.Fields is null || !fields.Any(update.Fields.ContainsKey))
             {
                 continue;
             }
-            if (!update.Fields.TryGetValue("System.ChangedDate", out var changed) ||
-                !DateTimeOffset.TryParse(Convert.ToString(changed.NewValue, CultureInfo.InvariantCulture),
-                    CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var time))
+            var changedAt = update.Fields.TryGetValue("System.ChangedDate", out var changed)
+                ? DevOpsService.ReadWorkItemTimestamp(changed.NewValue) : null;
+            if (!changedAt.HasValue)
             {
                 return null;
             }
-            if (!latest.HasValue || time > latest.Value)
+            if (!latestChangedAt.HasValue || changedAt.Value > latestChangedAt.Value)
             {
-                latest = time;
+                latestChangedAt = changedAt;
             }
         }
-        return latest;
+        return latestChangedAt;
     }
 
     private bool TryReuse(ServiceApiReadinessResponse result, Observation[] observations, string environment,

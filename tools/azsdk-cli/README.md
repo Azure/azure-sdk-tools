@@ -1,6 +1,6 @@
 # Azure SDK CLI and MCP server
 
-This project is the primary integration point for all `azure-sdk` provided [MCP](https://modelcontextprotocol.io/introduction) tools as well as a convenient CLI app for azure sdk developers. It is built and published out of the `azure-sdk-tools` repo but consumed primarily through the `.vscode/mcp.json` file within each `Azure-sdk-for-<lang>` language repository. Server installation is carried out by the eng/common scripts present at `eng/common/mcp/azure-sdk-mcp.ps1`.
+This project is the primary integration point for all `azure-sdk` provided [MCP](https://modelcontextprotocol.io/introduction) tools as well as a convenient CLI app for azure sdk developers. It is built and published out of the `azure-sdk-tools` repo but consumed primarily through the `.mcp.json` file within each `Azure-sdk-for-<lang>` language repository. Server installation is carried out by the eng/common scripts present at `eng/common/mcp/azure-sdk-mcp.ps1`.
 
 ## Table of Contents
 
@@ -664,7 +664,7 @@ graph TB
 
     %% Configuration
     subgraph Config[Configuration]
-        MCPConfig[.vscode/mcp.json<br/>VS Code Integration]
+        MCPConfig[.mcp.json<br/>Copilot CLI + VS Code Integration]
         GitHubConfig[github coding agent mcp config]
     end
 

@@ -44,6 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     ) : MCPMultiCommandTool
     {
         private const int ScheduleRiskWarningWindowDays = 7;
+        private const int DefaultInactivityDays = 30;
         private const string TargetReleaseMonthDescription = "SDK release target month in 'Month YYYY' format (full English month name and four-digit year). Must be the current month or later (UTC).";
         private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
@@ -174,6 +175,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             DefaultValueFactory = _ => false,
         };
 
+        private readonly Option<int> inactivityDaysOpt = new("--inactivity-days")
+        {
+            Description = "Minimum days without release-plan edits, SDK PR commits, reviews, or human comments before automatic abandonment. Must be positive.",
+            DefaultValueFactory = _ => DefaultInactivityDays,
+        };
+
         private readonly Option<string> azureSDKEmailerUriOpt = new("--emailer-uri")
         {
             Description = "The Uri of the app used to send email notifications",
@@ -213,7 +220,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<ProductType> productTypeOpt = new("--product-type")
         {
-            Description = "Product type. Allowed values: Offering, Feature, Sku. Used when the product type cannot be resolved from a triage work item.",
+            Description = "Product type. Allowed values: Offering, Feature, Sku. Overrides the type resolved from a previous release plan or triage work item.",
             Required = false,
             DefaultValueFactory = _ => ProductType.Unknown,
         };
@@ -334,7 +341,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
-            new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon inactive release plans after one full overdue calendar month") { dryRunOpt },
+            new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon inactive release plans after one full overdue calendar month") { dryRunOpt, inactivityDaysOpt },
             new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(getServiceDetailsCommandName, "Get service and product details (service tree ID, service ID, package display name) in service tree for TypeSpec project", GetServiceDetailsToolName) { typeSpecProjectOpt, },
             new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan by Release Plan ID", AbandonReleasePlanToolName) { releasePlanNumberOpt, },
@@ -402,7 +409,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return await ListOverdueReleasePlans(commandParser.GetValue(notifyOwnersOpt), commandParser.GetValue(azureSDKEmailerUriOpt), ct);
 
                 case abandonOverdueReleasePlansCommandName:
-                    return await AbandonOverdueReleasePlans(commandParser.GetValue(dryRunOpt), ct);
+                    return await AbandonOverdueReleasePlans(commandParser.GetValue(dryRunOpt), commandParser.GetValue(inactivityDaysOpt), ct);
 
                 case updateApiSpecPullRequestCommandName:
                     return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt), ct: ct);
@@ -799,13 +806,45 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return pullRequests;
         }
 
+        private string ResolveProductType(string productTreeId, ProductType productType, string previousProductType, ProductInfo? triageProductInfo)
+        {
+            var resolvedType = productType;
+            var source = "explicit productType parameter";
+            if (resolvedType == ProductType.Unknown)
+            {
+                resolvedType = ProductTypeExtensions.FromAdoFieldValue(previousProductType);
+                source = "saved or previous release plan";
+            }
+            if (resolvedType == ProductType.Unknown)
+            {
+                resolvedType = ProductTypeExtensions.FromAdoFieldValue(triageProductInfo?.ProductType);
+                source = "triage work item";
+            }
+            if (resolvedType != ProductType.Unknown)
+            {
+                logger.LogInformation("Resolved product type {ProductType} for product ID {ProductTreeId} from {Source}.", resolvedType, productTreeId, source);
+            }
+            return resolvedType.ToAdoFieldValue();
+        }
+
+        private ReleasePlanResponse MissingProductTypeResponse(string productTreeId)
+        {
+            logger.LogWarning("Product type could not be determined for product ID {ProductTreeId}. Requesting product type from user.", productTreeId);
+            return new ReleasePlanResponse
+            {
+                ResponseError = $"Product type could not be determined for product ID '{productTreeId}'. Please provide the product type before saving the release plan.",
+                NextSteps = ["Ask the user to provide the product type. Allowed values are: Offering, Feature, Sku. Then re-run the update release plan command/tool with productType (CLI: --product-type)."]
+            };
+        }
+
         /// <summary>
         /// Updates an existing release plan with new details using its exact Azure DevOps work item ID.
         /// Runs the @azure-tools/typespec-metadata emitter to resolve package names and updates SDK details.
         /// </summary>
         [McpServerTool(Name = UpdateReleasePlanToolName), Description("Update an existing release plan. Updates spec PR URL, TypeSpec project path, SDK release type, and optionally service/product IDs. " +
-            "When a product ID is provided, product name, product lifecycle and product type are resolved from a matching triage work item in Azure DevOps. " +
-            "If the product type cannot be determined, provide it via productType (allowed values: Offering, Feature, Sku). " +
+            "Product type precedence is explicit productType, saved/previous release plan for the same product, then matching triage work item. This also applies when the product ID is already saved on the plan. " +
+            "Product type lookups run only when productType is Unknown. When a product ID is provided, product name and product lifecycle are refreshed from a matching triage work item even if productType is explicit. Otherwise triage is queried only if the type is unresolved. " +
+            "If the product type cannot be determined, ask the user for productType (allowed values: Offering, Feature, Sku) and retry; no changes are saved without it. " +
             "Runs TypeSpec metadata emitter to resolve package names and updates SDK details. Requires the exact Azure DevOps work item ID; never selects a plan by spec PR URL or TypeSpec project path. " +
             "Optionally saves a supplied spec commit SHA; omission preserves the saved SHA.")]
         public async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl = "", string sdkReleaseType = "", [Description("Required exact Azure DevOps release-plan work item ID.")] int workItemId = 0, string serviceTreeId = "", string productTreeId = "", ProductType productType = ProductType.Unknown, CancellationToken ct = default, string specCommitSha = "")
@@ -915,30 +954,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (!string.IsNullOrEmpty(productTreeId))
                 {
                     fieldsToUpdate["Custom.ProductServiceTreeID"] = productTreeId;
+                }
 
-                    // Resolve product details (name, lifecycle, type) from a matching triage work item.
-                    var triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(productTreeId, ct);
-
-                    var resolvedProductType = triageProductInfo?.ProductType ?? string.Empty;
-
-                    // An explicitly provided product type always takes precedence.
-                    if (productType != ProductType.Unknown)
+                var effectiveProductTreeId = string.IsNullOrEmpty(productTreeId) ? releasePlan.ProductTreeId : productTreeId;
+                if (!string.IsNullOrEmpty(effectiveProductTreeId))
+                {
+                    var previousProductType = string.Equals(effectiveProductTreeId, releasePlan.ProductTreeId, StringComparison.OrdinalIgnoreCase)
+                        ? releasePlan.ProductType : string.Empty;
+                    // Get product type from previous release plans.
+                    if (productType == ProductType.Unknown && ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
                     {
-                        resolvedProductType = productType.ToAdoFieldValue();
+                        previousProductType = await devOpsService.GetProductTypeFromPreviousReleasePlansAsync(
+                            effectiveProductTreeId, releasePlan.WorkItemId, releasePlan.IsTestReleasePlan, ct);
                     }
 
-                    // If the product type is still unknown, ask the user to provide it before proceeding.
-                    if (ProductTypeExtensions.FromAdoFieldValue(resolvedProductType) == ProductType.Unknown)
+                    ProductInfo? triageProductInfo = null;
+                    if (!string.IsNullOrEmpty(productTreeId) ||
+                        (productType == ProductType.Unknown && ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown))
                     {
-                        logger.LogInformation("Product type could not be determined for product ID {productTreeId}. Requesting product type from user.", productTreeId);
-                        return new ReleasePlanResponse
-                        {
-                            ResponseError = $"Product type could not be determined for product ID '{productTreeId}'. Please provide the product type to update the release plan.",
-                            NextSteps = ["Ask the user to provide the product type. Allowed values are: Offering, Feature, Sku. Then re-run the update release plan command/tool with the provided product type."]
-                        };
+                        triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(effectiveProductTreeId, ct);
+                    }
+                    var resolvedProductType = ResolveProductType(effectiveProductTreeId, productType, previousProductType, triageProductInfo);
+                    if (string.IsNullOrEmpty(resolvedProductType))
+                    {
+                        return MissingProductTypeResponse(effectiveProductTreeId);
                     }
 
-                    if (triageProductInfo != null)
+                    if (!string.IsNullOrEmpty(productTreeId) && triageProductInfo != null)
                     {
                         if (!string.IsNullOrEmpty(triageProductInfo.ProductName))
                         {
@@ -953,7 +995,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     fieldsToUpdate["Custom.ProductType"] = resolvedProductType;
                 }
 
-                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, releasePlan.Revision, ct);
                 logger.LogInformation("Updated release plan fields for work item {WorkItemId}", releasePlan.WorkItemId);
 
                 // Update spec PR on the API spec child work item only if provided and different from current
@@ -1335,7 +1377,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 // Get service and product id from previous release plan
                 string productName = Path.GetFileName(specProject);
-                string productType = string.Empty;
+                string previousProductType = string.Empty;
                 string productLifecycle = string.Empty;
                 if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
                 {
@@ -1353,7 +1395,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         {
                             productName = productDetails.ProductName;
                         }
-                        productType = productDetails?.ProductType ?? string.Empty;
+                        if (string.Equals(productTreeId, productDetails?.ProductServiceTreeId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            previousProductType = productDetails?.ProductType ?? string.Empty;
+                        }
                         productLifecycle = productDetails?.ProductLifecycle ?? string.Empty;
                     }
 
@@ -1401,8 +1446,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                var resolvedProductType = string.Empty;
+                if (!string.IsNullOrEmpty(productTreeId))
+                {
+                    ProductInfo? triageProductInfo = null;
+                    if (ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
+                    {
+                        previousProductType = await devOpsService.GetProductTypeFromPreviousReleasePlansAsync(
+                            productTreeId, 0, isTestReleasePlan, ct);
+                    }
+                    if (ProductTypeExtensions.FromAdoFieldValue(previousProductType) == ProductType.Unknown)
+                    {
+                        triageProductInfo = await devOpsService.GetProductInfoFromTriageWorkItemAsync(productTreeId, ct);
+                    }
+                    resolvedProductType = ResolveProductType(productTreeId, ProductType.Unknown, previousProductType, triageProductInfo);
+                    if (string.IsNullOrEmpty(resolvedProductType))
+                    {
+                        logger.LogWarning("Product type could not be determined for product ID {ProductTreeId}. Creating release plan without product type.", productTreeId);
+                    }
+                }
+
                 List<string> warnings = [];
                 List<string> nextSteps = [];
+                if (!string.IsNullOrEmpty(productTreeId) && string.IsNullOrEmpty(resolvedProductType))
+                {
+                    warnings.Add($"Product type could not be determined for product ID '{productTreeId}'. The release plan was created without a product type.");
+                    nextSteps.Add("Provide the product type when updating the release plan (CLI: --product-type; allowed values: Offering, Feature, Sku).");
+                }
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 
@@ -1452,7 +1522,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ReleasePlanSubmittedByEmail = userEmail,
                     APISpecProjectPath = specProject,
                     ProductName = productDisplayName,
-                    ProductType = productType,
+                    ProductType = resolvedProductType,
                     ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType,
                     SpecAPIVersion = apiVersion,
@@ -2184,7 +2254,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        public async Task<ReleasePlanListResponse> AbandonOverdueReleasePlans(bool dryRun = false, CancellationToken ct = default)
+        public async Task<ReleasePlanListResponse> AbandonOverdueReleasePlans(bool dryRun = false, int inactivityDays = DefaultInactivityDays, CancellationToken ct = default)
         {
             var response = new ReleasePlanListResponse
             {
@@ -2197,16 +2267,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 ct.ThrowIfCancellationRequested();
+                if (inactivityDays <= 0)
+                {
+                    response.ResponseError = "Inactivity days must be a positive number.";
+                    return response;
+                }
+                var now = _timeProvider.GetUtcNow();
+                var today = now.Date;
+                var recentActivityCutoff = now.AddDays(-inactivityDays);
                 var overdueReleasePlans = await devOpsService.ListOverdueReleasePlansAsync(ct);
                 ct.ThrowIfCancellationRequested();
-                var today = _timeProvider.GetUtcNow().Date;
                 var resultPlans = new List<ReleasePlanWorkItem>();
                 var responseErrors = new List<string>();
                 var skippedPlans = dryRun ? new Dictionary<int, string>() : null;
                 var skippedByReason = new Dictionary<string, int>();
 
-                void RecordSkippedPlan(ReleasePlanWorkItem plan, string category)
+                void RecordSkippedPlan(ReleasePlanWorkItem plan, string category, string? reason = null)
                 {
+                    if (reason != null)
+                    {
+                        response.EligibilityReasons[plan.WorkItemId] = reason;
+                        logger.LogInformation("Skipped overdue release plan {WorkItemId}: {Reason}", plan.WorkItemId, reason);
+                    }
                     if (skippedPlans == null)
                     {
                         return;
@@ -2236,6 +2318,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             continue;
                         }
 
+                        if (releasePlan.ChangedDate >= recentActivityCutoff.UtcDateTime)
+                        {
+                            var activityReason = $"Release plan work item {releasePlan.WorkItemId} was updated at {releasePlan.ChangedDate:O}, within the last {inactivityDays} days.";
+                            RecordSkippedPlan(releasePlan, "recent_plan_activity", activityReason);
+                            continue;
+                        }
+
                         var assessment = await EvaluateReleasePlanWorkAsync(releasePlan, ct);
                         if (!assessment.IsInactive)
                         {
@@ -2243,9 +2332,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             continue;
                         }
 
-                        ct.ThrowIfCancellationRequested();
-                        // An actual update requires a valid snapshot revision, so previews must too.
                         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(releasePlan.Revision);
+                        if (releasePlan.ChangedDate == default)
+                        {
+                            throw new InvalidOperationException("Could not verify the release plan's last update time.");
+                        }
+
+                        var recentPullRequestActivity = await GetRecentSdkPullRequestActivityAsync(releasePlan, recentActivityCutoff, inactivityDays, ct);
+                        if (recentPullRequestActivity != null)
+                        {
+                            RecordSkippedPlan(releasePlan, "recent_sdk_pr_activity", recentPullRequestActivity);
+                            continue;
+                        }
+
+                        ct.ThrowIfCancellationRequested();
                         var reason = $"Target month {releasePlan.SDKReleaseMonth} is past the one-full-month grace period. {assessment.Reason}";
                         if (dryRun)
                         {
@@ -2388,10 +2488,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     : "No SDKs are recorded as released, and all linked SDK pull requests are closed without being merged.");
         }
 
-        /// <summary>
-        /// Validates a linked PR URL, then reads its state and (for open SDK PRs) current approval.
-        /// </summary>
-        private async Task<(PullRequest PullRequest, bool Approved)> GetValidatedPullRequestDetailsAsync(string url, bool isSpec, CancellationToken ct)
+        private async Task<string?> GetRecentSdkPullRequestActivityAsync(ReleasePlanWorkItem releasePlan, DateTimeOffset cutoff, int inactivityDays, CancellationToken ct)
+        {
+            foreach (var url in releasePlan.SDKInfo.Select(sdk => sdk.SdkPullRequestUrl)
+                .Where(url => !string.IsNullOrWhiteSpace(url)).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var (owner, repository, number) = ParseMaintenancePullRequestUrl(url, isSpec: false);
+                try
+                {
+                    var activity = await githubService.GetPullRequestLatestActivityAsync(owner, repository, number, ct).WaitAsync(ct);
+                    if (activity.Timestamp == DateTimeOffset.MinValue || string.IsNullOrWhiteSpace(activity.Source))
+                    {
+                        throw new InvalidOperationException($"Could not verify pull request activity for {url}.");
+                    }
+                    if (activity.Timestamp >= cutoff)
+                    {
+                        return $"Linked SDK pull request {url} has a {activity.Source} at {activity.Timestamp:O}, within the last {inactivityDays} days.";
+                    }
+                }
+                catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+                {
+                    throw new InvalidOperationException($"Pull request activity lookup did not complete for {url}: {ex.Message}", ex);
+                }
+            }
+            return null;
+        }
+
+        private static (string Owner, string Repository, int Number) ParseMaintenancePullRequestUrl(string url, bool isSpec)
         {
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
                 || uri.Scheme != Uri.UriSchemeHttps
@@ -2411,12 +2534,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 throw new InvalidOperationException($"Invalid release plan pull request URL: {url}");
             }
+            return (parts[0], parts[1], prNumber);
+        }
+
+        /// <summary>
+        /// Validates a linked PR URL, then reads its state and (for open SDK PRs) current approval.
+        /// </summary>
+        private async Task<(PullRequest PullRequest, bool Approved)> GetValidatedPullRequestDetailsAsync(string url, bool isSpec, CancellationToken ct)
+        {
+            var (owner, repository, number) = ParseMaintenancePullRequestUrl(url, isSpec);
             try
             {
-                var pr = await githubService.GetPullRequestAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct)
+                var pr = await githubService.GetPullRequestAsync(owner, repository, number, ct).WaitAsync(ct)
                     ?? throw new InvalidOperationException($"Could not determine pull request status for {url}");
                 var approved = !isSpec && !pr.Merged && pr.State.Value == ItemState.Open
-                    && await githubService.IsPullRequestApprovedAsync(parts[0], parts[1], prNumber, ct).WaitAsync(ct);
+                    && await githubService.IsPullRequestApprovedAsync(owner, repository, number, ct).WaitAsync(ct);
                 return (pr, approved);
             }
             catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)

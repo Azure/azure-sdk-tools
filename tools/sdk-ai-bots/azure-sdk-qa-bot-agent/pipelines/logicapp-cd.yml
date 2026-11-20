@@ -15,6 +15,7 @@ parameters:
     values:
       - azure_sdk
       - azure_mcp_server
+      - api_stewardship_board
   - name: environment
     displayName: 'Target Environment'
     type: string

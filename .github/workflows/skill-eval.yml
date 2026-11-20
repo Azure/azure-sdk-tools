@@ -4,30 +4,69 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/skills/**'
-      - 'eng/skill-eval/**'
-      - '.github/workflows/skill-eval.yml'
+      - ".github/skills/**"
+      - "eng/skill-eval/**"
+      - "eng/common/scripts/skill-eval-coverage/**"
+      - ".github/skill-eval-coverage.json"
+      - ".github/workflows/skill-eval.yml"
+      - ".github/workflows/skill-eval-coverage-comment.yml"
+  # Run the read-only check on every PR update so reverting all skill changes
+  # can clear an earlier comment. Vally lint keeps its original path scope below.
   pull_request:
-    paths:
-      - '.github/skills/**'
-      - 'eng/skill-eval/**'
-      - '.github/workflows/skill-eval.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  skill-eval-coverage:
+    name: Skill Eval coverage (warning only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      run_lint: ${{ steps.coverage.outputs.run_lint }}
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      # Only a YAML parser is installed. No Vally, Copilot, MCP, or model-backed Evals.
+      - name: Install coverage checker dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/skill-coverage-pnpm" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund pnpm@12.6.0
+          node "$RUNNER_TEMP/skill-coverage-pnpm/node_modules/pnpm/bin/pnpm.mjs" --dir eng/common/scripts/skill-eval-coverage --ignore-workspace install --pm-on-fail=ignore --frozen-lockfile --prod --ignore-scripts
+
+      - name: Check changed skills
+        id: coverage
+        if: github.event_name == 'pull_request'
+        run: node eng/common/scripts/skill-eval-coverage/github.ts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Inventory skill coverage
+        if: github.event_name != 'pull_request'
+        run: node eng/common/scripts/skill-eval-coverage/check.ts --all
+
   check-skills:
     name: Skill Compliance Check (Vally lint)
+    needs: skill-eval-coverage
+    # Missing/failed scope detection must not suppress the existing blocking lint.
+    if: ${{ always() && needs.skill-eval-coverage.outputs.run_lint != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
           cache-dependency-path: eng/skill-eval/package-lock.json
 
       - name: Install Vally CLI (pinned via lockfile)

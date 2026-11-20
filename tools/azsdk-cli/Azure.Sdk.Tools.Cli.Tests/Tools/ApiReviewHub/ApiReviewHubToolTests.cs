@@ -46,6 +46,48 @@ public class ApiReviewHubToolTests
         Assert.That(parseResult.Errors, Is.Empty);
     }
 
+    [TestCase("javascript", "javascript", "azure-sdk-for-js")]
+    [TestCase("js", "javascript", "azure-sdk-for-js")]
+    [TestCase("TypeScript", "javascript", "azure-sdk-for-js")]
+    [TestCase("ts", "javascript", "azure-sdk-for-js")]
+    [TestCase("net", "csharp", "azure-sdk-for-net")]
+    [TestCase(".NET", "csharp", "azure-sdk-for-net")]
+    [TestCase("dotnet", "csharp", "azure-sdk-for-net")]
+    [TestCase("C#", "csharp", "azure-sdk-for-net")]
+    [TestCase("cs", "csharp", "azure-sdk-for-net")]
+    [TestCase("C++", "cpp", "azure-sdk-for-cpp")]
+    [TestCase("golang", "go", "azure-sdk-for-go")]
+    [TestCase("py", "python", "azure-sdk-for-python")]
+    public async Task CreateCommand_NormalizesLanguageAndDefaultRepo(string language, string expectedLanguage, string expectedRepo)
+    {
+        ReviewPullRequestCreationRequest? capturedRequest = null;
+        var service = new Mock<IApiReviewHubService>();
+        service
+            .Setup(x => x.RequestReviewPullRequestAsync(
+                It.IsAny<ReviewPullRequestCreationRequest>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<ReviewPullRequestCreationRequest, string, bool, TimeSpan, CancellationToken>(
+                (request, _, _, _, _) => capturedRequest = request)
+            .ReturnsAsync(new OperationStatus { Status = "accepted" });
+        var tool = new ApiReviewHubTool(service.Object, new TestLogger<ApiReviewHubTool>());
+        var command = tool.GetCommandInstances().Single();
+
+        var parseResult = command.Parse(
+            $"--language {language} --package-name azure-test --target-branch feature --no-wait");
+        Assert.That(parseResult.Errors, Is.Empty);
+        await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedRequest!.Language, Is.EqualTo(expectedLanguage));
+            Assert.That(capturedRequest.TargetBranch.Repo, Is.EqualTo(expectedRepo));
+        });
+    }
+
     [Test]
     public void CreateCommand_RejectsSwift()
     {

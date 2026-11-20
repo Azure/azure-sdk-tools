@@ -206,10 +206,11 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         var matches = new List<(ServiceApiReadinessProject Project, Observation Observation)>();
         foreach (var project in result.Projects)
         {
-            var observation = observations.OrderByDescending(item => item.CheckedAt).FirstOrDefault(item =>
+            var observation = observations.Where(item =>
                 item.ResourceProvider.Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) &&
                 item.ValidationEnvironment == environment &&
-                item.CheckedAt >= scopeChangedAt && item.CheckedAt <= now);
+                item.CheckedAt >= scopeChangedAt && item.CheckedAt <= now)
+                .MaxBy(item => item.CheckedAt);
             if (observation is null || observation.Status != ServiceApiReadinessResponse.Passed &&
                 now - observation.CheckedAt >= NonPassedLifetime)
             {

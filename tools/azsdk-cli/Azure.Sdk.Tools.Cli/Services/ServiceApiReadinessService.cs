@@ -48,7 +48,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             ct.ThrowIfCancellationRequested();
             var token = github.GetAuthToken(ct);
             var prPath = $"repos/{owner}/{repository}/pulls/{pullRequest}";
-            var pr = await ReadGitHubAsync(prPath, token, ct) ?? throw new InvalidOperationException("SDK PR is unavailable.");
+            var pr = await GitHubService.ReadJsonEvidenceAsync(_http, prPath, token, ct) ?? throw new InvalidOperationException("SDK PR is unavailable.");
             // Capture one revision; publishing callers must check that it is still current.
             result.HeadSha = Text(pr["head"]?["sha"]);
             result.HeadRepository = Text(pr["head"]?["repo"]?["full_name"]);
@@ -316,9 +316,6 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
                 string.Join(Environment.NewLine, failures);
         }
     }
-
-    private Task<JsonNode?> ReadGitHubAsync(string path, string token, CancellationToken ct) =>
-        GitHubService.ReadJsonEvidenceAsync(_http, path, token, ct);
 
     private async Task<JsonNode?> ReadTenantProviderAsync(string providerNamespace, TokenCredential credential, CancellationToken ct)
     {

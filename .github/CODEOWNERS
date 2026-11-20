@@ -62,7 +62,7 @@
 #####################
 # Azure SDK Tools MCP
 #####################
-/eng/common/instructions/azsdk-tools/   @praveenkuttappan @MrJustinB 
+/eng/common/instructions/azsdk-tools/   @praveenkuttappan @lfraleigh
 # PRLabel: %azsdk-cli
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion

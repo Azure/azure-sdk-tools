@@ -1,7 +1,7 @@
 import astroid
 import logging
 import inspect
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, get_origin
 
 from ._base_node import NodeEntityBase
 from ._data_class_node import DataClassNode
@@ -51,6 +51,11 @@ class ModuleNode(NodeEntityBase):
         # find class and function nodes in module
         for name, member_obj in inspect.getmembers(self.obj):
             if self._should_skip_parsing(name, member_obj, public_entities):
+                continue
+            # Python 3.10 reports parameterized collections.abc aliases such as
+            # Callable[[str], T] as classes. They are type aliases, not class APIs.
+            if get_origin(member_obj) is not None:
+                logging.debug("Skipping parameterized type alias in module: %s", name)
                 continue
             if inspect.isclass(member_obj):
                 class_type = ClassNode

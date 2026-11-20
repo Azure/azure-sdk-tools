@@ -209,10 +209,14 @@ func (p *Pkg) indexFile(f *ast.File) error {
 					spec := s.(*ast.ValueSpec)
 					declarations := []ast.Node{}
 					if spec.Type != nil {
-						declarations = append(declarations, spec.Type)
-					}
-					for _, value := range spec.Values {
-						declarations = append(declarations, value)
+						switch spec.Type.(type) {
+						case *ast.Ident, *ast.MapType, *ast.SelectorExpr, *ast.StarExpr:
+							declarations = append(declarations, spec.Type)
+						}
+					} else if len(spec.Values) == 1 {
+						if literal, ok := spec.Values[0].(*ast.CompositeLit); ok {
+							declarations = append(declarations, literal.Type)
+						}
 					}
 					imports, err := p.importsForDeclaration(imports, unnamedImports, declarations...)
 					if err != nil {
@@ -223,7 +227,11 @@ func (p *Pkg) indexFile(f *ast.File) error {
 				}
 			}
 		case *ast.TypeSpec:
-			imports, err := p.importsForDeclaration(imports, unnamedImports, x.Type)
+			declarations := []ast.Node{x.Type}
+			if x.TypeParams != nil {
+				declarations = append(declarations, x.TypeParams)
+			}
+			imports, err := p.importsForDeclaration(imports, unnamedImports, declarations...)
 			if err != nil {
 				indexErr = err
 				return false

@@ -216,6 +216,45 @@ type Public = source.Data
 	require.Contains(t, feedbackLineText(feedbackLine(t, review, "exporter.Public")), "[]byte")
 }
 
+func TestInferredDeclarationValuesDoNotResolveImports(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/contract\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "types.go"), []byte(`
+package contract
+var defaults struct { Value int }
+var private = defaults.Value
+var handler = func(w interface { WriteHeader(int) }) { w.WriteHeader(200) }
+`), 0644))
+
+	_, err := createReview(dir)
+	require.NoError(t, err)
+}
+
+func TestUnnamedImportsInTypeParameterConstraintsAreResolved(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/generics\n\ngo 1.21\n"), 0644))
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "constraints"), 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "types.go"), []byte(`
+package generics
+import "example.com/generics/constraints"
+type Box[T constraints.Constraint] struct{}
+type Container[T constraints.Constraint] interface{}
+`), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "constraints", "constraints.go"), []byte(`
+package constraints
+type Constraint interface { ~int }
+`), 0644))
+
+	review, err := createReview(dir)
+	require.NoError(t, err)
+	box := feedbackLine(t, review, "generics.Box")
+	require.Contains(t, feedbackLineText(box), "<generics/constraints.Constraint>")
+	container := feedbackLine(t, review, "generics.Container")
+	require.True(t, searchTokens([]ReviewLine{container}, func(token ReviewToken) bool {
+		return token.NavigateToID == "generics/constraints.Constraint"
+	}))
+}
+
 func TestUnusedInternalAliasesToUnsupportedDependenciesAreSkipped(t *testing.T) {
 	dir := t.TempDir()
 	dependency := filepath.Join(filepath.Dir(dir), "dependency")

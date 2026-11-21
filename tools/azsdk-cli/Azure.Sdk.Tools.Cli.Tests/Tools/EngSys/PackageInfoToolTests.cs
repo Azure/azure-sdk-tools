@@ -55,12 +55,17 @@ public class PackageInfoToolTests
     [Test]
     public async Task SinglePackageReturnsPackageInfoWithoutExportOrBulkDiscovery()
     {
+        await File.WriteAllTextAsync(Path.Combine(_directory.DirectoryPath, "metadata.json"), "{\"apiVersions\":{\"Example\":\"2025-01-01\"}}");
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(_package, new TestLogger<PackageInfoToolTests>());
+        var parsedMetadata = typeof(PackageInfo).GetProperty("GeneratedMetadataContents", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        Assert.That(parsedMetadata.GetValue(_package), Is.Not.Null);
         var response = await Invoke("--package-path", _directory.DirectoryPath, "--output", "json");
         var result = (DefaultCommandResponse)response;
         using var json = JsonDocument.Parse(new OutputHelper(OutputHelper.OutputModes.Json).Format(response));
 
         Assert.That(response.ExitCode, Is.Zero);
         Assert.That(result.Result, Is.SameAs(_package));
+        Assert.That(parsedMetadata.GetValue(_package), Is.Null);
         Assert.That(json.RootElement.GetProperty("result").GetProperty("Name").GetString(), Is.EqualTo("@azure/example"));
         Assert.That(json.RootElement.GetProperty("result").GetProperty("ApiVersions")[0].GetProperty("Version").GetString(), Is.EqualTo("2025-01-01"));
         Assert.That(json.RootElement.GetProperty("result").GetProperty("ApiVersions")[0].GetProperty("Namespace").GetString(), Is.EqualTo("Example"));

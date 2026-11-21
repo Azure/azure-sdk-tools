@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Helpers;
 using YamlDotNet.RepresentationModel;
 
 namespace Azure.Sdk.Tools.Cli.Models
@@ -8,7 +9,6 @@ namespace Azure.Sdk.Tools.Cli.Models
     public class TypeSpecProject
     {
         public static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
-        private string TypeSpecConfigYaml { get; set; }
 
         public string Name { get; set; }
         public string ProjectRootPath { get; set; }
@@ -30,7 +30,6 @@ namespace Azure.Sdk.Tools.Cli.Models
             Name = string.Empty;
             ProjectRootPath = string.Empty;
             SdkServicePath = string.Empty;
-            TypeSpecConfigYaml = string.Empty;
         }
 
         public static bool IsValidTypeSpecProjectPath(string typeSpecProjectPath)
@@ -70,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Models
                 throw new Exception($"Failed to load contents of tspconfig.yaml in the [{typeSpecProjectPath}]");
             }
 
-            typeSpecProject.TypeSpecConfigYaml = tspConfigYaml;
+            typeSpecProject.IsManagementPlane = ClassifySdkType(tspConfigYaml) == SdkType.Management;
             return typeSpecProject;
         }
 
@@ -90,16 +89,14 @@ namespace Azure.Sdk.Tools.Cli.Models
             return path;
         }
 
-        public static SdkType ClassifySdkType(string configurationYaml)
+        public static SdkType ClassifySdkType(string configurationYaml) => ClassifySdkType(configurationYaml, out _);
+
+        internal static SdkType ClassifySdkType(string configurationYaml, out YamlMappingNode? configuration)
         {
+            configuration = null;
             try
             {
-                var yaml = new YamlStream();
-                yaml.Load(new StringReader(configurationYaml));
-                if (yaml.Documents.Count != 1 || yaml.Documents[0].RootNode is not YamlMappingNode configuration)
-                {
-                    return SdkType.Unknown;
-                }
+                configuration = GeneratedSdkMetadataHelper.ParseYaml(configurationYaml);
                 var rulesNode = Child(Child(configuration, "linter"), "extends");
                 IEnumerable<string?> ruleSets = rulesNode switch
                 {
@@ -122,6 +119,6 @@ namespace Azure.Sdk.Tools.Cli.Models
                 parent is YamlMappingNode mapping && mapping.Children.TryGetValue(new YamlScalarNode(name), out var value) ? value : null;
         }
 
-        public bool IsManagementPlane => ClassifySdkType(TypeSpecConfigYaml) == SdkType.Management;
+        public bool IsManagementPlane { get; private set; }
     }
 }

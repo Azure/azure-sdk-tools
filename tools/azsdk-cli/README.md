@@ -271,6 +271,16 @@ and returns `inputKind: "package"` with no PR head SHA. It is not a PR-head
 attestation and must not be used by the automation worker to publish a PR result.
 The worker continues to invoke PR mode. No SDK files are modified in either mode.
 
+Local readiness and resource-type inspection reuse generation metadata content
+already read by the existing language `GetPackageInfo` call. The content handoff
+contains parsed JSON, is internal to `PackageInfo`, is excluded from output, and
+is cleared after consumption. The parsed pinned TypeSpec configuration is shared
+between plane classification and Swagger mapping, without fetching it again.
+Readiness still validates provenance and conflicting versions against that input;
+a later check reads current working-tree content rather than retaining a cache.
+Ordinary and bulk inspection discard the unused parsed-content handoff after
+package metadata is populated.
+
 GitHub authentication uses the existing token resolver: automation can supply
 its App installation token through `GITHUB_TOKEN`; local users can use
 `gh auth login`. ARM uses the existing Azure credential service, including

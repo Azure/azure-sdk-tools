@@ -3,6 +3,8 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using static Azure.Sdk.Tools.Cli.Helpers.PackageInfoHelper;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -29,7 +31,14 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         var relativePath = string.IsNullOrEmpty(package.RepoRoot) ? Path.GetFileName(path) : Path.GetRelativePath(package.RepoRoot, path).Replace('\\', '/');
         package.DirectoryPath = relativePath;
         var sdk = new SdkSnapshot("", "", package.Language, "", "", package);
-        return await PopulateGenerationMetadataAsync(package, sdk, ct);
+        try
+        {
+            return await PopulateGenerationMetadataAsync(package, sdk, ct);
+        }
+        finally
+        {
+            package.GeneratedMetadataContents = null;
+        }
     }
 
     internal async Task<(IReadOnlyList<PackageInfo> Packages, IReadOnlyList<string> Issues)> DiscoverPackagesAsync(
@@ -66,6 +75,7 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         package.MetadataIssues = [];
         package.ResourceTypes = [];
         package.TypeSpecLocation = null;
+        package.PinnedTypeSpecConfiguration = null;
         package.SpecProjectPath = null;
         package.SdkType = SdkType.Unknown;
         await PopulateTypeSpecLocationAsync(package, sdk, ct);
@@ -111,7 +121,8 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             package.TypeSpecLocation = new TypeSpecLocation(directory, commit, repository);
             package.SpecProjectPath = directory;
             var configuration = await ReadFileAsync(repository, commit, $"{directory}/tspconfig.yaml", ct);
-            package.SdkType = TypeSpecProject.ClassifySdkType(configuration ?? "");
+            package.SdkType = TypeSpecProject.ClassifySdkType(configuration ?? "", out var parsedConfiguration);
+            package.PinnedTypeSpecConfiguration = parsedConfiguration;
             if (package.SdkType == SdkType.Unknown)
             {
                 package.MetadataIssues = [$"{package.DirectoryPath}: API plane is missing or unresolved in the pinned project configuration."];
@@ -145,11 +156,8 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         }
         if (sdk.LocalPackage is not null)
         {
-            var localDirectory = Path.Combine(sdk.LocalPackage.PackagePath, location.Directory);
-            var localPaths = Directory.Exists(localDirectory)
-                ? Directory.EnumerateFiles(localDirectory, location.Pattern, SearchOption.TopDirectoryOnly)
-                    .Order(StringComparer.Ordinal).Select(path => $"{directory}/{Path.GetFileName(path)}").ToList()
-                : [];
+            var localPaths = sdk.LocalPackage.GeneratedMetadataContents!.Keys.Order(StringComparer.Ordinal)
+                .Select(path => $"{directory}/{Path.GetFileName(path)}").ToList();
             if (localPaths.Count == 0)
             {
                 issues.Add($"{package}: missing SDK generation metadata ({directory}/{location.Pattern}).");
@@ -163,8 +171,8 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             issues.Add($"{package}: Java metadata directory listing is invalid or incomplete.");
             return [];
         }
-        var paths = (listing as JsonArray ?? []).Where(entry => Text(entry?["type"]) == "file")
-            .Select(entry => Text(entry?["name"]))
+        var paths = (listing as JsonArray ?? []).Where(entry => ReadJsonString(entry?["type"]) == "file")
+            .Select(entry => ReadJsonString(entry?["name"]))
             .Where(name => name.EndsWith(location.Pattern[1..], StringComparison.Ordinal) && name.IndexOfAny(['/', '\\', '\0']) < 0)
             .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Select(name => $"{directory}/{name}").ToList();
         if (paths.Count == 0)
@@ -176,6 +184,10 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
 
     private async Task PopulatePackageApiVersionsAsync(PackageInfo package, SdkSnapshot sdk, CancellationToken ct)
     {
+        if (sdk.LocalPackage is { GeneratedMetadataContents: null } localPackage)
+        {
+            await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(localPackage, NullLogger.Instance, ct);
+        }
         var location = package.TypeSpecLocation!;
         var packagePath = package.DirectoryPath.ToString();
         var issues = package.MetadataIssues.ToList();
@@ -186,15 +198,41 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         string? inferredProvider = null;
         foreach (var metadataPath in metadataPaths)
         {
-            var text = sdk.LocalPackage is null
-                ? await ReadFileAsync(sdk.Repository, sdk.HeadSha, metadataPath, ct)
-                : await ReadLocalFileAsync(Path.Combine(sdk.LocalPackage.PackagePath, metadataPath[(packagePath.Length + 1)..]), ct);
-            if (text is null)
+            JsonElement metadata;
+            if (sdk.LocalPackage is null)
             {
-                issues.Add($"{packagePath}: missing SDK generation metadata ({metadataPath}).");
-                continue;
+                var text = await ReadFileAsync(sdk.Repository, sdk.HeadSha, metadataPath, ct);
+                if (text is null)
+                {
+                    issues.Add($"{packagePath}: missing SDK generation metadata ({metadataPath}).");
+                    continue;
+                }
+                try
+                {
+                    using var document = JsonDocument.Parse(text);
+                    metadata = document.RootElement.Clone();
+                }
+                catch (JsonException)
+                {
+                    issues.Add($"{packagePath}: invalid JSON generation metadata.");
+                    continue;
+                }
             }
-            var metadataVersions = ReadPackageApiVersions(packagePath, text, location, issues);
+            else
+            {
+                var localPath = Path.GetFullPath(Path.Combine(sdk.LocalPackage.PackagePath, metadataPath[(packagePath.Length + 1)..]));
+                if (!sdk.LocalPackage.GeneratedMetadataContents!.TryGetValue(localPath, out var parsedMetadata))
+                {
+                    issues.Add($"{packagePath}: missing SDK generation metadata ({metadataPath}).");
+                    continue;
+                }
+                if (!parsedMetadata.HasValue)
+                {
+                    throw new IOException("SDK generation metadata could not be read.");
+                }
+                metadata = parsedMetadata.Value;
+            }
+            var metadataVersions = ReadPackageApiVersions(packagePath, metadata, location, issues);
             foreach (var entry in metadataVersions)
             {
                 var provider = entry.Key;
@@ -221,26 +259,24 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
             versions.Clear();
             resolvedVersions.Clear();
         }
-        package.ApiVersions = [.. versions.GroupBy(version => version.Namespace, StringComparer.OrdinalIgnoreCase)
-            .SelectMany(group => group.DistinctBy(version => version.Version))
+        package.ApiVersions = [.. DeduplicateApiVersionsByProvider(versions)
             .OrderBy(version => version.Namespace, StringComparer.Ordinal).ThenBy(version => version.Version, StringComparer.Ordinal)];
-        package.ResolvedApiVersions = [.. resolvedVersions.GroupBy(version => version.Namespace, StringComparer.OrdinalIgnoreCase)
-            .SelectMany(group => group.DistinctBy(version => version.Version))];
+        package.ResolvedApiVersions = DeduplicateApiVersionsByProvider(resolvedVersions);
         package.MetadataIssues = [.. issues];
     }
 
-    private static Dictionary<string, string> ReadPackageApiVersions(string package, string text, TypeSpecLocation location, List<string> issues)
+    private static Dictionary<string, string> ReadPackageApiVersions(string package, JsonElement metadata, TypeSpecLocation location, List<string> issues)
     {
         try
         {
-            if (JsonNode.Parse(text) is not JsonObject metadata)
+            if (metadata.ValueKind != JsonValueKind.Object)
             {
                 issues.Add($"{package}: invalid SDK API-version metadata.");
                 return [];
             }
-            if (metadata["commit"] is not null && Text(metadata["commit"]) != location.Commit ||
-                metadata["typespec_src"] is not null && Text(metadata["typespec_src"]) != location.Directory ||
-                metadata["repository_url"] is not null && NormalizeSpecRepository(Text(metadata["repository_url"])) != location.Repository)
+            if (metadata.TryGetProperty("commit", out var commit) && commit.ValueKind != JsonValueKind.Null && PackageInfoHelper.ReadJsonString(commit) != location.Commit ||
+                metadata.TryGetProperty("typespec_src", out var project) && project.ValueKind != JsonValueKind.Null && PackageInfoHelper.ReadJsonString(project) != location.Directory ||
+                metadata.TryGetProperty("repository_url", out var repository) && repository.ValueKind != JsonValueKind.Null && NormalizeSpecRepository(PackageInfoHelper.ReadJsonString(repository)) != location.Repository)
             {
                 issues.Add($"{package}: SDK metadata conflicts with {GenerationLocationFile}.");
                 return [];
@@ -275,12 +311,12 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
                 ?? throw new InvalidOperationException("Changed SDK files are unavailable.");
             foreach (var file in files)
             {
-                var filename = Text(file?["filename"]);
-                var status = Text(file?["status"]);
+                var filename = ReadJsonString(file?["filename"]);
+                var status = ReadJsonString(file?["status"]);
                 changedFiles[filename] = status != "removed" || changedFiles.GetValueOrDefault(filename);
                 if (status == "renamed")
                 {
-                    changedFiles.TryAdd(Text(file?["previous_filename"]), false);
+                    changedFiles.TryAdd(ReadJsonString(file?["previous_filename"]), false);
                 }
             }
             if (files.Count < pageSize)
@@ -389,5 +425,4 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
         return await File.ReadAllTextAsync(path, ct);
     }
 
-    private static string Text(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";
 }

@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using static Azure.Sdk.Tools.Cli.Helpers.PackageInfoHelper;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -50,9 +51,9 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             var prPath = $"repos/{owner}/{repository}/pulls/{pullRequest}";
             var pr = await GitHubService.ReadJsonEvidenceAsync(_http, prPath, token, ct) ?? throw new InvalidOperationException("SDK PR is unavailable.");
             // Capture one revision; publishing callers must check that it is still current.
-            result.HeadSha = Text(pr["head"]?["sha"]);
-            result.HeadRepository = Text(pr["head"]?["repo"]?["full_name"]);
-            if (Text(pr["state"]) != "open" || !GeneratedSdkMetadataHelper.IsCommitSha(result.HeadSha) ||
+            result.HeadSha = ReadJsonString(pr["head"]?["sha"]);
+            result.HeadRepository = ReadJsonString(pr["head"]?["repo"]?["full_name"]);
+            if (ReadJsonString(pr["state"]) != "open" || !GeneratedSdkMetadataHelper.IsCommitSha(result.HeadSha) ||
                 string.IsNullOrEmpty(result.HeadRepository))
             {
                 result.Detail = "An open SDK PR with a current head repository and full head SHA is required.";
@@ -61,7 +62,7 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
             var language = SdkLanguageHelpers.GetLanguageForRepo(repository);
             var sdkPackageMetadataHelper = new SdkPackageMetadataHelper(_http, token);
             var snapshot = new SdkPackageMetadataHelper.SdkSnapshot(result.HeadRepository, result.HeadSha, language,
-                Text(pr["base"]?["repo"]?["full_name"]), Text(pr["base"]?["sha"]));
+                ReadJsonString(pr["base"]?["repo"]?["full_name"]), ReadJsonString(pr["base"]?["sha"]));
             var discovery = await sdkPackageMetadataHelper.DiscoverPackagesAsync(prPath, snapshot, ct);
             result.Packages.AddRange(discovery.Packages);
             foreach (var package in result.Packages)
@@ -255,12 +256,12 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
 
     private static void CompareApiVersion(ServiceApiReadinessProject project, JsonNode provider)
     {
-        if (!Text(provider["namespace"]).Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) ||
+        if (!ReadJsonString(provider["namespace"]).Equals(project.Namespace, StringComparison.OrdinalIgnoreCase) ||
             provider["resourceTypes"] is not JsonArray advertisedTypes)
         {
             throw new InvalidOperationException("Unexpected ARM provider metadata response.");
         }
-        var applicable = advertisedTypes.Where(resource => !string.IsNullOrWhiteSpace(Text(resource?["resourceType"]))).ToArray();
+        var applicable = advertisedTypes.Where(resource => !string.IsNullOrWhiteSpace(ReadJsonString(resource?["resourceType"]))).ToArray();
         if (applicable.Length == 0)
         {
             project.Detail = "The provider metadata contains no resource types.";
@@ -268,14 +269,14 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         }
         foreach (var resource in applicable)
         {
-            if (resource?["apiVersions"] is not JsonArray advertised || !advertised.Select(Text).Contains(project.ApiVersion.Version, StringComparer.Ordinal))
+            if (resource?["apiVersions"] is not JsonArray advertised || !advertised.Select(ReadJsonString).Contains(project.ApiVersion.Version, StringComparer.Ordinal))
             {
                 continue;
             }
-            var regions = (resource["locations"] as JsonArray ?? []).Select(Text)
-                .Concat((resource["locationMappings"] as JsonArray ?? []).Select(mapping => Text(mapping?["location"])))
+            var regions = (resource["locations"] as JsonArray ?? []).Select(ReadJsonString)
+                .Concat((resource["locationMappings"] as JsonArray ?? []).Select(mapping => ReadJsonString(mapping?["location"])))
                 .Where(region => !string.IsNullOrEmpty(region)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
-            project.Matches.Add(new ServiceApiReadinessMatch { ResourceType = Text(resource["resourceType"]), Regions = regions });
+            project.Matches.Add(new ServiceApiReadinessMatch { ResourceType = ReadJsonString(resource["resourceType"]), Regions = regions });
         }
         // One exact match passes this project, but does not prove every operation or region.
         project.ReadinessStatus = project.Matches.Count > 0 ? ServiceApiReadinessResponse.Passed : ServiceApiReadinessResponse.NotDetected;
@@ -336,5 +337,4 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
         exception is HttpRequestException httpException && httpException.StatusCode.HasValue ? $"A platform or application failure prevented the check (HTTP {(int)httpException.StatusCode.Value})." :
         "A platform or application failure prevented the check. No deployment conclusion can be drawn.";
 
-    private static string Text(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";
 }

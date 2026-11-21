@@ -54,8 +54,8 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
         var resourceTypeHelper = new ProjectResourceTypeHelper(_http, github.GetAuthToken(ct));
         foreach (var group in package.ApiVersions.GroupBy(version => version.Version, StringComparer.Ordinal))
         {
-            var resourceEvidence = await resourceTypeHelper.ReadPinnedSwaggerResourceTypesAsync(location.Repository, location.Commit,
-                $"{location.Directory}/tspconfig.yaml", group.Key, ct);
+            var resourceEvidence = await resourceTypeHelper.ReadPinnedSwaggerResourceTypesAsync(location,
+                package.PinnedTypeSpecConfiguration, group.Key, ct);
             if (resourceEvidence.MissingEvidence.Count > 0)
             {
                 issues.AddRange(resourceEvidence.MissingEvidence);
@@ -81,8 +81,7 @@ public sealed class PackageApiMetadataService(IGitHubService github, IHttpClient
         }
         package.ResourceTypes = [.. resources.OrderBy(type => type.Namespace, StringComparer.Ordinal)
             .ThenBy(type => type.ApiVersion, StringComparer.Ordinal).ThenBy(type => type.ResourceType, StringComparer.Ordinal)];
-        package.ResolvedApiVersions = [.. resolvedVersions.GroupBy(version => version.Namespace, StringComparer.OrdinalIgnoreCase)
-            .SelectMany(group => group.DistinctBy(version => version.Version))];
+        package.ResolvedApiVersions = PackageInfoHelper.DeduplicateApiVersionsByProvider(resolvedVersions);
         package.MetadataIssues = [.. issues.Distinct(StringComparer.Ordinal)];
         return package;
     }

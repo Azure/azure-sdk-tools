@@ -23,6 +23,7 @@ public static class GeneratedSdkMetadataHelper
     {
         ct.ThrowIfCancellationRequested();
         packageInfo.ApiVersions = [];
+        packageInfo.GeneratedMetadataContents = [];
 
         var packagePath = Path.GetFullPath(packageInfo.PackagePath);
         var location = GetMetadataFileLocation(packageInfo.Language);
@@ -40,19 +41,30 @@ public static class GeneratedSdkMetadataHelper
             }
 
             var versions = new HashSet<PackageApiVersion>();
+            IOException? metadataReadError = null;
             foreach (var metadataFile in Directory.GetFiles(directory, location.Pattern, SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal))
             {
                 ct.ThrowIfCancellationRequested();
+                packageInfo.GeneratedMetadataContents[metadataFile] = default(JsonElement);
                 try
                 {
                     await using var stream = File.OpenRead(metadataFile);
                     using var document = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+                    packageInfo.GeneratedMetadataContents[metadataFile] = document.RootElement.Clone();
                     versions.UnionWith(PackageInfoHelper.ReadApiVersions(document.RootElement));
                 }
                 catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
                 {
-                    throw new IOException($"Unable to read SDK API versions from '{metadataFile}': {ex.Message}", ex);
+                    if (ex is IOException or UnauthorizedAccessException)
+                    {
+                        packageInfo.GeneratedMetadataContents[metadataFile] = null;
+                    }
+                    metadataReadError ??= new IOException($"Unable to read SDK API versions from '{metadataFile}': {ex.Message}", ex);
                 }
+            }
+            if (metadataReadError is not null)
+            {
+                throw metadataReadError;
             }
 
             packageInfo.ApiVersions = [.. versions

@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Octokit;
 using AuthenticationHeaderValue = System.Net.Http.Headers.AuthenticationHeaderValue;
 using MediaTypeWithQualityHeaderValue = System.Net.Http.Headers.MediaTypeWithQualityHeaderValue;
+using static Azure.Sdk.Tools.Cli.Helpers.PackageInfoHelper;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -204,14 +205,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 return null;
             }
-            if (ReadString(file["type"]) != "file")
+            if (ReadJsonString(file["type"]) != "file")
             {
                 throw new InvalidOperationException("Expected a checked-in metadata file.");
             }
             // Large files lack inline content; fetch raw content from this same pinned API path.
-            return ReadString(file["encoding"]) switch
+            return ReadJsonString(file["encoding"]) switch
             {
-                "base64" => Encoding.UTF8.GetString(Convert.FromBase64String(ReadString(file["content"]))),
+                "base64" => Encoding.UTF8.GetString(Convert.FromBase64String(ReadJsonString(file["content"]))),
                 "none" => await ReadGitHubEvidenceAsync(http, requestPath, token, "application/vnd.github.raw+json", ct),
                 _ => throw new InvalidOperationException("Expected checked-in file content.")
             };
@@ -233,8 +234,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync(ct);
         }
-
-        private static string ReadString(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";
 
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {

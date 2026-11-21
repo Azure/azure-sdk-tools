@@ -113,6 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 {
                     var packageInfo = await GetPackageInfo(packageDirectory, ct);
                     PopulateCiMetadata(packageInfo);
+                    packageInfo.GeneratedMetadataContents = null;
                     packages.Add(packageInfo);
                 }
                 catch (Exception ex)

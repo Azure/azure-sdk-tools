@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using YamlDotNet.RepresentationModel;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
@@ -36,6 +38,12 @@ public class PackageInfo
     /// </summary>
     [JsonPropertyName("ApiVersions")]
     public PackageApiVersion[] ApiVersions { get; set; } = [];
+
+    [JsonIgnore]
+    internal Dictionary<string, JsonElement?>? GeneratedMetadataContents { get; set; }
+
+    [JsonIgnore]
+    internal YamlMappingNode? PinnedTypeSpecConfiguration { get; set; }
 
     [JsonPropertyName("ResourceTypes")]
     public PackageResourceType[] ResourceTypes { get; set; } = [];

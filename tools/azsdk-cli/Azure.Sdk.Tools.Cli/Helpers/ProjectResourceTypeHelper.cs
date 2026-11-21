@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using YamlDotNet.RepresentationModel;
+using static Azure.Sdk.Tools.Cli.Helpers.PackageInfoHelper;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -11,30 +12,26 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
 {
     private const int MaxDirectoryEntries = 1000;
-    private const string ConfigurationSuffix = "/tspconfig.yaml";
 
     public sealed record ResourceTypeEvidence(PackageResourceType[] ResourceTypes, string[] ProviderNamespaces, List<string> MissingEvidence);
     private sealed record ProjectSource(string SpecRepository, string CommitSha);
 
     public async Task<ResourceTypeEvidence> ReadPinnedSwaggerResourceTypesAsync(
-        string specRepository, string commitSha, string configuration, string apiVersion, CancellationToken ct = default)
+        TypeSpecLocation location, YamlMappingNode? configuration, string apiVersion, CancellationToken ct = default)
     {
-        if (specRepository is not ("Azure/azure-rest-api-specs" or "Azure/azure-rest-api-specs-pr") ||
-            !GeneratedSdkMetadataHelper.IsCommitSha(commitSha) ||
-            !configuration.StartsWith("specification/", StringComparison.Ordinal) ||
-            !configuration.EndsWith(ConfigurationSuffix, StringComparison.Ordinal) ||
-            configuration.Split('/').Any(part => part is "" or "." or ".." || part.Contains('\\')))
+        if (location.Repository is not ("Azure/azure-rest-api-specs" or "Azure/azure-rest-api-specs-pr") ||
+            !GeneratedSdkMetadataHelper.IsCommitSha(location.Commit) ||
+            !location.Directory.StartsWith("specification/", StringComparison.Ordinal) ||
+            location.Directory.Split('/').Any(part => part is "" or "." or ".." || part.Contains('\\')))
         {
             throw new ArgumentException("Provide a pinned Azure specification project configuration.");
         }
-        var source = new ProjectSource(specRepository, commitSha);
-        var configurationText = await ReadFileAsync(source, configuration, ct);
-        if (configurationText is null)
+        var source = new ProjectSource(location.Repository, location.Commit);
+        if (configuration is null)
         {
             return new([], [], ["TypeSpec configuration at spec commit"]);
         }
-        var projectDirectory = configuration[..^ConfigurationSuffix.Length];
-        var swaggerPattern = SwaggerOutputPattern(configurationText, projectDirectory, apiVersion);
+        var swaggerPattern = SwaggerOutputPattern(configuration, location.Directory, apiVersion);
         if (swaggerPattern is null)
         {
             return new([], [], ["checked-in Swagger output mapping"]);
@@ -94,17 +91,17 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
             var matcher = $"\\A{Regex.Escape(parts[wildcard]).Replace("\\*", "[^/]*", StringComparison.Ordinal)}\\z";
             foreach (var entry in entries)
             {
-                var name = Text(entry?["name"]);
+                var name = ReadJsonString(entry?["name"]);
                 if (!Regex.IsMatch(name, matcher) || name is "." or ".." || name.Contains('/') || name.Contains('\\'))
                 {
                     continue;
                 }
                 var path = string.IsNullOrEmpty(parent) ? name : $"{parent}/{name}";
-                if (wildcard == parts.Length - 1 && Text(entry?["type"]) == "file")
+                if (wildcard == parts.Length - 1 && ReadJsonString(entry?["type"]) == "file")
                 {
                     files.Add(path);
                 }
-                else if (Text(entry?["type"]) == "dir")
+                else if (ReadJsonString(entry?["type"]) == "dir")
                 {
                     await DiscoverAsync(wildcard + 1, path);
                 }
@@ -129,7 +126,7 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
             missing.Add($"Invalid checked-in Swagger: {file}");
             return;
         }
-        if (document["info"] is not JsonObject info || Text(info["version"]) != apiVersion)
+        if (document["info"] is not JsonObject info || ReadJsonString(info["version"]) != apiVersion)
         {
             missing.Add($"Swagger API version does not match SDK generation metadata: {file}");
             return;
@@ -149,24 +146,16 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
         }
     }
 
-    private static string? SwaggerOutputPattern(string text, string project, string apiVersion)
+    private static string? SwaggerOutputPattern(YamlMappingNode configuration, string project, string apiVersion)
     {
-        try
-        {
-            var config = GeneratedSdkMetadataHelper.ParseYaml(text);
-            // Inherited emitter options are unresolved here; do not guess their output mapping.
-            if (config.Children.ContainsKey(new YamlScalarNode("extends")) ||
-                !config.Children.TryGetValue(new YamlScalarNode("options"), out var optionsNode) || optionsNode is not YamlMappingNode options ||
-                !options.Children.TryGetValue(new YamlScalarNode("@azure-tools/typespec-autorest"), out var emitterNode) || emitterNode is not YamlMappingNode emitter)
-            {
-                return null;
-            }
-            return ResolveOutputPattern(config, emitter, project, apiVersion);
-        }
-        catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or FormatException)
+        // Inherited emitter options are unresolved here; do not guess their output mapping.
+        if (configuration.Children.ContainsKey(new YamlScalarNode("extends")) ||
+            !configuration.Children.TryGetValue(new YamlScalarNode("options"), out var optionsNode) || optionsNode is not YamlMappingNode options ||
+            !options.Children.TryGetValue(new YamlScalarNode("@azure-tools/typespec-autorest"), out var emitterNode) || emitterNode is not YamlMappingNode emitter)
         {
             return null;
         }
+        return ResolveOutputPattern(configuration, emitter, project, apiVersion);
     }
 
     private static string? ResolveOutputPattern(YamlMappingNode config, YamlMappingNode emitter, string project, string apiVersion)
@@ -282,5 +271,4 @@ public sealed class ProjectResourceTypeHelper(HttpClient http, string token)
     private Task<string?> ReadFileAsync(ProjectSource source, string path, CancellationToken ct) =>
         GitHubService.ReadFileEvidenceAsync(http, source.SpecRepository, source.CommitSha, path, token, ct);
 
-    private static string Text(JsonNode? value) => value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : "";
 }

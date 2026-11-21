@@ -378,6 +378,8 @@ public class ServiceApiReadinessServiceTests
             apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = Version, ["Microsoft.Other"] = "2026-03-01" }
         }));
         var package = new PackageInfo { PackagePath = packagePath, RepoRoot = directory.DirectoryPath, Language = language };
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(package, new TestLogger<ServiceApiReadinessServiceTests>(), CancellationToken.None);
+        using var metadataLock = new FileStream(Path.Combine(packagePath, metadataFile), FileMode.Open, FileAccess.Read, FileShare.None);
 
         var evidence = await new SdkPackageMetadataHelper(_http, "github-test-token").ReadLocalGenerationEvidenceAsync(package, CancellationToken.None);
 
@@ -390,10 +392,64 @@ public class ServiceApiReadinessServiceTests
         Assert.That(evidence.ApiVersions, Has.Length.EqualTo(2));
         Assert.That(evidence.DirectoryPath.ToString(), Is.EqualTo(Package));
         Assert.That(evidence.MetadataFiles, Does.Contain($"{Package}/tsp-location.yaml").And.Contain($"{Package}/{metadataFile}"));
+        using var serializedPackage = JsonDocument.Parse(JsonSerializer.Serialize(evidence));
+        Assert.That(serializedPackage.RootElement.TryGetProperty("GeneratedMetadataContents", out _), Is.False);
+        Assert.That(serializedPackage.RootElement.TryGetProperty("PinnedTypeSpecConfiguration", out _), Is.False);
         Assert.That(_requests, Has.Count.EqualTo(1));
         Assert.That(Uri.UnescapeDataString(_requests.Single().Uri.AbsolutePath), Does.EndWith($"{Project}/tspconfig.yaml"));
         Assert.That(QueryHelpers.ParseQuery(_requests.Single().Uri.Query)["ref"].ToString(), Is.EqualTo(SpecCommit));
         Assert.That(_pullRequestReads, Is.Zero);
+    }
+
+    [TestCase("commit", "conflicting-commit")]
+    [TestCase("typespec_src", "specification/other/Other")]
+    [TestCase("repository_url", "Azure/azure-rest-api-specs-pr")]
+    [TestCase("apiVersion", "2020-01-01")]
+    public async Task ReusedLocalMetadataStillRejectsConflictingGenerationEvidence(string field, string conflictingValue)
+    {
+        using var directory = TempDirectory.Create("ReusedLocalMetadata");
+        var metadataPath = Path.Combine(directory.DirectoryPath, "metadata.json");
+        await File.WriteAllTextAsync(Path.Combine(directory.DirectoryPath, "tsp-location.yaml"), $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        var metadata = new JsonObject
+        {
+            ["apiVersions"] = new JsonObject { ["Microsoft.Example"] = Version },
+            [field] = conflictingValue
+        };
+        await File.WriteAllTextAsync(metadataPath, metadata.ToJsonString());
+        var package = new PackageInfo { PackagePath = directory.DirectoryPath, Language = SdkLanguage.JavaScript };
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(package, new TestLogger<ServiceApiReadinessServiceTests>(), CancellationToken.None);
+        Assert.That(package.ApiVersions.Single().Version, Is.EqualTo(Version));
+        using var metadataLock = new FileStream(metadataPath, FileMode.Open, FileAccess.Read, FileShare.None);
+
+        var result = await _service.CheckPackageAsync(package, CancellationToken.None);
+
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(package.MetadataIssues, Is.Not.Empty);
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
+    public async Task RepeatedLocalChecksReadCurrentMetadataAfterTheHandoffIsConsumed()
+    {
+        using var directory = TempDirectory.Create("RepeatedLocalMetadata");
+        var metadataPath = Path.Combine(directory.DirectoryPath, "metadata.json");
+        await File.WriteAllTextAsync(Path.Combine(directory.DirectoryPath, "tsp-location.yaml"), $"directory: {Project}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        await File.WriteAllTextAsync(metadataPath, JsonSerializer.Serialize(new
+        {
+            apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = Version }
+        }));
+        var package = new PackageInfo { PackagePath = directory.DirectoryPath, Language = SdkLanguage.JavaScript };
+
+        var first = await _service.CheckPackageAsync(package, CancellationToken.None);
+        await File.WriteAllTextAsync(metadataPath, JsonSerializer.Serialize(new
+        {
+            apiVersions = new Dictionary<string, string> { ["Microsoft.Example"] = "2020-01-01" }
+        }));
+        var second = await _service.CheckPackageAsync(package, CancellationToken.None);
+
+        Assert.That(first.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(second.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.NotDetected));
+        Assert.That(second.Projects.Single().ApiVersion.Version, Is.EqualTo("2020-01-01"));
     }
 
     [TestCase(false)]
@@ -433,6 +489,7 @@ public class ServiceApiReadinessServiceTests
         Assert.That(result.MetadataIssues, Is.Empty);
         Assert.That(ArmRequests(), Is.Empty);
         Assert.That(_pullRequestReads, Is.Zero);
+        Assert.That(_requests.Count(request => request.Uri.AbsolutePath.EndsWith("/tspconfig.yaml", StringComparison.Ordinal)), Is.EqualTo(1));
     }
 
     [TestCase(true)]
@@ -568,6 +625,26 @@ public class ServiceApiReadinessServiceTests
         Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
         Assert.That(response.Projects.Single().Namespace, Is.EqualTo("Microsoft.Example"));
         Assert.That(response.Packages.Single().ResourceTypes.Single().Namespace, Is.EqualTo("Microsoft.Example"));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ProviderCaseVariantsDoNotDuplicateVersionChecks()
+    {
+        SetFile(_repository, Head, $"{Package}/{Metadata}", JsonSerializer.Serialize(new
+        {
+            apiVersions = new Dictionary<string, string>
+            {
+                ["Microsoft.Example"] = Version,
+                ["microsoft.example"] = Version
+            }
+        }));
+
+        var result = await CheckAsync();
+
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(result.Packages.Single().ApiVersions, Has.Length.EqualTo(1));
+        Assert.That(result.Projects, Has.Count.EqualTo(1));
         Assert.That(ArmRequests().Count(), Is.EqualTo(1));
     }
 

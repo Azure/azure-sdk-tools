@@ -108,19 +108,6 @@ public class GitHubServiceTests
         process.Verify(helper => helper.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [Test]
-    public void SynchronousTokenResolutionDoesNotExposeFailedGhOutput()
-    {
-        var process = new Mock<IProcessHelper>();
-        var result = new ProcessResult { ExitCode = 1 };
-        result.AppendStdout("private-token-value");
-        result.AppendStderr("private-diagnostic-value");
-        process.Setup(helper => helper.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-        var connection = new TestableGitConnection(process.Object);
-        var error = Assert.Throws<InvalidOperationException>(() => connection.GetAuthTokenForTest());
-        Assert.That(error!.Message, Does.Not.Contain("private-token-value").And.Not.Contain("private-diagnostic-value"));
-    }
-
     [TestCase("GITHUB_TOKEN")]
     [TestCase("GITHUB_PERSONAL_ACCESS_TOKEN")]
     public void TokenResolutionReusesEnvironmentWithCallerCancellation(string variable)

@@ -149,6 +149,10 @@ public class PackageInfoTool(
         {
             packageInfo = await apiMetadata.GetPackageInfoAsync(packageInfo, ct);
         }
+        else
+        {
+            packageInfo.GeneratedMetadataContents = null;
+        }
 
         if (options.AddDevVersion)
         {

@@ -486,10 +486,15 @@ export async function generateCommand(argv: any) {
     }
     await npmCommand(srcDir, args);
 
-    // Log all package versions for diagnostics, ignoring errors
+    // Log package versions for TypeSpec/Azure tooling diagnostics, ignoring errors
     try {
       await npmCommand(srcDir, ["ls", "-a", "|", "grep", "-E", "'typespec|azure-tools'"]);
-    } catch (err) {}
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      Logger.warn(
+        `Unable to log diagnostic package versions for dependencies matching 'typespec|azure-tools' (from 'npm ls -a'). This step is optional and generation will continue. Error: ${errorMessage}`,
+      );
+    }
   }
   const result = await compileTsp({
     emitterPackage: emitter,

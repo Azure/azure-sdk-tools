@@ -231,6 +231,8 @@ print(f'{{package_name}} {{version}} True {{sys.argv[-1]}} ')
         Assert.That(packages.Single(package => package.PackageName == "@azure/valid").ApiVersions,
             Is.EqualTo(new[] { new PackageApiVersion("2025-01-01", "Example") }));
         Assert.That(packages.Single(package => package.PackageName == "@azure/invalid").ApiVersions, Is.Empty);
+        var parsedMetadata = typeof(PackageInfo).GetProperty("GeneratedMetadataContents", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        Assert.That(packages.All(package => parsedMetadata.GetValue(package) is null), Is.True);
     }
 
     [Test]

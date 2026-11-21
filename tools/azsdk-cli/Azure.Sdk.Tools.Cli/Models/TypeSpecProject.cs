@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Helpers;
+using YamlDotNet.RepresentationModel;
+
 namespace Azure.Sdk.Tools.Cli.Models
 {
     public class TypeSpecProject
     {
         public static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
-        private string TypeSpecConfigYaml { get; set; }
 
         public string Name { get; set; }
         public string ProjectRootPath { get; set; }
@@ -28,7 +30,6 @@ namespace Azure.Sdk.Tools.Cli.Models
             Name = string.Empty;
             ProjectRootPath = string.Empty;
             SdkServicePath = string.Empty;
-            TypeSpecConfigYaml = string.Empty;
         }
 
         public static bool IsValidTypeSpecProjectPath(string typeSpecProjectPath)
@@ -68,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Models
                 throw new Exception($"Failed to load contents of tspconfig.yaml in the [{typeSpecProjectPath}]");
             }
 
-            typeSpecProject.TypeSpecConfigYaml = tspConfigYaml;
+            typeSpecProject.IsManagementPlane = ClassifySdkType(tspConfigYaml) == SdkType.Management;
             return typeSpecProject;
         }
 
@@ -88,12 +89,36 @@ namespace Azure.Sdk.Tools.Cli.Models
             return path;
         }
 
-        public bool IsManagementPlane
+        public static SdkType ClassifySdkType(string configurationYaml) => ClassifySdkType(configurationYaml, out _);
+
+        internal static SdkType ClassifySdkType(string configurationYaml, out YamlMappingNode? configuration)
         {
-            get
+            configuration = null;
+            try
             {
-                return TypeSpecConfigYaml.Contains("azure-resource-provider-folder: ./resource-manager") || TypeSpecConfigYaml.Contains("@azure-tools/typespec-azure-rulesets/resource-manager");
+                configuration = GeneratedSdkMetadataHelper.ParseYaml(configurationYaml);
+                var rulesNode = Child(Child(configuration, "linter"), "extends");
+                IEnumerable<string?> ruleSets = rulesNode switch
+                {
+                    YamlScalarNode scalar => [scalar.Value],
+                    YamlSequenceNode sequence => sequence.Children.OfType<YamlScalarNode>().Select(value => value.Value),
+                    _ => []
+                };
+                var folder = Child(Child(Child(configuration, "options"), "@azure-tools/typespec-autorest"), "azure-resource-provider-folder") as YamlScalarNode;
+                var management = ruleSets.Contains("@azure-tools/typespec-azure-rulesets/resource-manager", StringComparer.Ordinal) ||
+                    folder?.Value is "resource-manager" or "./resource-manager";
+                var data = ruleSets.Contains("@azure-tools/typespec-azure-rulesets/data-plane", StringComparer.Ordinal);
+                return management == data ? SdkType.Unknown : management ? SdkType.Management : SdkType.Dataplane;
             }
+            catch (Exception exception) when (exception is YamlDotNet.Core.YamlException or FormatException)
+            {
+                return SdkType.Unknown;
+            }
+
+            static YamlNode? Child(YamlNode? parent, string name) =>
+                parent is YamlMappingNode mapping && mapping.Children.TryGetValue(new YamlScalarNode(name), out var value) ? value : null;
         }
+
+        public bool IsManagementPlane { get; private set; }
     }
 }

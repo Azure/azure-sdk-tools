@@ -38,6 +38,9 @@ environments:
         env:
           AZSDKTOOLS_AGENT_TESTING: "true"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+          AZSDK_COPILOT_CLI_PATH: "${AZSDK_COPILOT_CLI_PATH:-}"
+          # Copilot filters its own auth variables from MCP expansion; forward through the explicit SDK alias.
+          AZSDK_COPILOT_GITHUB_TOKEN: "${AZSDK_COPILOT_GITHUB_TOKEN:-}"
 
 # Suites group evals for selective execution.
 #
@@ -61,10 +64,12 @@ suites:
 
   scenarios-live:
     description: |
-      Scenarios against live MCP — real DevOps / GitHub / pipelines. Slow;
+      Scenarios and customization tool evals against live MCP — real DevOps / GitHub / pipelines. Slow;
       nightly only. Prime any required clones first via
       `eng/common/scripts/eval/sync-eval-git-repo.js`.
-    evals: ["workflows/live/*.eval.yaml"]
+    evals:
+      - "workflows/live/*.eval.yaml"
+      - "tools/azsdk-customized-code-update-tool/**/*.eval.yaml"
 
   # ---- composite suites ----
   pr-gate:

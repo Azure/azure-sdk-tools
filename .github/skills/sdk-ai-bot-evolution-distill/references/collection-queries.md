@@ -23,7 +23,7 @@ gh search issues '"[Teams Chatbot]:"' --repo Azure/azure-sdk-pr --label feedback
 ```
 
 2. **Batch-read issues and linked PRs (`gh api graphql`):** Fetch `issue(number)` fields `body`, `state`, `closedAt`, `comments(first: 50)`, and `timelineItems(first: 50, itemTypes: [CROSS_REFERENCED_EVENT, CONNECTED_EVENT])` resolving `PullRequest { number state merged url repository { nameWithOwner } }`.
-3. **Inspect PR feedback and final diffs:** For each linked PR, fetch `author`, `state`, `merged`, `commits(first: 50)` (initial `copilot-swe-agent` commit vs. follow-up commits), `reviews(first: 50)`, `reviewThreads(first: 50)` (`path`, `diffHunk`, `comments`), and `files(first: 50)` or `gh pr diff`.
+3. **Inspect PR feedback and final diffs:** For each linked PR, fetch `author`, `state`, `merged`, `commits(first: 50)` (initial `copilot-swe-agent` commit vs. follow-up commits), `reviews(first: 50)`, `reviewThreads(first: 50)` (`path` and `comments` nodes with `author`, `body`, `diffHunk`), and `files(first: 50)` or `gh pr diff`.
 4. **Check wiki commits:** When `Azure/azure-rest-api-specs` wiki issues close without a PR, inspect `git log --since="<SINCE_DATE>" -p` on `https://github.com/Azure/azure-rest-api-specs.wiki.git`.
 5. **Filter noise:** Drop comments by `github-actions`, `azure-sdk`, `microsoft-github-policy-service`, `Next Steps to Merge` banners, and automated `Validation passed/failed` notes (keep `Validation skipped` links to maintainer no-action comments).
 

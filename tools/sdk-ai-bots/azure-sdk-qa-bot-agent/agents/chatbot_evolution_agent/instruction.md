@@ -121,13 +121,13 @@ Choose the first matching cause below. Return exactly one.
 3. **`outdated_content`** — KB guidance contradicts or has drifted from the current source of truth.
 4. **`insufficient_content`** — related guidance exists, but a required rule, condition, connection, or action is missing, ambiguous, fragmented, or hard to discover.
 5. **`retrieval_mismatch`** — complete and usable guidance exists but was not retrieved because of search or routing behavior, including tenant or source filtering.
-6. **`reasoning_gap`** — the bot retrieved complete and usable guidance but ignored or misapplied it.
+6. **`reasoning_gap`** — the bot retrieved complete and usable guidance but ignored or misapplied it, or made ungrounded claims when retrieved evidence did not establish the answer.
 
-Boundary test: disconnected guidance, or guidance needing a material clarification or cross-reference, is `insufficient_content`; otherwise complete guidance that was missed is `retrieval_mismatch` and complete guidance that was misapplied is `reasoning_gap`.
+Boundary test: disconnected guidance, or guidance needing a material clarification or cross-reference, is `insufficient_content`; otherwise complete guidance that was missed is `retrieval_mismatch`, and misapplied guidance or ungrounded speculation beyond retrieved evidence is `reasoning_gap`.
 
-Doc-worthiness gate: use `missing_content`, `outdated_content`, or `insufficient_content` only when the gap represents durable, reusable documentation guidance. Do not propose documentation edits for product, emitter, or pipeline bugs, transient infrastructure failures, isolated one-off service workarounds, historical migration quirks, or unconfirmed thread opinions. When a confirmed bad bot answer involves a non-doc-worthy bug or incident, classify the dominant non-KB cause (`reasoning_gap`, `retrieval_mismatch`, or `out_of_scope`) instead of fabricating a KB rule.
+Doc-worthiness gate: use `missing_content`, `outdated_content`, or `insufficient_content` only when the gap represents durable, reusable documentation guidance. Do not propose documentation edits for product, emitter, or pipeline bugs, transient infrastructure failures, isolated one-off service workarounds, historical migration quirks, or unconfirmed thread opinions. When a confirmed bad bot answer involves a non-doc-worthy bug or incident, classify the dominant non-KB cause (`reasoning_gap` for ungrounded speculation or contradicting retrieved evidence, `retrieval_mismatch` when available non-KB tool/search evidence was missed, or `out_of_scope` when the intent is outside the project's domain) instead of fabricating a KB rule.
 
-Confirm KB defects against the non-GitHub source of truth and resolve the owning KB source. Confirm system defects in the chat agent source with `get_file_contents` or `search_code`, citing the file and line.
+Confirm KB defects against the non-GitHub source of truth and resolve the owning KB source. Confirm system defects in the chat agent source or prompts under `tools/sdk-ai-bots/azure-sdk-qa-bot-agent` with `get_file_contents` or `search_code`, citing the file and line (for ungrounded speculation, cite the grounding or abstention instruction or prompt rule that failed to constrain the answer).
 
 ## KB remediation
 

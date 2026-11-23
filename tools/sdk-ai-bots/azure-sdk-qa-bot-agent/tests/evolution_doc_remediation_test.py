@@ -63,6 +63,8 @@ def test_kb_remediation_enforces_doc_worthiness_and_generated_doc_policy() -> No
         "unconfirmed thread opinions",
     ):
         assert excluded in taxonomy
+    assert "ungrounded speculation" in taxonomy
+    assert "grounding or abstention instruction" in taxonomy
 
     for tool_name in (
         "`list_knowledge_sources`",

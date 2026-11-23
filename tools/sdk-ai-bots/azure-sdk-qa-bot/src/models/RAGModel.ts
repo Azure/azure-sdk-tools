@@ -2,7 +2,7 @@ import { Memory, PromptCompletionModel, PromptFunctions, PromptTemplate, Tokeniz
 import { TurnContext } from 'botbuilder';
 import { AdditionalInfo, CompletionRequestPayload, getRAGReply, Message, RAGOptions } from '../backend/rag.js';
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
-import { ThinkingHandler } from '../turn/ThinkingHandler.js';
+import { ReplyHandler } from '../turn/ReplyHandler.js';
 import config from '../config/config.js';
 import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenerator.js';
 import { logger } from '../logging/logger.js';
@@ -57,12 +57,12 @@ export class RAGModel implements PromptCompletionModel {
       meta,
     });
 
-    const thinkingHandler = new ThinkingHandler(context, this.conversationHandler, this.tenantConfigManager);
+    const replyHandler = new ReplyHandler(context, this.conversationHandler, this.tenantConfigManager);
 
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    const replyStartTimestamp = await thinkingHandler.prepare(conversationMessages);
+    const replyStartTimestamp = await replyHandler.prepare(conversationMessages);
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
@@ -81,7 +81,7 @@ export class RAGModel implements PromptCompletionModel {
         references: undefined,
       };
     }
-    await thinkingHandler.sendReply(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
+    await replyHandler.sendReply(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
 
     return { status: 'success' };
   }

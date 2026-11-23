@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ThinkingHandler } from '../src/turn/ThinkingHandler.js';
+import { ReplyHandler } from '../src/turn/ReplyHandler.js';
 import { ConversationHandler, Prompt } from '../src/input/ConversationHandler.js';
 import { CompletionResponsePayload, RagApiError, ErrorCode, ErrorCategory } from '../src/backend/rag.js';
 import { TurnContext } from 'botbuilder';
@@ -26,8 +26,8 @@ vi.mock('../src/config/config.js', () => ({
   contactCardVersion: '1.0',
 }));
 
-describe('ThinkingHandler', () => {
-  let thinkingHandler: ThinkingHandler;
+describe('ReplyHandler', () => {
+  let replyHandler: ReplyHandler;
   let mockContext: Partial<TurnContext>;
   let mockConversationHandler: Partial<ConversationHandler>;
   let mockTenantConfigManager: Partial<TenantConfigManager>;
@@ -52,7 +52,7 @@ describe('ThinkingHandler', () => {
     // Mock TenantConfigManager
     mockTenantConfigManager = {};
 
-    thinkingHandler = new ThinkingHandler(
+    replyHandler = new ReplyHandler(
       mockContext as TurnContext,
       mockConversationHandler as ConversationHandler,
       mockTenantConfigManager as TenantConfigManager
@@ -63,7 +63,7 @@ describe('ThinkingHandler', () => {
     it('does not send a thinking placeholder or schedule updates', async () => {
       vi.useFakeTimers();
       try {
-        const timestamp = await thinkingHandler.prepare([{
+        const timestamp = await replyHandler.prepare([{
           conversationId: 'test-conversation',
           activityId: 'existing-contact-card',
           contactCard: { version: '1.0' },
@@ -82,7 +82,7 @@ describe('ThinkingHandler', () => {
     });
 
     it('preserves the one-time contact card without sending a placeholder', async () => {
-      await thinkingHandler.prepare([]);
+      await replyHandler.prepare([]);
 
       expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
       expect(mockContext.sendActivity).toHaveBeenCalledWith(
@@ -108,7 +108,7 @@ describe('ThinkingHandler', () => {
       };
 
       // Access private method using type assertion
-      const result = (thinkingHandler as any).generateAnswer(ragError);
+      const result = (replyHandler as any).generateAnswer(ragError);
 
       expect(result.answer).toBe(
         "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Request validation failed."
@@ -123,7 +123,7 @@ describe('ThinkingHandler', () => {
         category: 'authentication',
       };
 
-      const result = (thinkingHandler as any).generateAnswer(ragError);
+      const result = (replyHandler as any).generateAnswer(ragError);
 
       expect(result.answer).toBe(
         "🚫Sorry, I'm having some authentication issues right now and can't answer your question. Error: Authentication failed."
@@ -138,7 +138,7 @@ describe('ThinkingHandler', () => {
         category: 'service' as ErrorCategory,
       };
 
-      const result = (thinkingHandler as any).generateAnswer(ragError);
+      const result = (replyHandler as any).generateAnswer(ragError);
 
       expect(result.answer).toBe(
         "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM service is temporarily unavailable."
@@ -153,7 +153,7 @@ describe('ThinkingHandler', () => {
         category: 'internal' as ErrorCategory,
       };
 
-      const result = (thinkingHandler as any).generateAnswer(ragError);
+      const result = (replyHandler as any).generateAnswer(ragError);
 
       expect(result.answer).toBe(
         "🚫Sorry, I'm having some internal issues right now and can't answer your question. Error: An unexpected error occurred."
@@ -176,7 +176,7 @@ describe('ThinkingHandler', () => {
         ],
       };
 
-      const result = (thinkingHandler as any).generateAnswer(successResponse);
+      const result = (replyHandler as any).generateAnswer(successResponse);
 
       expect(result.answer).toContain('This is a test answer');
       expect(result.answer).toContain('**References**');
@@ -192,7 +192,7 @@ describe('ThinkingHandler', () => {
         references: [],
       };
 
-      const result = (thinkingHandler as any).generateAnswer(successResponse);
+      const result = (replyHandler as any).generateAnswer(successResponse);
 
       expect(result.answer).toBe('This is a test answer without references');
       expect(result.answer).not.toContain('**References**');
@@ -208,7 +208,7 @@ describe('ThinkingHandler', () => {
         category: 'validation' as ErrorCategory,
       };
 
-      const result = (thinkingHandler as any).convertPayloadToReply(ragError);
+      const result = (replyHandler as any).convertPayloadToReply(ragError);
 
       expect(result).toEqual({
         answer:
@@ -225,7 +225,7 @@ describe('ThinkingHandler', () => {
         category: 'authorization' as ErrorCategory,
       };
 
-      const result = (thinkingHandler as any).convertPayloadToReply(ragError);
+      const result = (replyHandler as any).convertPayloadToReply(ragError);
 
       expect(result).toEqual({
         answer:
@@ -242,7 +242,7 @@ describe('ThinkingHandler', () => {
         category: 'dependency' as ErrorCategory,
       };
 
-      const result = (thinkingHandler as any).convertPayloadToReply(ragError);
+      const result = (replyHandler as any).convertPayloadToReply(ragError);
 
       expect(result).toEqual({
         answer:
@@ -259,7 +259,7 @@ describe('ThinkingHandler', () => {
         category: 'rate_limit' as ErrorCategory,
       };
 
-      const result = (thinkingHandler as any).convertPayloadToReply(ragError);
+      const result = (replyHandler as any).convertPayloadToReply(ragError);
 
       expect(result).toEqual({
         answer:
@@ -290,7 +290,7 @@ describe('ThinkingHandler', () => {
         ],
       };
 
-      const result = (thinkingHandler as any).convertPayloadToReply(successResponse);
+      const result = (replyHandler as any).convertPayloadToReply(successResponse);
 
       expect(result).toEqual({
         answer: 'This is a successful response',
@@ -320,7 +320,7 @@ describe('ThinkingHandler', () => {
         references: [],
       };
 
-      const result = (thinkingHandler as any).convertPayloadToReply(successResponse);
+      const result = (replyHandler as any).convertPayloadToReply(successResponse);
 
       expect(result).toEqual({
         answer: 'This is a response without references',
@@ -336,7 +336,7 @@ describe('ThinkingHandler', () => {
         has_result: true,
       };
 
-      const result = (thinkingHandler as any).convertPayloadToReply(successResponse);
+      const result = (replyHandler as any).convertPayloadToReply(successResponse);
 
       expect(result).toEqual({
         answer: 'This is a response with undefined references',
@@ -369,7 +369,7 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await thinkingHandler.sendReply(new Date(), reply, prompt);
+      await replyHandler.sendReply(new Date(), reply, prompt);
 
       expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
       expect(mockContext.updateActivity).not.toHaveBeenCalled();
@@ -410,7 +410,7 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await thinkingHandler.sendReply(new Date(), ragError, mockPrompt);
+      await replyHandler.sendReply(new Date(), ragError, mockPrompt);
 
       expect(mockContext.sendActivity).toHaveBeenCalledWith({
         type: 'message',
@@ -443,7 +443,7 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await thinkingHandler.sendReply(new Date(), ragError, mockPrompt);
+      await replyHandler.sendReply(new Date(), ragError, mockPrompt);
 
       expect(mockContext.sendActivity).toHaveBeenCalledWith({
         type: 'message',
@@ -477,7 +477,7 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await thinkingHandler.sendReply(new Date(), successResponse, mockPrompt);
+      await replyHandler.sendReply(new Date(), successResponse, mockPrompt);
 
       expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
       expect(mockContext.updateActivity).not.toHaveBeenCalled();
@@ -514,7 +514,7 @@ describe('ThinkingHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await expect(thinkingHandler.sendReply(new Date(), {
+      await expect(replyHandler.sendReply(new Date(), {
         id: 'reply',
         answer: 'Answer',
         has_result: true,

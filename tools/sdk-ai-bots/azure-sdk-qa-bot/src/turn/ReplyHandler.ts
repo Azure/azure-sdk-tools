@@ -10,7 +10,7 @@ import { sendActivityWithRetry } from '../activityUtils.js';
 import type { AIEntity } from '@microsoft/teams-ai/lib/types/AIEntity.js';
 import { getTeamsMentionEntities } from '../common/mentions.js';
 
-export class ThinkingHandler {
+export class ReplyHandler {
   private readonly aiGeneratedEntity: AIEntity = {
     type: 'https://schema.org/Message',
     '@type': 'Message',

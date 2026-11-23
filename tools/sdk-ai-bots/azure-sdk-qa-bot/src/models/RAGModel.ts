@@ -44,9 +44,14 @@ export class RAGModel implements PromptCompletionModel {
     const token = await getAccessTokenByManagedIdentity(this.credential, config.ragScope);
     const meta = getTurnContextLogMeta(context);
     const { channelId } = parseConversationId(context.activity.conversation.id);
-    const ragTenantId = this.channelConfigManager.getRagTenant(channelId);
-    const ragEndpoint = this.channelConfigManager.getRagEndpoint(channelId);
-    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
+    const channelConfig = this.channelConfigManager.getChannelConfig(channelId);
+    const ragTenantId = channelConfig.tenant;
+    const ragEndpoint = channelConfig.endpoint;
+    const channelName =
+      channelConfig.name && channelConfig.name !== 'default'
+        ? channelConfig.name
+        : context.activity.channelData?.channel?.name;
+    logger.info(`Processing request for channel ${channelId} (${channelName ?? 'default'}) on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,
       accessToken: token ? token.token : undefined
@@ -66,7 +71,11 @@ export class RAGModel implements PromptCompletionModel {
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
-    const completionPayload = this.convertFullPromptToCompletionRequestPayload(fullPrompt, ragTenantId);
+    const completionPayload = this.convertFullPromptToCompletionRequestPayload(
+      fullPrompt,
+      ragTenantId,
+      channelName
+    );
 
     logger.info('prompt to RAG', {
       prompt: { ...fullPrompt, additionalInfo: { imageCount: fullPrompt.additionalInfo.images.length } },
@@ -95,7 +104,8 @@ export class RAGModel implements PromptCompletionModel {
 
   private convertFullPromptToCompletionRequestPayload(
     fullPrompt: MessageWithRemoteContent,
-    tenantId: string
+    tenantId: string,
+    channelName?: string
   ): CompletionRequestPayload {
     const message: Message = {
       role: 'user',
@@ -111,6 +121,7 @@ export class RAGModel implements PromptCompletionModel {
 
     const payload: CompletionRequestPayload = {
       tenant_id: tenantId,
+      ...(channelName ? { channel_name: channelName } : {}),
       message: message,
       additional_infos,
       conversation_id: fullPrompt.conversationID,

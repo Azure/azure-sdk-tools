@@ -795,7 +795,7 @@ def get_tenant_scope_description(tenant_id: TenantID) -> str:
     """Return a human-readable description of the tenant's scope and topics.
 
     Used to inject into the system message so the LLM knows the current
-    tenant's domain without calling route_tenant first.
+    tenant's domain without loading a skill first.
     """
     config = get_tenant_config(tenant_id)
     if config is None:
@@ -810,7 +810,7 @@ def get_tenant_scope_description(tenant_id: TenantID) -> str:
         for topic in config.topics:
             parts.append(f"- {topic}")
     if config.exclusions:
-        parts.append("**Exclusions** (out of scope — requires routing):")
+        parts.append("**Exclusions** (outside this tenant's default skill — load the matching skill to answer):")
         for exc in config.exclusions:
             parts.append(f"- {exc}")
     return "\n".join(parts)

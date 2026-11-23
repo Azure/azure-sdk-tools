@@ -846,6 +846,198 @@ async def test_chat_selects_request_version_before_configured_version(
         project.agents.get.assert_not_called()
 
 
+def test_loaded_skills_never_set_route_tenant() -> None:
+    import json
+
+    from openai.types.responses import (
+        Response,
+        ResponseFunctionToolCall,
+        ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage,
+        ResponseOutputText,
+    )
+
+    output = []
+    for index, skill_name in enumerate(
+        ("api-stewardship-board", "typespec", "support-channels")
+    ):
+        call_id = f"skill-{index}"
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call",
+                name="load_skill",
+                call_id=call_id,
+                arguments=json.dumps({"skill_name": skill_name}),
+            ),
+            ResponseFunctionToolCallOutputItem.model_construct(
+                type="function_call_output",
+                id=call_id,
+                call_id=call_id,
+                output=f"Loaded {skill_name}",
+                status="completed",
+            ),
+        ])
+    output.append(
+        ResponseOutputMessage.model_construct(
+            type="message",
+            id="answer",
+            role="assistant",
+            status="completed",
+            content=[
+                ResponseOutputText.model_construct(
+                    type="output_text",
+                    text="Use Azure.ResourceManager ArmResourceCreateOrReplaceAsync for ARM PUT.",
+                    annotations=[],
+                )
+            ],
+        )
+    )
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id="api_spec_review_bot",
+        message=ChatMessage(role="user", content="ARM PUT TypeSpec pattern?"),
+    )
+
+    result = ChatService()._postprocess(request, response, None)
+
+    assert result.has_result is True
+    assert result.route_tenant is None
+    assert result.route_channel_name is None
+    assert result.route_channel_link is None
+
+
+@pytest.mark.parametrize("placeholder_order", ["after_refs", "before_refs"])
+@pytest.mark.parametrize(
+    ("current_channel", "expected_name"),
+    [
+        ("Azure SDK Onboarding", "SDK release support"),
+        ("SDK release support", None),
+    ],
+)
+def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
+    placeholder_order, current_channel, expected_name
+) -> None:
+    from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
+
+    channel_link = (
+        "https://teams.microsoft.com/l/channel/"
+        "19%3A084875bb626242ed95f3ac8dddfaa12a%40thread.skype/"
+        "SDK%20release%20support?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121"
+        "&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"
+    )
+    refs_block = "**References**\n- [Release Guide](https://example.test/release)"
+    placeholder = "{{channel:sdk_release_support}}"
+    tail = (
+        f"{refs_block}\n\n{placeholder}"
+        if placeholder_order == "after_refs"
+        else f"{placeholder}\n\n{refs_block}"
+    )
+
+    response = Response.model_construct(
+        id="reply",
+        output=[
+            ResponseOutputMessage.model_construct(
+                type="message",
+                id="answer",
+                role="assistant",
+                status="completed",
+                content=[
+                    ResponseOutputText.model_construct(
+                        type="output_text",
+                        text=f"Please follow up with release support.\n\n{tail}",
+                        annotations=[],
+                    )
+                ],
+            ),
+        ],
+    )
+    request = ChatRequest(
+        tenant_id="azure_sdk_onboarding",
+        channel_name=current_channel,
+        message=ChatMessage(role="user", content="Release help"),
+    )
+
+    service = ChatService()
+    assert f"current_channel={current_channel}" in service._build_tenant_system_message(
+        request.tenant_id, request.channel_name
+    )
+
+    result = service._postprocess(request, response, None)
+
+    assert result.answer == "Please follow up with release support."
+    assert len(result.references or []) == 1
+    assert result.references[0].link == "https://example.test/release"
+    assert result.route_tenant is None
+    assert result.route_channel_name == expected_name
+    assert result.route_channel_link == (channel_link if expected_name else None)
+
+
+def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:
+    from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
+
+    response = Response.model_construct(
+        id="reply",
+        output=[
+            ResponseOutputMessage.model_construct(
+                type="message",
+                id="answer",
+                role="assistant",
+                status="completed",
+                content=[
+                    ResponseOutputText.model_construct(
+                        type="output_text",
+                        text="Answer.\n\n{{channel:nonexistent_channel}}",
+                        annotations=[],
+                    )
+                ],
+            ),
+        ],
+    )
+    request = ChatRequest(
+        tenant_id="api_spec_review_bot",
+        message=ChatMessage(role="user", content="Help"),
+    )
+
+    result = ChatService()._postprocess(request, response, None)
+
+    assert result.answer == "Answer."
+    assert result.route_channel_name is None
+    assert result.route_channel_link is None
+
+
+@pytest.mark.asyncio
+async def test_support_channel_catalog_loads_and_injects_into_skill() -> None:
+    from models.support_channel import get_support_channel, parse_support_channel_catalog
+    from skills.support_channels import create_support_channels_skill
+
+    skill = create_support_channels_skill()
+    assert skill is not None
+    assert skill.frontmatter.name == "support-channels"
+    content = (
+        await skill.get_content()
+        if hasattr(skill, "get_content")
+        else skill.content
+    )
+    assert "{{channel:<key>}}" in content
+    assert "sdk_release_support" in content
+    assert "https://teams.microsoft.com" not in content
+    assert get_support_channel("language_mobile") is None
+
+    empty = parse_support_channel_catalog(b"support_channels: []")
+    assert empty.support_channels == []
+
+    with pytest.raises(ValueError):
+        parse_support_channel_catalog(
+            b"""
+support_channels:
+  - key: bad
+    name: "Bad"
+    description: "Desc"
+    link: "https://example.com/not-teams"
+"""
+        )
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("configured_version", ["17", None])
 async def test_chat_branch_fallback_uses_default(monkeypatch, configured_version):

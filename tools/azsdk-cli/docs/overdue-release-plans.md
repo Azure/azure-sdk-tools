@@ -64,9 +64,9 @@ Use the positive `--inactivity-days` option to set a different window. An activi
 timestamp exactly at the cutoff still protects the plan. Both preview and actual
 cleanup use the same checks:
 
-- A recent Azure DevOps release-plan update protects the plan, including the
-  write that records the first overdue reminder. This can delay abandonment by
-  one monthly cleanup run.
+- A recent Azure DevOps release-plan update protects the plan, including each
+  write that records an overdue reminder. Monthly reminders can repeatedly
+  prevent abandonment when cleanup runs within the inactivity window.
 - Recent activity on any linked SDK PR protects the plan, even when approval
   is pending or changes have been requested. Activity includes commit timestamps,
   submitted reviews, and human comments, including inline review comments and edits.
@@ -144,19 +144,20 @@ allow reads of linked repositories, including private specs. The CLI supports
 Reminders require `--notify-owners true`, a valid `--emailer-uri`, and a valid
 submitter email address. After the emailer returns HTTP success (acceptance,
 not proof of delivery), the CLI records the current UTC time in the release-plan
-work item's `Custom.OverdueLastNotifiedDate` field, but only if that field is empty. An
-existing value is never overwritten and does not suppress later reminders. The save is tied to the work item revision
-the run read, so if the work item changed after that read (for example, an
-overlapping run already saved the date), Azure DevOps refuses the save. Skipped,
-failed, and unconfirmed sends leave the field untouched.
+work item's `Custom.OverdueLastNotifiedDate` field, replacing any existing
+value. The save is tied to the work-item revision the run read, so if the work
+item changed after that read (for example, an overlapping run already saved a
+date), Azure DevOps refuses the save. Skipped, failed, and unconfirmed sends
+leave the field untouched.
 
 Before deploying, confirm the Azure DevOps Date/Time field
 `Custom.OverdueLastNotifiedDate` on the release-plan work item type. Grant
 the automation write access and confirm the dashboard can read the field. If
 the emailer accepts a reminder but the timestamp write fails or is refused, the
-command reports both facts and does not resend the email; the next accepted
-reminder fills the empty field. Do not rerun notifications just to repair that timestamp.
-The write advances `System.ChangedDate` and counts as activity for cleanup
+command reports both facts and does not resend the email; the field may remain
+out of date until a later accepted reminder is successfully recorded. Do not
+rerun notifications just to repair that timestamp. Each successful write
+advances `System.ChangedDate` and counts as activity for cleanup
 (see Recent activity protection).
 
 Reminder and abandonment subjects are distinct. Both emails use the assessment's

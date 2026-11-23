@@ -2621,16 +2621,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     continue;
                 }
 
-                // Keep the first recorded notification date; only fill the field when it is empty.
-                if (releasePlan.OverdueLastNotifiedDate != null)
-                {
-                    continue;
-                }
-
                 var sentAtUtc = _timeProvider.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
                 try
                 {
-                    // The revision check stops a run with a stale read from replacing a date another run just saved.
+                    // Reject an update based on a stale work-item read.
                     var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
                     {
                         [ReleasePlanWorkItem.OverdueLastNotifiedDateField] = sentAtUtc

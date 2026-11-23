@@ -6,6 +6,7 @@ import {
   readFile,
   readdir,
   readlink,
+  realpath,
   rm,
   stat,
   symlink,
@@ -41,7 +42,7 @@ async function workspace(name: string, packageManifest = manifest, packageLock: 
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), "tsp-emitter-reuse-test-"));
+  root = await realpath(await mkdtemp(join(tmpdir(), "tsp-emitter-reuse-test-")));
   vi.stubEnv("TMPDIR", root);
   vi.stubEnv("TMP", root);
   vi.stubEnv("TEMP", root);
@@ -68,22 +69,25 @@ afterEach(async () => {
   vi.resetAllMocks();
 });
 
-it("installs once and validates and audits each subsequent compatible workspace", async () => {
-  const first = await workspace("first");
-  const second = await workspace("second");
-  await reuse.install(dirname(first), first, ["ci"]);
-  const firstFile = join(dirname(first), "node_modules/fixture/index.js");
-  await writeFile(firstFile, "changed by the first emitter\n");
-  await rm(dirname(first), { recursive: true });
-  await reuse.install(dirname(second), second, ["ci"]);
-  expect(await readFile(join(dirname(second), "node_modules/fixture/index.js"), "utf8")).toBe(
-    "export const value = 1;\n",
-  );
-  expect(vi.mocked(npmCommand).mock.calls).toEqual([
-    [first, ["ci"]],
-    [second, ["ci", "--package-lock-only"]],
-  ]);
-});
+it.skipIf(process.platform !== "linux")(
+  "installs once and validates and audits each subsequent compatible workspace",
+  async () => {
+    const first = await workspace("first");
+    const second = await workspace("second");
+    await reuse.install(dirname(first), first, ["ci"]);
+    const firstFile = join(dirname(first), "node_modules/fixture/index.js");
+    await writeFile(firstFile, "changed by the first emitter\n");
+    await rm(dirname(first), { recursive: true });
+    await reuse.install(dirname(second), second, ["ci"]);
+    expect(await readFile(join(dirname(second), "node_modules/fixture/index.js"), "utf8")).toBe(
+      "export const value = 1;\n",
+    );
+    expect(vi.mocked(npmCommand).mock.calls).toEqual([
+      [first, ["ci"]],
+      [second, ["ci", "--package-lock-only"]],
+    ]);
+  },
+);
 
 it("uses full installs for changed configuration, missing lock, force, and script-bearing manifests", async () => {
   const first = await workspace("first");
@@ -110,50 +114,58 @@ it("uses full installs for changed configuration, missing lock, force, and scrip
   ]);
 });
 
-it("falls back on a corrupt private snapshot and removes it at the end of the batch", async () => {
-  const first = await workspace("first");
-  await reuse.install(dirname(first), first, ["ci"]);
-  const [snapshot] = (await readdir(root)).filter((entry) => entry.startsWith("tsp-emitter-deps-"));
-  expect(snapshot).toBeDefined();
-  await writeFile(join(root, snapshot!, "node_modules/fixture/index.js"), "corrupt");
-  const second = await workspace("second");
-  await reuse.install(dirname(second), second, ["ci"]);
-  expect(vi.mocked(npmCommand).mock.calls.map(([, args]) => args)).toEqual([["ci"], ["ci"]]);
-  expect(await readFile(join(dirname(second), "node_modules/fixture/index.js"), "utf8")).toBe(
-    "export const value = 1;\n",
-  );
-  await reuse.dispose();
-  expect((await readdir(root)).filter((entry) => entry.startsWith("tsp-emitter-deps-"))).toEqual(
-    [],
-  );
-});
+it.skipIf(process.platform !== "linux")(
+  "falls back on a corrupt private snapshot and removes it at the end of the batch",
+  async () => {
+    const first = await workspace("first");
+    await reuse.install(dirname(first), first, ["ci"]);
+    const [snapshot] = (await readdir(root)).filter((entry) =>
+      entry.startsWith("tsp-emitter-deps-"),
+    );
+    expect(snapshot).toBeDefined();
+    await writeFile(join(root, snapshot!, "node_modules/fixture/index.js"), "corrupt");
+    const second = await workspace("second");
+    await reuse.install(dirname(second), second, ["ci"]);
+    expect(vi.mocked(npmCommand).mock.calls.map(([, args]) => args)).toEqual([["ci"], ["ci"]]);
+    expect(await readFile(join(dirname(second), "node_modules/fixture/index.js"), "utf8")).toBe(
+      "export const value = 1;\n",
+    );
+    await reuse.dispose();
+    expect((await readdir(root)).filter((entry) => entry.startsWith("tsp-emitter-deps-"))).toEqual(
+      [],
+    );
+  },
+);
 
-it("does not share snapshots with a concurrent batch or a bypassed install", async () => {
-  const first = await workspace("first");
-  const second = await workspace("second");
-  const other = new BatchEmitterDependencies();
-  try {
-    await Promise.all([
-      reuse.install(dirname(first), first, ["ci"]),
-      other.install(dirname(second), second, ["ci"]),
+it.skipIf(process.platform !== "linux")(
+  "does not share snapshots with a concurrent batch or a bypassed install",
+  async () => {
+    const first = await workspace("first");
+    const second = await workspace("second");
+    const other = new BatchEmitterDependencies();
+    try {
+      await Promise.all([
+        reuse.install(dirname(first), first, ["ci"]),
+        other.install(dirname(second), second, ["ci"]),
+      ]);
+      expect(
+        (await readdir(root)).filter((name) => name.startsWith("tsp-emitter-deps-")),
+      ).toHaveLength(2);
+    } finally {
+      await other.dispose();
+    }
+    vi.stubEnv("TSP_CLIENT_EMITTER_REUSE", "0");
+    const third = await workspace("third");
+    await reuse.install(dirname(third), third, ["ci"]);
+    expect(vi.mocked(npmCommand).mock.calls.map(([, args]) => args)).toEqual([
+      ["ci"],
+      ["ci"],
+      ["ci"],
     ]);
-    expect(
-      (await readdir(root)).filter((name) => name.startsWith("tsp-emitter-deps-")),
-    ).toHaveLength(2);
-  } finally {
-    await other.dispose();
-  }
-  vi.stubEnv("TSP_CLIENT_EMITTER_REUSE", "0");
-  const third = await workspace("third");
-  await reuse.install(dirname(third), third, ["ci"]);
-  expect(vi.mocked(npmCommand).mock.calls.map(([, args]) => args)).toEqual([
-    ["ci"],
-    ["ci"],
-    ["ci"],
-  ]);
-});
+  },
+);
 
-it.skipIf(process.platform === "win32")(
+it.skipIf(process.platform !== "linux")(
   "preserves relative npm bin links and executable files",
   async () => {
     const install = vi.mocked(npmCommand).getMockImplementation()!;
@@ -264,18 +276,42 @@ it("lets ordinary npm report a malformed lockfile", async () => {
   expect(vi.mocked(npmCommand).mock.calls).toEqual([[dir, ["ci"]]]);
 });
 
-it("falls back when npm rejects warm lock-only validation", async () => {
-  const first = await workspace("first");
-  await reuse.install(dirname(first), first, ["ci"]);
-  const second = await workspace("second");
-  vi.mocked(npmCommand).mockRejectedValueOnce(new Error("lock-only failed"));
-  await reuse.install(dirname(second), second, ["ci"]);
-  expect(vi.mocked(npmCommand).mock.calls.map(([, args]) => args)).toEqual([
-    ["ci"],
-    ["ci", "--package-lock-only"],
-    ["ci"],
-  ]);
-  await expect(
-    access(join(dirname(second), "node_modules/fixture/package.json")),
-  ).resolves.toBeUndefined();
-});
+it.runIf(process.platform !== "linux")(
+  "uses ordinary installs on platforms without reuse support",
+  async () => {
+    const actual = await vi.importActual<typeof import("../src/npm.js")>("../src/npm.js");
+    vi.mocked(npmReuseFingerprint).mockImplementation(actual.npmReuseFingerprint);
+    const first = await workspace("first");
+    const second = await workspace("second");
+    await expect(actual.npmReuseFingerprint(first, dirname(first))).resolves.toBeUndefined();
+    await reuse.install(dirname(first), first, ["ci"]);
+    await reuse.install(dirname(second), second, ["ci"]);
+    expect(vi.mocked(npmReuseFingerprint).mock.calls).toEqual([
+      [first, dirname(first)],
+      [second, dirname(second)],
+    ]);
+    expect(vi.mocked(npmCommand).mock.calls).toEqual([
+      [first, ["ci"]],
+      [second, ["ci"]],
+    ]);
+  },
+);
+
+it.skipIf(process.platform !== "linux")(
+  "falls back when npm rejects warm lock-only validation",
+  async () => {
+    const first = await workspace("first");
+    await reuse.install(dirname(first), first, ["ci"]);
+    const second = await workspace("second");
+    vi.mocked(npmCommand).mockRejectedValueOnce(new Error("lock-only failed"));
+    await reuse.install(dirname(second), second, ["ci"]);
+    expect(vi.mocked(npmCommand).mock.calls.map(([, args]) => args)).toEqual([
+      ["ci"],
+      ["ci", "--package-lock-only"],
+      ["ci"],
+    ]);
+    await expect(
+      access(join(dirname(second), "node_modules/fixture/package.json")),
+    ).resolves.toBeUndefined();
+  },
+);

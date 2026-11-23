@@ -137,7 +137,8 @@ public class PackageReleaseStatusService(
         statusCode is >= 200 and < 300;
 
     private static bool IsApiViewLanguageSupported(string language) =>
-        language.Equals("js", StringComparison.OrdinalIgnoreCase)
+        language.Equals("javascript", StringComparison.OrdinalIgnoreCase)
+        || language.Equals("js", StringComparison.OrdinalIgnoreCase)
         || language.Equals("csharp", StringComparison.OrdinalIgnoreCase)
         || language.Equals("java", StringComparison.OrdinalIgnoreCase)
         || language.Equals("python", StringComparison.OrdinalIgnoreCase)

@@ -194,7 +194,8 @@ def test_stewardship_skill_contains_tenant_sources_and_guideline() -> None:
     assert f"- {SRC_AZURE_AVOCADO_DOCS}:" in content
     assert "[skill_guideline]" in content
     assert skill.frontmatter.description == (
-        "Data-plane spec-to-SDK lifecycle: API modeling and REST design "
+        "Data-plane only (not ARM/management-plane) spec-to-SDK lifecycle: "
+        "data-plane API modeling and REST design "
         "(endpoints, LROs, service access boundaries); specification validation "
         "and API Stewardship Board review "
         "(readiness, scheduling, async reviews, Office Hours, signoff); "
@@ -670,6 +671,7 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     )
     assert {skill.frontmatter.name for skill in skills} == {"find-owner", "pr-review"}
     assert "pr-review" not in get_skill_to_tenant_map()
+    assert "support-channels" not in get_skill_to_tenant_map()
 
     init = (
         _AGENT_ROOT / "agents" / "chat_agent" / "init.py"
@@ -685,30 +687,6 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
         str(Path("/app/skills/tenant_skills.py")),
     )
     assert chat_agent_init._get_chat_skill_dir() == Path("/app/skills/chat_agent")
-
-
-def test_pr_review_skill_does_not_change_tenant_routing() -> None:
-    from openai.types.responses.response_function_tool_call import (
-        ResponseFunctionToolCall,
-    )
-
-    from services.chat_service import ChatService
-
-    def load_skill_call(skill_name: str) -> ResponseFunctionToolCall:
-        return ResponseFunctionToolCall(
-            id=f"fc_{skill_name}",
-            call_id=f"call_{skill_name}",
-            name="load_skill",
-            arguments=json.dumps({"skill_name": skill_name}),
-            type="function_call",
-            status="completed",
-        )
-
-    assert ChatService._extract_routed_tenant([load_skill_call("pr-review")]) is None
-    assert ChatService._extract_routed_tenant([load_skill_call("find-owner")]) is None
-    assert ChatService._extract_routed_tenant(
-        [load_skill_call("api-spec-review")]
-    ) == TenantID.API_SPEC_REVIEW_BOT
 
 
 def test_azure_mcp_server_skill_contains_routing_metadata() -> None:

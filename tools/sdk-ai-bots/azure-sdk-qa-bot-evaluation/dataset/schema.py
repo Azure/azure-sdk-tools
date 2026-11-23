@@ -100,6 +100,7 @@ JSON_SCHEMA: dict[str, Any] = {
         },
         "scenario": {"type": "string", "minLength": 1},
         "tenant": {"type": ["string", "null"]},
+        "expected_route_channel": {"type": ["string", "null"]},
         "source": {"type": "string"},
         "reviewed": {"type": "string", "enum": list(REVIEW_STATUSES)},
         "dedup_key": {"type": "string"},
@@ -125,13 +126,14 @@ class CanonicalCase:
     scenario: str
     reviewed: str = REVIEW_STATUS_TODO
     tenant: str | None = None
+    expected_route_channel: str | None = None
     source: str = ""
     expected_references: list[dict[str, str]] = field(default_factory=list)
     expected_knowledges: list[dict[str, str]] = field(default_factory=list)
     dedup_key: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        data: dict[str, Any] = {
             "testcase": self.testcase,
             "query": self.query,
             "ground_truth": self.ground_truth,
@@ -143,6 +145,9 @@ class CanonicalCase:
             "reviewed": self.reviewed,
             "dedup_key": self.dedup_key or case_hash(self.scenario, self.query),
         }
+        if self.expected_route_channel is not None:
+            data["expected_route_channel"] = self.expected_route_channel
+        return data
 
     @classmethod
     def from_dict(cls, obj: dict[str, Any]) -> "CanonicalCase":
@@ -154,6 +159,7 @@ class CanonicalCase:
             scenario=obj["scenario"],
             reviewed=normalize_review_status(obj.get("reviewed", REVIEW_STATUS_TODO)),
             tenant=obj.get("tenant"),
+            expected_route_channel=obj.get("expected_route_channel"),
             source=obj.get("source", ""),
             expected_references=list(obj.get("expected_references", []) or []),
             expected_knowledges=list(obj.get("expected_knowledges", []) or []),
@@ -198,6 +204,10 @@ def validate_case(obj: Any, where: str = "case") -> None:
 
     if "tenant" in obj and obj["tenant"] is not None and not isinstance(obj["tenant"], str):
         raise ValidationError(f"{where}: 'tenant' must be a string or null")
+
+    if "expected_route_channel" in obj and obj["expected_route_channel"] is not None:
+        if not isinstance(obj["expected_route_channel"], str) or not obj["expected_route_channel"].strip():
+            raise ValidationError(f"{where}: 'expected_route_channel' must be a non-empty string or null")
 
     if "source" in obj and not isinstance(obj["source"], str):
         raise ValidationError(f"{where}: 'source' must be a string")

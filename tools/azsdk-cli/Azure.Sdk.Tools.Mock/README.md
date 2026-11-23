@@ -27,13 +27,13 @@ The MCP client sees the exact same tool list and schemas as the real CLI — onl
 dotnet run --project tools/azsdk-cli/Azure.Sdk.Tools.Mock
 ```
 
-### As an MCP server in VS Code
+### As an MCP server in VS Code or Copilot CLI
 
-Add to `.vscode/mcp.json`:
+Add to the repo-root `.mcp.json`:
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "azure-sdk-mock": {
       "type": "stdio",
       "command": "dotnet",

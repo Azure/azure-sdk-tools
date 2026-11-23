@@ -78,13 +78,14 @@ async def test_image_attempt_limit_keeps_failure_and_limit_notices(monkeypatch, 
     assert "additional images were not read" in items[-1]["content"]
 
 
-@pytest.mark.parametrize("conversation_type, include_tag, last_lookup_fails", [
-    ("teams_channel", True, False), ("teams_channel", False, False),
-    (None, True, False), ("teams_channel", True, True),
+@pytest.mark.parametrize("conversation_type, include_tag, lookup_outcome", [
+    ("teams_channel", True, "success"), ("teams_channel", False, "success"),
+    (None, True, "success"), ("teams_channel", True, "failure"),
+    ("teams_channel", True, "recovery"),
 ])
 @pytest.mark.parametrize("output_type", ["function_call_output", "message"])
 def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
-    conversation_type, include_tag, last_lookup_fails, output_type
+    conversation_type, include_tag, lookup_outcome, output_type
 ):
     import json
 
@@ -109,8 +110,10 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         ResolveGitHubUsersResult(errors={"unlinked": "No linked Microsoft account was found."}),
         ResolveGitHubUsersResult(errors={"service": "Not a person."}),
     ]
-    if last_lookup_fails:
+    if lookup_outcome in ("failure", "recovery"):
         lookups.append(ResolveGitHubUsersResult(errors={"linked-user": "HTTP 403"}))
+    if lookup_outcome == "recovery":
+        lookups.append(ResolveGitHubUsersResult(mentions={"linked-user": mention}))
     for index, result in enumerate(lookups):
         call_id = f"lookup-{index}"
         tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
@@ -148,17 +151,148 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         message=ChatMessage(role="user", content="Who can review?"),
     )
 
-    result = ChatService()._postprocess(request, response, None)
+    service = ChatService()
+    decoded_results = service._extract_tool_results(output)
+    assert decoded_results["resolve_github_users"] == lookups
+
+    result = service._postprocess(request, response, None)
 
     assert result.answer == answer
     assert result.mentions == (
-        [mention] if conversation_type and include_tag and not last_lookup_fails else None
+        [mention] if conversation_type and include_tag and lookup_outcome != "failure" else None
     )
     if result.mentions:
         assert result.model_dump(mode="json")["mentions"] == [{
             "text": mention.text,
             "mentioned": {"id": mention.mentioned.id, "name": "Linked Person"},
         }]
+
+
+@pytest.mark.parametrize("output_type", ["function_call_output", "message"])
+@pytest.mark.parametrize("with_full_context", [True, False])
+@pytest.mark.parametrize("searches", ["mixed", "wiki_only", "last_empty", "empty"])
+def test_references_and_full_context_use_all_search_calls(
+    output_type, with_full_context, searches
+):
+    import json
+
+    from openai.types.responses import (
+        Response, ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage, ResponseOutputText,
+    )
+
+    from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
+
+    earlier = Reference(
+        title="Earlier section", source="azure-sdk-docs-eng",
+        link="https://example.test/shared", content="Earlier evidence",
+    )
+    later = earlier.model_copy(update={
+        "title": "Later section", "content": "Additional evidence from the same document",
+    })
+    repeated = Reference(
+        title="Repeated document", source="azure-sdk-docs-eng",
+        link="https://example.test/repeated", content="Repeated evidence",
+    )
+    wiki = Reference(
+        title="Wiki guidance", source="azure-sdk-docs-eng",
+        link="https://example.test/wiki", content="Wiki evidence",
+    )
+    calls = {
+        "mixed": [
+            ("search_knowledge_base", [earlier, repeated]),
+            ("wiki_search", [wiki, repeated]),
+            ("search_knowledge_base", [later, repeated]),
+        ],
+        "wiki_only": [("wiki_search", [wiki, repeated])],
+        "last_empty": [
+            ("search_knowledge_base", [earlier, repeated]),
+            ("search_knowledge_base", []),
+            ("wiki_search", []),
+        ],
+        "empty": [("search_knowledge_base", []), ("wiki_search", [])],
+    }[searches]
+    expected_context = {
+        "mixed": [earlier, repeated, later, wiki],
+        "wiki_only": [wiki, repeated],
+        "last_empty": [earlier, repeated],
+        "empty": [],
+    }[searches]
+    output = []
+    for index, (name, references) in enumerate(calls):
+        call_id = f"search-{index}"
+        result = SearchKnowledgeBaseResult(results=references)
+        wrapped_output = json.dumps([result.model_dump_json()])
+        tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
+        if output_type == "function_call_output":
+            tool_output = ResponseFunctionToolCallOutputItem.model_construct(
+                type=output_type, id=call_id, call_id=call_id,
+                output=wrapped_output, status="completed",
+            )
+        else:
+            tool_output = ResponseOutputMessage.model_construct(
+                type="message", id=call_id, role="assistant", status="completed", content=[],
+                call_id=call_id, output=wrapped_output,
+            )
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call", name=name, call_id=call_id, arguments="{}",
+            ),
+            tool_output,
+        ])
+    text = (
+        "Answer using retrieved evidence.\n\n**References**\n"
+        "- [Earlier section](https://example.test/shared)\n"
+        "- [Wiki guidance](https://example.test/wiki)\n"
+        "- [Repeated document](https://example.test/repeated)\n"
+        "- [Later section](https://example.test/shared)\n"
+        "- [Unmatched document](https://example.test/unmatched)"
+    )
+    output.append(ResponseOutputMessage.model_construct(
+        type="message", id="answer", role="assistant", status="completed",
+        content=[ResponseOutputText.model_construct(
+            type="output_text", text=text, annotations=[],
+        )],
+    ))
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id="azure_sdk_qa_bot",
+        message=ChatMessage(role="user", content="Review this question"),
+        with_full_context=with_full_context,
+    )
+    service = ChatService()
+    decoded_results = service._extract_tool_results(output)
+    assert decoded_results == {
+        name: [
+            SearchKnowledgeBaseResult(results=references)
+            for tool_name, references in calls if tool_name == name
+        ]
+        for name, _ in calls
+    }
+    cited = [
+        earlier, wiki, repeated, later,
+        Reference(title="Unmatched document", source="", link="https://example.test/unmatched"),
+    ]
+    expected_references = [
+        ref if ref in expected_context else Reference(title=ref.title, source="", link=ref.link)
+        for ref in cited
+    ]
+    if searches == "last_empty":
+        # Keep link-only fallback when the cited section was not retrieved.
+        expected_references[3] = earlier
+
+    result = service._postprocess(request, response, "conversation")
+
+    assert result.answer == "Answer using retrieved evidence."
+    assert result.references == expected_references
+    assert result.agent_conversation_id == "conversation"
+    if with_full_context and expected_context:
+        assert json.loads(result.full_context) == [
+            DocumentContext.from_reference(ref).model_dump(mode="json")
+            for ref in expected_context
+        ]
+    else:
+        assert result.full_context is None
 
 
 # -- Memory scope handling ------------
@@ -318,6 +452,9 @@ def _version(version, branch="feature/foo", status="active"):
 
 def _project_with_versions(*pages):
     project = MagicMock()
+    latest = SimpleNamespace(name="agent", version="99", status="active")
+    project.agents.get = AsyncMock(return_value=SimpleNamespace(versions=SimpleNamespace(latest=latest)))
+    project.agents.get_version = AsyncMock(return_value=latest)
 
     async def get_next(token):
         await asyncio.sleep(0)
@@ -427,20 +564,17 @@ async def test_branch_tag_in_channel_title(monkeypatch, trailing):
 
 
 @pytest.mark.asyncio
-async def test_missing_deployment_fails(monkeypatch):
-    from services.chat_service import AgentRoutingError
+async def test_missing_deployment_returns_none(monkeypatch, caplog):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([_version("42")])
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:missing] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:missing] q", "agent") is None
+    project.agents.get.assert_not_called()
+    assert "branch=missing; falling back to the configured default" in caplog.text
 
 
 @pytest.mark.asyncio
 async def test_metadata_selects_matching_branch_and_agent_across_pages(monkeypatch):
-    from services.chat_service import AgentRoutingError
-
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     chat_project = _project_with_versions(
         [_version("43", "other-branch")], [_version("42", "feature/Case/path")],
@@ -461,9 +595,8 @@ async def test_metadata_selects_matching_branch_and_agent_across_pages(monkeypat
         "[branch:other-branch] question", "chat-agent"
     ) == "43"
     for branch, agent in [("missing", "chat-agent"), ("other-branch", "mcp-agent")]:
-        with pytest.raises(AgentRoutingError) as exc:
-            await service._resolve_request_version(f"[branch:{branch}] question", agent)
-        assert exc.value.status_code == 404
+        assert await service._resolve_request_version(f"[branch:{branch}] question", agent) is None
+    project.agents.get.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -505,39 +638,29 @@ async def test_deleted_candidate_does_not_hide_older_active_version(monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_untagged_versions_are_not_selected(monkeypatch):
-    from services.chat_service import AgentRoutingError
-
+async def test_untagged_versions_do_not_match_branch(monkeypatch):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([AgentVersionDetails({
         "version": "43", "metadata": {}, "status": "active",
     })])
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:feature/foo] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
     project.agents.get_version.assert_not_called()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status", ["creating", "failed", None])
-async def test_no_active_version_returns_404(monkeypatch, status):
-    from services.chat_service import AgentRoutingError
-
+async def test_no_active_branch_version_returns_none(monkeypatch, status):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([_version("43", status=status)])
     project.agents.get_version = AsyncMock(return_value=_version("43", status=status))
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:feature/foo] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("present", [True, False])
 async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present):
-    from services.chat_service import AgentRoutingError
-
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     versions = [_version("42")] if present else []
     project = _project_with_versions(versions)
@@ -545,10 +668,7 @@ async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present
     results = await asyncio.gather(*(
         service._resolve_request_version("[branch:feature/foo] q", "agent") for _ in range(5)
     ), return_exceptions=True)
-    if present:
-        assert results == ["42"] * 5
-    else:
-        assert all(isinstance(result, AgentRoutingError) and result.status_code == 404 for result in results)
+    assert results == (["42"] if present else [None]) * 5
     assert project.agents.list_versions.call_count == 5
     project.agents.list_versions.assert_called_with("agent", order="desc")
     versions.insert(0, _version("43"))
@@ -560,17 +680,19 @@ async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present
 @pytest.mark.parametrize("missing_agent", [True, False])
 async def test_foundry_errors_are_not_cached(monkeypatch, missing_agent):
     from azure.core.exceptions import ResourceNotFoundError, ServiceRequestError
-    from services.chat_service import AgentRoutingError
 
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
-    project = MagicMock()
+    project = _project_with_versions([])
     project.agents.list_versions.side_effect = (
         ResourceNotFoundError("missing") if missing_agent else ServiceRequestError("unavailable")
     )
     service = ChatService(project_client=project)
     for _ in range(2):
-        with pytest.raises(AgentRoutingError if missing_agent else ServiceRequestError):
-            await service._resolve_request_version("[branch:feature/foo] q", "agent")
+        if missing_agent:
+            assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
+        else:
+            with pytest.raises(ServiceRequestError):
+                await service._resolve_request_version("[branch:feature/foo] q", "agent")
     assert project.agents.list_versions.call_count == 2
 
 
@@ -722,3 +844,28 @@ async def test_chat_selects_request_version_before_configured_version(
     else:
         project.agents.get_version.assert_awaited_once_with("agent", expected)
         project.agents.get.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("configured_version", ["17", None])
+async def test_chat_branch_fallback_uses_default(monkeypatch, configured_version):
+    monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
+    project = _project_with_versions([])
+    service = ChatService(
+        project_client=project,
+        settings={"AI_FOUNDRY_AGENT_NAME": "agent", "AI_FOUNDRY_AGENT_VERSION": configured_version}.get,
+    )
+    service._get_openai_client = MagicMock(side_effect=RuntimeError("stop after agent selection"))
+    request = ChatRequest(
+        tenant_id="general_qa_bot", message=ChatMessage(role="user", content="[branch:feature/foo] q"),
+    )
+
+    with pytest.raises(RuntimeError, match="stop after agent selection"):
+        await service.chat(request)
+
+    if configured_version is None:
+        project.agents.get.assert_awaited_once_with("agent")
+    else:
+        project.agents.get.assert_not_called()
+        project.agents.get_version.assert_awaited_with("agent", configured_version)
+    service._get_openai_client.assert_called_once_with("agent")

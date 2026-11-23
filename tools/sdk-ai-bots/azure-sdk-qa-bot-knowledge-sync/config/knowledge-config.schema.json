@@ -167,14 +167,14 @@
         },
         "ignoredPaths": {
           "type": "array",
-          "description": "Paths to ignore during processing",
+          "description": "Paths to ignore relative to the configured source directory; generated sources match flattened filename prefixes",
           "items": {
             "type": "string"
           }
         },
         "relativeByRepoPath": {
           "type": "boolean",
-          "description": "Whether paths are relative to the repository root",
+          "description": "Whether citation filenames and metadata override paths are relative to the repository root; processing remains limited to the configured path",
           "default": false
         },
         "isGenerated": {

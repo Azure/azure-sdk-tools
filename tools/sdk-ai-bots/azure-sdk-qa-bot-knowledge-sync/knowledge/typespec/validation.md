@@ -51,7 +51,7 @@ npm ci
 npx tsv specification/yourservice/YourService.Management
 ```
 
-Always follow the TypeSpec Validation wiki instructions for local repro before investigating config issues.
+Always follow the [TypeSpec Validation instructions](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/validation/typespec-validation.md) for local repro before investigating config issues.
 
 ## Inconsistent filename or folder casing causes TypeSpec validation failure on Linux CI
 

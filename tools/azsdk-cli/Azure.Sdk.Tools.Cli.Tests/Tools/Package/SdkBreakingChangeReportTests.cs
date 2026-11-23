@@ -41,7 +41,7 @@ public class SdkBreakingChangeReportTests
         _config = new Mock<ISpecGenSdkConfigHelper>(MockBehavior.Strict);
         var classifier = new Mock<ISdkBreakingChangeClassificationService>();
         classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SdkBreakingChangeDetectionResult
             {
                 HasBreakingChange = true,

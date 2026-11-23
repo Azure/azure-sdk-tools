@@ -53,5 +53,11 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
         /// </summary>
         [JsonPropertyName("originBreaks")]
         public List<string>? OriginBreaks { get; set; }
+
+        /// <summary>
+        /// Whether none, some, or all original breaking changes match the package's SDK suppressions.
+        /// </summary>
+        [JsonPropertyName("suppressionStatus")]
+        public SdkBreakingChangeSuppressionStatus SuppressionStatus { get; set; }
     }
 }

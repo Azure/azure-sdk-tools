@@ -158,6 +158,17 @@ breaks: `generator`, `client customization`, or `manual`. Other languages can
 continue returning entries without `mitigationStrategy`. `category` always
 describes the root cause, not whether or how the change can be mitigated.
 
+Each classified entry also includes `suppressionStatus`, computed from
+`sdk-suppressions.yaml` in the TypeSpec project directory rather than from the
+agent response. YAML is deserialized into a typed model: the top-level
+`suppressions` mapping associates SDK repository names with lists of package
+entries, each containing a `package` string and a `breaking-changes` string list.
+Matching uses the SDK repository language key, exact package
+name, and exact `originBreaks` text. The status is `suppressed` when all original
+entries match, `partiallySuppressed` when only some match, and `none` when no
+entries match or the original entries are missing or empty. Suppression status does not remove
+breaking changes or change `hasBreakingChange`.
+
 **Classified .NET result:**
 
 ```json
@@ -173,6 +184,7 @@ describes the root cause, not whether or how the change can be mitigated.
             "category": "unknown",
             "resolution": "Review the removed member against the released API and TypeSpec source before selecting a fix; no safe mapping has been verified.",
             "mitigationStrategy": "manual",
+            "suppressionStatus": "none",
             "originBreaks": [
                 "CP0002: Member Azure.Example.Widget.Get(string) removed"
             ]
@@ -201,6 +213,7 @@ describes the root cause, not whether or how the change can be mitigated.
             "breakingChange": "ContainerRegistry.Prop changed from string to int32",
             "category": "spec change",
             "resolution": "Review the service contract change with the owner before choosing a compatible representation.",
+            "suppressionStatus": "none",
             "originBreaks": [
                 "Field Prop of struct ContainerRegistry changed from string to int32"
             ]

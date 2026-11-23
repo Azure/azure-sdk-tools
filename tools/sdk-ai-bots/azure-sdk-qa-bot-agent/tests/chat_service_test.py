@@ -1007,38 +1007,18 @@ def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:
 
 @pytest.mark.asyncio
 async def test_support_channel_catalog_loads_and_injects_into_skill() -> None:
-    from pathlib import Path
-    from agent_framework import InlineSkill, SkillFrontmatter
-
     from models.support_channel import get_support_channel, parse_support_channel_catalog
-    from skills.support_channels import inject_support_channels
+    from skills.support_channels import create_support_channels_skill
 
-    skill_text = (
-        Path(__file__).resolve().parents[1]
-        / "skills"
-        / "chat_agent"
-        / "support-channels"
-        / "SKILL.md"
-    ).read_text(encoding="utf-8")
-    assert "{{support_channels}}" in skill_text
-
-    base_skill = InlineSkill(
-        frontmatter=SkillFrontmatter(name="support-channels", description="Support channels"),
-        instructions=skill_text,
-    )
-    other_skill = InlineSkill(
-        frontmatter=SkillFrontmatter(name="pr-review", description="PR review"),
-        instructions="PR review instructions",
-    )
-    injected = inject_support_channels([other_skill, base_skill])
-    assert [s.frontmatter.name for s in injected] == ["pr-review", "support-channels"]
-    skill = injected[1]
+    skill = create_support_channels_skill()
+    assert skill is not None
+    assert skill.frontmatter.name == "support-channels"
     content = (
         await skill.get_content()
         if hasattr(skill, "get_content")
         else skill.content
     )
-    assert "{{support_channels}}" not in content
+    assert "{{channel:<key>}}" in content
     assert "sdk_release_support" in content
     assert "https://teams.microsoft.com" not in content
     assert get_support_channel("language_mobile") is None

@@ -452,6 +452,9 @@ def _version(version, branch="feature/foo", status="active"):
 
 def _project_with_versions(*pages):
     project = MagicMock()
+    latest = SimpleNamespace(name="agent", version="99", status="active")
+    project.agents.get = AsyncMock(return_value=SimpleNamespace(versions=SimpleNamespace(latest=latest)))
+    project.agents.get_version = AsyncMock(return_value=latest)
 
     async def get_next(token):
         await asyncio.sleep(0)
@@ -561,20 +564,17 @@ async def test_branch_tag_in_channel_title(monkeypatch, trailing):
 
 
 @pytest.mark.asyncio
-async def test_missing_deployment_fails(monkeypatch):
-    from services.chat_service import AgentRoutingError
+async def test_missing_deployment_returns_none(monkeypatch, caplog):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([_version("42")])
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:missing] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:missing] q", "agent") is None
+    project.agents.get.assert_not_called()
+    assert "branch=missing; falling back to the configured default" in caplog.text
 
 
 @pytest.mark.asyncio
 async def test_metadata_selects_matching_branch_and_agent_across_pages(monkeypatch):
-    from services.chat_service import AgentRoutingError
-
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     chat_project = _project_with_versions(
         [_version("43", "other-branch")], [_version("42", "feature/Case/path")],
@@ -595,9 +595,8 @@ async def test_metadata_selects_matching_branch_and_agent_across_pages(monkeypat
         "[branch:other-branch] question", "chat-agent"
     ) == "43"
     for branch, agent in [("missing", "chat-agent"), ("other-branch", "mcp-agent")]:
-        with pytest.raises(AgentRoutingError) as exc:
-            await service._resolve_request_version(f"[branch:{branch}] question", agent)
-        assert exc.value.status_code == 404
+        assert await service._resolve_request_version(f"[branch:{branch}] question", agent) is None
+    project.agents.get.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -639,39 +638,29 @@ async def test_deleted_candidate_does_not_hide_older_active_version(monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_untagged_versions_are_not_selected(monkeypatch):
-    from services.chat_service import AgentRoutingError
-
+async def test_untagged_versions_do_not_match_branch(monkeypatch):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([AgentVersionDetails({
         "version": "43", "metadata": {}, "status": "active",
     })])
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:feature/foo] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
     project.agents.get_version.assert_not_called()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status", ["creating", "failed", None])
-async def test_no_active_version_returns_404(monkeypatch, status):
-    from services.chat_service import AgentRoutingError
-
+async def test_no_active_branch_version_returns_none(monkeypatch, status):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([_version("43", status=status)])
     project.agents.get_version = AsyncMock(return_value=_version("43", status=status))
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:feature/foo] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("present", [True, False])
 async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present):
-    from services.chat_service import AgentRoutingError
-
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     versions = [_version("42")] if present else []
     project = _project_with_versions(versions)
@@ -679,10 +668,7 @@ async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present
     results = await asyncio.gather(*(
         service._resolve_request_version("[branch:feature/foo] q", "agent") for _ in range(5)
     ), return_exceptions=True)
-    if present:
-        assert results == ["42"] * 5
-    else:
-        assert all(isinstance(result, AgentRoutingError) and result.status_code == 404 for result in results)
+    assert results == (["42"] if present else [None]) * 5
     assert project.agents.list_versions.call_count == 5
     project.agents.list_versions.assert_called_with("agent", order="desc")
     versions.insert(0, _version("43"))
@@ -694,17 +680,19 @@ async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present
 @pytest.mark.parametrize("missing_agent", [True, False])
 async def test_foundry_errors_are_not_cached(monkeypatch, missing_agent):
     from azure.core.exceptions import ResourceNotFoundError, ServiceRequestError
-    from services.chat_service import AgentRoutingError
 
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
-    project = MagicMock()
+    project = _project_with_versions([])
     project.agents.list_versions.side_effect = (
         ResourceNotFoundError("missing") if missing_agent else ServiceRequestError("unavailable")
     )
     service = ChatService(project_client=project)
     for _ in range(2):
-        with pytest.raises(AgentRoutingError if missing_agent else ServiceRequestError):
-            await service._resolve_request_version("[branch:feature/foo] q", "agent")
+        if missing_agent:
+            assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
+        else:
+            with pytest.raises(ServiceRequestError):
+                await service._resolve_request_version("[branch:feature/foo] q", "agent")
     assert project.agents.list_versions.call_count == 2
 
 
@@ -1068,3 +1056,28 @@ support_channels:
     link: "https://example.com/not-teams"
 """
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("configured_version", ["17", None])
+async def test_chat_branch_fallback_uses_default(monkeypatch, configured_version):
+    monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
+    project = _project_with_versions([])
+    service = ChatService(
+        project_client=project,
+        settings={"AI_FOUNDRY_AGENT_NAME": "agent", "AI_FOUNDRY_AGENT_VERSION": configured_version}.get,
+    )
+    service._get_openai_client = MagicMock(side_effect=RuntimeError("stop after agent selection"))
+    request = ChatRequest(
+        tenant_id="general_qa_bot", message=ChatMessage(role="user", content="[branch:feature/foo] q"),
+    )
+
+    with pytest.raises(RuntimeError, match="stop after agent selection"):
+        await service.chat(request)
+
+    if configured_version is None:
+        project.agents.get.assert_awaited_once_with("agent")
+    else:
+        project.agents.get.assert_not_called()
+        project.agents.get_version.assert_awaited_with("agent", configured_version)
+    service._get_openai_client.assert_called_once_with("agent")

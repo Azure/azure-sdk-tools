@@ -87,7 +87,7 @@ _CHANNEL_PLACEHOLDER_RE = re.compile(r"\{\{channel:([^}\n]+)\}\}")
 
 class AgentRoutingError(ValueError):
     # Default to 422 for invalid routing input, consistent with FastAPI validation;
-    # disabled routing and missing deployments explicitly use 403 and 404.
+    # disabled routing explicitly uses 403.
     def __init__(self, message: str, status_code: int = 422) -> None:
         super().__init__(message)
         self.status_code = status_code
@@ -378,7 +378,10 @@ class ChatService:
                 self._get_project_client(), agent_name, target
             )
             if version is None:
-                raise AgentRoutingError(f"No active deployment of '{agent_name}' for '{target}'.", 404)
+                logger.warning(
+                    "No active version of agent=%s for branch=%s; falling back to the configured default.",
+                    agent_name, target,
+                )
             return version
         return None
 

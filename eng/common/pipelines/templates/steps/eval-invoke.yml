@@ -18,8 +18,6 @@ parameters:
     default: opensource-api-connection
 
 steps:
-  - script: npm install --no-save --package-lock=false @github/copilot@1.0.105 --userconfig "$(Build.SourcesDirectory)/.npmrc"
-    displayName: 'Install Copilot CLI 1.0.105'
   - ${{ if parameters.UseAzSdkAuthentication }}:
     - task: AzureCLI@2
       displayName: 'vally eval $(shardName) (authenticated)'
@@ -37,7 +35,6 @@ steps:
       env:
         COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
         AZSDK_COPILOT_GITHUB_TOKEN: $(COPILOT_GITHUB_TOKEN)
-        AZSDK_COPILOT_CLI_PATH: $(Build.SourcesDirectory)/node_modules/.bin/copilot
 
   - ${{ else }}:
     - script: |

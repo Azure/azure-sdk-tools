@@ -102,8 +102,8 @@ public class SdkBreakingChangeSuppressionTests
 
         var result = await ClassifyAsync(directory.DirectoryPath, "Go", "test-package", logger, ["Removed Widget"]);
 
-        Assert.That(result, Is.Null);
-        Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("load SDK suppressions")), Is.True);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("Failed to read SDK suppression file")), Is.True);
     }
 
     [TestCase("other-package")]
@@ -126,7 +126,7 @@ public class SdkBreakingChangeSuppressionTests
         Assert.That(result!.BreakingChanges.Single().SuppressionStatus, Is.EqualTo(SdkBreakingChangeSuppressionStatus.None));
         if (packageName == null)
         {
-            Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("without an SDK package name")), Is.True);
+            Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("Cannot match SDK suppressions without an SDK package name")), Is.True);
         }
     }
 
@@ -154,7 +154,7 @@ public class SdkBreakingChangeSuppressionTests
     [TestCase("suppressions: { azure-sdk-for-go: [{ package: test-package, breaking-changes: [null] }] }")]
     [TestCase("suppressions: { azure-sdk-for-go: [{ package: test-package, breaking-changes: [], extra: true }] }")]
     [TestCase("suppressions: {}\nsuppressions: {}")]
-    public async Task Classify_InvalidSuppressionsReportsFailure(string yaml)
+    public async Task Classify_InvalidSuppressionsLeavesChangesUnsuppressed(string yaml)
     {
         using var directory = TempDirectory.Create("sdk-suppressions");
         await File.WriteAllTextAsync(Path.Combine(directory.DirectoryPath, "sdk-suppressions.yaml"), yaml);
@@ -162,8 +162,25 @@ public class SdkBreakingChangeSuppressionTests
 
         var result = await ClassifyAsync(directory.DirectoryPath, "Go", "test-package", logger, ["Removed Widget"]);
 
-        Assert.That(result, Is.Null);
-        Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("load SDK suppressions")), Is.True);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.BreakingChanges.Single());
+        Assert.IsTrue(result.BreakingChanges.Single().SuppressionStatus == SdkBreakingChangeSuppressionStatus.None);
+    }
+
+    [TestCase("suppressions: [")]
+    [TestCase("suppressions: {}\nsuppressions: {}")]
+    public async Task Classify_YamlParseFailureIsLoggedAndPreservesClassification(string yaml)
+    {
+        using var directory = TempDirectory.Create("sdk-suppressions");
+        await File.WriteAllTextAsync(Path.Combine(directory.DirectoryPath, "sdk-suppressions.yaml"), yaml);
+        var logger = new TestLogger<SdkBreakingChangeClassificationService>();
+
+        var result = await ClassifyAsync(directory.DirectoryPath, "Go", "test-package", logger, ["Removed Widget"]);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.HasBreakingChange, Is.True);
+        Assert.That(result.BreakingChanges.Single().SuppressionStatus, Is.EqualTo(SdkBreakingChangeSuppressionStatus.None));
+        Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("Failed to parse SDK suppression file")), Is.True);
     }
 
     private static Task<SdkBreakingChangeDetectionResult?> ClassifyAsync(

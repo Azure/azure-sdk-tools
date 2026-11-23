@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Microsoft.Extensions.AI;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -57,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 try
                 {
                     var detectionResult = JsonSerializer.Deserialize<SdkBreakingChangeDetectionResult>(result);
-                    if (detectionResult?.BreakingChanges != null && !string.IsNullOrWhiteSpace(packageName))
+                    if (detectionResult?.BreakingChanges != null)
                     {
                         var suppressions = await LoadSuppressionsAsync(tspProjectPath, language, packageName, ct);
                         foreach (var breakingChange in detectionResult.BreakingChanges)
@@ -97,6 +98,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return new HashSet<string>(StringComparer.Ordinal);
             }
 
+            if (string.IsNullOrWhiteSpace(packageName))
+            {
+                _logger.LogWarning("Cannot match SDK suppressions without an SDK package name. No SDK breaking changes will be suppressed");
+                return new HashSet<string>(StringComparer.Ordinal);
+            }
+
             var path = Path.Combine(tspProjectPath, "sdk-suppressions.yaml");
             string content;
             try
@@ -114,18 +121,22 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return new HashSet<string>(StringComparer.Ordinal);
             }
 
-            var document = new DeserializerBuilder()
-                .WithDuplicateKeyChecking()
-                .Build()
-                .Deserialize<SdkSuppressionsDocument>(content);
+            SdkSuppressionsDocument? document;
+            try
+            {
+                document = new DeserializerBuilder()
+                    .WithDuplicateKeyChecking()
+                    .Build()
+                    .Deserialize<SdkSuppressionsDocument>(content);
+            }
+            catch (YamlException ex)
+            {
+                _logger.LogError(ex, "Failed to parse SDK suppression file '{Path}'. No SDK breaking changes will be suppressed.", path);
+                return new HashSet<string>(StringComparer.Ordinal);
+            }
             if (document?.Suppressions == null)
             {
                 _logger.LogInformation("SDK suppression file '{Path}' does not contain a 'suppressions' mapping.", path);
-                return new HashSet<string>(StringComparer.Ordinal);
-            }
-            if (string.IsNullOrWhiteSpace(packageName))
-            {
-                _logger.LogWarning("Cannot match SDK suppressions in {Path} without an SDK package name.", path);
                 return new HashSet<string>(StringComparer.Ordinal);
             }
 

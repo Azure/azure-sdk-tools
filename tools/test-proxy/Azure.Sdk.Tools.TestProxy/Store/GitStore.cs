@@ -2,6 +2,7 @@ using System.IO;
 using System.Net;
 using System;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Net.Http;
@@ -282,27 +283,36 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        public async Task<string> Restore(string pathToAssetsJson) {
-            var config = await ParseConfigurationFile(pathToAssetsJson);
+        public async Task<string> Restore(string pathToAssetsJson)
+        {
+            var initialConfig = await ParseConfigurationFile(pathToAssetsJson);
+            var restoreQueue = InitTasks.GetOrAdd(initialConfig.AssetsJsonRelativeLocation, new TaskQueue());
 
-            var restoreQueue = InitTasks.GetOrAdd(config.AssetsJsonRelativeLocation, new TaskQueue());
-
-            await restoreQueue.EnqueueAsync(async () =>
+            return await restoreQueue.EnqueueAsync(async () =>
             {
-                using var repositoryLock = await LockRepositoryAsync(config);
-
-                var initialized = IsAssetsRepoInitialized(config);
-
-                if (!initialized)
+                var (config, repositoryLock) = await LockCurrentRepositoryAsync(initialConfig);
+                using (repositoryLock)
                 {
-                    InitializeAssetsRepoCore(config);
+                    if (!IsAssetsRepoInitialized(config))
+                    {
+                        InitializeAssetsRepoCore(config);
+                    }
+                    else if ((config.AssetsRepo != initialConfig.AssetsRepo || config.Tag != initialConfig.Tag) &&
+                        Assets.TryGetValue(config.AssetsJsonRelativeLocation, out var cachedTag) && cachedTag == config.Tag)
+                    {
+                        // The tag cached by this store may describe an earlier checkout (or a different repository).
+                        SetSafeDirectory(config);
+                        if (!IsAtConfiguredTag(GetCommit(config, "HEAD"), GetConfiguredTagCommit(config)))
+                        {
+                            Assets.TryRemove(config.AssetsJsonRelativeLocation, out _);
+                        }
+                    }
+
+                    CheckoutRepoAtConfig(config, cleanEnabled: true);
+                    await BreadCrumb.Update(config);
+                    return config.AssetsRepoLocation.ToString();
                 }
-
-                CheckoutRepoAtConfig(config, cleanEnabled: true);
-                await BreadCrumb.Update(config);
             });
-
-            return config.AssetsRepoLocation.ToString();
         }
 
         /// <summary>
@@ -314,62 +324,124 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task Reset(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var allowReset = false;
-            string[] pendingChanges;
+            ResetState confirmedState = null;
 
-            // The lock isn't held while waiting for an answer, so that other processes can use the repository meanwhile.
-            using (await LockRepositoryAsync(config))
+            while (true)
             {
-                var initialized = IsAssetsRepoInitialized(config);
-
-                if (!initialized)
+                var (currentConfig, repositoryLock) = await LockCurrentRepositoryAsync(config);
+                using (repositoryLock)
                 {
-                    InitializeAssetsRepoCore(config);
+                    config = currentConfig;
+                    if (!IsAssetsRepoInitialized(config))
+                    {
+                        InitializeAssetsRepoCore(config);
+                    }
+
+                    if (DetectPendingChanges(config).Length == 0)
+                    {
+                        HideOrigin(config);
+                        return;
+                    }
+
+                    var state = GetResetState(config);
+                    if (state == confirmedState)
+                    {
+                        if (!string.IsNullOrWhiteSpace(config.Tag))
+                        {
+                            SetOrigin(config);
+                            Clean(config);
+                            if (!IsAtConfiguredTag(state.Head, state.TagCommit))
+                            {
+                                Assets.TryRemove(config.AssetsJsonRelativeLocation, out _);
+                            }
+                            CheckoutRepoAtConfig(config, cleanEnabled: false);
+                            await BreadCrumb.Update(config);
+                        }
+
+                        HideOrigin(config);
+                        return;
+                    }
+
+                    confirmedState = state;
+                    HideOrigin(config);
                 }
 
-                SetOrigin(config);
-                pendingChanges = DetectPendingChanges(config);
-            }
-
-            if (pendingChanges.Length > 0)
-            {
+                // Other processes can change the repository while the lock is released for input.
                 _consoleWrapper.WriteLine($"There are pending git changes, are you sure you want to reset? [Y|N]");
                 while (true)
                 {
-                    string response = _consoleWrapper.ReadLine();
-                    response = response.ToLowerInvariant();
+                    string response = _consoleWrapper.ReadLine().ToLowerInvariant();
                     if (response.Equals("y"))
                     {
-                        allowReset = true;
                         break;
                     }
                     else if (response.Equals("n"))
                     {
-                        allowReset = false;
-                        break;
+                        return;
                     }
-                    else
-                    {
-                        _consoleWrapper.WriteLine("Please answer [Y|N]");
-                    }
-                }
-            }
 
-            using (await LockRepositoryAsync(config))
-            {
-                if (allowReset)
-                {
-                    if (!string.IsNullOrWhiteSpace(config.Tag))
-                    {
-                        Clean(config);
-                        CheckoutRepoAtConfig(config, cleanEnabled: false);
-                        await BreadCrumb.Update(config);
-                    }
+                    _consoleWrapper.WriteLine("Please answer [Y|N]");
                 }
-
-                HideOrigin(config);
             }
         }
+
+        private sealed record ResetState(string Repository, string AssetsRepo, string CheckoutPaths, string Tag,
+            string Head, string TagCommit, string Status, string StagedChanges, string FileContents);
+
+        private ResetState GetResetState(GitAssetsConfiguration config)
+        {
+            var repository = config.AssetsRepoLocation.ToString();
+            var head = GetCommit(config, "HEAD");
+            var tagCommit = GetConfiguredTagCommit(config);
+            // Porcelain status alone doesn't detect further edits to a dirty file. Include staged object IDs and hash
+            // working files, including untracked and ignored files that 'git clean -xdf' can discard.
+            var status = GitHandler.Run("status --porcelain=v1 -z --no-renames --untracked-files=all --ignored", config).StdOut;
+            var stagedChanges = GitHandler.Run("diff --cached --raw --no-abbrev --no-renames", config).StdOut;
+            var fileContents = status.Split('\0').SkipLast(1)
+                .Select(entry => HashResetEntry(Path.Join(repository, entry[3..].TrimEnd('/'))));
+            return new ResetState(repository, config.AssetsRepo, ResolveCheckoutPaths(config), config.Tag, head, tagCommit,
+                status, stagedChanges, string.Join('\0', fileContents));
+        }
+
+        // Git reports wholly ignored or nested-repository directories as a single 'dir/' entry, so hash their contents too.
+        private static string HashResetEntry(string path)
+        {
+            var file = new FileInfo(path);
+            if (file.LinkTarget is string linkTarget)
+            {
+                return $"link:{linkTarget}";
+            }
+            if (file.Exists)
+            {
+                using var contents = file.OpenRead();
+                return Convert.ToHexString(SHA256.HashData(contents));
+            }
+
+            var directory = new DirectoryInfo(path);
+            if (!directory.Exists)
+            {
+                return string.Empty;
+            }
+            var children = directory.EnumerateFileSystemInfos()
+                .OrderBy(child => child.Name, StringComparer.Ordinal)
+                .Select(child => $"{child.Name}:{HashResetEntry(child.FullName)}");
+            return $"dir:[{string.Join('\0', children)}]";
+        }
+
+        private string GetConfiguredTagCommit(GitAssetsConfiguration config) =>
+            string.IsNullOrWhiteSpace(config.Tag) ? null : GetCommit(config, $"refs/tags/{config.Tag}^{{commit}}");
+
+        private string GetCommit(GitAssetsConfiguration config, string revision)
+        {
+            if (GitHandler.TryRun($"rev-parse --verify --quiet {revision}", config.AssetsRepoLocation, out var result))
+            {
+                return result.StdOut.Trim();
+            }
+            // A tag may not have been fetched yet, or HEAD may be unborn.
+            return result.ExitCode == 1 ? null : throw GenerateInvokeException(result);
+        }
+
+        private static bool IsAtConfiguredTag(string head, string tagCommit) => head != null && head == tagCommit;
 
         private void Clean(GitAssetsConfiguration config)
         {
@@ -830,6 +902,35 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return Path.Join(config.AssetsRepoLocation, ".git", IncompleteInitializationMarker);
         }
 
+        private static string GetRepositoryLockPath(GitAssetsConfiguration config) =>
+            Path.GetFullPath(Path.Join(config.ResolveAssetsStoreLocation(), $"{config.AssetRepoShortHash}.lock"));
+
+        private async Task<(GitAssetsConfiguration Config, FileStream RepositoryLock)> LockCurrentRepositoryAsync(GitAssetsConfiguration config)
+        {
+            while (true)
+            {
+                var repositoryLock = await LockRepositoryAsync(config);
+                try
+                {
+                    var currentConfig = await ParseConfigurationFile(config.AssetsJsonLocation);
+                    // Recheck after every acquisition, including when a previous check redirected us to another lock.
+                    if (string.Equals(repositoryLock.Name, GetRepositoryLockPath(currentConfig), StringComparison.Ordinal))
+                    {
+                        return (currentConfig, repositoryLock);
+                    }
+
+                    config = currentConfig;
+                }
+                catch
+                {
+                    repositoryLock.Dispose();
+                    throw;
+                }
+
+                repositoryLock.Dispose();
+            }
+        }
+
         /// <summary>
         /// Waits for exclusive use of an assets repository, across Test Proxy processes. Operations hold the lock from before
         /// they inspect the repository until they're done with it.
@@ -840,7 +941,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private async Task<FileStream> LockRepositoryAsync(GitAssetsConfiguration config)
         {
             // The lock file is next to the repository, rather than in it, because recovery deletes the repository's directory.
-            string lockPath = Path.Join(config.ResolveAssetsStoreLocation(), $"{config.AssetRepoShortHash}.lock");
+            string lockPath = GetRepositoryLockPath(config);
             Stopwatch waitTime = null;
 
             while (true)

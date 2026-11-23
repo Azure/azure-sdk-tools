@@ -233,6 +233,165 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task RestoreReloadsConfigurationAfterEachRepositoryLock(bool switchRepositories, bool changeWhileWaitingAgain)
+        {
+            var original = await CreateConfiguration();
+            var alternateRepo = _repositoryName + "-alternate";
+            var console = new RecordingConsoleWrapper();
+            var git = switchRepositories && !changeWhileWaitingAgain ? new LocalGitProcessHandler(_remotePath, alternateRepo) : _git;
+            var otherStore = new GitStore(console) { GitHandler = git };
+
+            var originalLock = HoldRepositoryLock(original);
+            FileStream alternateLock = null;
+            var restore = Task.Run(() => otherStore.Restore(original.AssetsJsonLocation));
+            GitAssetsConfiguration expected;
+            try
+            {
+                Assert.True(console.WaitForLine($"finish with \"{original.AssetsRepoLocation}\"", ConcurrencyTimeout));
+                expected = await ChangeConfiguration(original, switchRepositories ? alternateRepo : _repositoryName, "recordings_v2");
+                if (switchRepositories)
+                {
+                    alternateLock = HoldRepositoryLock(expected);
+                    originalLock.Dispose();
+
+                    Assert.True(console.WaitForLine($"finish with \"{expected.AssetsRepoLocation}\"", ConcurrencyTimeout));
+                    if (changeWhileWaitingAgain)
+                    {
+                        expected = await ChangeConfiguration(original, _repositoryName, "recordings_v2");
+                    }
+                }
+            }
+            finally
+            {
+                originalLock.Dispose();
+                alternateLock?.Dispose();
+                await restore.WaitAsync(ConcurrencyTimeout);
+            }
+
+            Assert.Equal(expected.AssetsRepoLocation.ToString(), await restore);
+            Assert.Equal("recording version 2", File.ReadAllText(RecordingPath(expected)));
+            Assert.Equal(new BreadcrumbLine(expected).ToString(), Assert.Single(File.ReadAllLines(otherStore.BreadCrumb.GetBreadCrumbLocation(expected))));
+            if (switchRepositories && !changeWhileWaitingAgain)
+            {
+                Assert.False(File.Exists(otherStore.BreadCrumb.GetBreadCrumbLocation(original)));
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task ResetReconfirmsWhenTheSamePendingRecordingChanges(bool confirmAgain)
+        {
+            var config = await CreateConfiguration();
+            await _store.Restore(config.AssetsJsonLocation);
+            string recording = RecordingPath(config);
+            File.WriteAllText(recording, "first edit");
+            string[] pending = _store.DetectPendingChanges(config);
+
+            var console = new RecordingConsoleWrapper();
+            var resetStore = new GitStore(console) { GitHandler = _git };
+            int confirmations = 0;
+            console.OnReadLine = () =>
+            {
+                using var peerLock = HoldRepositoryLock(config);
+                switch (++confirmations)
+                {
+                    case 1:
+                        File.WriteAllText(recording, "later edit");
+                        Assert.Equal(pending, _store.DetectPendingChanges(config));
+                        return "y";
+                    case 2:
+                        Assert.Equal("later edit", File.ReadAllText(recording));
+                        return confirmAgain ? "y" : "n";
+                    default:
+                        throw new InvalidOperationException("Unexpected reset prompt.");
+                }
+            };
+
+            await resetStore.Reset(config.AssetsJsonLocation);
+
+            Assert.Equal(2, confirmations);
+            Assert.Equal(confirmAgain ? "recording version 1" : "later edit", File.ReadAllText(recording));
+        }
+
+        [Fact]
+        public async Task ResetReconfirmsWhenIgnoredDirectoryContentsChange()
+        {
+            var config = await CreateConfiguration();
+            await _store.Restore(config.AssetsJsonLocation);
+            File.WriteAllText(RecordingPath(config), "first edit");
+            File.AppendAllText(Path.Join(config.AssetsRepoLocation, ".git", "info", "exclude"), "\nignored-dir/\n");
+            string ignoredFile = Path.Join(config.AssetsRepoLocation, "ignored-dir", "nested", "file.txt");
+            TestHelpers.WriteTestFile("first", ignoredFile);
+
+            var console = new RecordingConsoleWrapper();
+            var resetStore = new GitStore(console) { GitHandler = _git };
+            int confirmations = 0;
+            console.OnReadLine = () =>
+            {
+                using var peerLock = HoldRepositoryLock(config);
+                switch (++confirmations)
+                {
+                    case 1:
+                        File.WriteAllText(ignoredFile, "later");
+                        return "y";
+                    case 2:
+                        return "n";
+                    default:
+                        throw new InvalidOperationException("Unexpected reset prompt.");
+                }
+            };
+
+            await resetStore.Reset(config.AssetsJsonLocation);
+
+            Assert.Equal(2, confirmations);
+            Assert.Equal("later", File.ReadAllText(ignoredFile));
+        }
+
+        [Fact]
+        public async Task ResetReconfirmsAfterTheConfigurationSwitchesRepositories()
+        {
+            var original = await CreateConfiguration();
+            await _store.Restore(original.AssetsJsonLocation);
+            File.WriteAllText(RecordingPath(original), "original edit");
+            var alternateRepo = _repositoryName + "-alternate";
+            var alternateGit = new LocalGitProcessHandler(_remotePath, alternateRepo);
+            var peer = new GitStore { GitHandler = alternateGit };
+            var console = new RecordingConsoleWrapper();
+            var resetStore = new GitStore(console) { GitHandler = _git };
+
+            GitAssetsConfiguration alternate = null;
+            int confirmations = 0;
+            console.OnReadLine = () =>
+            {
+                switch (++confirmations)
+                {
+                    case 1:
+                        alternate = ChangeConfiguration(original, alternateRepo, "recordings_v2").GetAwaiter().GetResult();
+                        peer.Restore(alternate.AssetsJsonLocation).GetAwaiter().GetResult();
+                        File.WriteAllText(RecordingPath(alternate), "alternate edit");
+                        resetStore.GitHandler = alternateGit;
+                        return "y";
+                    case 2:
+                        Assert.Equal("alternate edit", File.ReadAllText(RecordingPath(alternate)));
+                        return "y";
+                    default:
+                        throw new InvalidOperationException("Unexpected reset prompt.");
+                }
+            };
+
+            await Task.Run(() => resetStore.Reset(original.AssetsJsonLocation)).WaitAsync(ConcurrencyTimeout);
+
+            Assert.Equal(2, confirmations);
+            Assert.Equal("original edit", File.ReadAllText(RecordingPath(original)));
+            Assert.Equal("recording version 2", File.ReadAllText(RecordingPath(alternate)));
+            Assert.Equal(new BreadcrumbLine(alternate).ToString(), Assert.Single(File.ReadAllLines(peer.BreadCrumb.GetBreadCrumbLocation(alternate))));
+        }
+
+        [Theory]
         [InlineData(null)]
         [InlineData("2.45.4")]
         public async Task RestoreRecoversInterruptedInitializationDespiteStaleBreadcrumb(string gitVersion)
@@ -614,6 +773,25 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             return await _store.ParseConfigurationFile(assetsJsonPath);
         }
 
+        private async Task<GitAssetsConfiguration> ChangeConfiguration(GitAssetsConfiguration original, string repository, string tag)
+        {
+            await File.WriteAllTextAsync(original.AssetsJsonLocation, JsonSerializer.Serialize(new Assets
+            {
+                AssetsRepo = repository,
+                AssetsRepoPrefixPath = original.AssetsRepoPrefixPath,
+                TagPrefix = original.TagPrefix,
+                Tag = tag
+            }));
+            return await _store.ParseConfigurationFile(original.AssetsJsonLocation);
+        }
+
+        private static FileStream HoldRepositoryLock(GitAssetsConfiguration config) =>
+            new FileStream(Path.Join(config.ResolveAssetsStoreLocation(), $"{config.AssetRepoShortHash}.lock"),
+                FileMode.OpenOrCreate, FileAccess.Read, FileShare.None);
+
+        private static string RecordingPath(GitAssetsConfiguration config) =>
+            Path.Join(config.AssetsRepoLocation, "python", "sdk", "service", "recording.json");
+
         private void WriteRemoteFile(string relativePath, string content)
         {
             TestHelpers.WriteTestFile(content, Path.Join(_remotePath, relativePath));
@@ -731,12 +909,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         private class RecordingConsoleWrapper : IConsoleWrapper
         {
             private readonly ConcurrentQueue<string> _lines = new ConcurrentQueue<string>();
+            public Func<string> OnReadLine { get; set; }
 
             public void Write(string message) => _lines.Enqueue(message);
 
             public void WriteLine(string message) => _lines.Enqueue(message);
 
-            public string ReadLine() => throw new NotSupportedException();
+            public string ReadLine() => OnReadLine == null ? throw new NotSupportedException() : OnReadLine();
 
             public bool WaitForLine(string text, TimeSpan timeout) =>
                 SpinWait.SpinUntil(() => _lines.Any(line => line.Contains(text, StringComparison.Ordinal)), timeout);

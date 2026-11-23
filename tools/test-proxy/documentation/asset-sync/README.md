@@ -92,8 +92,10 @@ only use the repository in their working directory, so they never fall back to t
 Restores, pushes, and resets of an asset repository run one at a time, including in separate Test Proxy processes that
 share a storage location, such as when `go test ./...` tests packages in parallel. Each holds a lock on the file
 `.assets/<hash>.lock`, next to the repository's `.assets/<hash>` directory, from before it inspects the repository until
-it's done; a reset releases it while it asks for confirmation. The OS releases the lock if its process exits. Others
-report that they're waiting, and give up after 10 minutes.
+it's done. Restore and Reset re-read `assets.json` after acquiring the lock and switch locks if the target repository
+changed. Reset releases the lock while asking for confirmation and asks again if there are still pending changes but
+the target or changes to discard are different. The OS releases the lock if its process exits. Others report that
+they're waiting, and give up after 10 minutes.
 
 Restoring the same tag preserves staged, unstaged, and untracked recordings, without cleaning or checking out the tag
 again. Existing objects are retained, and subsequent fetches use the blobless filter; old trees that were not

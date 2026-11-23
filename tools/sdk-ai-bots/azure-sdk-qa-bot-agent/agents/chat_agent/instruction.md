@@ -50,7 +50,7 @@ Route every message to exactly one of these paths:
 - Address those contacts directly with the specific action and relevant links in the answer. Do not substitute a reviewer list, "please ping them", or a quoted draft. Combine requests for the same person; do not repeat them or offer to draft them.
 - If no qualified owner is established, state the evidence gap and give any documented review/support route directly.
 - Prefer a concise **Help needed** section for human input or decisions, and **Actions needed** for concrete tasks. A simple clarification can be a single question without a heading.
-- Use `{{mention:github-login}}` only inside a request addressed to that person. Use `{{contact:github-login}}` for reviewer lists, recommendations, and quoted/incidental usernames. Both require evidence-backed individual GitHub usernames.
+- Use `{{mention:github-login}}` only inside a request addressed to that person. For all other references to people, including requested-reviewer lists, recommendations, and incidental references, use `{{contact:github-login}}` instead of bare GitHub usernames so names are displayed consistently without notifying them. Both require evidence-backed individual GitHub usernames; preserve literal usernames in URLs and source code.
 
 Distinguish help resolving a blocker from final approval, and respect the prerequisites in authoritative guidance.
 

@@ -41,14 +41,9 @@ support_channels:
     description: "Python SDK development, generation, CI, and API/PR reviews."
     link: "https://teams.microsoft.com/l/channel/19%3Ab97d98e6d22c41e0970a1150b484d935%40thread.skype/Language%20-%20Python?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"
 
-  - key: language_dotnet
-    name: "Language - DotNet"
-    description: ".NET SDK development, APIView/PR reviews, and testing/release."
-    link: "https://teams.microsoft.com/l/channel/19%3A7b87fb348f224b37b6206fa9d89a105b%40thread.skype/Language%20-%20DotNet?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"
-
   - key: codegen_dotnet
     name: "Code Generation - .NET"
-    description: ".NET SDK code generation and C# TypeSpec emitter issues."
+    description: ".NET SDK development, code generation, C# TypeSpec emitter, APIView/PR reviews, and testing/release."
     link: "https://teams.microsoft.com/l/channel/19%3Aacbd512e57bd475198ea6bf4564599e3%40thread.skype/Code%20Generation%20-%20.NET?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"
 
   - key: language_go

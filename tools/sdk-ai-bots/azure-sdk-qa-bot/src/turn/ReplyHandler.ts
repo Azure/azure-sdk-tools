@@ -34,12 +34,8 @@ export class ReplyHandler {
     this.tenantConfigManager = tenantConfigManager;
   }
 
-  public async prepare(conversationMessages: ConversationMessage[]): Promise<Date> {
+  public async sendReply(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, conversationMessages: ConversationMessage[], currentChannelTenant?: string) {
     await this.trySendContactCard(conversationMessages);
-    return new Date();
-  }
-
-  public async sendReply(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
     const { answer, isError } = this.generateAnswer(reply);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
     const traceId = isCompletionResponsePayload(reply) ? reply.trace_id : undefined;

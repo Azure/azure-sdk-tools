@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ReplyHandler } from '../src/turn/ReplyHandler.js';
-import { ConversationHandler, Prompt } from '../src/input/ConversationHandler.js';
+import { ConversationHandler, ConversationMessage, Prompt } from '../src/input/ConversationHandler.js';
 import { CompletionResponsePayload, RagApiError, ErrorCode, ErrorCategory } from '../src/backend/rag.js';
 import { TurnContext } from 'botbuilder';
 import { TenantConfigManager } from '../src/config/tenant.js';
@@ -31,6 +31,12 @@ describe('ReplyHandler', () => {
   let mockContext: Partial<TurnContext>;
   let mockConversationHandler: Partial<ConversationHandler>;
   let mockTenantConfigManager: Partial<TenantConfigManager>;
+  const existingConversationMessages: ConversationMessage[] = [{
+    conversationId: 'test-conversation',
+    activityId: 'existing-contact-card',
+    contactCard: { version: '1.0' },
+    timestamp: new Date(),
+  }];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,34 +65,28 @@ describe('ReplyHandler', () => {
     );
   });
 
-  describe('prepare', () => {
-    it('does not send a thinking placeholder or schedule updates', async () => {
-      vi.useFakeTimers();
-      try {
-        const timestamp = await replyHandler.prepare([{
-          conversationId: 'test-conversation',
-          activityId: 'existing-contact-card',
-          contactCard: { version: '1.0' },
-          timestamp: new Date(),
-        }]);
+  describe('contact card delivery', () => {
+    it('sends the contact card only when delivering the first reply', async () => {
+      expect(mockContext.sendActivity).not.toHaveBeenCalled();
+      const prompt: Prompt = {
+        textWithoutMention: 'Test prompt',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+      await replyHandler.sendReply(new Date(), {
+        id: 'reply',
+        answer: 'Answer',
+        has_result: true,
+      }, prompt, []);
 
-        await vi.advanceTimersByTimeAsync(60_000);
-
-        expect(timestamp).toBeInstanceOf(Date);
-        expect(mockContext.sendActivity).not.toHaveBeenCalled();
-        expect(mockContext.updateActivity).not.toHaveBeenCalled();
-        expect(vi.getTimerCount()).toBe(0);
-      } finally {
-        vi.useRealTimers();
-      }
-    });
-
-    it('preserves the one-time contact card without sending a placeholder', async () => {
-      await replyHandler.prepare([]);
-
-      expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
-      expect(mockContext.sendActivity).toHaveBeenCalledWith(
-        expect.objectContaining({ attachments: expect.any(Array) })
+      expect(mockContext.sendActivity).toHaveBeenCalledTimes(2);
+      expect(mockContext.sendActivity).toHaveBeenNthCalledWith(
+        1, expect.objectContaining({ attachments: expect.any(Array) })
+      );
+      expect(mockContext.sendActivity).toHaveBeenNthCalledWith(
+        2, expect.objectContaining({ text: 'Answer' })
       );
       expect(mockContext.updateActivity).not.toHaveBeenCalled();
       expect(mockConversationHandler.saveMessage).toHaveBeenCalledWith(
@@ -369,7 +369,7 @@ describe('ReplyHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await replyHandler.sendReply(new Date(), reply, prompt);
+      await replyHandler.sendReply(new Date(), reply, prompt, existingConversationMessages);
 
       expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
       expect(mockContext.updateActivity).not.toHaveBeenCalled();
@@ -410,7 +410,7 @@ describe('ReplyHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await replyHandler.sendReply(new Date(), ragError, mockPrompt);
+      await replyHandler.sendReply(new Date(), ragError, mockPrompt, existingConversationMessages);
 
       expect(mockContext.sendActivity).toHaveBeenCalledWith({
         type: 'message',
@@ -443,7 +443,7 @@ describe('ReplyHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await replyHandler.sendReply(new Date(), ragError, mockPrompt);
+      await replyHandler.sendReply(new Date(), ragError, mockPrompt, existingConversationMessages);
 
       expect(mockContext.sendActivity).toHaveBeenCalledWith({
         type: 'message',
@@ -477,7 +477,7 @@ describe('ReplyHandler', () => {
         conversationID: 'test-conversation',
       };
 
-      await replyHandler.sendReply(new Date(), successResponse, mockPrompt);
+      await replyHandler.sendReply(new Date(), successResponse, mockPrompt, existingConversationMessages);
 
       expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
       expect(mockContext.updateActivity).not.toHaveBeenCalled();
@@ -518,7 +518,7 @@ describe('ReplyHandler', () => {
         id: 'reply',
         answer: 'Answer',
         has_result: true,
-      }, prompt)).rejects.toBe(error);
+      }, prompt, existingConversationMessages)).rejects.toBe(error);
 
       expect(mockContext.updateActivity).not.toHaveBeenCalled();
       expect(mockConversationHandler.saveMessage).not.toHaveBeenCalled();

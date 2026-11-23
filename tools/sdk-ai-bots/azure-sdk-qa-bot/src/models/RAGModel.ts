@@ -62,7 +62,7 @@ export class RAGModel implements PromptCompletionModel {
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    const replyStartTimestamp = await replyHandler.prepare(conversationMessages);
+    const replyStartTimestamp = new Date();
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
@@ -81,7 +81,7 @@ export class RAGModel implements PromptCompletionModel {
         references: undefined,
       };
     }
-    await replyHandler.sendReply(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
+    await replyHandler.sendReply(replyStartTimestamp, ragReply, currentPrompt, conversationMessages, ragTenantId);
 
     return { status: 'success' };
   }

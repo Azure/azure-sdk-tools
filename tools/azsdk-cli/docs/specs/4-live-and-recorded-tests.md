@@ -77,12 +77,7 @@ public abstract class LanguageService
 
 Deployment of test resources involves variables such as the user's service directory, resource group name, and deployment region. The live-and-recorded-tests skill uses the Azure SDK Test Resources - TME tenant and subscription by default for `AzureCloud` deployments; users can specify another subscription for other clouds or subscriptions.
 
-For CLI-backed live tests, ensure the Azure CLI is logged in to the TME tenant and set to the TME subscription:
-
-```powershell
-az login --tenant 70a036f6-8e4d-4615-bad6-149c02e7720d
-az account set --subscription 4d042dc6-fe17-4698-a23f-ec6a8d1e98f4
-```
+For pre- or post-deployment scripts that invoke the Azure CLI, they must set the CLI tenant and subscription themselves using the `SubscriptionId`, `TenantId`, and `Environment` values passed to them. Azure CLI context is not required unless a script uses it.
 
 #### Skill outline
 

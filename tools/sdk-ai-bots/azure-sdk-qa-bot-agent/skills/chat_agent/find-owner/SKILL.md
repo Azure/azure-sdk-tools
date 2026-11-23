@@ -5,6 +5,6 @@ description: "Find Azure SDK and TypeSpec owners, reviewers, and support contact
 
 # Find an Owner
 
-Identify the help needed, SDK language, management/data plane, and blocker, then read the [support contacts](references/support-contact.yaml). Match contacts to the needed help using the applicable workflow's eligibility requirements and contact-selection priorities.
+Identify the help needed, SDK language, management/data plane, and blocker, then read `references/support-contact.yaml`. Match contacts to the needed help using the applicable workflow's eligibility requirements and contact-selection priorities.
 
 The reference provides ownership data, not workflow policy or a requirement to refer. Keep its configuration details internal, and use retrieved ownership evidence when the non-exhaustive list has no suitable match.

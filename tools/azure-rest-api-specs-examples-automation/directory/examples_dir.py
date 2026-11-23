@@ -6,7 +6,9 @@ import re
 from typing import Optional, Tuple
 
 
-def resolve_example_path(specs_path: str, sdk_package_path: str, reference: str) -> Tuple[str, str]:
+def resolve_example_path(
+    specs_path: str, sdk_package_path: str, reference: str, namespace_cache: Optional[dict] = None
+) -> Tuple[str, str]:
     reference = reference.replace("\\", "/")
     source, separator, example_id = reference.partition("#")
     if not source.endswith((".yaml", ".yml")):
@@ -25,8 +27,13 @@ def resolve_example_path(specs_path: str, sdk_package_path: str, reference: str)
     yaml_path = path.join(project_root, source)
     if not path.isfile(yaml_path):
         raise RuntimeError(f"Example YAML file not found at path {yaml_path}")
-    with open(yaml_path, encoding="utf-8") as fin:
-        examples = yaml.safe_load(fin)
+    if namespace_cache is None:
+        namespace_cache = {}
+    if yaml_path not in namespace_cache:
+        with open(yaml_path, encoding="utf-8") as fin:
+            examples = yaml.safe_load(fin)
+        namespace_cache[yaml_path] = examples.get("$namespace") if isinstance(examples, dict) else None
+    namespace = namespace_cache[yaml_path]
 
     api_versions = {}
     metadata_patterns = [
@@ -53,10 +60,9 @@ def resolve_example_path(specs_path: str, sdk_package_path: str, reference: str)
         source_parts.index("examples") if "examples" in source_parts else len(source_parts) - 1
     )
     service_parts = source_parts[:examples_index]
-    namespace = examples.get("$namespace") if isinstance(examples, dict) else None
     if namespace:
         services = [namespace] if namespace in api_versions else []
-    elif service_parts:
+    elif service_parts and len(api_versions) > 1:
         services = [service for service in api_versions if service.split(".")[-1] == service_parts[-1]]
     else:
         services = list(api_versions)
@@ -98,14 +104,21 @@ def _read_tsp_directory(sdk_package_path: str) -> str:
 
 
 def _find_swagger_example(
-    specs_path: str, tsp_dir: str, api_version: str, relative_file: str, service_root: str
+    specs_path: str,
+    tsp_dir: str,
+    api_version: str,
+    relative_file: str,
+    service_root: str,
+    *,
+    allow_unscoped_fallback: bool = False,
 ) -> Optional[str]:
     project_root = path.join(specs_path, tsp_dir)
     scopes = [(service_root, True)]
     if path.normpath(service_root) != path.normpath(project_root):
         # Combined services can share the emitted Swagger directory above their source folders.
         scopes.append((project_root, False))
-    if "/resource-manager/" not in tsp_dir and "/data-plane/" not in tsp_dir:
+    # Only legacy JSON references retain the cross-tree resource-manager search.
+    if allow_unscoped_fallback and "/resource-manager/" not in tsp_dir and "/data-plane/" not in tsp_dir:
         service_dir = "/".join(tsp_dir.split("/")[:2])
         scopes.append((path.join(specs_path, service_dir, "resource-manager"), True))
 
@@ -158,7 +171,12 @@ def try_find_resource_manager_example(
 
         if not example_paths or match:
             swagger_example = _find_swagger_example(
-                specs_path, tsp_dir, api_version, relative_file, project_root
+                specs_path,
+                tsp_dir,
+                api_version,
+                relative_file,
+                project_root,
+                allow_unscoped_fallback=True,
             )
             if swagger_example:
                 example_dir = path.dirname(path.relpath(swagger_example, specs_path).replace("\\", "/"))

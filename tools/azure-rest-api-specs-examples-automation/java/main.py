@@ -167,7 +167,7 @@ def format_java(lines: List[str], old_class_name: str, new_class_name: str) -> L
     return new_lines
 
 
-def process_java_example(filepath: str) -> List[JavaExample]:
+def process_java_example(filepath: str, namespace_cache=None) -> List[JavaExample]:
     # process aggregated Java sample to examples
 
     filename = path.basename(filepath)
@@ -177,10 +177,10 @@ def process_java_example(filepath: str) -> List[JavaExample]:
         lines = f.readlines()
 
     class_name = filename.split(".")[0]
-    return process_java_example_content(lines, class_name)
+    return process_java_example_content(lines, class_name, namespace_cache)
 
 
-def process_java_example_content(lines: List[str], class_name: str) -> List[JavaExample]:
+def process_java_example_content(lines: List[str], class_name: str, namespace_cache=None) -> List[JavaExample]:
     java_examples = []
     if is_aggregated_java_example(lines):
         aggregated_java_example = break_down_aggregated_java_example(lines)
@@ -198,7 +198,7 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 example_filepath = java_example_method.example_relative_path
                 try:
                     example_dir, example_filename = examples_dir.resolve_example_path(
-                        specs_path, sdk_package_path, example_filepath
+                        specs_path, sdk_package_path, example_filepath, namespace_cache
                     )
                 except NameError:
                     example_dir, example_filename = path.split(example_filepath)
@@ -297,8 +297,9 @@ def create_java_examples(release: Release, sdk_examples_path: str, java_examples
             if path.splitext(filepath)[1] == ".java":
                 java_paths.append(filepath)
 
+    namespace_cache = {}
     for filepath in java_paths:
-        java_examples += process_java_example(filepath)
+        java_examples += process_java_example(filepath, namespace_cache)
 
     files = []
     if java_examples:

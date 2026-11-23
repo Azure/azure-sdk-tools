@@ -2,6 +2,9 @@ import unittest
 import tempfile
 import json
 from os import path, makedirs, remove
+from unittest.mock import patch
+
+import yaml
 
 from examples_dir import resolve_example_path, try_find_resource_manager_example
 
@@ -244,6 +247,58 @@ class TestUnifiedExamples(unittest.TestCase):
         self.write(self.specs, relative, "{}")
         return relative.rsplit("/", 1)
 
+    def test_external_swagger_fallback_does_not_match_another_service(self):
+        self.tsp_dir = "specification/mongocluster/SelectedService"
+        self.configure({"Contoso.SelectedService": "2026-04-01"})
+        self.write(self.specs, f"{self.tsp_dir}/examples.yaml", "$namespace: Contoso.SelectedService\n")
+        self.write(
+            self.specs,
+            "specification/mongocluster/resource-manager/Microsoft.Other/Sibling/"
+            "stable/2026-04-01/examples/Foo.json",
+            "{}",
+        )
+        expected = self.write_swagger_example("2026-04-01", "Foo.json")
+        self.assertEqual(
+            tuple(expected),
+            resolve_example_path(self.specs, self.sdk, "examples.yaml#Foo"),
+        )
+        remove(path.join(self.specs, *expected))
+        with self.assertRaisesRegex(RuntimeError, "Swagger example not found"):
+            resolve_example_path(self.specs, self.sdk, "examples.yaml#Foo")
+
+    def test_namespace_cache_parses_each_document_once_including_missing_namespace(self):
+        self.configure({"SchemaRegistry": "2023-07-01"})
+        self.write(self.specs, f"{self.tsp_dir}/examples.yaml", "$namespace: SchemaRegistry\n")
+        self.write(self.specs, f"{self.tsp_dir}/examples/Other.yaml", "{}")
+        expected = {
+            example_id: tuple(self.write_swagger_example("2023-07-01", example_id + ".json"))
+            for example_id in ("Foo", "Bar")
+        }
+        namespace_cache = {}
+        with patch("examples_dir.yaml.safe_load", wraps=yaml.safe_load) as load:
+            for source in ("examples.yaml", "examples/Other.yaml"):
+                for example_id in expected:
+                    self.assertEqual(
+                        expected[example_id],
+                        resolve_example_path(self.specs, self.sdk, source + "#" + example_id, namespace_cache),
+                    )
+        parsed_documents = [
+            call.args[0].name
+            for call in load.call_args_list
+            if call.args[0].name.endswith(("examples.yaml", "Other.yaml"))
+        ]
+        self.assertEqual(2, len(parsed_documents))
+
+    def test_new_collection_reads_updated_namespace(self):
+        self.configure({"SchemaRegistry": "2023-07-01", "Other": "2022-10"})
+        for namespace, version in (("SchemaRegistry", "2023-07-01"), ("Other", "2022-10")):
+            self.write(self.specs, f"{self.tsp_dir}/examples.yaml", f"$namespace: {namespace}\n")
+            expected = self.write_swagger_example(version, "Foo.json")
+            self.assertEqual(
+                tuple(expected),
+                resolve_example_path(self.specs, self.sdk, "examples.yaml#Foo", {}),
+            )
+
     def test_schema_registry_uses_metadata_version_without_authored_json(self):
         self.write(
             self.specs,
@@ -326,7 +381,7 @@ class TestUnifiedExamples(unittest.TestCase):
             )
 
     def test_missing_namespace_uses_unique_service_prefix_or_single_metadata_entry(self):
-        for source in ("examples.yaml", "SchemaRegistry/examples.yaml"):
+        for source in ("examples.yaml", "SchemaRegistry/examples.yaml", "operations/examples.yaml"):
             with self.subTest(source=source):
                 self.configure({"Contoso.SchemaRegistry": "2023-07-01"})
                 self.write(self.specs, f"{self.tsp_dir}/{source}", "{}")
@@ -338,9 +393,11 @@ class TestUnifiedExamples(unittest.TestCase):
 
     def test_reports_ambiguous_service_instead_of_guessing_version(self):
         self.configure({"Compute": "2026-04-01", "ComputeDisk": "2026-03-02"})
-        self.write(self.specs, f"{self.tsp_dir}/examples.yaml", "{}")
-        with self.assertRaisesRegex(RuntimeError, "Cannot uniquely match"):
-            resolve_example_path(self.specs, self.sdk, "examples.yaml#Foo")
+        for source in ("examples.yaml", "operations/examples.yaml"):
+            with self.subTest(source=source):
+                self.write(self.specs, f"{self.tsp_dir}/{source}", "{}")
+                with self.assertRaisesRegex(RuntimeError, "Cannot uniquely match"):
+                    resolve_example_path(self.specs, self.sdk, source + "#Foo")
 
     def test_reports_ambiguous_swagger_matches(self):
         self.configure({"SchemaRegistry": "2023-07-01"})

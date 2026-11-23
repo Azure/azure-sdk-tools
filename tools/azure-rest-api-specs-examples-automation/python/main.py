@@ -43,7 +43,7 @@ class PythonExample:
     content: str
 
 
-def parse_python_example(lines: List[str]) -> Optional[PythonExample]:
+def parse_python_example(lines: List[str], namespace_cache=None) -> Optional[PythonExample]:
     # check metadata to see if the sample file is a candidate for example extraction
 
     example_relative_path = None
@@ -56,7 +56,7 @@ def parse_python_example(lines: List[str]) -> Optional[PythonExample]:
     if example_relative_path:
         try:
             example_dir, example_filename = examples_dir.resolve_example_path(
-                specs_path, sdk_package_path, example_relative_path
+                specs_path, sdk_package_path, example_relative_path, namespace_cache
             )
         except NameError:
             example_dir, example_filename = path.split(example_relative_path)
@@ -81,7 +81,7 @@ def parse_python_example(lines: List[str]) -> Optional[PythonExample]:
     return example
 
 
-def process_python_example(filepath: str) -> List[PythonExample]:
+def process_python_example(filepath: str, namespace_cache=None) -> List[PythonExample]:
     # process aggregated Python sample to examples
 
     filename = path.basename(filepath)
@@ -91,7 +91,7 @@ def process_python_example(filepath: str) -> List[PythonExample]:
         lines = f.readlines()
 
     python_examples = []
-    python_example = parse_python_example(lines)
+    python_example = parse_python_example(lines, namespace_cache)
     if python_example:
         python_examples.append(python_example)
 
@@ -162,8 +162,9 @@ def create_python_examples(
 
     logging.info(f"Processing SDK examples: {release.package}")
     python_examples = []
+    namespace_cache = {}
     for filepath in python_paths:
-        python_examples += process_python_example(filepath)
+        python_examples += process_python_example(filepath, namespace_cache)
 
     files = []
     if python_examples:

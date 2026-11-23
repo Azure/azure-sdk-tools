@@ -124,6 +124,7 @@
 # Add owners for notifications for specific pipelines
 /eng/common/pipelines/codeowners-linter.yml        @danieljurek
 /eng/pipelines/pipeline-owners-extraction.yml      @danieljurek
+/eng/pipelines/merge-docs-main-to-live.yml         @danieljurek @lmazuel @live1206 @XiaofeiCao
 
 # EngSys should own all package-lock.json under eng/common
 /eng/common/**/package-lock.json                   @danieljurek

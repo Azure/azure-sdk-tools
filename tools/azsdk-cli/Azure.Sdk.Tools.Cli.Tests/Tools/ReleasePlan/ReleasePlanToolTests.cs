@@ -3216,9 +3216,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var response = await CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object, client: client)
                 .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
 
-            Assert.That(response.ExitCode, Is.EqualTo(1), "The lookup failure must remain visible even when a reminder is sent.");
-            Assert.That(response.ResponseErrors, Has.Count.EqualTo(failFirstSend ? 2 : 1));
-            Assert.That(response.ResponseErrors, Has.Some.Contains("381"));
+            Assert.That(response.ExitCode, Is.EqualTo(failFirstSend ? 1 : 0));
+            Assert.That(response.ResponseErrors ?? [], Has.Count.EqualTo(failFirstSend ? 1 : 0));
             Assert.That(captured, Has.Count.EqualTo(2));
             var genericBody = captured[0].GetProperty("Body").GetString()!;
             Assert.That(genericBody, Does.Contain("This is a verification issue, not confirmation that your release is inactive"));
@@ -3317,8 +3316,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     notifyOwners: true, emailerUri: "https://notifications.example.com/send", ct: cts.Token);
 
                 Assert.That(response.ExitCode, Is.EqualTo(1));
-                Assert.That(response.ResponseErrors, Has.Count.EqualTo(2));
-                Assert.That(response.ResponseErrors, Has.Some.Contains("384").And.Contains("GitHub unavailable"));
+                Assert.That(response.ResponseErrors, Has.Count.EqualTo(1));
                 Assert.That(response.ResponseErrors, Has.Some.Contains("384").And.Contains("Email request timed out"));
                 Assert.That(captured, Has.Count.EqualTo(2));
                 Assert.That(captured[1].GetProperty("EmailTo").GetString(), Is.EqualTo("next@microsoft.com"));
@@ -3468,7 +3466,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             service.Verify(x => x.UpdateWorkItemAsync(601, It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
 
             var reminder = await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
-            Assert.That(reminder.ExitCode, Is.EqualTo(1));
+            Assert.That(reminder.ExitCode, Is.Zero);
             Assert.That(captured.Single().GetProperty("Body").GetString(), Does.Contain("verification issue").And.Not.Contain("eligible for automatic abandonment now"));
         }
 

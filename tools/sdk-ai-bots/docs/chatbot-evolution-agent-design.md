@@ -302,13 +302,13 @@ The existing `conversation-eval` pipeline remains an independent reporting workf
 
 ### 2.5 KB validation loop
 
-Only KB classifications enter the automated validation loop. A knowledge-gap issue cannot be validated by rerunning the current production bot because the missing content is still absent. In the isolated dev environment, the Agent therefore writes candidate markdown into the existing tenant-configured knowledge folder, refreshes the dev index, and calls the dev Chat Agent.
+Only KB classifications that pass the doc-worthiness gate (durable, reusable guidance rather than product/pipeline bugs, transient infrastructure failures, isolated one-off workarounds, or unconfirmed thread opinions) enter the automated validation loop. Before mutating dev knowledge, the Agent reuses `list_knowledge_sources`, topic-level `search_knowledge_base` queries, `resolve_kb_source`, and `read_knowledge` across candidate documents to compare document purpose (reference/how-to vs. FAQ/troubleshooting vs. migration vs. beginner tutorial), plane scope (`data-plane` vs. `management-plane`), and section structure. When the owning KB document is auto-generated, the Agent validates and describes the content change on that KB document without tracing upstream generator sources; the human owner or downstream coding agent maps it to the upstream source.
 
-The Evolution agent owns the loop through two guarded tools:
+In the isolated dev environment, the Agent reads the full target document structure, heading hierarchy, table of contents, and callout syntax, weaves a concise generalized rule (typically 1–3 sentences or a list item with explicit applicability conditions) into the owning section, refreshes the dev index, and calls the dev Chat Agent:
 
 1. Call `update_knowledge` to write the candidate to the dev knowledge source and refresh the index.
 2. Call `validate_agent_response` with `target="candidate"` and the original bad case.
-3. If validation fails, revise the candidate and repeat within the attempt limit. If it passes, create the issue with the answer and trace ID as evidence.
+3. If validation fails, refine genuine ambiguity without adding Q&A-specific steering bloat; if a clean edit in the owning document still fails, re-evaluate whether the bottleneck is `retrieval_mismatch` or `reasoning_gap`. When validation passes, create the goal-oriented issue with candidate validation reference proof.
 
 After all agent sessions finish, fail, or time out, the feedback pipeline triggers the knowledge-sync pipeline once if any session mutated the KB. The feedback job waits for restoration from the authoritative sources and is marked failed if restoration does not succeed.
 
@@ -318,21 +318,15 @@ The Evolution Agent may prepare issue content during analysis, but it must compl
 
 Before creation, the Agent searches the selected tracker for a stable HTML marker containing the source, classification, and scope. It reuses only an item representing the same defect and adds the new conversation and validation evidence as a comment. ADO creation is source-bound: the creation tool accepts the exact source identity and URL, re-resolves them against knowledge configuration, derives the configured project, and fixes the work-item type to `Issue`.
 
-Every Agent-created item includes concise expected behavior, detailed fixed-document provenance, and validation evidence. It does not duplicate the complete conversation or validated answer. Before persisting a KB issue, the backend re-resolves its exact source identity and URL against the authoritative knowledge configuration and requires the issue destination to match the configured tracker or the explicit `Azure/azure-sdk-pr` fallback. Registered static sources without repository configuration use their stable source identity and may route only to the fallback. The backend stores the canonical issue URL and `feedback.status=pending_validation` so the daily job can validate the item after closure. Labels are presentation metadata written only in `Azure/azure-sdk-pr`; they never control routing, deduplication, scheduling, validation, persistence, retries, or dashboard reporting. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent cites the exact KB document or proposed missing-content location and authoritative source:
+Every Agent-created KB item frames a goal-oriented `Documentation goal` (target audience/scope, reusable guidance, owning document/section rationale, and upstream provenance) plus a `Candidate validation reference` marked as reference proof rather than a verbatim copy-paste patch, alongside grounded `Expected behavior`. It does not duplicate the complete conversation or validated answer. Before persisting a KB issue, the backend re-resolves its exact source identity and URL against the authoritative knowledge configuration and requires the issue destination to match the configured tracker or the explicit `Azure/azure-sdk-pr` fallback. Registered static sources without repository configuration use their stable source identity and may route only to the fallback. The backend stores the canonical issue URL and `feedback.status=pending_validation` so the daily job can validate the item after closure. Labels are presentation metadata written only in `Azure/azure-sdk-pr`; they never control routing, deduplication, scheduling, validation, persistence, retries, or dashboard reporting. For KB issues (`missing_content` / `outdated_content` / `insufficient_content`), the Agent cites the owning KB document or proposed location and authoritative source:
 
-> **Title:** [Doc] No guidance on the TypeSpec `@added` versioning decorator
+> **Title:** `[Teams Chatbot]: Document TypeSpec @added versioning decorator usage`
 >
 > **Marker:** `<!-- chatbot-evolution source="typespec_docs" classification="missing_content" scope="documentation/typespec/versioning.md" -->`
 >
-> **Fixed document:** `typespec_docs/documentation/typespec/versioning.md`
+> **Documentation goal:** Explain when and how TypeSpec authors apply `@added` and `@removed` across versioned namespaces, integrated into the decorator section of `typespec_docs/documentation/typespec/versioning.md` (`Azure/azure-rest-api-specs-pr @ main: documentation/typespec/versioning.md`, [TypeSpec versioning decorators](https://typespec.io/docs/libraries/versioning/reference/decorators)).
 >
-> **Upstream:** `Azure/azure-rest-api-specs-pr @ main: documentation/typespec/versioning.md`
->
-> **Gap:** There is no documentation covering the `@added` decorator; the bot answered with a generic versioning explanation that did not address the question.
->
-> **Suggested change:** Add a section to `versioning.md` documenting `@added`/`@removed`, with an example. Source: [TypeSpec versioning decorators](https://typespec.io/docs/libraries/versioning/reference/decorators)
->
-> **Validation:** The dev Chat Agent passed the original bad case. Trace ID: `abc123def456`.
+> **Candidate validation reference:** Validated on `typespec_docs/documentation/typespec/versioning.md` (reference proof — integrate cleanly with repository structure and upstream sources). Passed on the dev Chat Agent; Trace ID: `abc123def456`.
 
 For `missing_content`, the Agent chooses the best maintained location using tenant scope, verified ownership, related evidence, expert corrections, and provenance even when no exact blob path exists. `resolve_kb_source` can resolve a folder without a blob path when every configured path shares the same source and tracker ownership. Unknown source folders, blob paths outside configured roots, and folders spanning different owners without a disambiguating path return `resolved=false`. Chatbot self-issues include the diagnosis and suggested fix but no candidate-validation evidence and use the fallback repository.
 
@@ -341,3 +335,7 @@ For `missing_content`, the Agent chooses the best maintained location using tena
 The daily feedback job reads production `pending_validation` QA records and checks each stored GitHub issue or ADO work item through a provider-neutral state dispatcher; labels and tags do not gate validation eligibility. For a KB issue, it first waits for the configured knowledge-sync or rollout pipeline so the production Chat Agent uses authoritative fixed content rather than the temporary candidate. The Evolution Agent reads the item and all provider comments, identifies the latest maintainer disposition, refetches the production conversation, recovers the original question, and calls `validate_agent_response` with `target="prod"`.
 
 The Agent comments the returned answer, trace ID, and pass/fail evidence through the matching provider. Only an item in `Azure/azure-sdk-pr` receives a presentation-only `fix-validation:passed`, `fix-validation:failed`, or `fix-validation:skipped` label; a rejected validation does not automatically reopen it. The backend persists terminal `feedback.status=validation_passed`, `feedback.status=validation_failed`, or `feedback.status=validation_skipped`. Operational failures use retryable `feedback.status=failed`, and the stored canonical URL routes the next daily run back to the correct provider. The historical `qa_status` remains `failed` because the original answer was wrong. The terminal Cosmos status, not a provider label or tag, prevents repeated validation.
+
+### 2.8 Periodic learning
+
+Periodic optimization from closed or merged GitHub issues, Azure DevOps `internal\qa-bot` work items, and linked PR review comments/diffs is captured in the repository skill `.github/skills/sdk-ai-bot-evolution-distill`. Rather than modifying prompts automatically at runtime, maintainers (or future scheduled distillation runs) invoke the skill to contrast the Agent's proposed `Documentation goal` and `Candidate validation reference` against human rejections, relocations, and merged PR edits, promoting only recurring meta-rules into human-reviewed PRs updating `agents/chatbot_evolution_agent/instruction.md`, `config/tenant_config.py`, and `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`.

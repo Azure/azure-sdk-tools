@@ -11,7 +11,7 @@ compatibility: "local azure-sdk-tools clone, gh CLI, az CLI (azure-devops extens
 
 # Chatbot Evolution Distillation
 
-Distill human review, closure, and PR outcomes on Chatbot Evolution Agent items across GitHub and Azure DevOps into bounded refinements for `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent/instruction.md` and `tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. Load [collection queries](references/collection-queries.md) for tracker retrieval and [distillation rubric](references/distillation-rubric.md) for delta classification and promotion gates.
+Distill human review, closure, and PR outcomes on Chatbot Evolution Agent items across GitHub and Azure DevOps into bounded refinements for `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent/instruction.md`, `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/tenant_config.py`, and `tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. Load [collection queries](references/collection-queries.md) for tracker retrieval and [distillation rubric](references/distillation-rubric.md) for delta classification and promotion gates.
 
 ## Rules
 
@@ -24,11 +24,11 @@ Distill human review, closure, and PR outcomes on Chatbot Evolution Agent items 
 
 ## Steps
 
-1. **Scope baseline** — Choose `<SINCE_DATE>` (`YYYY-MM-DD`) and read `agents/chatbot_evolution_agent/instruction.md` and `knowledge-config.json`.
+1. **Scope baseline** — Choose `<SINCE_DATE>` (`YYYY-MM-DD`) and read `agents/chatbot_evolution_agent/instruction.md`, `config/tenant_config.py`, and `knowledge-config.json`.
 2. **Collect evidence** — Run [collection queries](references/collection-queries.md) across GitHub issues/PRs/wiki commits and Azure DevOps `internal\qa-bot` items/PRs.
-3. **Compare outcomes** — Contrast each item's proposed target and `Validated change` against human rejection reasons, relocations, or merged PR diffs.
+3. **Compare outcomes** — Contrast each item's `Documentation goal` / `Candidate validation reference` (or legacy `Fixed document` / `Validated change`) against human rejections, relocations, or merged PR diffs.
 4. **Cluster gaps** — Apply [distillation rubric](references/distillation-rubric.md) categories and promotion gates.
-5. **Draft updates** — Propose minimal edits to `instruction.md` and `knowledge-config.json` consolidated into existing sections.
+5. **Draft updates** — Propose minimal edits to `instruction.md` and source descriptions in `tenant_config.py` / `knowledge-config.json` consolidated into existing sections.
 6. **Report or open PR** — Output the evidence-cited digest and, when requested, open a human-reviewed PR.
 
 ## Examples

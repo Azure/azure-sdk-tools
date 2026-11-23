@@ -6,10 +6,10 @@ Compare Evolution Agent proposals against human maintainer outcomes and distill 
 
 Record four fields per reviewed item:
 
-- **Agent proposal:** `classification`, `source`, target `KB document`, and `Validated change` (plus initial coding-agent PR commit when present).
+- **Agent proposal:** `classification`, `source`, proposed `Documentation goal` / `Candidate summary` (or legacy `KB document` / `Validated change`), plus initial coding-agent PR commit when present.
 - **Human outcome:** `merged_as_is`, `merged_with_edits`, `relocated`, `closed_rejected` (closed/abandoned without doc change), or `open_with_feedback`.
 - **Delta:** What the human rejected, moved, condensed, or generalized, and why.
-- **Agent gap:** Which missing or weak rule in `agents/chatbot_evolution_agent/instruction.md` or `knowledge-config.json` permitted the error.
+- **Agent gap:** Which missing or weak rule in `agents/chatbot_evolution_agent/instruction.md`, `config/tenant_config.py`, or `knowledge-config.json` permitted the error.
 
 Skip items that merged as-is without substantive routing or editorial corrections.
 
@@ -18,7 +18,7 @@ Skip items that merged as-is without substantive routing or editorial correction
 | Category | Human Review Signal | Target Artifact to Refine |
 | --- | --- | --- |
 | `triage_rejection` | Closed/abandoned as product/pipeline bug, transient outage, one-off workaround, historical migration quirk, or already documented | Doc-worthiness gate and classification rules in `agents/chatbot_evolution_agent/instruction.md` |
-| `ownership_relocation` | Moved to another repo, sibling doc, audience tier (tutorial vs. how-to/FAQ/troubleshooting/migration), plane (`data-plane` vs. `management-plane`), or section | Discovery rules in `instruction.md` (using `list_knowledge_sources`, `search_knowledge_base`, `resolve_kb_source`, `read_knowledge`) or source `description` in `knowledge-config.json` |
+| `ownership_relocation` | Moved to another repo, sibling doc, audience tier (tutorial vs. how-to/FAQ/troubleshooting/migration), plane (`data-plane` vs. `management-plane`), or section | Discovery rules in `instruction.md` (using `list_knowledge_sources`, `search_knowledge_base`, `resolve_kb_source`, `read_knowledge`) or source `description` in `config/tenant_config.py` / `knowledge-config.json` |
 | `editorial_generalization` | Replaced Q&A-specific paragraphs or LLM-steering caveats with 1–3 general lines woven into existing prose, lists, examples, TOCs, or repo callouts | Editing rubric and issue format (`Documentation goal` vs. `Candidate validation reference`) in `instruction.md` |
 | `domain_correction` | Blocked or softened a situational workaround overgeneralized into a misleading rule | Grounding and generalization guardrails in `instruction.md` |
 

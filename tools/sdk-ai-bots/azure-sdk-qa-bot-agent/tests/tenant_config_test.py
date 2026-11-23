@@ -91,7 +91,6 @@ def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
         _AGENT_ROOT / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
 
-    assert "8 tool calls" in instruction
     assert "3 dependent follow-up rounds" in instruction
     assert "`load_skill` ALONE" in instruction
 

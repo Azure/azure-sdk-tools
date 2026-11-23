@@ -110,15 +110,31 @@ export function collectEnvironmentSuiteErrors(
         `[${environmentName}] teamsChannelIds is empty or contains a placeholder`,
       );
     }
-    const azureMcpChannelIds = environment.azureMcpTeamsChannelIds ?? [];
-    if (
-      Boolean(environment.azureMcpTeamsGroupId) !== (azureMcpChannelIds.length > 0) ||
-      hasPlaceholder(environment.azureMcpTeamsGroupId) ||
-      azureMcpChannelIds.some((id) => !id || hasPlaceholder(id))
-    ) {
-      errors.push(
-        `[${environmentName}] azureMcpTeamsGroupId and azureMcpTeamsChannelIds must both be set or both empty, without placeholders`,
-      );
+    const additionalListeners = [
+      ["azureMcpTeamsGroupId", "azureMcpTeamsChannelIds"],
+      ["apiStewardshipTeamsGroupId", "apiStewardshipTeamsChannelIds"],
+    ] as const;
+    const groupIds = new Set([environment.teamsGroupId]);
+    const monitoredChannelIds = [...channelIds];
+    for (const [groupKey, channelsKey] of additionalListeners) {
+      const groupId = environment[groupKey];
+      const channels = environment[channelsKey];
+      if (
+        typeof groupId !== "string" ||
+        !Array.isArray(channels) ||
+        Boolean(groupId) !== (channels.length > 0) ||
+        hasPlaceholder(groupId) ||
+        channels.some((id) => typeof id !== "string" || !id.trim() || hasPlaceholder(id))
+      ) {
+        errors.push(
+          `[${environmentName}] ${groupKey} and ${channelsKey} must both be set or both empty, without placeholders`,
+        );
+        continue;
+      }
+      if (groupId) {
+        groupIds.add(groupId);
+        monitoredChannelIds.push(...channels);
+      }
     }
 
     if (environment.chatbotEvolutionAgentEnabled && !environment.candidateEnvironment) {
@@ -150,7 +166,6 @@ export function collectEnvironmentSuiteErrors(
     const routeIds = (channelConfig.channels ?? [])
       .map((channel) => channel.id)
       .filter((id): id is string => !!id);
-    const monitoredChannelIds = [...channelIds, ...azureMcpChannelIds];
     for (const channelId of monitoredChannelIds) {
       if (!routeIds.includes(channelId)) {
         errors.push(
@@ -194,10 +209,7 @@ export function collectEnvironmentSuiteErrors(
         );
         continue;
       }
-      if (
-        groupId !== environment.teamsGroupId &&
-        groupId !== environment.azureMcpTeamsGroupId
-      ) {
+      if (!groupIds.has(groupId)) {
         errors.push(
           `[${environmentName}] tenant channel link targets a different Teams group: '${tenant.channel_link}'`,
         );

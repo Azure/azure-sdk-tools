@@ -135,10 +135,13 @@ one-hour cache. Retain work-item permissions under the configured area.
 4. Confirm the Search index contains the expected externally ingested knowledge
    and wiki data.
 5. Confirm the primary Logic App is enabled and its Teams connection is
-   `Connected`. Dev uses one listener including MCP; preview and production
-   each use a separate MCP listener. Preview observes the production channels
-   through its own bot and backend. Verify activities from every configured group
-   reach the agent-server `/activity/convert` endpoint.
+   `Connected`. Dev uses one listener including MCP and API Stewardship Board;
+   preview and production each use a separate MCP listener. Production also
+   has a dedicated API Stewardship Board listener that is enabled only when the
+   shared connection is authorized. If provisioning created the connection while
+   disconnected, rerun Logic App provisioning after consent to enable the
+   workflows. Verify activities from every configured group reach the
+   agent-server `/activity/convert` endpoint.
 6. Send a test Teams message through each newly changed route.
 7. Confirm the hosted chat and Azure MCP Server agent versions are active. For
    production, also confirm the evolution-agent version and its

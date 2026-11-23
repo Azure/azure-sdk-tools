@@ -62,6 +62,16 @@ test("reports malformed identities, placeholders, and route drift", () => {
   assert.ok(errors.some((error) => error.includes("components.frontend")));
 });
 
+test("rejects a partial Stewardship listener and accepts complete production routing", () => {
+  const suite = loadEnvironmentSuite();
+  assert.deepEqual(collectEnvironmentSuiteErrors({ suite, environments: ["prod"], configRoot }), []);
+  suite.environments.prod.apiStewardshipTeamsGroupId = "";
+  const errors = collectEnvironmentSuiteErrors({ suite, environments: ["prod"], configRoot });
+  assert.ok(errors.some((error) => error.includes(
+    "apiStewardshipTeamsGroupId and apiStewardshipTeamsChannelIds must both be set or both empty",
+  )));
+});
+
 test("reports undefined tenants and Teams group mismatches", () => {
   const root = mkdtempSync(join(tmpdir(), "qabot-env-validation-"));
   const devRoot = join(root, "dev");

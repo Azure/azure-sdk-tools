@@ -52,6 +52,8 @@ environments:
         teamsChannelIds: string[]
         azureMcpTeamsGroupId: string
         azureMcpTeamsChannelIds: string[]
+        apiStewardshipTeamsGroupId: string
+        apiStewardshipTeamsChannelIds: string[]
         localDeployAllowed: bool
 
 components:
@@ -71,12 +73,14 @@ probe. Release health follows the verification steps in the
 Run `npm run validate-env-suite` to validate all environments, or append
 `-- --environment dev` for an environment-scoped check. In addition to required
 values and placeholders, the validator checks that `config/<env>/channel.yaml`
-exactly matches the union of `teamsChannelIds` and
-`azureMcpTeamsChannelIds`, every route tenant is defined, and tenant links
-target the corresponding primary or Azure MCP Server Teams group.
-The MCP group and channel list must either both be set or both be empty.
-Dev includes its MCP channel in the primary listener. Preview and production
-configure a second listener for the production MCP team.
+exactly matches the union of `teamsChannelIds`, `azureMcpTeamsChannelIds`, and
+`apiStewardshipTeamsChannelIds`, every route tenant is defined, and tenant links
+target a configured Teams group. For each additional listener, the group and
+channel list must either both be set or both be empty.
+Dev includes its MCP and API Stewardship Board channels in the primary
+listener. Preview and production have a second listener for the production MCP
+team; only production adds the Board's dedicated listener. Preview uses the
+production SDK and MCP teams, not the legacy test team's channels.
 
 ## Local azd sync
 
@@ -101,8 +105,9 @@ an immutable reviewed tag immediately before `azd deploy`.
 Teams routing values are suite-owned and copied into the local azd environment:
 `teamsGroupId` → `TEAMS_GROUP_ID`, and the `teamsChannelIds` array →
 comma-separated `TEAMS_CHANNEL_IDS`. The Azure MCP Server equivalents map to
-`AZURE_MCP_TEAMS_GROUP_ID` and `AZURE_MCP_TEAMS_CHANNEL_IDS`. Pipelines export
-the same values directly from the suite. `serverApplicationClientId` becomes
+`AZURE_MCP_TEAMS_GROUP_ID` and `AZURE_MCP_TEAMS_CHANNEL_IDS`; the Board equivalents
+map to `API_STEWARDSHIP_TEAMS_GROUP_ID` and `API_STEWARDSHIP_TEAMS_CHANNEL_IDS`.
+Pipelines export the same values directly from the suite. `serverApplicationClientId` becomes
 `SERVER_APPLICATION_CLIENT_ID` for Easy
 Auth. `serverApplicationIdUri` becomes `SERVER_APPLICATION_ID_URI`, and the
 frontend Bicep adapter derives its scope as `<serverApplicationIdUri>/.default`

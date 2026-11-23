@@ -7,9 +7,9 @@ blob container by `hooks/postprovision.ts` (via
 [`hooks/lib/upload-bot-configs.ts`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/hooks/lib/upload-bot-configs.ts)).
 
 The agent-server reads `channel.yaml`, caches it for five minutes by default,
-and exposes the authenticated `/config/channel` endpoint. The primary and Azure
-MCP Server Logic Apps use that endpoint to resolve the tenant for each Teams
-channel.
+and exposes the authenticated `/config/channel` endpoint. The SDK, Azure MCP
+Server, and production API Stewardship Board Logic Apps use that endpoint to
+resolve the tenant for each Teams channel.
 
 ## Layout
 

@@ -22,7 +22,7 @@ test("loads typed environment and hyphenated component names", () => {
   assert.equal(getEnvironmentConfig(suite, "dev").chatbotEvolutionAgentEnabled, false);
   assert.throws(() => getEnvironmentConfig(suite, "unknown"), /not declared/);
   const devChannelIds = getEnvironmentConfig(suite, "dev").teamsChannelIds;
-  assert.equal(devChannelIds.length, 14);
+  assert.equal(new Set(devChannelIds).size, devChannelIds.length);
   assert.ok(
     devChannelIds.includes(
       "19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2",

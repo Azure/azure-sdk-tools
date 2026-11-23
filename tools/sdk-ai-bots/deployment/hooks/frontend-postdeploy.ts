@@ -170,7 +170,10 @@ async function reconcileTeamsApp(envFile: string): Promise<void> {
   const azureMcpTeamId =
     process.env.AZURE_MCP_TEAMS_GROUP_ID?.trim() ||
     environment.azureMcpTeamsGroupId;
-  const teamIds = [...new Set([primaryTeamId, azureMcpTeamId].filter((id): id is string => !!id))];
+  const apiStewardshipTeamId =
+    process.env.API_STEWARDSHIP_TEAMS_GROUP_ID?.trim() ||
+    environment.apiStewardshipTeamsGroupId;
+  const teamIds = [...new Set([primaryTeamId, azureMcpTeamId, apiStewardshipTeamId].filter(Boolean))];
   const tenantId =
     process.env.TEAMS_APP_TENANT_ID?.trim() ||
     readEnvValue(envFile, "TEAMS_APP_TENANT_ID") ||

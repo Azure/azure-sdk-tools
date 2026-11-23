@@ -46,3 +46,7 @@ tenants:
   - tenant: azure_mcp_server
     channel_name: Azure MCP Server General
     channel_link: https://teams.microsoft.com/l/channel/19%3Aa357180f469c484db6890d8e35fe6a76%40thread.tacv2/Azure%20MCP%20Server%20General?groupId=7ccc31f0-b371-450b-a73c-48f5a31a9b96&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47
+
+  - tenant: api_stewardship_board_qa_bot
+    channel_name: API Stewardship Board - General
+    channel_link: https://teams.microsoft.com/l/channel/19%3A17b23ff1d5d54cc293dcf673d32a5b7f%40thread.tacv2/API%20Stewardship%20Board%20-%20General?groupId=7ccc31f0-b371-450b-a73c-48f5a31a9b96&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47

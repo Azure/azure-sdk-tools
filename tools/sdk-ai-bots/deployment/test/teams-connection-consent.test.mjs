@@ -155,6 +155,25 @@ test("fails when a workflow references a different connection", () => {
   assert.ok(result.calls.every(call => !call.includes("properties.statuses[0].status")));
 });
 
+test("verifies the configured Stewardship workflow before inspecting Teams consent", () => {
+  const env = {
+    API_STEWARDSHIP_TEAMS_GROUP_ID: "stewardship-team",
+    API_STEWARDSHIP_TEAMS_CHANNEL_IDS: "stewardship-channel",
+    API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME_OVERRIDE: "stewardship-workflow",
+  };
+  const data = fixture();
+  data.workflows["stewardship-workflow"] = { connectionId: `${prefix}teams`, id: apiId };
+  const success = runConsent({ env, data });
+  assert.equal(success.status, 0, success.stderr);
+  assert.ok(success.calls.some(call => call.includes("stewardship-workflow")));
+
+  data.workflows["stewardship-workflow"].connectionId = `${prefix}teams-1`;
+  const mismatch = runConsent({ env, data });
+  assert.notEqual(mismatch.status, 0);
+  assert.match(mismatch.stderr, /stewardship-workflow.*not the selected Teams connection/);
+  assert.ok(mismatch.calls.every(call => !call.includes("properties.statuses[0].status")));
+});
+
 test("does not guess when workflows disagree and no connection is configured", () => {
   const data = fixture();
   data.workflows["mcp-workflow"].connectionId = `${prefix}teams-2`;

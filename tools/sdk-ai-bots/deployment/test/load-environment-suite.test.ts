@@ -75,6 +75,11 @@ test("preserves scalar configuration in production", () => {
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(result.values.MANAGE_AUTHORIZATION_RESOURCES, undefined);
   assert.equal(result.values.GPT_4_1_CAPACITY, "200");
+  const prod = suite.environments.prod;
+  assert.equal(result.values.API_STEWARDSHIP_TEAMS_GROUP_ID, prod.apiStewardshipTeamsGroupId);
+  assert.equal(result.values.API_STEWARDSHIP_TEAMS_CHANNEL_IDS, prod.apiStewardshipTeamsChannelIds.join(","));
+  assert.equal(result.values.API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME_OVERRIDE,
+    prod.bicepOverrides?.API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME);
 });
 
 test("loads preview's adopted resource names and backend registration into pipeline variables", () => {
@@ -94,6 +99,8 @@ test("loads preview's adopted resource names and backend registration into pipel
   assert.equal(result.values.TEAMS_CHANNEL_IDS, suite.environments.prod.teamsChannelIds.join(","));
   assert.equal(result.values.AZURE_MCP_TEAMS_GROUP_ID, suite.environments.prod.azureMcpTeamsGroupId);
   assert.equal(result.values.AZURE_MCP_TEAMS_CHANNEL_IDS, suite.environments.prod.azureMcpTeamsChannelIds.join(","));
+  assert.equal(result.values.API_STEWARDSHIP_TEAMS_GROUP_ID, "");
+  assert.equal(result.values.API_STEWARDSHIP_TEAMS_CHANNEL_IDS, "");
 });
 
 test("preserves multiline JSON and literal logging escape sequences in pipeline overrides", () => {

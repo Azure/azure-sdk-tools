@@ -15,6 +15,12 @@ param azureMcpTeamsGroupId string = ''
 @description('Azure MCP Server Teams channel IDs to subscribe to.')
 param azureMcpTeamsChannelIds array = []
 
+@description('API Stewardship Board Teams group ID. Leave empty with no channel IDs to omit its separate listener.')
+param apiStewardshipTeamsGroupId string = ''
+
+@description('API Stewardship Board Teams channel IDs to subscribe to.')
+param apiStewardshipTeamsChannelIds array = []
+
 @description('Base URL of the agent server.')
 param serverBaseUrl string
 
@@ -52,6 +58,9 @@ param logicAppWorkflowNameOverride string = ''
 @description('Name of the Azure MCP Server Logic App workflow.')
 param azureMcpLogicAppWorkflowNameOverride string = ''
 
+@description('Name of the API Stewardship Board Logic App workflow.')
+param apiStewardshipLogicAppWorkflowNameOverride string = ''
+
 @description('Name of the metric alert on the Logic App workflow.')
 param logicAppAlertNameOverride string = ''
 
@@ -69,6 +78,8 @@ var azureMcpLogicAppWorkflowName = !empty(azureMcpLogicAppWorkflowNameOverride) 
 var logicAppAlertName = !empty(logicAppAlertNameOverride) ? logicAppAlertNameOverride : 'azuresdkqabot-logicapp-alert-${suffix}'
 var azureMcpLogicAppAlertName = !empty(azureMcpLogicAppAlertNameOverride) ? azureMcpLogicAppAlertNameOverride : '${azureMcpLogicAppWorkflowName}-alert'
 var deployAzureMcpWorkflow = !empty(azureMcpTeamsGroupId) && length(azureMcpTeamsChannelIds) > 0
+var apiStewardshipWorkflowName = !empty(apiStewardshipLogicAppWorkflowNameOverride) ? apiStewardshipLogicAppWorkflowNameOverride : 'api-stewardship-board-qabot-logicapp-${suffix}'
+var deployApiStewardshipWorkflow = !empty(apiStewardshipTeamsGroupId) && length(apiStewardshipTeamsChannelIds) > 0
 
 
 // Resource IDs the workflow authenticates with via managed identity. Computed
@@ -227,84 +238,80 @@ resource azureMcpWorkflow 'Microsoft.Logic/workflows@2019-05-01' = if (deployAzu
   }
 }
 
+resource apiStewardshipWorkflow 'Microsoft.Logic/workflows@2019-05-01' = if (deployApiStewardshipWorkflow) {
+  name: apiStewardshipWorkflowName
+  location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${botIdentityResourceId}': {}
+      '${serverIdentityResourceId}': {}
+    }
+  }
+  properties: {
+    state: workflowEnabled ? 'Enabled' : 'Disabled'
+    integrationAccount: {
+      id: integrationAccount.id
+    }
+    definition: workflowDefinition
+    parameters: union(workflowParameters, {
+      teamsGroupId: { value: apiStewardshipTeamsGroupId }
+      teamsChannelIds: { value: apiStewardshipTeamsChannelIds }
+    })
+  }
+}
+
+var metricAlertProperties = {
+  severity: 3
+  enabled: true
+  evaluationFrequency: 'PT1M'
+  autoMitigate: true
+  targetResourceType: 'Microsoft.Logic/workflows'
+  targetResourceRegion: location
+  actions: [
+    {
+      actionGroupId: resourceId('Microsoft.Insights/actionGroups', actionGroupName)
+      webHookProperties: {}
+    }
+  ]
+  windowSize: 'PT5M'
+  criteria: {
+    allOf: [
+      {
+        operator: 'GreaterThan'
+        threshold: 0
+        name: 'Metric1'
+        metricNamespace: 'Microsoft.Logic/workflows'
+        metricName: 'RunsFailed'
+        dimensions: []
+        timeAggregation: 'Total'
+        skipMetricValidation: false
+        criterionType: 'StaticThresholdCriterion'
+      }
+    ]
+    'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+  }
+}
+
 resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
   name: logicAppAlertName
   location: 'global'
-  properties: {
-    severity: 3
-    enabled: true
-    scopes: [
-      workflow.id
-    ]
-    evaluationFrequency: 'PT1M'
-    autoMitigate: true
-    targetResourceType: 'Microsoft.Logic/workflows'
-    targetResourceRegion: location
-    actions: [
-      {
-        actionGroupId: resourceId('Microsoft.Insights/actionGroups', actionGroupName)
-        webHookProperties: {}
-      }
-    ]
-    windowSize: 'PT5M'
-    criteria: {
-      allOf: [
-        {
-          operator: 'GreaterThan'
-          threshold: 0
-          name: 'Metric1'
-          metricNamespace: 'Microsoft.Logic/workflows'
-          metricName: 'RunsFailed'
-          dimensions: []
-          timeAggregation: 'Total'
-          skipMetricValidation: false
-          criterionType: 'StaticThresholdCriterion'
-        }
-      ]
-      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
-    }
-  }
+  properties: union(metricAlertProperties, { scopes: [workflow.id] })
 }
 
 resource azureMcpMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = if (deployAzureMcpWorkflow) {
   name: azureMcpLogicAppAlertName
   location: 'global'
-  properties: {
-    severity: 3
-    enabled: true
-    scopes: [
-      azureMcpWorkflow!.id
-    ]
-    evaluationFrequency: 'PT1M'
-    autoMitigate: true
-    targetResourceType: 'Microsoft.Logic/workflows'
-    targetResourceRegion: location
-    actions: [
-      {
-        actionGroupId: resourceId('Microsoft.Insights/actionGroups', actionGroupName)
-        webHookProperties: {}
-      }
-    ]
-    windowSize: 'PT5M'
-    criteria: {
-      allOf: [
-        {
-          operator: 'GreaterThan'
-          threshold: 0
-          name: 'Metric1'
-          metricNamespace: 'Microsoft.Logic/workflows'
-          metricName: 'RunsFailed'
-          dimensions: []
-          timeAggregation: 'Total'
-          skipMetricValidation: false
-          criterionType: 'StaticThresholdCriterion'
-        }
-      ]
-      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
-    }
-  }
+  properties: union(metricAlertProperties, { scopes: [azureMcpWorkflow!.id] })
+}
+
+resource apiStewardshipMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = if (deployApiStewardshipWorkflow) {
+  name: '${apiStewardshipWorkflowName}-alert'
+  location: 'global'
+  properties: union(metricAlertProperties, { scopes: [apiStewardshipWorkflow!.id] })
 }
 
 output TEAMS_CONNECTION_NAME string = teamsConnectionName
 output LOGIC_APP_WORKFLOW_NAME string = logicAppWorkflowName
 output AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME string = deployAzureMcpWorkflow ? azureMcpLogicAppWorkflowName : ''
+output API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME string = deployApiStewardshipWorkflow ? apiStewardshipWorkflowName : ''

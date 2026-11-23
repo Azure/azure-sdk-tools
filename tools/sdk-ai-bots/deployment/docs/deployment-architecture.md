@@ -105,10 +105,11 @@ only the frontend. `agent-server` deploys only the server in every environment. 
 an application deploy. Component CI remains separate from provisioning and
 deployment.
 
-Dev uses one Azure SDK Logic App listener including its MCP channel. Preview
-and production each use a primary SDK listener and a separate MCP team listener,
-monitoring the same production channels with environment-owned bot/backend
-resources. Each Logic App calls
+Dev uses one Azure SDK Logic App listener for its SDK, MCP, and API Stewardship
+Board channels. Preview and production each use a primary SDK listener and a
+separate MCP listener, monitoring the same SDK and MCP channels with their own
+bot and backend resources. Only production has a dedicated API Stewardship Board
+listener. Each Logic App calls
 the authenticated agent-server `/config/channel` endpoint
 to resolve each channel's tenant. The backend reads
 `bot-configs/channel.yaml` with the shared managed identity and caches the

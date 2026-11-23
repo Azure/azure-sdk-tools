@@ -22,6 +22,7 @@ workflow_names=()
 workflow_api_ids=()
 primary_workflow="${LOGIC_APP_WORKFLOW_NAME:-${LOGIC_APP_WORKFLOW_NAME_OVERRIDE:-}}"
 mcp_workflow="${AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME:-${AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME_OVERRIDE:-}}"
+stewardship_workflow="${API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME:-${API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME_OVERRIDE:-}}"
 [[ -z "$primary_workflow" ]] || workflow_names+=("$primary_workflow")
 if [[ -n "${AZURE_MCP_TEAMS_GROUP_ID:-}" && -n "${AZURE_MCP_TEAMS_CHANNEL_IDS:-}" ]]; then
     if [[ -z "$mcp_workflow" ]]; then
@@ -29,6 +30,13 @@ if [[ -n "${AZURE_MCP_TEAMS_GROUP_ID:-}" && -n "${AZURE_MCP_TEAMS_CHANNEL_IDS:-}
         exit 1
     fi
     workflow_names+=("$mcp_workflow")
+fi
+if [[ -n "${API_STEWARDSHIP_TEAMS_GROUP_ID:-}" && -n "${API_STEWARDSHIP_TEAMS_CHANNEL_IDS:-}" ]]; then
+    if [[ -z "$stewardship_workflow" ]]; then
+        echo "The API Stewardship Board workflow name is required to verify its Teams connection." >&2
+        exit 1
+    fi
+    workflow_names+=("$stewardship_workflow")
 fi
 
 connection_prefix="/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$AZURE_RESOURCE_GROUP/providers/Microsoft.Web/connections/"

@@ -245,7 +245,7 @@ versioning before production use.
 
 ### Existing-environment cutover
 
-Keep a legacy Function App until both Logic Apps have successfully called
+Keep a legacy Function App until all configured Logic Apps have successfully called
 agent-server `/activity/convert`. After verification, remove obsolete Function
 App resources and the `ado-token` secret through an approved cleanup change.
 They are not runtime dependencies of this deployment.

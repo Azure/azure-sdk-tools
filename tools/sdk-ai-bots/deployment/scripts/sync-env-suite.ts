@@ -38,7 +38,9 @@ export function syncEnvironment(
   const invalidKeys = Object.entries(values)
     .filter(([key, value]) => {
       const optionalListenerKey = key === "AZURE_MCP_TEAMS_GROUP_ID" ||
-        key === "AZURE_MCP_TEAMS_CHANNEL_IDS";
+        key === "AZURE_MCP_TEAMS_CHANNEL_IDS" ||
+        key === "API_STEWARDSHIP_TEAMS_GROUP_ID" ||
+        key === "API_STEWARDSHIP_TEAMS_CHANNEL_IDS";
       return (!value && !optionalListenerKey) || value.includes("REPLACE_WITH_");
     })
     .map(([key]) => key);

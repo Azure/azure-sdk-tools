@@ -33,6 +33,8 @@ export interface EnvironmentConfig {
   teamsChannelIds: string[];
   azureMcpTeamsGroupId: string;
   azureMcpTeamsChannelIds: string[];
+  apiStewardshipTeamsGroupId: string;
+  apiStewardshipTeamsChannelIds: string[];
   location: string;
   aiLocation: string;
   cosmosDbLocation: string;
@@ -147,6 +149,7 @@ const OVERRIDE_ALIAS_KEYS = new Set([
   "TEAMS_CONNECTION_NAME",
   "LOGIC_APP_WORKFLOW_NAME",
   "AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME",
+  "API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME",
   "LOGIC_APP_ALERT_NAME",
   "AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME",
 ]);
@@ -187,6 +190,8 @@ export function buildAzdEnvironmentValues(
     TEAMS_CHANNEL_IDS: environment.teamsChannelIds.join(","),
     AZURE_MCP_TEAMS_GROUP_ID: environment.azureMcpTeamsGroupId,
     AZURE_MCP_TEAMS_CHANNEL_IDS: environment.azureMcpTeamsChannelIds.join(","),
+    API_STEWARDSHIP_TEAMS_GROUP_ID: environment.apiStewardshipTeamsGroupId,
+    API_STEWARDSHIP_TEAMS_CHANNEL_IDS: environment.apiStewardshipTeamsChannelIds.join(","),
   };
 
   if (environment.candidateEnvironment) {

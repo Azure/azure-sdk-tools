@@ -67,9 +67,12 @@ environments:
             - '19:453ec446a66446589d764132f5cebb00@thread.tacv2'
             - '19:037246b9968445edb3a23612ea44524d@thread.tacv2'
             - '19:de16cb01a8a140678f02c3c1c8999756@thread.tacv2'
+            - '19:17b23ff1d5d54cc293dcf673d32a5b7f@thread.tacv2'
             - '19:a357180f469c484db6890d8e35fe6a76@thread.tacv2'
         azureMcpTeamsGroupId: ''
         azureMcpTeamsChannelIds: []
+        apiStewardshipTeamsGroupId: ''
+        apiStewardshipTeamsChannelIds: []
         location: 'westus2'
         aiLocation: 'swedencentral'
         cosmosDbLocation: 'westus2'
@@ -176,6 +179,8 @@ environments:
         azureMcpTeamsGroupId: '256e3336-e328-4683-a24a-7a36c8a123fc'
         azureMcpTeamsChannelIds:
             - '19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2'
+        apiStewardshipTeamsGroupId: ''
+        apiStewardshipTeamsChannelIds: []
         location: 'westus2'
         aiLocation: 'westus2'
         cosmosDbLocation: 'westus2'
@@ -259,6 +264,9 @@ environments:
         azureMcpTeamsGroupId: '256e3336-e328-4683-a24a-7a36c8a123fc'
         azureMcpTeamsChannelIds:
             - '19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2'
+        apiStewardshipTeamsGroupId: '1a10b50c-e870-4fe0-8483-bf5542a8d2d8'
+        apiStewardshipTeamsChannelIds:
+            - '19:3ebb18fded0e47938f998e196a52952f@thread.tacv2'
         location: 'westus2'
         aiLocation: 'swedencentral'
         cosmosDbLocation: 'westus2'
@@ -306,6 +314,7 @@ environments:
             TEAMS_CONNECTION_NAME: 'teams'
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
             AZURE_MCP_SERVER_LOGIC_APP_WORKFLOW_NAME: 'azuremcpserver-qabot-logicapp'
+            API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME: 'api-stewardship-board-qabot-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
             AZURE_MCP_SERVER_LOGIC_APP_ALERT_NAME: 'azuremcpserver-qabot-logicapp-alert'
         localDeployAllowed: false

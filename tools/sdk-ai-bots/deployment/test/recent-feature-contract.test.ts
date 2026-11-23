@@ -144,15 +144,50 @@ test("keeps all environment listener subscriptions aligned with the upstream Log
   }
 });
 
-test("mirrors production Teams routing in preview without adopting production backend resources", () => {
-  assert.deepEqual(parse(read("config/preview/channel.yaml")), parse(read("config/prod/channel.yaml")));
-  assert.deepEqual(parse(read("config/preview/tenant.yaml")), parse(read("config/prod/tenant.yaml")));
+test("mirrors SDK and MCP production routes in preview without adopting production backend resources", () => {
+  const prodChannels = parse(read("config/prod/channel.yaml"));
+  const prodTenants = parse(read("config/prod/tenant.yaml"));
+  const isPreviewRoute = ({ tenant }: { tenant: string }) => tenant !== "api_stewardship_board_qa_bot";
+  assert.deepEqual(parse(read("config/preview/channel.yaml")), {
+    ...prodChannels, channels: prodChannels.channels.filter(isPreviewRoute),
+  });
+  assert.deepEqual(parse(read("config/preview/tenant.yaml")), {
+    tenants: prodTenants.tenants.filter(isPreviewRoute),
+  });
   const suite = parse(read("infra/environments/environment-suite.yaml"));
   const preview = suite.environments.preview;
   assert.notEqual(preview.resourceGroupPrefix, suite.environments.prod.resourceGroupPrefix);
   assert.notEqual(preview.bicepOverrides.SERVER_BASE_URL, suite.environments.prod.bicepOverrides.SERVER_BASE_URL);
   assert.equal(preview.bicepOverrides.SERVER_BASE_URL, "https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net");
   assert.equal(preview.bicepOverrides.TEAMS_CONNECTION_NAME, "teams-preview");
+});
+
+test("keeps Stewardship on the dev SDK listener and a consent-gated production listener", () => {
+  const suite = parse(read("infra/environments/environment-suite.yaml"));
+  const upstream = JSON.parse(read(
+    "../azure-sdk-qa-bot-agent/pipelines/logicapp/parameters.api_stewardship_board.prod.json",
+  )).parameters;
+  const tenant = "api_stewardship_board_qa_bot";
+  const devChannel = "19:17b23ff1d5d54cc293dcf673d32a5b7f@thread.tacv2";
+  assert.ok(suite.environments.dev.teamsChannelIds.includes(devChannel));
+  for (const env of ["dev", "preview"]) {
+    assert.equal(suite.environments[env].apiStewardshipTeamsGroupId, "");
+    assert.deepEqual(suite.environments[env].apiStewardshipTeamsChannelIds, []);
+  }
+  const prod = suite.environments.prod;
+  assert.equal(prod.apiStewardshipTeamsGroupId, upstream.teamsGroupId.value);
+  assert.deepEqual(prod.apiStewardshipTeamsChannelIds, upstream.teamsChannelIds.value);
+  assert.equal(prod.bicepOverrides.API_STEWARDSHIP_LOGIC_APP_WORKFLOW_NAME, upstream.logicAppName.value);
+  for (const [env, expected] of [["dev", [devChannel]], ["prod", upstream.teamsChannelIds.value]]) {
+    const config = parse(read(`config/${env}/channel.yaml`));
+    const routes = config.channels.filter((route: { tenant: string }) => route.tenant === tenant);
+    assert.deepEqual(routes.map((route: { id: string }) => route.id), expected);
+    assert.ok(routes.every((route: { endpoint: string }) => route.endpoint === "${SERVER_BASE_URL}"));
+  }
+  const logicApp = read("infra/layers/logic-app/main.bicep");
+  assert.match(logicApp, /resource apiStewardshipWorkflow [^\n]+if \(deployApiStewardshipWorkflow\) \{[\s\S]*?state: workflowEnabled \? 'Enabled' : 'Disabled'/);
+  assert.match(logicApp, /resource apiStewardshipMetricAlert [^\n]+if \(deployApiStewardshipWorkflow\) \{[\s\S]*?scopes: \[apiStewardshipWorkflow!\.id\]/);
+  assert.match(read("hooks/frontend-postdeploy.ts"), /\[primaryTeamId, azureMcpTeamId, apiStewardshipTeamId\]/);
 });
 
 test("enables branch routing only for dev and tags native and standalone agent deployments", () => {
@@ -723,9 +758,10 @@ test("keeps Teams image downloads aligned with the upstream workflow", () => {
   assert.equal(actions.Scope, undefined);
 
   const bicep = read("infra/layers/logic-app/main.bicep");
-  assert.equal((bicep.match(/definition: workflowDefinition/g) ?? []).length, 2);
+  assert.equal((bicep.match(/definition: workflowDefinition/g) ?? []).length, 3);
   const manifest = JSON.parse(read("../azure-sdk-qa-bot/appPackage/manifest.json"));
-  assert.equal(manifest.manifestVersion, "1.25");
+  assert.equal(manifest.manifestVersion, "1.29");
+  assert.match(manifest.$schema, /\/v1\.29\/MicrosoftTeams\.schema\.json$/);
   assert.equal(manifest.supportsChannelFeatures, "tier1");
   assert.equal(manifest.version, "1.0.5");
   assert.match(read("../azure-sdk-qa-bot/src/index.ts"), /express\.json\(\{ limit: '30mb' \}\)/);

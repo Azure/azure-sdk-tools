@@ -62,3 +62,8 @@ channels:
     id: 19:Jwo_T5Rls-7KVRFup69ij9R4CoBCqtVuV3_TC7JwfRM1@thread.tacv2
     endpoint: ${SERVER_BASE_URL}
     tenant: azure_mcp_server
+
+  - name: API Stewardship Board - General
+    id: 19:3ebb18fded0e47938f998e196a52952f@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: api_stewardship_board_qa_bot

@@ -110,6 +110,11 @@ stimuli:
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
           value: '@@clientName(Microsoft.Widget.Employee, "Staff", "csharp")'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004001-model-renamed-breaking-change-SpecInputs-python
     tags:
@@ -152,6 +157,11 @@ stimuli:
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
           value: '@@clientName(Microsoft.Widget.Employee, "Staff", "python")'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004001-model-renamed-breaking-change-SpecInputs-java
     tags:
@@ -194,6 +204,11 @@ stimuli:
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
           value: '@@clientName(Microsoft.Widget.Employee, "Staff", "java")'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0
 
   - name: 004001-model-renamed-breaking-change-SpecInputs-javascript
     tags:
@@ -236,3 +251,8 @@ stimuli:
         config:
           path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
           value: '@@clientName(Microsoft.Widget.Employee, "Staff", "javascript")'
+      - type: run-command
+        config:
+          command: >-
+            tsp compile specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp --dry-run
+          expected_exit_code: 0

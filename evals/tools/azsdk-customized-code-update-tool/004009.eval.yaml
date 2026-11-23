@@ -44,10 +44,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -56,10 +59,13 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: diff-empty
       - type: output-contains
         config:
           substring: "CustomCodeChangeRequired"
+      - type: file-exists
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          negate: true
 
   - name: 004009-property-optionality-breaking-change-SpecInputs-csharp
     tags:
@@ -83,10 +89,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -95,10 +104,13 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: diff-empty
       - type: output-contains
         config:
           substring: "CustomCodeChangeRequired"
+      - type: file-exists
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          negate: true
 
   - name: 004009-property-optionality-breaking-change-SpecInputs-python
     tags:
@@ -122,10 +134,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -134,10 +149,13 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: diff-empty
       - type: output-contains
         config:
           substring: "CustomCodeChangeRequired"
+      - type: file-exists
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          negate: true
 
   - name: 004009-property-optionality-breaking-change-SpecInputs-java
     tags:
@@ -161,10 +179,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -173,10 +194,13 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: diff-empty
       - type: output-contains
         config:
           substring: "CustomCodeChangeRequired"
+      - type: file-exists
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          negate: true
 
   - name: 004009-property-optionality-breaking-change-SpecInputs-javascript
     tags:
@@ -200,10 +224,13 @@ stimuli:
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/employee.tsp
         - src: ../../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
           dest: specification/widget/resource-manager/Microsoft.Widget/Widget/tspconfig.yaml
+        - src: ../../scripts/link-node-modules.cjs
+          dest: evals/scripts/link-node-modules.cjs
         - src: ../../../eng/common/knowledge/customizing-client-tsp.md
           dest: eng/common/knowledge/customizing-client-tsp.md
       commands:
         - git init
+        - node evals/scripts/link-node-modules.cjs
     constraints:
       max_turns: 20
       max_tokens: 50000
@@ -212,7 +239,10 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: diff-empty
       - type: output-contains
         config:
           substring: "CustomCodeChangeRequired"
+      - type: file-exists
+        config:
+          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
+          negate: true

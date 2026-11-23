@@ -63,14 +63,18 @@ def resolve_example_path(
     if namespace:
         services = [namespace] if namespace in api_versions else []
     elif service_parts and len(api_versions) > 1:
-        services = [service for service in api_versions if service.split(".")[-1] == service_parts[-1]]
+        services = [service for service in api_versions if service.split(".")[-1] == source_parts[0]]
     else:
         services = list(api_versions)
     if len(services) != 1:
         raise RuntimeError(f"Cannot uniquely match example {reference} to an API-version metadata service")
     api_version = api_versions[services[0]]
     _check_relative_path(api_version)
-    service_root = path.join(project_root, *service_parts)
+    service_name = services[0].split(".")[-1]
+    _check_relative_path(service_name)
+    service_root = path.join(project_root, service_name)
+    if len(api_versions) == 1 and not path.isdir(service_root):
+        service_root = project_root
     example_path = _find_swagger_example(
         specs_path, tsp_dir, api_version, example_id + ".json", service_root
     )
@@ -113,12 +117,14 @@ def _find_swagger_example(
     allow_unscoped_fallback: bool = False,
 ) -> Optional[str]:
     project_root = path.join(specs_path, tsp_dir)
-    scopes = [(service_root, True)]
-    if path.normpath(service_root) != path.normpath(project_root):
+    service_local = path.normpath(service_root) != path.normpath(project_root)
+    # Unified references may recurse within the selected service, not across the project.
+    scopes = [(service_root, service_local or allow_unscoped_fallback)]
+    if service_local:
         # Combined services can share the emitted Swagger directory above their source folders.
         scopes.append((project_root, False))
     # Only legacy JSON references retain the cross-tree resource-manager search.
-    if allow_unscoped_fallback and "/resource-manager/" not in tsp_dir and "/data-plane/" not in tsp_dir:
+    if allow_unscoped_fallback:
         service_dir = "/".join(tsp_dir.split("/")[:2])
         scopes.append((path.join(specs_path, service_dir, "resource-manager"), True))
 

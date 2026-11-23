@@ -363,22 +363,53 @@ class TestUnifiedExamples(unittest.TestCase):
     def test_service_local_swagger_does_not_match_another_subservice(self):
         self.tsp_dir = "specification/compute/resource-manager/Microsoft.Compute/Compute"
         self.configure({"Compute": "2026-04-01", "ComputeDisk": "2026-04-01"})
-        self.write(self.specs, f"{self.tsp_dir}/Compute/examples.yaml", "$namespace: Compute\n")
-        expected = self.write_swagger_example(
-            "2026-04-01", "virtualMachineExamples/Foo.json", "Compute/"
+        sources = (
+            "Compute/examples.yaml",
+            "examples/VirtualMachines.yaml",
+            "Compute/operations/examples.yaml",
         )
+        for source in sources:
+            self.write(self.specs, f"{self.tsp_dir}/{source}", "$namespace: Compute\n")
+        expected = self.write_swagger_example("2026-04-01", "virtualMachineExamples/Foo.json", "Compute/")
         self.write_swagger_example("2026-04-01", "virtualMachineExamples/Foo.json", "ComputeDisk/")
+        for source in sources:
+            with self.subTest(source=source):
+                self.assertEqual(
+                    tuple(expected),
+                    resolve_example_path(self.specs, self.sdk, source + "#virtualMachineExamples/Foo"),
+                )
+        remove(path.join(self.specs, *expected))
+        for source in sources:
+            with self.subTest(source=source):
+                with self.assertRaisesRegex(RuntimeError, "Swagger example not found"):
+                    resolve_example_path(self.specs, self.sdk, source + "#virtualMachineExamples/Foo")
+
+    def test_root_yaml_does_not_use_unowned_subdirectories(self):
+        self.configure({"SchemaRegistry": "2023-07-01"})
+        self.write(self.specs, f"{self.tsp_dir}/examples.yaml", "$namespace: SchemaRegistry\n")
+        self.write_swagger_example("2023-07-01", "Foo.json", "Other/")
+        with self.assertRaisesRegex(RuntimeError, "Swagger example not found"):
+            resolve_example_path(self.specs, self.sdk, "examples.yaml#Foo")
+        expected = self.write_swagger_example("2023-07-01", "Foo.json", "SchemaRegistry/")
         self.assertEqual(
             tuple(expected),
-            resolve_example_path(
-                self.specs, self.sdk, "Compute/examples.yaml#virtualMachineExamples/Foo"
-            ),
+            resolve_example_path(self.specs, self.sdk, "examples.yaml#Foo"),
         )
-        remove(path.join(self.specs, *expected))
-        with self.assertRaisesRegex(RuntimeError, "Swagger example not found"):
-            resolve_example_path(
-                self.specs, self.sdk, "Compute/examples.yaml#virtualMachineExamples/Foo"
-            )
+
+    def test_legacy_resource_manager_project_uses_sibling_swagger(self):
+        self.tsp_dir = "specification/example/resource-manager/Microsoft.Example/TypeSpecService"
+        self.configure({"Example": "2026-04-01"})
+        authored = self.write(self.specs, f"{self.tsp_dir}/examples/2026-04-01/Foo.json", "{}")
+        swagger = "specification/example/resource-manager/Microsoft.Example/stable/2026-04-01/examples"
+        self.write(self.specs, swagger + "/Foo.json", "{}")
+        for authored_exists in (True, False):
+            with self.subTest(authored_exists=authored_exists):
+                if not authored_exists:
+                    remove(authored)
+                self.assertEqual(
+                    (swagger, "Foo.json"),
+                    resolve_example_path(self.specs, self.sdk, "2026-04-01/Foo.json"),
+                )
 
     def test_missing_namespace_uses_unique_service_prefix_or_single_metadata_entry(self):
         for source in ("examples.yaml", "SchemaRegistry/examples.yaml", "operations/examples.yaml"):
@@ -390,6 +421,12 @@ class TestUnifiedExamples(unittest.TestCase):
                     tuple(expected),
                     resolve_example_path(self.specs, self.sdk, source + "#GetSchemaById"),
                 )
+        self.configure({"Contoso.SchemaRegistry": "2023-07-01", "Other": "2022-10"})
+        self.write(self.specs, f"{self.tsp_dir}/SchemaRegistry/operations/examples.yaml", "{}")
+        self.assertEqual(
+            tuple(expected),
+            resolve_example_path(self.specs, self.sdk, "SchemaRegistry/operations/examples.yaml#GetSchemaById"),
+        )
 
     def test_reports_ambiguous_service_instead_of_guessing_version(self):
         self.configure({"Compute": "2026-04-01", "ComputeDisk": "2026-03-02"})
@@ -402,8 +439,8 @@ class TestUnifiedExamples(unittest.TestCase):
     def test_reports_ambiguous_swagger_matches(self):
         self.configure({"SchemaRegistry": "2023-07-01"})
         self.write(self.specs, f"{self.tsp_dir}/examples.yaml", "$namespace: SchemaRegistry\n")
-        self.write_swagger_example("2023-07-01", "Foo.json", "first/")
-        self.write_swagger_example("2023-07-01", "Foo.json", "second/")
+        self.write_swagger_example("2023-07-01", "Foo.json", "SchemaRegistry/first/")
+        self.write_swagger_example("2023-07-01", "Foo.json", "SchemaRegistry/second/")
         with self.assertRaisesRegex(RuntimeError, "Ambiguous Swagger example"):
             resolve_example_path(self.specs, self.sdk, "examples.yaml#Foo")
 

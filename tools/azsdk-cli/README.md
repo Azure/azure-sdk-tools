@@ -142,6 +142,40 @@ dotnet test
 This tool can be run in test mode when the `AZSDKTOOLS_AGENT_TESTING` environment variable is set to `true`.
 When testing is enabled, release plans will be automatically generated in the test environment.
 
+### Version-safe release-plan lookup and creation
+
+`release-plan get --typespec-path <project> --api-version <version> --api-release-type <type>`
+searches for the same API version and release type in `In Progress` or `Finished`
+status. Concrete versions match exactly. An explicitly empty version or either
+multi-version alias (`all`, `multiple-versions`) selects the unversioned flow.
+JSON/MCP output reports `outcome: "existing"` when a plan is found and
+`outcome: "not_found"` when no plan matches. The existing no-match exit code of 1 is preserved.
+If an API Spec child cannot be read, version-specific lookup fails instead of
+reporting `not_found`. Creation uses the same lookup and stops before writing a
+plan when version evidence cannot be read, for all API release types.
+
+`release-plan create` derives its API version from TypeSpec metadata and reports
+`outcome: "created"` or `outcome: "existing"`. A plan linked to the same PR but targeting
+another concrete version does not prevent creation. The optional `--expected-api-version`
+(`expectedApiVersion` in MCP) checks the metadata before any plan is selected or written;
+it is an assertion, not a metadata override.
+
+Metadata containing `all`, `multiple-versions`, differing versions, or no version
+uses an empty API version. This supports umbrella SDK projects such as Compute,
+Network, and Security without a project allowlist. The CLI first searches by
+project path and release type for an empty-version plan, including finished plans.
+If none exists, it can reuse an applicable empty-version plan linked to the PR.
+If no reusable plan exists, it creates one with an empty `Custom.APISpecversion`.
+An existing match is returned rather than creating another plan of that type.
+If only a concrete-version plan of the same type exists, the unversioned request
+reports that plan as a conflict instead of creating another plan or treating its version as empty.
+
+The expected-version assertion normalizes aliases to empty on both sides, so
+`--expected-api-version all` and `--expected-api-version ""` can validate a
+multi-version project. An empty version is never a wildcard for concrete-version
+requests, and a conflicting PR-linked plan produces an error instead of being
+silently reused. Failures to read API Spec details stop lookup and creation.
+
 ### Manual release-plan abandonment
 
 Use `azsdk release-plan abandon --release-plan-id <Release Plan ID>` or supply `releasePlanId` to `azsdk_abandon_release_plan`. Supply the user-facing Release Plan ID, not the Azure DevOps work item ID. Manual abandonment no longer accepts `--work-item-id` or `workItemId`; other commands retain their existing ID contracts.

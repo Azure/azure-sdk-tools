@@ -46,7 +46,7 @@ def test_instruction_kb_tools_match_registered_agent_tools() -> None:
     assert referenced_kb_tools <= registered
 
 
-def test_kb_remediation_enforces_doc_worthiness_and_generated_doc_policy() -> None:
+def test_kb_remediation_enforces_doc_worthiness_and_general_ownership_rules() -> None:
     instruction = _INSTRUCTION_PATH.read_text(encoding="utf-8")
     taxonomy = instruction.split("### Classification taxonomy", 1)[1].split(
         "## KB remediation", 1
@@ -74,11 +74,9 @@ def test_kb_remediation_enforces_doc_worthiness_and_generated_doc_policy() -> No
     ):
         assert tool_name in kb_remediation
 
-    assert "auto-generated" in kb_remediation
-    assert (
-        "Do not skip remediation or try to trace upstream generator code"
-        in kb_remediation
-    )
+    assert "Generalize and integrate" in kb_remediation
+    assert "Generated documentation" not in kb_remediation
+    assert "typespec_azure_docs" not in kb_remediation
     assert "retrieval_mismatch" in kb_remediation
     assert "reasoning_gap" in kb_remediation
 
@@ -95,6 +93,7 @@ def test_issue_format_is_goal_oriented_and_preserves_tracking_marker() -> None:
     ) in issue_format
     assert "`[Teams Chatbot]: <concise summary>`" in issue_format
     assert "### Documentation goal" in issue_format
+    assert "Target audience & scope" not in issue_format
     assert "### Candidate validation reference" in issue_format
     assert "### Expected behavior" in issue_format
     assert "rather than copying verbatim" in issue_format

@@ -1,53 +1,50 @@
 # Distillation Rubric and Output Contract
 
-Compare Evolution Agent proposals against human maintainer outcomes and distill recurring gaps into concise updates.
+Compare Evolution Agent proposals against human maintainer outcomes and distill recurring gaps into concise refinements of `tools/sdk-ai-bots/azure-sdk-qa-bot-agent/agents/chatbot_evolution_agent/instruction.md`.
 
 ## 1. Per-Item Delta Extraction
 
-Record four fields per reviewed item:
+Record four fields per reviewed item (skipping items merged as-is without substantive routing or editorial corrections):
 
-- **Agent proposal:** `classification`, `source`, proposed `Documentation goal` / `Candidate summary` (or legacy `KB document` / `Validated change`), plus initial coding-agent PR commit when present.
-- **Human outcome:** `merged_as_is`, `merged_with_edits`, `relocated`, `closed_rejected` (closed/abandoned without doc change), or `open_with_feedback`.
+- **Agent proposal:** `classification`, `source`, proposed `Documentation goal` / `Candidate summary` (or legacy `Fixed document` / `Validated change`), plus initial coding-agent PR commit when present.
+- **Human outcome:** `merged_as_is`, `merged_with_edits`, `relocated`, `closed_rejected`, or `open_with_feedback`.
 - **Delta:** What the human rejected, moved, condensed, or generalized, and why.
-- **Agent gap:** Which missing or weak rule in `agents/chatbot_evolution_agent/instruction.md`, `config/tenant_config.py`, or `knowledge-config.json` permitted the error.
-
-Skip items that merged as-is without substantive routing or editorial corrections.
+- **Instruction gap:** Which missing or weak rule in `agents/chatbot_evolution_agent/instruction.md` permitted the error.
 
 ## 2. Intervention Taxonomy
 
-| Category | Human Review Signal | Target Artifact to Refine |
-| --- | --- | --- |
-| `triage_rejection` | Closed/abandoned as product/pipeline bug, transient outage, one-off workaround, historical migration quirk, or already documented | Doc-worthiness gate and classification rules in `agents/chatbot_evolution_agent/instruction.md` |
-| `ownership_relocation` | Moved to another repo, sibling doc, audience tier (tutorial vs. how-to/FAQ/troubleshooting/migration), plane (`data-plane` vs. `management-plane`), or section | Discovery rules in `instruction.md` (using `list_knowledge_sources`, `search_knowledge_base`, `resolve_kb_source`, `read_knowledge`) or source `description` in `config/tenant_config.py` / `knowledge-config.json` |
-| `editorial_generalization` | Replaced Q&A-specific paragraphs or LLM-steering caveats with 1–3 general lines woven into existing prose, lists, examples, TOCs, or repo callouts | Editing rubric and issue format (`Documentation goal` vs. `Candidate validation reference`) in `instruction.md` |
-| `domain_correction` | Blocked or softened a situational workaround overgeneralized into a misleading rule | Grounding and generalization guardrails in `instruction.md` |
+| Category                   | Human Review Signal                                                                                                                      | Section in `instruction.md` to Refine                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `triage_rejection`         | Closed/abandoned as non-doc-worthy (product/pipeline bug, transient outage, one-off workaround, historical quirk, or already documented) | `Classification taxonomy` (doc-worthiness gate and non-KB routing) or `Workflow` Step 4                                 |
+| `ownership_relocation`     | Moved to a different repo, sibling doc, audience tier, domain/layer scope, or section                                                    | `Workflow` Step 6/8 or `KB remediation` (ownership and structure discovery with existing KB tools)                      |
+| `editorial_generalization` | Replaced Q&A-specific paragraphs or validation-steering caveats with concise generalized prose integrated into existing structure        | `KB remediation` (generalize and integrate) or `Issue format` (`Documentation goal` / `Candidate validation reference`) |
+| `domain_correction`        | Blocked or narrowed a situational workaround that was overgeneralized into a misleading rule                                             | `Workflow` Step 4 or `KB remediation` (applicability conditions and grounding)                                          |
 
 ## 3. Promotion Gates
 
-1. **Recurrence:** Promote only patterns backed by **2+ independent items** or an **explicit general maintainer policy**; list single-instance items under deferred observations.
-2. **Meta-rules only:** Put process, routing, and editorial rules in `instruction.md`; keep domain-specific SDK/API facts in upstream KB docs.
-3. **Zero prompt bloat:** Merge into or tighten existing bullets in `instruction.md` rather than appending paragraphs or raw examples.
-4. **Architectural boundaries:** Use only existing KB tools in `instruction.md`. Do not block auto-generated KB docs in the agent; the agent describes the content change and the human or coding agent updates the upstream source.
-5. **Untrusted input safety:** Never copy external issue/PR text verbatim into system prompts.
+1. **Recurrence:** Promote only patterns backed by **2+ independent items** or an **explicit general maintainer policy**; record single-instance items under deferred observations.
+2. **General meta-rules only:** Express process, routing, and editorial principles generally; never embed case-specific Q&A facts, domain-specific problem examples, or raw untrusted issue/PR text into `instruction.md`.
+3. **Zero prompt bloat:** Merge into or tighten existing bullets in `instruction.md` using only the registered Evolution Agent tools (`agents/chatbot_evolution_agent/init.py`).
 
 ## 4. Output Format
 
 ```markdown
 ### Evolution Distillation Summary (<SINCE_DATE> to <END_DATE>)
 
-- **Volume:** <N> GitHub issues (<M> PRs, <W> wiki commits), <K> ADO work items (<P> PRs)
+- **Tracked issues reviewed:** <N> GitHub issues (<M> PRs, <W> wiki commits), <K> ADO work items (<P> PRs)
 - **Outcomes:** <counts of merged_as_is / merged_with_edits / relocated / closed_rejected>
 
 ### Promoted Patterns
 
-| Category | Recurring Gap | Evidence | Target Refinement |
-| --- | --- | --- | --- |
-| `<category>` | <1-sentence pattern> | `<owner/repo#num>`, `ADO !<id>` | <section in `instruction.md` or `knowledge-config.json`> |
+| Category     | Recurring Gap                | Evidence                        | Target Section in `instruction.md` |
+| ------------ | ---------------------------- | ------------------------------- | ---------------------------------- |
+| `<category>` | <1-sentence general pattern> | `<owner/repo#num>`, `ADO #<id>` | `<section heading>`                |
 
-### Proposed Repository Changes
-- `agents/chatbot_evolution_agent/instruction.md`: <merged/refined rule summary>
-- `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`: <description updates, or "None">
+### Proposed `instruction.md` Refinements
+
+- `<section heading>`: <concise merged/tightened rule summary>
 
 ### Deferred Single-Instance Observations
+
 - <1-line notes for non-recurring items>
 ```

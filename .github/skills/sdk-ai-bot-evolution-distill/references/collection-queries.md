@@ -1,41 +1,37 @@
 # Collection Queries for Evolution Agent Outcomes
 
-Collect Chatbot Evolution Agent items, linked pull requests, wiki commits, and human review comments updated since `<SINCE_DATE>` (`YYYY-MM-DD`).
+Enumerate tracked items directly from Chatbot Evolution `qa-records` updated since `<SINCE_DATE>` (`YYYY-MM-DD`), then fetch full provider comments and linked PR diffs.
 
-## Trackers and Markers
+## 1. Enumerate Issue URLs from Evolution Records
 
-Evolution items contain `<!-- chatbot-evolution source="..." classification="..." scope="..." -->` and `[Teams Chatbot]:` titles. Destinations come from `tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json` (`repository.issueTracker`):
+Every Evolution Agent item is persisted in `QARecord.feedback.issue_url` (`models/qa_record.py`) as a canonical GitHub issue URL (`https://github.com/<owner>/<repo>/issues/<number>`) or Azure Boards URL (`https://dev.azure.com/<org>/<project>/_workitems/edit/<id>`). Do not search across repositories.
 
-| Provider | Primary Trackers | Linked Doc Targets |
-| --- | --- | --- |
-| GitHub | `Azure/azure-sdk-pr` (`feedback-agent`), `Azure/azure-rest-api-specs`, `Azure/typespec-azure`, `Azure/azure-sdk-for-*`, `Azure/openapi-diff` | Upstream repo PRs and `Azure/azure-rest-api-specs.wiki.git` commits |
-| Azure DevOps | `https://dev.azure.com/azure-sdk`, project `internal`, area `internal\qa-bot` | Repo `azure-sdk-docs-eng.ms` PRs (`Agency` or maintainer PRs) |
+- **Via QA Dashboard API (`server.py`):** Page through `GET <DASHBOARD_BASE_URL>/api/dashboard/qa-records?updated_from=<SINCE_DATE>T00:00:00Z&page=<1..N>` until `page * page_size >= total`, keep records with non-null `feedback.issue_url` (focusing on closed outcomes `validation_passed`, `validation_failed`, `validation_skipped`), and deduplicate by `feedback.issue_url`.
+- **Via Cosmos DB (`utils/azure_cosmosdb.py`):** Query container `qa-records` in database `azure-sdk-qa-bot`:
 
-Skip `Azure/azure-sdk-pr` feature issues carrying `Teams Chatbot` without `feedback-agent` or the `chatbot-evolution` marker.
-
-## 1. GitHub Collection (`gh`)
-
-1. **Find updated issues:**
-
-```powershell
-gh search issues '"chatbot-evolution"' --owner Azure --updated ">=<SINCE_DATE>" --limit 200 --json repository,number,title,state,closedAt,updatedAt,labels,url
-gh search issues '"[Teams Chatbot]:"' --repo Azure/azure-sdk-pr --label feedback-agent --updated ">=<SINCE_DATE>" --limit 200 --json repository,number,title,state,closedAt,updatedAt,labels,url
+```sql
+SELECT c.id, c.tenant_id, c.feedback.issue_url, c.feedback.status, c.feedback.classification, c.updated_at
+FROM c
+WHERE IS_DEFINED(c.feedback.issue_url) AND NOT IS_NULL(c.feedback.issue_url)
+  AND c.updated_at >= @since
 ```
 
-2. **Batch-read issues and linked PRs (`gh api graphql`):** Fetch `issue(number)` fields `body`, `state`, `closedAt`, `comments(first: 50)`, and `timelineItems(first: 50, itemTypes: [CROSS_REFERENCED_EVENT, CONNECTED_EVENT])` resolving `PullRequest { number state merged url repository { nameWithOwner } }`.
-3. **Inspect PR feedback and final diffs:** For each linked PR, fetch `author`, `state`, `merged`, `commits(first: 50)` (initial `copilot-swe-agent` commit vs. follow-up commits), `reviews(first: 50)`, `reviewThreads(first: 50)` (`path` and `comments` nodes with `author`, `body`, `diffHunk`), and `files(first: 50)` or `gh pr diff`.
-4. **Check wiki commits:** When `Azure/azure-rest-api-specs` wiki issues close without a PR, inspect `git log --since="<SINCE_DATE>" -p` on `https://github.com/Azure/azure-rest-api-specs.wiki.git`.
-5. **Filter noise:** Drop comments by `github-actions`, `azure-sdk`, `microsoft-github-policy-service`, `Next Steps to Merge` banners, and automated `Validation passed/failed` notes (keep `Validation skipped` links to maintainer no-action comments).
+Parse each unique `issue_url` with `models.feedback.parse_issue_reference` (or URL host) into GitHub vs. Azure DevOps batches.
 
-## 2. Azure DevOps Collection (`az` + REST)
+## 2. Fetch GitHub Issue and PR Evidence (`gh`)
 
-1. **Query `internal\qa-bot` work items:**
+1. **Read issue and linked PRs (`gh api graphql`):** For each `https://github.com/<owner>/<repo>/issues/<number>`, fetch `body`, `state`, `closedAt`, `comments(first: 100, after: $cursor)`, and `timelineItems(first: 100, after: $cursor, itemTypes: [CROSS_REFERENCED_EVENT, CONNECTED_EVENT])` resolving `PullRequest { number state merged url repository { nameWithOwner } }`. Follow `pageInfo { hasNextPage endCursor }` until `hasNextPage` is `false`.
+2. **Fetch PR review threads and full patch diff:** For each linked PR, paginate `commits(first: 100, after: $cursor)`, `reviews(first: 100, after: $cursor)`, and `reviewThreads(first: 100, after: $cursor)` (`path` and paginated `comments(first: 100, after: $commentCursor)` nodes with `author { login }`, `body`, `diffHunk`), then fetch the actual patch content via `gh pr diff <pr_number> --repo <owner>/<repo>` (GraphQL `files` exposes metadata only, not patch hunks).
+3. **Check wiki commits:** When a wiki-backed issue closes without a linked PR, inspect `git log --since="<SINCE_DATE>" -p` on `https://github.com/<owner>/<repo>.wiki.git`.
 
-```powershell
-az boards query --org https://dev.azure.com/azure-sdk -p internal --wiql "SELECT [System.Id], [System.Title], [System.State], [System.ChangedDate] FROM WorkItems WHERE [System.AreaPath] UNDER 'internal\qa-bot' AND [System.ChangedDate] >= '<SINCE_DATE>' ORDER BY [System.ChangedDate] DESC" -o json
-```
+## 3. Fetch Azure DevOps Work Item and PR Evidence (`az` + REST)
 
-2. **Fetch work-item bodies, comments, and PR links:** Get a bearer token (`az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv`), then call:
-   - `GET https://dev.azure.com/azure-sdk/internal/_apis/wit/workitems?ids=<csv>&$expand=relations&api-version=7.1` (`System.Description` + `vstfs:///Git/PullRequestId/...` links)
-   - `GET https://dev.azure.com/azure-sdk/internal/_apis/wit/workItems/<id>/comments?api-version=7.1-preview.4`
-3. **Fetch `azure-sdk-docs-eng.ms` PRs and threads:** Run `az repos pr list --org https://dev.azure.com/azure-sdk -p internal -r azure-sdk-docs-eng.ms --status all --top 100 -o json`, match linked or `Agency`-authored `[Teams Chatbot]` PRs, and read `GET .../_apis/git/repositories/<repoId>/pullRequests/<prId>/threads?api-version=7.1` (`commentType == "text"` and `isDeleted != true`).
+Acquire a bearer token once via `az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv`:
+
+1. **Read work item and PR links:** Call `GET https://dev.azure.com/<org>/<project>/_apis/wit/workitems?ids=<csv>&$expand=relations&api-version=7.1` to read `System.Description`, `System.State`, and `vstfs:///Git/PullRequestId/...` relations.
+2. **Paginate all work-item comments:** Call `GET https://dev.azure.com/<org>/<project>/_apis/wit/workItems/<id>/comments?api-version=7.1-preview.4`, repeating with `&continuationToken=<token>` until `continuationToken` is absent.
+3. **Read linked PR threads and diffs:** For each linked PR, fetch human threads (`GET .../_apis/git/repositories/<repoId>/pullRequests/<prId>/threads?api-version=7.1`, `commentType == "text"` and `isDeleted != true`) and inspect changed file content across the PR's source/target commits.
+
+## 4. Noise Filtering
+
+Ignore comments authored by `github-actions`, `azure-sdk`, `microsoft-github-policy-service`, `Next Steps to Merge` banners, and automated `Validation passed/failed` comments (retain `Validation skipped` citations pointing to a human no-action comment).

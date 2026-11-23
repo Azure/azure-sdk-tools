@@ -146,7 +146,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return [];
                 }
 
-                return packages?.FirstOrDefault(p => string.Equals(p.Package, packageName, StringComparison.OrdinalIgnoreCase))?.BreakingChanges ?? [];
+                return packages?.FirstOrDefault(p => string.Equals(p.Package, packageName, StringComparison.Ordinal))?.BreakingChanges ?? [];
             }
         }
 

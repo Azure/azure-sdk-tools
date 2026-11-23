@@ -30,7 +30,7 @@ stimuli:
       specification/widget/resource-manager/Microsoft.Widget/Widget against
       your current working directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
-      - customizationRequest: "resolve Go sdk breaking change: 'WidgetEmployees' client is renamed to 'Employees'"
+      - customizationRequest: "resolve Go sdk breaking change: SDK had `WidgetEmployees` client, but now it's generated as `Employees` client"
       - tspProjectPath: use the exact absolute path returned by the shell
       - editScope: "SpecInputs"
 
@@ -77,7 +77,7 @@ stimuli:
       specification/widget/resource-manager/Microsoft.Widget/Widget against
       your current working directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
-      - customizationRequest: "resolve C# sdk breaking change: 'WidgetEmployees' client is renamed to 'Employees'"
+      - customizationRequest: "resolve C# sdk breaking change: SDK had `WidgetEmployees` client, but now it's generated as `Employees` client"
       - tspProjectPath: use the exact absolute path returned by the shell
       - editScope: "SpecInputs"
 
@@ -124,7 +124,7 @@ stimuli:
       specification/widget/resource-manager/Microsoft.Widget/Widget against
       your current working directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
-      - customizationRequest: "resolve Python sdk breaking change: 'WidgetEmployees' client is renamed to 'Employees'"
+      - customizationRequest: "resolve Python sdk breaking change: SDK had `WidgetEmployees` client, but now it's generated as `Employees` client"
       - tspProjectPath: use the exact absolute path returned by the shell
       - editScope: "SpecInputs"
 
@@ -171,7 +171,7 @@ stimuli:
       specification/widget/resource-manager/Microsoft.Widget/Widget against
       your current working directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
-      - customizationRequest: "resolve Java sdk breaking change: 'WidgetEmployees' client is renamed to 'Employees'"
+      - customizationRequest: "resolve Java sdk breaking change: SDK had `WidgetEmployees` client, but now it's generated as `Employees` client"
       - tspProjectPath: use the exact absolute path returned by the shell
       - editScope: "SpecInputs"
 
@@ -218,7 +218,7 @@ stimuli:
       specification/widget/resource-manager/Microsoft.Widget/Widget against
       your current working directory and obtain its absolute directory path.
       Then call azsdk_customized_code_update with parameters:
-      - customizationRequest: "resolve JavaScript sdk breaking change: 'WidgetEmployees' client is renamed to 'Employees'"
+      - customizationRequest: "resolve JavaScript sdk breaking change: SDK had `WidgetEmployees` client, but now it's generated as `Employees` client"
       - tspProjectPath: use the exact absolute path returned by the shell
       - editScope: "SpecInputs"
 

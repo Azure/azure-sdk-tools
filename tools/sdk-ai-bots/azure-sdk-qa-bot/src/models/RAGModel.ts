@@ -2,7 +2,7 @@ import { Memory, PromptCompletionModel, PromptFunctions, PromptTemplate, Tokeniz
 import { TurnContext } from 'botbuilder';
 import { AdditionalInfo, CompletionRequestPayload, getRAGReply, Message, RAGOptions } from '../backend/rag.js';
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
-import { ThinkingHandler } from '../turn/ThinkingHandler.js';
+import { ReplyHandler } from '../turn/ReplyHandler.js';
 import config from '../config/config.js';
 import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenerator.js';
 import { logger } from '../logging/logger.js';
@@ -62,12 +62,12 @@ export class RAGModel implements PromptCompletionModel {
       meta,
     });
 
-    const thinkingHandler = new ThinkingHandler(context, this.conversationHandler, this.tenantConfigManager);
+    const replyHandler = new ReplyHandler(context, this.conversationHandler, this.tenantConfigManager);
 
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    const replyStartTimestamp = await thinkingHandler.start(conversationMessages);
+    const replyStartTimestamp = new Date();
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
@@ -90,14 +90,7 @@ export class RAGModel implements PromptCompletionModel {
         references: undefined,
       };
     }
-    // Best-effort cancel: safeCancelTimer can throw if the thinking loop can't be stopped.
-    // Swallow the error so stop() still updates the activity with the final reply.
-    try {
-      await thinkingHandler.safeCancelTimer();
-    } catch (error: any) {
-      logger.warn('safeCancelTimer failed unexpectedly, proceeding to deliver reply', { error: error?.message, meta });
-    }
-    await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
+    await replyHandler.sendReply(replyStartTimestamp, ragReply, currentPrompt, conversationMessages, ragTenantId);
 
     return { status: 'success' };
   }

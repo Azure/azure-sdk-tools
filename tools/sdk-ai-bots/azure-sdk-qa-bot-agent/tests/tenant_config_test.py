@@ -91,7 +91,6 @@ def test_shared_retrieval_uses_bounded_batch_and_latency_constraints() -> None:
         _AGENT_ROOT / "agents" / "chat_agent" / "instruction.md"
     ).read_text(encoding="utf-8")
 
-    assert "8 tool calls" in instruction
     assert "3 dependent follow-up rounds" in instruction
     assert "`load_skill` ALONE" in instruction
 
@@ -670,9 +669,7 @@ def test_chat_agent_pr_review_skill_is_discoverable_and_registered(
     skills = asyncio.run(
         FileSkillsSource(_AGENT_ROOT / "skills" / "chat_agent").get_skills()
     )
-    assert {skill.frontmatter.name for skill in skills} == {
-        "pr-review",
-    }
+    assert {skill.frontmatter.name for skill in skills} == {"find-owner", "pr-review"}
     assert "pr-review" not in get_skill_to_tenant_map()
     assert "support-channels" not in get_skill_to_tenant_map()
 

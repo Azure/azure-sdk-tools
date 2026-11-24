@@ -36,6 +36,8 @@ stimuli:
 
       Do not pass a relative path or literal placeholder text as
       tspProjectPath.
+    rubric:
+      - Meets all TypeSpec @@override and parameter ordering requirements specified in the judge instructions.
     environment:
       files:
         - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -59,13 +61,45 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: prompt
         config:
-          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: >-
-            @@override(Microsoft.Widget.Employees.listByResourceGroup,
-            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
-            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "go");
+          model: gpt-5.6-luna
+          scoring: scale_1_5
+          threshold: 0.75
+          prompt: |
+            Compare the tool's output against the expected code sections below.
+            It should be either equivalent to code section 1 or code section 2.
+
+            code section 1:
+            ```
+              op replacement(
+                ...   # other parameters remain unchanged
+                $filter?: string
+                $top?: int32;
+              ): ...  # returns remain unchanged
+
+              @@override(Employees.listByResourceGroup, replacement, "go")
+            ```
+
+            code section 2:
+            ```
+              # Any deviation from the specified parameter order will be considered incorrect.
+              @@override(
+                Employees.listByResourceGroup,
+                reorderParameters(
+                  Employees.listByResourceGroup,
+                  #[
+                    "apiVersion",
+                    "subscriptionId",
+                    "resourceGroupName",
+                    "provider",
+                    "$filter",
+                    "$top"
+                  ]
+                ),
+                "go"
+              );
+            ```
       - type: run-command
         config:
           command: >-
@@ -86,6 +120,8 @@ stimuli:
 
       Do not pass a relative path or literal placeholder text as
       tspProjectPath.
+    rubric:
+      - Meets all TypeSpec @@override and parameter ordering requirements specified in the judge instructions.
     environment:
       files:
         - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -109,13 +145,45 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: prompt
         config:
-          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: >-
-            @@override(Microsoft.Widget.Employees.listByResourceGroup,
-            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
-            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "csharp");
+          model: gpt-5.6-luna
+          scoring: scale_1_5
+          threshold: 0.8
+          prompt: |
+            Compare the tool's output against the expected code sections below.
+            It should be either equivalent to code section 1 or code section 2.
+
+            code section 1:
+            ```
+              op replacement(
+                ...   # other parameters remain unchanged
+                $filter?: string
+                $top?: int32;
+              ): ...  # returns remain unchanged
+
+              @@override(Employees.listByResourceGroup, replacement, "csharp")
+            ```
+
+            code section 2:
+            ```
+              # Any deviation from the specified parameter order will be considered incorrect.
+              @@override(
+                Employees.listByResourceGroup,
+                reorderParameters(
+                  Employees.listByResourceGroup,
+                  #[
+                    "apiVersion",
+                    "subscriptionId",
+                    "resourceGroupName",
+                    "provider",
+                    "$filter",
+                    "$top"
+                  ]
+                ),
+                "csharp"
+              );
+            ```
       - type: run-command
         config:
           command: >-
@@ -136,6 +204,8 @@ stimuli:
 
       Do not pass a relative path or literal placeholder text as
       tspProjectPath.
+    rubric:
+      - Meets all TypeSpec @@override and parameter ordering requirements specified in the judge instructions.
     environment:
       files:
         - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -159,13 +229,45 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: prompt
         config:
-          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: >-
-            @@override(Microsoft.Widget.Employees.listByResourceGroup,
-            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
-            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "python");
+          model: gpt-5.6-luna
+          scoring: scale_1_5
+          threshold: 0.75
+          prompt: |
+            Compare the tool's output against the expected code sections below.
+            It should be either equivalent to code section 1 or code section 2.
+
+            code section 1:
+            ```
+              op replacement(
+                ...   # other parameters remain unchanged
+                $filter?: string
+                $top?: int32;
+              ): ...  # returns remain unchanged
+
+              @@override(Employees.listByResourceGroup, replacement, "python")
+            ```
+
+            code section 2:
+            ```
+              # Any deviation from the specified parameter order will be considered incorrect.
+              @@override(
+                Employees.listByResourceGroup,
+                reorderParameters(
+                  Employees.listByResourceGroup,
+                  #[
+                    "apiVersion",
+                    "subscriptionId",
+                    "resourceGroupName",
+                    "provider",
+                    "$filter",
+                    "$top"
+                  ]
+                ),
+                "py"
+              );
+            ```
       - type: run-command
         config:
           command: >-
@@ -186,6 +288,8 @@ stimuli:
 
       Do not pass a relative path or literal placeholder text as
       tspProjectPath.
+    rubric:
+      - Meets all TypeSpec @@override and parameter ordering requirements specified in the judge instructions.
     environment:
       files:
         - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -209,13 +313,45 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: prompt
         config:
-          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: >-
-            @@override(Microsoft.Widget.Employees.listByResourceGroup,
-            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
-            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "java");
+          model: gpt-5.6-luna
+          scoring: scale_1_5
+          threshold: 0.75
+          prompt: |
+            Compare the tool's output against the expected code sections below.
+            It should be either equivalent to code section 1 or code section 2.
+
+            code section 1:
+            ```
+              op replacement(
+                ...   # other parameters remain unchanged
+                $filter?: string
+                $top?: int32;
+              ): ...  # returns remain unchanged
+
+              @@override(Employees.listByResourceGroup, replacement, "java")
+            ```
+
+            code section 2:
+            ```
+              # Any deviation from the specified parameter order will be considered incorrect.
+              @@override(
+                Employees.listByResourceGroup,
+                reorderParameters(
+                  Employees.listByResourceGroup,
+                  #[
+                    "apiVersion",
+                    "subscriptionId",
+                    "resourceGroupName",
+                    "provider",
+                    "$filter",
+                    "$top"
+                  ]
+                ),
+                "java"
+              );
+            ```
       - type: run-command
         config:
           command: >-
@@ -236,6 +372,8 @@ stimuli:
 
       Do not pass a relative path or literal placeholder text as
       tspProjectPath.
+    rubric:
+      - Meets all TypeSpec @@override and parameter ordering requirements specified in the judge instructions.
     environment:
       files:
         - src: ../../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -259,13 +397,45 @@ stimuli:
         config:
           required:
             - azsdk_customized_code_update
-      - type: file-contains
+      - type: prompt
         config:
-          path: specification/widget/resource-manager/Microsoft.Widget/Widget/client.tsp
-          value: >-
-            @@override(Microsoft.Widget.Employees.listByResourceGroup,
-            reorderParameters(Microsoft.Widget.Employees.listByResourceGroup,
-            #["apiVersion", "subscriptionId", "resourceGroupName", "provider", "$filter", "$top"]), "javascript");
+          model: gpt-5.6-luna
+          scoring: scale_1_5
+          threshold: 0.75
+          prompt: |
+            Compare the tool's output against the expected code sections below.
+            It should be either equivalent to code section 1 or code section 2.
+
+            code section 1:
+            ```
+              op replacement(
+                ...   # other parameters remain unchanged
+                $filter?: string
+                $top?: int32;
+              ): ...  # returns remain unchanged
+
+              @@override(Employees.listByResourceGroup, replacement, "javascript")
+            ```
+
+            code section 2:
+            ```
+              # Any deviation from the specified parameter order will be considered incorrect.
+              @@override(
+                Employees.listByResourceGroup,
+                reorderParameters(
+                  Employees.listByResourceGroup,
+                  #[
+                    "apiVersion",
+                    "subscriptionId",
+                    "resourceGroupName",
+                    "provider",
+                    "$filter",
+                    "$top"
+                  ]
+                ),
+                "javascript"
+              );
+            ```
       - type: run-command
         config:
           command: >-

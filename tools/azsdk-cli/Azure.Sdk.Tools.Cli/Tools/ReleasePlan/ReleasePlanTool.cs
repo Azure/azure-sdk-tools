@@ -511,15 +511,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 else if (!string.IsNullOrWhiteSpace(specPullRequestUrl))
                 {
                     ValidatePullRequestUrl(specPullRequestUrl);
-                    if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                    releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
+                    if (releasePlan == null && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
                     {
                         releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(
                             typeSpecProjectPath, apiReleaseType: parsedApiReleaseType, ct: ct);
-                    }
-
-                    if (releasePlan == null)
-                    {
-                        releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
                     }
                 }
                 else if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
@@ -2953,28 +2949,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private async Task<ReleasePlanWorkItem?> FindReleasePlanForVersionAsync(
             string projectPath, string apiVersion, ApiReleaseType releaseType, string? specPr, CancellationToken ct)
         {
-            var plan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
-                projectPath, apiVersion, releaseType, ct);
-            if (plan != null || apiVersion.Length > 0 || string.IsNullOrWhiteSpace(specPr))
+            if (!string.IsNullOrWhiteSpace(specPr))
             {
-                return plan;
+                var plan = await devOpsService.GetReleasePlanAsync(specPr, releaseType, ct);
+                if (plan != null &&
+                    plan.ApiReleaseType == releaseType &&
+                    plan.APISpecProjectPath.Equals(projectPath, StringComparison.OrdinalIgnoreCase) &&
+                    NormalizeApiVersion(plan.SpecAPIVersion).Equals(apiVersion, StringComparison.OrdinalIgnoreCase) &&
+                    (plan.Status.Equals("In Progress", StringComparison.OrdinalIgnoreCase) ||
+                     plan.Status.Equals("Finished", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return plan;
+                }
             }
 
-            plan = await devOpsService.GetReleasePlanAsync(specPr, releaseType, ct);
-            if (plan == null)
-            {
-                return null;
-            }
-            if (plan.ApiReleaseType != releaseType ||
-                !plan.APISpecProjectPath.Equals(projectPath, StringComparison.OrdinalIgnoreCase) ||
-                NormalizeApiVersion(plan.SpecAPIVersion).Length > 0 ||
-                (!plan.Status.Equals("In Progress", StringComparison.OrdinalIgnoreCase) &&
-                 !plan.Status.Equals("Finished", StringComparison.OrdinalIgnoreCase)))
-            {
-                throw new InvalidOperationException(
-                    $"Release plan {plan.ReleasePlanId} already linked to this PR does not match the unversioned project/release type. No release plan was created.");
-            }
-            return plan;
+            return await devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                projectPath, apiVersion, releaseType, ct);
         }
 
         /// <summary>

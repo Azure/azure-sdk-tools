@@ -2440,7 +2440,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}", 
                     releasePlanWorkItems.Count, typeSpecProjectPath, apiVersion);
 
-                ReleasePlanWorkItem? conflictingVersionedPlan = null;
                 // Loop through all release plans to find one with matching API version
                 foreach (var workItem in releasePlanWorkItems)
                 {
@@ -2457,20 +2456,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                             releasePlan.ReleasePlanId, releasePlan.WorkItemId, typeSpecProjectPath, apiVersion, apiReleaseType);
                         return releasePlan;
                     }
-                    if (apiVersion.Length == 0 &&
-                        releasePlan.ApiReleaseType == apiReleaseType &&
-                        (releasePlan.Status.Equals(ReleasePlanInProgressState, StringComparison.OrdinalIgnoreCase) ||
-                         releasePlan.Status.Equals(ReleasePlanFinishedState, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        conflictingVersionedPlan ??= releasePlan;
-                    }
                 }
 
-                if (conflictingVersionedPlan != null)
-                {
-                    throw new InvalidOperationException(
-                        $"Release plan {conflictingVersionedPlan.ReleasePlanId} already exists for this project and release type with API version '{conflictingVersionedPlan.SpecAPIVersion}'. No additional unversioned plan can be created.");
-                }
                 logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath} with matching API version: {apiVersion} and API release type: {apiReleaseType}", typeSpecProjectPath, apiVersion, apiReleaseType);
                 return null;
             }

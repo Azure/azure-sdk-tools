@@ -1102,7 +1102,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public void VersionLookup_ExistingSameTypeVersionedPlanPreventsAnotherUnversionedPlan()
+        public async Task VersionLookup_ReturnsNoMatchWhenOnlyAVersionedPlanExists()
         {
             const string path = "specification/contoso/Contoso.Management";
             var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
@@ -1113,11 +1113,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _connection.AddWorkItem(CreateApiSpecWorkItemWithVersion(200,
                 "https://github.com/Azure/azure-rest-api-specs/pull/12345", "Active", "2026-01-01", 100));
 
-            var error = Assert.ThrowsAsync<Exception>(async () =>
-                await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
-                    path, "", ApiReleaseType.GA, CancellationToken.None));
+            var result = await _devOpsService.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                path, "", ApiReleaseType.GA, CancellationToken.None);
 
-            Assert.That(error!.GetBaseException().Message, Does.Contain("No additional unversioned plan"));
+            Assert.That(result, Is.Null);
         }
 
         [TestCase(ApiReleaseType.GA, "In Progress")]

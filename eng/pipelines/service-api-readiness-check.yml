@@ -1,0 +1,63 @@
+# Phase one of the service API-version readiness check
+# (https://github.com/Azure/azure-sdk-tools/issues/17122).
+#
+# The azure-sdk-automation app queues this pipeline from main when an SDK PR gets
+# the `service-api-version-check-requested` label, passing only the PR URL.
+# The pipeline builds the azsdk CLI from this repository, reads the SDK PR
+# through the GitHub API, saves the result to the release plan, posts one result
+# comment, and adds `service-api-version-check-passed` only when the result is
+# Passed. It never checks out or runs code from the SDK PR, and it does not
+# poll, block merging, or merge.
+trigger: none
+pr: none
+
+parameters:
+  - name: PullRequestUrl
+    displayName: SDK pull request URL, such as https://github.com/Azure/azure-sdk-for-net/pull/123
+    type: string
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: AzsdkPublishDirectory
+    value: $(Agent.TempDirectory)/azsdk
+
+jobs:
+  - job: CheckServiceApiReadiness
+    displayName: Check service API-version readiness
+    timeoutInMinutes: 30
+    pool:
+      name: $(LINUXPOOL)
+      demands: ImageOverride -equals $(LINUXVMIMAGE)
+    steps:
+      - checkout: self
+        fetchDepth: 1
+
+      - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+      - pwsh: dotnet publish tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj --configuration Release --output "$(AzsdkPublishDirectory)"
+        displayName: Build azsdk CLI
+
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          TokenOwners:
+            - Azure
+
+      # The service connection signs in for both ARM provider metadata reads and
+      # release-plan updates in Azure DevOps.
+      - task: AzureCLI@2
+        displayName: Check and publish readiness result
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: scriptPath
+          scriptPath: eng/scripts/Invoke-ServiceApiReadinessCheck.ps1
+          arguments: >
+            -PullRequestUrl $env:SDK_PULL_REQUEST_URL
+            -AzsdkPath "$(AzsdkPublishDirectory)/azsdk"
+            -PipelineRunUrl "$(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)"
+        env:
+          # Passed through the environment so the URL is never parsed as script text.
+          SDK_PULL_REQUEST_URL: ${{ parameters.PullRequestUrl }}
+          GH_TOKEN: $(GH_TOKEN)
+          GITHUB_TOKEN: $(GH_TOKEN)
+          AZSDK_SERVICE_READINESS_ENVIRONMENT: azure-public-cloud

@@ -2,8 +2,8 @@
 
 These guidelines apply to new or modified Python code under `tools/sdk-ai-bots/`,
 including tests and scripts, whether written by a person or a coding agent.
-They address Azure/azure-sdk-pr#3230. This guidance does not introduce new tools,
-dependencies, CI checks, or changes to existing application code.
+This guidance does not introduce new tools, dependencies, CI checks, or changes
+to existing application code.
 
 ## Reuse established guidance
 

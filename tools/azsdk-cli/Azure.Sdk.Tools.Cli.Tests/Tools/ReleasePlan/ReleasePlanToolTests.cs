@@ -3290,9 +3290,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var response = await CreateOverdueMaintenanceTool(service.Object, github.Object, notification.Object, client: client)
                 .ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
 
-            Assert.That(response.ExitCode, Is.EqualTo(1), "The lookup failure must remain visible even when a reminder is sent.");
-            Assert.That(response.ResponseErrors, Has.Count.EqualTo(failFirstSend ? 2 : 1));
-            Assert.That(response.ResponseErrors, Has.Some.Contains("381"));
+            Assert.That(response.ExitCode, Is.EqualTo(failFirstSend ? 1 : 0));
+            Assert.That(response.ResponseErrors ?? [], Has.Count.EqualTo(failFirstSend ? 1 : 0));
             Assert.That(captured, Has.Count.EqualTo(2));
             var genericBody = captured[0].GetProperty("Body").GetString()!;
             Assert.That(genericBody, Does.Contain("This is a verification issue, not confirmation that your release is inactive"));
@@ -3392,8 +3391,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     notifyOwners: true, emailerUri: "https://notifications.example.com/send", ct: cts.Token);
 
                 Assert.That(response.ExitCode, Is.EqualTo(1));
-                Assert.That(response.ResponseErrors, Has.Count.EqualTo(2));
-                Assert.That(response.ResponseErrors, Has.Some.Contains("384").And.Contains("GitHub unavailable"));
+                Assert.That(response.ResponseErrors, Has.Count.EqualTo(1));
                 Assert.That(response.ResponseErrors, Has.Some.Contains("384").And.Contains("Email request timed out"));
                 Assert.That(captured, Has.Count.EqualTo(2));
                 Assert.That(captured[1].GetProperty("EmailTo").GetString(), Is.EqualTo("next@microsoft.com"));
@@ -3552,8 +3550,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             AllowReminderTimestampUpdate(service, blocked.WorkItemId);
             var reminder = await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send");
-            Assert.That(reminder.ExitCode, Is.EqualTo(1));
-            Assert.That(reminder.ResponseErrors!.Single(), Does.Contain("Could not determine release activity"));
+            Assert.That(reminder.ExitCode, Is.Zero);
+            Assert.That(reminder.ResponseErrors, Is.Null.Or.Empty);
+            service.Verify(x => x.UpdateWorkItemAsync(blocked.WorkItemId,
+                It.Is<Dictionary<string, string>>(fields => fields.ContainsKey(ReleasePlanWorkItem.OverdueLastNotifiedDateField)),
+                blocked.Revision, It.IsAny<CancellationToken>()), Times.Once);
             Assert.That(captured.Single().GetProperty("Body").GetString(), Does.Contain("verification issue").And.Not.Contain("eligible for automatic abandonment now"));
         }
 
@@ -3763,6 +3764,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ResponseErrors, Has.Count.EqualTo(1));
             Assert.That(response.ResponseErrors, Has.Some.Contains("311"));
             Assert.That(captured, Has.Count.EqualTo(2));
+            Assert.That(logger.Logs.Select(log => log.ToString()), Has.Some.Contains(
+                "Reminder summary: selected 2; accepted 1; skipped 0; failed 1; timestamp save failures 0"));
         }
 
         private static void AllowReminderTimestampUpdate(Mock<IDevOpsService> service, int workItemId)
@@ -3926,6 +3929,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ResponseErrors!.Single(), Does.Contain("Overdue reminder accepted for release-plan work item 451")
                 .And.Contain("2026-11-01T00:00:00.0000000Z").And.Contain("could not be recorded")
                 .And.Contain(unconfirmedWrite ? "did not confirm the update" : "Field unavailable"));
+            Assert.That(logger.Logs.Select(log => log.ToString()), Has.Some.Contains(
+                "Reminder summary: selected 1; accepted 1; skipped 0; failed 0; timestamp save failures 1"));
             service.Verify(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 

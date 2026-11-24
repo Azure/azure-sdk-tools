@@ -7,8 +7,22 @@ import httpx
 import pytest
 from azure.core.exceptions import ClientAuthenticationError
 
+from models.identity import ResolvedGitHubUser, ResolveGitHubUsersResult
 from tools import identity_tools
 from tools.identity_tools import IdentityTools
+
+
+def test_result_rejects_legacy_mentions_key():
+    with pytest.raises(ValueError, match="Extra inputs are not permitted"):
+        ResolveGitHubUsersResult.model_validate({"mentions": {}})
+
+
+def test_resolved_user_requires_plain_contact_text():
+    with pytest.raises(ValueError, match="plain_text"):
+        ResolvedGitHubUser.model_validate({
+            "text": "<at>person@example.test</at>",
+            "mentioned": {"id": "verified-user", "name": "Person"},
+        })
 
 
 def _link():
@@ -60,11 +74,14 @@ async def test_lookup_uses_entra_auth_and_deduplicates_logins(monkeypatch):
     assert requests[0].headers["authorization"] == "Bearer test-token"
     assert requests[0].headers["api-version"] == "2019-10-01"
     assert requests[0].url.params["showOrganizations"] == "false"
-    mention = result.mentions["linked-user"]
+    mention = result.users["linked-user"]
     assert result.errors == {}
     assert mention.text == "<at>linked.person@microsoft.com</at>"
     assert mention.mentioned.name == "Linked Person"
     assert mention.mentioned.id == "11111111-2222-3333-4444-555555555555"
+    assert mention.plain_text == "Linked Person (linked.person@microsoft.com)"
+    assert set(result.model_dump()) == {"users", "errors"}
+    assert set(mention.model_dump()) == {"text", "mentioned", "plain_text"}
 
 
 @pytest.mark.asyncio
@@ -73,7 +90,16 @@ async def test_lookup_supplies_html_safe_microsoft_markup(monkeypatch):
     payload["aad"]["userPrincipalName"] = "person&team@microsoft.com"
     _portal(monkeypatch, payload=payload)
     result = await IdentityTools().resolve_github_users(usernames=["linked-user"])
-    assert result.mentions["linked-user"].text == "<at>person&amp;team@microsoft.com</at>"
+    assert result.users["linked-user"].text == "<at>person&amp;team@microsoft.com</at>"
+    assert result.users["linked-user"].plain_text == "Linked Person (person&team@microsoft.com)"
+
+
+@pytest.mark.asyncio
+async def test_partial_lookup_keeps_only_verified_contact_details(monkeypatch):
+    _portal(monkeypatch, payload=_link())
+    result = await IdentityTools().resolve_github_users(usernames=["linked-user", "other-user"])
+    assert set(result.users) == {"linked-user"}
+    assert set(result.errors) == {"other-user"}
 
 
 @pytest.mark.asyncio
@@ -90,7 +116,7 @@ async def test_unavailable_identity_never_becomes_a_mention(
 ):
     _portal(monkeypatch, status=status, payload=payload)
     result = await IdentityTools().resolve_github_users(usernames=["linked-user"])
-    assert result.mentions == {}
+    assert result.users == {}
     assert expected in result.errors["linked-user"]
     if status not in {200, 404}:
         assert result.errors["linked-user"] in caplog.text
@@ -104,11 +130,13 @@ async def test_unavailable_identity_never_becomes_a_mention(
     {"github": {"login": "linked-user"}, "aad": {**_link()["aad"], "id": "not-a-guid"}},
     {"github": {"login": "linked-user"}, "aad": {**_link()["aad"], "preferredName": " "}},
     {"github": {"login": "linked-user"}, "aad": {**_link()["aad"], "userPrincipalName": ""}},
+    {"github": {"login": "linked-user"}, "aad": {**_link()["aad"], "userPrincipalName": " "}},
+    {"github": {"login": "linked-user"}, "aad": {**_link()["aad"], "userPrincipalName": None}},
 ])
 async def test_invalid_mapping_is_reported_without_exposing_payload(monkeypatch, payload):
     _portal(monkeypatch, payload=payload)
     result = await IdentityTools().resolve_github_users(usernames=["linked-user"])
-    assert result.mentions == {}
+    assert result.users == {}
     assert result.errors["linked-user"] == "The portal returned an invalid Microsoft account mapping."
 
 
@@ -116,7 +144,7 @@ async def test_invalid_mapping_is_reported_without_exposing_payload(monkeypatch,
 async def test_network_failure_is_not_reported_as_an_unlinked_user(monkeypatch):
     _portal(monkeypatch, fail=True)
     result = await IdentityTools().resolve_github_users(usernames=["linked-user"])
-    assert result.mentions == {}
+    assert result.users == {}
     assert "could not be reached" in result.errors["linked-user"]
 
 
@@ -127,7 +155,7 @@ async def test_redirects_do_not_forward_portal_credentials(monkeypatch):
     )
     result = await IdentityTools().resolve_github_users(usernames=["linked-user"])
     assert len(requests) == 1
-    assert result.mentions == {}
+    assert result.users == {}
     assert "HTTP 302" in result.errors["linked-user"]
 
 
@@ -136,7 +164,7 @@ async def test_authentication_failure_is_explicit_and_does_not_log_credentials(m
     credential, requests = _portal(monkeypatch)
     credential.get_token.side_effect = ClientAuthenticationError("sensitive authentication details")
     result = await IdentityTools().resolve_github_users(usernames=["linked-user", "other"])
-    assert result.mentions == {}
+    assert result.users == {}
     assert set(result.errors) == {"linked-user", "other"}
     assert all("Unable to authenticate" in error for error in result.errors.values())
     assert requests == []

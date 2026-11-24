@@ -53,6 +53,7 @@ export interface AdditionalInfo {
 // Completion request interface
 export interface CompletionRequestPayload {
   tenant_id: string;
+  channel_name?: string;
   message: Message;
   with_full_context?: boolean; // default is false
   additional_infos?: AdditionalInfo[];
@@ -78,7 +79,10 @@ export interface CompletionResponsePayload {
   intension?: IntensionResult;
   Category?: string;
   ReasoningProgress?: string;
+  /** @deprecated Use route_channel_name and route_channel_link instead. */
   route_tenant?: string;
+  route_channel_name?: string;
+  route_channel_link?: string;
   trace_id?: string;
   mentions?: TeamsMention[] | null;
 }

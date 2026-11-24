@@ -2281,19 +2281,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var responseErrors = new List<string>();
                 var skippedPlans = dryRun ? new Dictionary<int, string>() : null;
                 var skippedByReason = new Dictionary<string, int>();
+                var skippedCount = 0;
 
                 void RecordSkippedPlan(ReleasePlanWorkItem plan, string category, string? reason = null)
                 {
+                    skippedCount++;
+                    var planId = plan.ReleasePlanId > 0 ? plan.ReleasePlanId : plan.WorkItemId;
+                    logger.LogInformation("Cleanup skipped Release Plan ID {ReleasePlanId}, work item {WorkItemId}: {Reason}",
+                        planId, plan.WorkItemId, reason ?? category.Replace('_', ' '));
                     if (reason != null)
                     {
                         response.EligibilityReasons[plan.WorkItemId] = reason;
-                        logger.LogInformation("Skipped overdue release plan {WorkItemId}: {Reason}", plan.WorkItemId, reason);
                     }
                     if (skippedPlans == null)
                     {
                         return;
                     }
-                    var planId = plan.ReleasePlanId > 0 ? plan.ReleasePlanId : plan.WorkItemId;
                     skippedPlans.Add(planId, plan.ReleasePlanLink);
                     skippedByReason[category] = skippedByReason.GetValueOrDefault(category) + 1;
                 }
@@ -2301,6 +2304,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 foreach (var releasePlan in overdueReleasePlans)
                 {
                     ct.ThrowIfCancellationRequested();
+                    var planId = releasePlan.ReleasePlanId > 0 ? releasePlan.ReleasePlanId : releasePlan.WorkItemId;
                     try
                     {
                         // September targets are warned in October and become eligible in November.
@@ -2351,6 +2355,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         {
                             resultPlans.Add(releasePlan);
                             response.EligibilityReasons[releasePlan.WorkItemId] = reason;
+                            logger.LogInformation("Preview eligible Release Plan ID {ReleasePlanId}, work item {WorkItemId}: {Reason}",
+                                planId, releasePlan.WorkItemId, reason);
                             continue;
                         }
 
@@ -2371,10 +2377,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.Status = "Abandoned";
                         resultPlans.Add(releasePlan);
                         response.EligibilityReasons[releasePlan.WorkItemId] = reason;
-                        await notificationService.SendEmailNotificationAsync(
+                        logger.LogInformation("Cleanup abandoned Release Plan ID {ReleasePlanId}, work item {WorkItemId}: {Reason}",
+                            planId, releasePlan.WorkItemId, reason);
+                        var delivery = await notificationService.SendEmailNotificationAsync(
                             new PastDueReleasePlanEmail(releasePlan, assessment.Reason, _timeProvider.GetUtcNow()), ct);
                         ct.ThrowIfCancellationRequested();
-                        logger.LogInformation("Abandoned overdue release plan {WorkItemId}", releasePlan.WorkItemId);
+                        logger.Log(delivery?.Status == NotificationStatus.Sent ? LogLevel.Information : LogLevel.Warning,
+                            "Abandonment email {Status} for Release Plan ID {ReleasePlanId}, work item {WorkItemId}. {Details}",
+                            delivery?.Status.ToString() ?? "Unknown", planId, releasePlan.WorkItemId,
+                            delivery?.ErrorMessage ?? "Sent means accepted by the email service; inbox delivery is not verified.");
                     }
                     catch (OperationCanceledException)
                     {
@@ -2384,11 +2395,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         ct.ThrowIfCancellationRequested();
                         var action = dryRun ? "evaluate" : "abandon";
-                        logger.LogError(ex, "Failed to {Action} overdue release plan {WorkItemId}", action, releasePlan.WorkItemId);
+                        logger.LogError(ex, "Failed to {Action} Release Plan ID {ReleasePlanId}, work item {WorkItemId}",
+                            action, planId, releasePlan.WorkItemId);
                         responseErrors.Add($"Failed to {action} overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
                     }
                 }
 
+                logger.LogInformation("{Action} summary: scanned {Scanned}; {Outcome} {Completed}; skipped {Skipped}; errors {Errors}",
+                    dryRun ? "Preview" : "Cleanup", overdueReleasePlans.Count, dryRun ? "eligible" : "abandoned",
+                    resultPlans.Count, skippedCount, responseErrors.Count);
                 response.Message = dryRun
                     ? $"Dry run: {resultPlans.Count} release plan(s) eligible for abandonment after one full overdue calendar month. No plans were changed or notifications sent."
                     : $"Abandoned {resultPlans.Count} inactive release plan(s) after one full overdue calendar month.";
@@ -2561,17 +2576,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private async Task<List<string>> NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri, CancellationToken ct)
         {
             var errors = new List<string>();
+            var acceptedCount = 0;
+            var skippedCount = 0;
+            var failedCount = 0;
+            var timestampFailureCount = 0;
 
             foreach (var releasePlan in releasePlans)
             {
                 ct.ThrowIfCancellationRequested();
                 var releaseOwnerEmail = releasePlan.ReleasePlanSubmittedByEmail;
+                var planId = releasePlan.ReleasePlanId > 0 ? releasePlan.ReleasePlanId : releasePlan.WorkItemId;
 
                 // Validate email address
                 if (string.IsNullOrWhiteSpace(releaseOwnerEmail) || !Regex.IsMatch(releaseOwnerEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase))
                 {
-                    logger.LogWarning("Skipped notification for Release Plan ID {WorkItemId}: invalid email '{Email}'",
-                        releasePlan.WorkItemId, releaseOwnerEmail);
+                    skippedCount++;
+                    logger.LogWarning("Reminder skipped for Release Plan ID {ReleasePlanId}, work item {WorkItemId}: owner email is missing or invalid.",
+                        planId, releasePlan.WorkItemId);
                     continue;
                 }
 
@@ -2595,19 +2616,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     catch (Exception ex)
                     {
                         ct.ThrowIfCancellationRequested();
-                        logger.LogWarning(ex, "Could not determine release activity for overdue release plan {WorkItemId}; using a generic reminder",
-                            releasePlan.WorkItemId);
-                        errors.Add($"Could not determine release activity for overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                        // Assessment failure does not turn a successfully sent generic reminder into an error.
+                        logger.LogWarning(ex, "Assessment unavailable for Release Plan ID {ReleasePlanId}, work item {WorkItemId}; attempting a generic reminder",
+                            planId, releasePlan.WorkItemId);
                     }
 
                     ct.ThrowIfCancellationRequested();
                     if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview && hasInactiveWork == false)
                     {
                         // Private Preview completes at spec merge; do not request SDK publication.
+                        skippedCount++;
+                        logger.LogInformation("Reminder skipped for Release Plan ID {ReleasePlanId}, work item {WorkItemId}: {Reason}",
+                            planId, releasePlan.WorkItemId, workReason);
                         continue;
                     }
                     var email = new OverdueReleasePlanEmail(releasePlan, hasInactiveWork, workReason, _timeProvider.GetUtcNow());
                     await SendEmailNotification(emailerUri, releaseOwnerEmail, sdkApexEmail, email.Subject, email.Body, ct);
+                    acceptedCount++;
+                    logger.LogInformation("Reminder accepted for Release Plan ID {ReleasePlanId}, work item {WorkItemId}",
+                        planId, releasePlan.WorkItemId);
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
@@ -2616,7 +2643,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 catch (Exception ex)
                 {
                     ct.ThrowIfCancellationRequested();
-                    logger.LogError(ex, "Failed to notify owner of overdue release plan {WorkItemId}", releasePlan.WorkItemId);
+                    logger.LogError(ex, "Reminder failed for Release Plan ID {ReleasePlanId}, work item {WorkItemId}",
+                        planId, releasePlan.WorkItemId);
+                    failedCount++;
                     errors.Add($"Failed to notify owner of overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
                     continue;
                 }
@@ -2640,9 +2669,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         "Overdue reminder accepted for release-plan work item {WorkItemId} at {SentAtUtc}, but its send time could not be recorded",
                         releasePlan.WorkItemId, sentAtUtc);
                     ct.ThrowIfCancellationRequested();
+                    timestampFailureCount++;
                     errors.Add($"Overdue reminder accepted for release-plan work item {releasePlan.WorkItemId} at {sentAtUtc}, but its send time could not be recorded: {ex.Message}");
                 }
             }
+            logger.LogInformation("Reminder summary: selected {Selected}; accepted {Accepted}; skipped {Skipped}; failed {Failed}; timestamp save failures {TimestampFailures}",
+                releasePlans.Count, acceptedCount, skippedCount, failedCount, timestampFailureCount);
             return errors;
         }
 

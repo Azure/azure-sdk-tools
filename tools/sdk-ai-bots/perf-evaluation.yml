@@ -28,6 +28,7 @@ parameters:
       - authoring
       - mcpserver
       - sdkagent
+      - apistewardshipboard
   - name: maxConcurrency
     type: number
     default: 2

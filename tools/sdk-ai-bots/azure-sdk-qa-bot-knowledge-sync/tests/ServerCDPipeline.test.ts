@@ -17,7 +17,7 @@ describe('server CD job separation', () => {
         expect(JSON.stringify(pipeline)).not.toContain('webjobOnly');
         expect(pipeline.extends.template).toBe('/eng/pipelines/templates/stages/1es-redirect.yml');
         expect(stages).toHaveLength(1);
-        expect(entries).toHaveLength(3);
+        expect(entries).toHaveLength(5);
         for (const job of [server, knowledge]) {
             expect(job.pool).toEqual({ name: '$(LINUXPOOL)', image: '$(LINUXVMIMAGE)', os: 'linux' });
             expect(job.steps[0].checkout).toBe('self');
@@ -78,7 +78,7 @@ describe('server CD job separation', () => {
     });
 
     it('includes the failing validation job only for WebJob preview deployments', () => {
-        const validation = entries[0]["${{ if and(in(parameters.deploymentTarget, 'knowledge-sync', 'wiki-index', 'feedback-jobs'), eq(parameters.environment, 'preview')) }}"][0];
+        const validation = entries[0]["${{ if and(in(parameters.deploymentTarget, 'knowledge-sync', 'wiki-index'), eq(parameters.environment, 'preview')) }}"][0];
         expect(validation.job).toBe('ValidateDeployment');
         expect(validation.pool).toEqual(server.pool);
         expect(validation.steps[0].checkout).toBe('none');
@@ -86,14 +86,18 @@ describe('server CD job separation', () => {
         expect(validation.steps[1].bash).toContain('exit 1');
     });
 
-    it('includes wiki-index and feedback-jobs WebJob deployment jobs for dev and prod', () => {
+    it('includes wiki-index for dev/prod and feedback-jobs only for prod', () => {
         const webjobGroup = entries.find((entry: any) => entry["${{ if in(parameters.environment, 'dev', 'prod') }}"])
             ["${{ if in(parameters.environment, 'dev', 'prod') }}"];
         const wikiJob = webjobGroup.find((job: any) => job.job === 'DeployWikiIndex');
-        const feedbackJob = webjobGroup.find((job: any) => job.job === 'DeployFeedbackJobs');
         expect(wikiJob).toBeDefined();
         expect(wikiJob.dependsOn).toBe('DeployServer');
         expect(wikiJob.steps.at(-1).env.WEBJOB_NAME).toBe('wiki-index');
+        expect(webjobGroup.find((job: any) => job.job === 'DeployFeedbackJobs')).toBeUndefined();
+
+        const prodGroup = entries.find((entry: any) => entry["${{ if eq(parameters.environment, 'prod') }}"])
+            ["${{ if eq(parameters.environment, 'prod') }}"];
+        const feedbackJob = prodGroup.find((job: any) => job.job === 'DeployFeedbackJobs');
         expect(feedbackJob).toBeDefined();
         expect(feedbackJob.dependsOn).toBe('DeployServer');
         expect(feedbackJob.steps.at(-1).env.WEBJOB_NAME).toBe('feedback-jobs');

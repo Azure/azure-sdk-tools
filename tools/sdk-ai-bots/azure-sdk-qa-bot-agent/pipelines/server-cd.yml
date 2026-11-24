@@ -55,7 +55,7 @@ extends:
       - stage: DeployPipeline
         displayName: 'Deploy ${{ parameters.deploymentTarget }} (${{ parameters.environment }})'
         jobs:
-          - ${{ if and(in(parameters.deploymentTarget, 'knowledge-sync', 'wiki-index', 'feedback-jobs'), eq(parameters.environment, 'preview')) }}:
+          - ${{ if and(in(parameters.deploymentTarget, 'knowledge-sync', 'wiki-index'), eq(parameters.environment, 'preview')) }}:
             - job: ValidateDeployment
               displayName: 'Reject WebJob Preview Deployment'
               pool:
@@ -68,6 +68,20 @@ extends:
                     echo 'WebJob deployment is supported only for dev and prod.' >&2
                     exit 1
                   displayName: 'Reject WebJob Preview Deployment'
+
+          - ${{ if and(eq(parameters.deploymentTarget, 'feedback-jobs'), ne(parameters.environment, 'prod')) }}:
+            - job: ValidateFeedbackJobsDeployment
+              displayName: 'Reject Feedback Jobs Non-Prod Deployment'
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              steps:
+                - checkout: none
+                - bash: |
+                    echo 'Feedback jobs deployment is supported only for prod.' >&2
+                    exit 1
+                  displayName: 'Reject Feedback Jobs Non-Prod Deployment'
 
           - job: DeployServer
             displayName: 'Deploy Server'
@@ -389,6 +403,7 @@ extends:
                     RESOURCE_GROUP: $(RESOURCE_GROUP)
                     WEBJOB_NAME: 'wiki-index'
 
+          - ${{ if eq(parameters.environment, 'prod') }}:
             - job: DeployFeedbackJobs
               displayName: 'Deploy Scheduled Feedback Jobs'
               dependsOn: DeployServer

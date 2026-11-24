@@ -143,6 +143,27 @@ def test_pr_review_prioritizes_compatibility_diagnostics_and_baseline() -> None:
     ) in board
 
 
+def test_pr_review_routes_dotnet_breaking_changes_to_documented_mitigation() -> None:
+    pr_review = _read_pr_review_skill()
+    guidance = pr_review.split("For a generated .NET SDK PR blocked by breaking changes", 1)[
+        1
+    ].split("\n\n", 1)[0]
+
+    for source in (
+        "azure_sdk_for_net_docs",
+        "doc/dev/SDKBreakingChanges.md",
+        ".github/skills/mitigate-breaking-changes/SKILL.md",
+        "GitHub MCP",
+    ):
+        assert source in guidance
+    assert "spec-side approval does not approve SDK breaks" in guidance
+    assert "management-plane specific" in guidance
+    assert "local spec project when the chosen customization requires it" in guidance
+    assert "generator, client-customization, and manual routes" in guidance
+    assert "Regenerate and rerun compatibility and relevant validation" in guidance
+    assert "approval-only requests or unrelated failures" in guidance
+
+
 def test_review_filter_changes_do_not_broaden_typespec_tenant() -> None:
     config = get_tenant_config(TenantID.TYPESPEC_CHANNEL_QA_BOT)
     assert config is not None

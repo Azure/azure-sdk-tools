@@ -13,7 +13,7 @@ const knowledge = entries.find((entry: any) => entry["${{ if in(parameters.envir
 
 describe('server CD job separation', () => {
     it('keeps the existing templates, one stage, Linux pools, and default combined deployment', () => {
-        expect(pipeline.parameters.find((parameter: any) => parameter.name === 'deploymentTarget')).toMatchObject({ type: 'string', default: 'all', values: ['all', 'server', 'knowledge-sync'] });
+        expect(pipeline.parameters.find((parameter: any) => parameter.name === 'deploymentTarget')).toMatchObject({ type: 'string', default: 'all', values: ['all', 'server', 'knowledge-sync', 'wiki-index', 'feedback-jobs'] });
         expect(JSON.stringify(pipeline)).not.toContain('webjobOnly');
         expect(pipeline.extends.template).toBe('/eng/pipelines/templates/stages/1es-redirect.yml');
         expect(stages).toHaveLength(1);
@@ -25,7 +25,7 @@ describe('server CD job separation', () => {
     });
 
     it('runs server steps only for all or server targets', () => {
-        expect(server.condition).toBe("and(succeeded(), ${{ ne(parameters.deploymentTarget, 'knowledge-sync') }})");
+        expect(server.condition).toBe("and(succeeded(), ${{ in(parameters.deploymentTarget, 'all', 'server') }})");
         expect(server.steps.map((step: any) => step.displayName)).toEqual([
             'Checkout repository', 'Resolve Image Tag', 'Build & Push Image',
             'Validate Image Exists', 'Configure Agent Routing', 'Update App Service', 'Health Check'
@@ -77,12 +77,25 @@ describe('server CD job separation', () => {
         }
     });
 
-    it('includes the failing validation job only for knowledge-sync preview', () => {
-        const validation = entries[0]["${{ if and(eq(parameters.deploymentTarget, 'knowledge-sync'), eq(parameters.environment, 'preview')) }}"][0];
+    it('includes the failing validation job only for WebJob preview deployments', () => {
+        const validation = entries[0]["${{ if and(in(parameters.deploymentTarget, 'knowledge-sync', 'wiki-index', 'feedback-jobs'), eq(parameters.environment, 'preview')) }}"][0];
         expect(validation.job).toBe('ValidateDeployment');
         expect(validation.pool).toEqual(server.pool);
         expect(validation.steps[0].checkout).toBe('none');
-        expect(validation.steps[1].bash).toContain('Knowledge sync deployment is supported only for dev and prod.');
+        expect(validation.steps[1].bash).toContain('WebJob deployment is supported only for dev and prod.');
         expect(validation.steps[1].bash).toContain('exit 1');
+    });
+
+    it('includes wiki-index and feedback-jobs WebJob deployment jobs for dev and prod', () => {
+        const webjobGroup = entries.find((entry: any) => entry["${{ if in(parameters.environment, 'dev', 'prod') }}"])
+            ["${{ if in(parameters.environment, 'dev', 'prod') }}"];
+        const wikiJob = webjobGroup.find((job: any) => job.job === 'DeployWikiIndex');
+        const feedbackJob = webjobGroup.find((job: any) => job.job === 'DeployFeedbackJobs');
+        expect(wikiJob).toBeDefined();
+        expect(wikiJob.dependsOn).toBe('DeployServer');
+        expect(wikiJob.steps.at(-1).env.WEBJOB_NAME).toBe('wiki-index');
+        expect(feedbackJob).toBeDefined();
+        expect(feedbackJob.dependsOn).toBe('DeployServer');
+        expect(feedbackJob.steps.at(-1).env.WEBJOB_NAME).toBe('feedback-jobs');
     });
 });

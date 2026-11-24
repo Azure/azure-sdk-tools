@@ -2609,6 +2609,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             var errors = new List<string>();
             var acceptedCount = 0;
             var skippedCount = 0;
+            var failedCount = 0;
+            var timestampFailureCount = 0;
 
             foreach (var releasePlan in releasePlans)
             {
@@ -2674,11 +2676,36 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ct.ThrowIfCancellationRequested();
                     logger.LogError(ex, "Reminder failed for Release Plan ID {ReleasePlanId}, work item {WorkItemId}",
                         planId, releasePlan.WorkItemId);
+                    failedCount++;
                     errors.Add($"Failed to notify owner of overdue release plan {releasePlan.WorkItemId}: {ex.Message}");
+                    continue;
+                }
+
+                var sentAtUtc = _timeProvider.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
+                try
+                {
+                    // Reject an update based on a stale work-item read.
+                    var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                    {
+                        [ReleasePlanWorkItem.OverdueLastNotifiedDateField] = sentAtUtc
+                    }, releasePlan.Revision, ct);
+                    if (updatedWorkItem is null)
+                    {
+                        throw new InvalidOperationException("Azure DevOps did not confirm the update.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex,
+                        "Overdue reminder accepted for release-plan work item {WorkItemId} at {SentAtUtc}, but its send time could not be recorded",
+                        releasePlan.WorkItemId, sentAtUtc);
+                    ct.ThrowIfCancellationRequested();
+                    timestampFailureCount++;
+                    errors.Add($"Overdue reminder accepted for release-plan work item {releasePlan.WorkItemId} at {sentAtUtc}, but its send time could not be recorded: {ex.Message}");
                 }
             }
-            logger.LogInformation("Reminder summary: selected {Selected}; accepted {Accepted}; skipped {Skipped}; failed {Failed}",
-                releasePlans.Count, acceptedCount, skippedCount, errors.Count);
+            logger.LogInformation("Reminder summary: selected {Selected}; accepted {Accepted}; skipped {Skipped}; failed {Failed}; timestamp save failures {TimestampFailures}",
+                releasePlans.Count, acceptedCount, skippedCount, failedCount, timestampFailureCount);
             return errors;
         }
 

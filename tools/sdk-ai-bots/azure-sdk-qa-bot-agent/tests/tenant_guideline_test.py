@@ -59,8 +59,7 @@ def test_dotnet_guideline_links_skills_to_the_relevant_problem():
     [
         "For management-plane GA API approval, contact **Arthur Ma (`arthurma`)**.",
         (
-            "For data-plane GA API approval, contact **Michael Nash (`micnash`)** "
-            "or **Josh Love (`jolov`)**."
+            "For data-plane GA API approval, contact **Michael Nash (`micnash`)**."
         ),
     ],
 )

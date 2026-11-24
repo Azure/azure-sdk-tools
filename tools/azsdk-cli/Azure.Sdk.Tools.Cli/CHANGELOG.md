@@ -5,6 +5,7 @@
 ### Features Added
 
 - Management-plane release plans support optional .NET and JavaScript provisioning SDK packages alongside normal packages. TypeSpec metadata preserves all emitter entries and identifies provisioning packages by emitter name. SDK generation, SDK PR retrieval/linking, and release-status updates accept an optional provisioning selector; normal SDK behavior remains the default. Linked provisioning SDK PRs require release before the plan finishes, while unlinked provisioning packages do not block completion. Publishing pipelines and shared release callbacks are not changed.
+- After the emailer accepts an overdue release-plan reminder, the CLI records the UTC send time in the release plan's `Custom.OverdueLastNotifiedDate` field. If the email is accepted but the date cannot be saved, the error is reported separately and the email is not resent. Each recorded reminder counts as plan activity for abandonment cleanup.
 
 ### Breaking Changes
 

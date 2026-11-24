@@ -19,7 +19,6 @@ This section applies to resource groups located in any of the dev/test subscript
 Engineering System team, such as:
 
 - Azure SDK Test Resources TME
-- Azure SDK Developer Playground
 
 Currently, the automation will inspect resource groups and role assignments only.
 
@@ -41,7 +40,7 @@ If you need the group for a little more time, add/update a tag named `DeleteAfte
 
 *To create long-lived resources:*
 
-NOTE: Resource groups in the TME and playground subscription, if compliant and marked with valid aliases (see below), **will still
+NOTE: Resource groups in the TME subscription, if compliant and marked with valid aliases (see below), **will still
 be marked for deletion after 10 days.** See the below examples for how to extend this deletion deadline if necessary.
 
 Create a resource group to contain all testing resources. The resource group name should start with your Microsoft alias.

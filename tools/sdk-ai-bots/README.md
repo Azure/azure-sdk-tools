@@ -95,6 +95,11 @@ python evals_run.py --help
 
 To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/README.md)
 
+## Contributing Python changes
+
+Use the shared [Python coding guidelines](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/docs/python-coding-guidelines.md) for
+new or modified Python code, whether written by a person or a coding agent.
+
 ## Configuration
 
 ### Documentation Sources

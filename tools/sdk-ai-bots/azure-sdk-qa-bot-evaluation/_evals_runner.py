@@ -82,7 +82,7 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
 }
 
 
-_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:[^()]+|\([^()]*\))*\)")
+_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)")
 _HTML_IMAGE_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
 _HTML_IMAGE_ALT_RE = re.compile(
     r"""alt\s*=\s*(?:\\"([^\\"]*)\\"|\"([^\"]*)\"|'([^']*)')""",

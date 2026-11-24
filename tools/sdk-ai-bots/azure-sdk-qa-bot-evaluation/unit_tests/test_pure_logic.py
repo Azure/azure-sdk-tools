@@ -39,6 +39,7 @@ from _evals_runner import (  # noqa: E402
     FoundryEvalsRunner,
     _delete_eval_input,
     _retry_foundry_call,
+    _strip_image_tags,
     _upload_eval_items,
     output_items_to_rows,
     extract_title_and_link_from_references,
@@ -197,6 +198,16 @@ def test_upload_eval_items_strips_markdown_and_html_image_tags():
     )
     assert "user-attachments/assets" not in uploaded_row["context"]
     assert "azure-rest-api-specs/assets" not in uploaded_row["context"]
+
+
+def test_strip_image_tags_unclosed_markdown_is_linear_time():
+    import time
+
+    unclosed = "![alt](" + "a" * 10000
+    start = time.monotonic()
+    assert _strip_image_tags(unclosed) == unclosed
+    assert time.monotonic() - start < 0.5
+    assert _strip_image_tags("![alt](https://example.test/img(1).png)") == "[Image: alt]"
 
 
 def test_upload_processing_failure_deletes_its_input():

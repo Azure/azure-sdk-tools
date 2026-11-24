@@ -1,0 +1,12 @@
+required-version = "==0.17.6"
+target-version = "py310"
+line-length = 88
+
+# Expand this clean scope with new modules and their tests, not blanket ignores.
+include = [
+    "azure-sdk-qa-bot-agent/utils/text_util.py",
+    "azure-sdk-qa-bot-agent/tests/test_text_util.py",
+]
+
+[lint]
+select = ["E7", "E9", "F", "BLE001"]

@@ -1,4 +1,5 @@
 -r requirements.txt
+-r ../requirements-checks.txt
 debugpy
 # Agent development CLI tool (preview) — install separately with:
 #   pip install agent-dev-cli --pre --no-deps

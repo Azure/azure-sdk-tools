@@ -16,4 +16,6 @@ apply to human-written and agent-generated code.
 - Keep changes focused. Explain unresolved conflicts with legacy code instead of
   silently changing behavior or performing unrelated refactoring.
 - Use the affected component's existing checks and add focused behavioral tests.
+  Run the shared Ruff checks documented in the guideline. Add new Python modules
+  and their tests to its incremental enforcement scope.
   Report the commands run and any checks that could not be completed.

@@ -10,6 +10,13 @@ trigger:
   paths:
     include:
       - tools/sdk-ai-bots/azure-sdk-qa-bot-agent
+      - tools/sdk-ai-bots/AGENTS.md
+      - tools/sdk-ai-bots/README.md
+      - tools/sdk-ai-bots/docs/python-coding-guidelines.md
+      - tools/sdk-ai-bots/requirements-checks.txt
+      - tools/sdk-ai-bots/ruff.toml
+      - .github/copilot-instructions.md
+      - .github/instructions/sdk-ai-bots-python.instructions.md
 
 pr:
   branches:
@@ -18,6 +25,13 @@ pr:
   paths:
     include:
       - tools/sdk-ai-bots/azure-sdk-qa-bot-agent
+      - tools/sdk-ai-bots/AGENTS.md
+      - tools/sdk-ai-bots/README.md
+      - tools/sdk-ai-bots/docs/python-coding-guidelines.md
+      - tools/sdk-ai-bots/requirements-checks.txt
+      - tools/sdk-ai-bots/ruff.toml
+      - .github/copilot-instructions.md
+      - .github/instructions/sdk-ai-bots-python.instructions.md
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -65,14 +79,21 @@ extends:
                   python -m pip config set global.index-url "$PIP_INDEX_URL"
 
                   pip install -r requirements.txt --retries 5 --timeout 60
-                  pip install pytest pytest-asyncio pytest-cov pyright --retries 5 --timeout 60
+                  python -m pip install -r ../requirements-checks.txt --retries 5 --timeout 60
                 displayName: 'Install dependencies'
                 workingDirectory: $(workingDirectory)
 
               - bash: |
                   set -euo pipefail
+                  python -m ruff check .
+                  python -m ruff format --check .
+                displayName: 'Lint & Format (incremental scope)'
+                workingDirectory: '$(workingDirectory)/..'
+
+              - bash: |
+                  set -euo pipefail
                   echo "Running pyright type check..."
-                  pyright --pythonversion $(pythonVersion) \
+                  python -m pyright --pythonversion $(pythonVersion) \
                     server.py \
                     config/ \
                     models/ \

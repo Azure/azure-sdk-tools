@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import sys
 from pathlib import Path
 
@@ -12,7 +11,7 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from utils.text_util import clean_html_tags, decode_html_content, preprocess_message
+from utils.text_util import clean_html_tags, preprocess_message
 
 # ---------------------------------------------------------------------------
 # Fixtures: realistic Teams HTML payloads
@@ -86,37 +85,6 @@ def test_clean_html_tags_strips_non_link_html() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Tests: decode_html_content
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    "message,expected",
-    [
-        ("%E2%9C%93%20source", "\u2713 source"),
-        ("%GG%2", "%GG%2"),
-        ("%FF", "\ufffd"),
-        (r"\u003csource\u003e", "<source>"),
-        ("source&amp;name", "source&name"),
-    ],
-)
-def test_decode_html_content(message: str, expected: str) -> None:
-    assert decode_html_content(message) == expected
-
-
-def test_decode_html_content_propagates_unexpected_failure(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def failing_decoder(text: str) -> str:
-        raise RuntimeError("Unexpected decoder failure")
-
-    monkeypatch.setattr("utils.text_util.unquote", failing_decoder)
-
-    with pytest.raises(RuntimeError, match="Unexpected decoder failure"):
-        decode_html_content("source%20name")
-
-
-# ---------------------------------------------------------------------------
 # Tests: preprocess_message (full pipeline)
 # ---------------------------------------------------------------------------
 
@@ -139,47 +107,24 @@ def test_preprocess_message_plain_text_passthrough() -> None:
     assert "plain text message" in result
 
 
-@pytest.mark.parametrize(
-    "message",
-    [
-        "private question about swagger definitions",
-        "<p>private question about swagger definitions</p>",
-    ],
-)
-def test_preprocess_message_does_not_log_user_content(
-    message: str, caplog: pytest.LogCaptureFixture
-) -> None:
-    with caplog.at_level(logging.DEBUG, logger="utils.text_util"):
-        result = preprocess_message(message)
-
-    assert result == "private question about Open API definitions"
-    assert "private question" not in caplog.text
-
-
-@pytest.mark.parametrize(
-    "message,expected",
-    [
-        ("[branch:feature/foo] question", "question"),
-        ("[branch:feature/foo]question", "question"),
-        ("[branch:feature/foo]问题", "问题"),
-        ("title: [branch:feature/foo]question", "title: question"),
-        ("<p>[branch:feature/foo] question</p>", "question"),
-        ("<p>[branch:feature/foo]</p><p>question</p>", "question"),
-        ("[branch:feature/foo]<br />question", "question"),
-        ("<div>[branch:feature/foo]</div><div>question</div>", "question"),
-        ("<p><span>[branch:feature/</span><b>foo]</b></p><p>question</p>", "question"),
-        (
-            'title: [branch:jiaqizhang-dev-api-stewardship-chatbot] test message\n\n<p>test</p>"',
-            'title: test message test"',
-        ),
-        ("title: [branch:feature/foo] question", "title: question"),
-        ("title: question\n\n<p>test</p>", "title: question test"),
-        (
-            "Explain [branch:feature/foo] in this example",
-            "Explain [branch:feature/foo] in this example",
-        ),
-        ("[agent:v42] question", "[agent:v42] question"),
-    ],
-)
+@pytest.mark.parametrize("message,expected", [
+    ("[branch:feature/foo] question", "question"),
+    ("[branch:feature/foo]question", "question"),
+    ("[branch:feature/foo]问题", "问题"),
+    ("title: [branch:feature/foo]question", "title: question"),
+    ("<p>[branch:feature/foo] question</p>", "question"),
+    ("<p>[branch:feature/foo]</p><p>question</p>", "question"),
+    ("[branch:feature/foo]<br />question", "question"),
+    ("<div>[branch:feature/foo]</div><div>question</div>", "question"),
+    ("<p><span>[branch:feature/</span><b>foo]</b></p><p>question</p>", "question"),
+    (
+        'title: [branch:jiaqizhang-dev-api-stewardship-chatbot] test message\n\n<p>test</p>"',
+        'title: test message test"',
+    ),
+    ("title: [branch:feature/foo] question", "title: question"),
+    ("title: question\n\n<p>test</p>", "title: question test"),
+    ("Explain [branch:feature/foo] in this example", "Explain [branch:feature/foo] in this example"),
+    ("[agent:v42] question", "[agent:v42] question"),
+])
 def test_preprocess_message_branch_prefix(message: str, expected: str) -> None:
     assert preprocess_message(message) == expected

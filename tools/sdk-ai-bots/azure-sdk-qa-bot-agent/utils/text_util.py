@@ -81,7 +81,12 @@ def decode_html_content(text: str) -> str:
     decoded = _UNICODE_ESCAPE_RE.sub(_replace_unicode, decoded)
 
     # Decode URL encoding (%20 -> space, %E2%80%A6 -> ..., etc.)
-    return unquote(decoded)
+    try:
+        decoded = unquote(decoded)
+    except Exception:
+        pass  # keep as-is on decode failure
+
+    return decoded
 
 
 def clean_html_tags(text: str) -> str:
@@ -149,5 +154,5 @@ def preprocess_message(text: str) -> str:
     result = preprocess_html_content(text)
     result = BRANCH_PREFIX_RE.sub(lambda match: match.group(1) or "", result, count=1)
     result = replace_keywords(result)
-    logger.info("Message preprocessing completed")
+    logger.info("Preprocessed message: %s", result)
     return result

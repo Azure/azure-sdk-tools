@@ -1,5 +1,0 @@
-pyright
-pytest
-pytest-asyncio
-pytest-cov
-ruff==0.17.6

@@ -12,6 +12,19 @@
 - Remove custom `truncating_mcp_parser` callbacks in favor of raw MCP outputs protected by `ToolOutputSecurityMiddleware` and `ToolOutputStorageMiddleware`.
 - Update hosted agent deployment to Responses protocol `2.0.0`.
 
+## 0.2.2 (2026-11-18)
+
+### Features Added
+
+- Add catalog-driven Teams channel handoff via `config/support-channel.yaml`, `models/support_channel.py`, and the on-demand `support-channels` skill (`{{channel:<key>}}`), returning `route_channel_name` and `route_channel_link` while soft-deprecating `route_tenant`.
+- Pass `channel_name` from `ChatRequest` into `[tenant_context]` and suppress self-routing back to the current channel.
+
+### Bugs Fixed
+
+- Stop inferring `route_tenant` from `load_skill` calls and decouple `load_skill` from Teams channel handoffs.
+- Clarify `api-stewardship-board` as data-plane only and direct ARM/management-plane questions to `typespec`.
+- Keep TypeSpec PR design-review requests in `typespec` instead of switching to `api-spec-review` or merge-blocker-only triage.
+
 ## 0.2.1 (2026-10-30)
 
 ### Features Added

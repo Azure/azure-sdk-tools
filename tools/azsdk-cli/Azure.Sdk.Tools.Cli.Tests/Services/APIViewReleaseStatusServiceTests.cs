@@ -45,7 +45,9 @@ public class APIViewReleaseStatusServiceTests
 
     [TestCase("go", "language=Go")]
     [TestCase("rust", "language=Rust")]
-    public async Task GetApprovalStatusAsync_MapsSupportedGoAndRustLanguages(string language, string expectedLanguageQuery)
+    [TestCase("javascript", "language=JavaScript")]
+    [TestCase("js", "language=JavaScript")]
+    public async Task GetApprovalStatusAsync_MapsSupportedLanguages(string language, string expectedLanguageQuery)
     {
         string? capturedEndpoint = null;
         apiViewHttpServiceMock

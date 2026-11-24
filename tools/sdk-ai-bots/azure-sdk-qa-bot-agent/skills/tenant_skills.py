@@ -28,14 +28,26 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
+    TenantID.API_STEWARDSHIP_BOARD_QA_BOT: (
+        "Data-plane only (not ARM/management-plane) spec-to-SDK lifecycle: "
+        "data-plane API modeling and REST design "
+        "(endpoints, LROs, service access boundaries); specification validation "
+        "and API Stewardship Board review "
+        "(readiness, scheduling, async reviews, Office Hours, signoff); "
+        "SDK design, clients, library/package naming and approval, "
+        "documentation and SDK exposure; preview/GA versioning, compatibility, "
+        "breaking changes, "
+        "deprecation, retirement and customer notification."
+    ),
     TenantID.API_SPEC_REVIEW_BOT: (
-        "Azure REST API specification authoring and PR review: requirements, "
-        "validation errors, LintDiff, Avocado, breaking changes, review status, "
-        "scheduling, blockers, and merge process in azure-rest-api-specs repos. "
-        "Prefer this skill whenever a specification PR, validation check, or "
-        "breaking-change comparison is the primary issue. Use typespec instead "
-        "when the primary task is a language-level model or code transformation, "
-        "even if a PR check exposed it."
+        "Azure REST API specification PR review process: requirements, "
+        "validation errors, LintDiff, Avocado, breaking-change approvals, "
+        "review status, scheduling, blockers, and merge process in "
+        "azure-rest-api-specs repos. Prefer this skill when the primary "
+        "issue is PR validation checks, breaking-change approvals, or merge "
+        "blockers. Use typespec instead for TypeSpec authoring, API/resource "
+        "modeling, spec folder layout, or TypeSpec PR design reviews, even if "
+        "a PR link or check exposed it."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
@@ -58,7 +70,8 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "requests, including requests to apply diagnostics or suppressions."
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: (
-        "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
+        "TypeSpec language and Azure API design (ARM/management-plane and data-plane): "
+        "syntax, decorators, patterns, Azure extensions, TypeSpec PR design reviews, "
         "migration from OpenAPI, validation, tspconfig, specification service-folder "
         "organization, and RPaaS registration paths coupled to that layout. Do not "
         "replace a preloaded typespec-authoring skill for Authoring tenant requests."

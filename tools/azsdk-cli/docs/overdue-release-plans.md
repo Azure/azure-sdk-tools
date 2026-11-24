@@ -124,10 +124,11 @@ can change or its update can fail after the preview.
 - **Concurrent updates:** both modes require a valid work-item revision. Actual
   cleanup atomically checks that revision when changing the state. A revision
   conflict skips the plan with an error, without retry or confirmation email.
-- **Partial failures:** reported lookup, update, or reminder errors produce a
+- **Partial failures:** cleanup lookup or update errors and reminder-send errors produce a
   nonzero exit code while other plans continue. Preview identifies an incomplete
-  eligible list; actual cleanup retains only successful state changes. A fallback
-  reminder does not hide the lookup error. Confirmation delivery is best effort,
+  eligible list; actual cleanup retains only successful state changes. A successfully
+  sent fallback reminder logs the assessment problem as a warning instead of a
+  command error. Confirmation delivery is best effort,
   as described below.
 - **Cancellation:** stops further processing and the wait for a stalled GitHub
   read. It does not trigger a fallback email or undo completed state changes.
@@ -140,7 +141,10 @@ allow reads of linked repositories, including private specs. The CLI supports
 `GITHUB_TOKEN` or an existing GitHub CLI login.
 
 Reminders require `--notify-owners true`, a valid `--emailer-uri`, and a valid
-submitter email address. They report lookup and send failures to the caller.
+submitter email address. Assessment failures are logged as warnings when fallback
+delivery succeeds; send failures are returned as errors.
+Logs identify each release-plan and work-item ID, accepted or failed reminders,
+skip reasons, abandonment-email outcomes, and cleanup/reminder summary counts.
 Reminder and abandonment subjects are distinct. Both emails use the assessment's
 exact reason; missing PRs, closed PRs, unapproved open PRs, merged or approved PRs,
 and released SDKs are not conflated. Unrecognized release types and verification

@@ -107,6 +107,9 @@ model ChatRequest {
   @doc("The tenant ID")
   tenant_id: string;
 
+  @doc("Current Teams channel display name")
+  channel_name?: string;
+
   @doc("Existing conversation identifier, if continuing a conversation")
   conversation_id?: string;
 
@@ -143,8 +146,14 @@ model ChatResponse {
   @doc("Whether the agent produced a non-empty answer")
   has_result: boolean;
 
-  @doc("The tenant ID the question is routed to")
+  @doc("Deprecated: use route_channel_name and route_channel_link instead.")
   route_tenant?: string;
+
+  @doc("The Teams channel name the question is routed to")
+  route_channel_name?: string;
+
+  @doc("The Teams channel link the question is routed to")
+  route_channel_link?: string;
 
   @doc("Verified Teams mention metadata for AT markup already present in the answer")
   mentions?: TeamsMention[];

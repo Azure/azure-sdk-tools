@@ -35,6 +35,7 @@ from dataset.schema import (  # noqa: E402
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
     FoundryEvalsRunner,
+    _delete_eval_input,
     _retry_foundry_call,
     _upload_eval_items,
     output_items_to_rows,
@@ -64,7 +65,7 @@ def test_upload_eval_items_uses_file_backed_data_source():
 
     client = MagicMock()
     client.files.create.return_value = SimpleNamespace(id="file-uploaded")
-    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-processed")
+    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-processed", status="processed")
 
     data_source = _upload_eval_items(
         client,
@@ -84,6 +85,122 @@ def test_upload_eval_items_uses_file_backed_data_source():
         "type": "jsonl",
         "source": {"type": "file_id", "id": "file-processed"},
     }
+    client.files.delete.assert_not_called()
+
+
+def test_upload_processing_failure_deletes_its_input():
+    from types import SimpleNamespace
+    from unittest import TestCase
+    from unittest.mock import MagicMock
+
+    for failure in ("error", "timeout"):
+        client = MagicMock()
+        client.files.create.return_value = SimpleNamespace(id="file-input")
+        client.files.delete.return_value = SimpleNamespace(deleted=True)
+        client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="error")
+        if failure == "timeout":
+            client.files.wait_for_processing.side_effect = RuntimeError("Processing timed out")
+        with TestCase().assertRaises(RuntimeError):
+            _upload_eval_items(client, [{"query": "q", "response": "a"}], "typespec")
+        client.files.delete.assert_called_once_with("file-input")
+        client.evals.runs.create.assert_not_called()
+
+
+def test_eval_input_cleanup_retries_transient_errors():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    import httpx
+    from openai import APIStatusError
+
+    request = httpx.Request("DELETE", "https://example.test/files/file-input")
+    error = APIStatusError("unavailable", response=httpx.Response(503, request=request), body=None)
+    client = MagicMock()
+    client.files.delete.side_effect = [error, SimpleNamespace(deleted=True)]
+    with patch("_evals_runner.time.sleep"):
+        _delete_eval_input(client, "file-input")
+
+    assert client.files.delete.call_count == 2
+    assert all(call.args == ("file-input",) for call in client.files.delete.call_args_list)
+
+
+def test_eval_input_cleanup_requires_confirmed_deletion():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    client = MagicMock()
+    client.files.delete.return_value = SimpleNamespace(deleted=False)
+    with patch("_evals_runner.logger") as log:
+        _delete_eval_input(client, "file-input")
+    log.warning.assert_called_once()
+    assert "manual cleanup is required" in log.warning.call_args.args[0]
+
+
+def test_evaluation_input_cleanup_respects_remote_run_lifetime():
+    from contextlib import ExitStack
+    from types import SimpleNamespace
+    from unittest import TestCase
+    from unittest.mock import MagicMock, patch
+
+    import httpx
+    from openai import APIConnectionError, APIStatusError
+
+    request = httpx.Request("POST", "https://example.test/evals")
+    error = APIStatusError("rejected", response=httpx.Response(400, request=request), body=None)
+    for outcome in (
+        "completed", "failed", "canceled", "timeout", "status_error",
+        "output_error", "creation_unknown", "cleanup_error", "output_cleanup_error",
+    ):
+        client = MagicMock()
+        client.files.create.return_value = SimpleNamespace(id="file-input")
+        client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="processed")
+        client.files.delete.return_value = SimpleNamespace(deleted=True)
+        client.evals.create.return_value = SimpleNamespace(id="eval-id")
+        client.evals.runs.create.return_value = SimpleNamespace(id="run-id")
+        status = outcome if outcome in ("failed", "canceled") else "completed"
+        client.evals.runs.retrieve.return_value = SimpleNamespace(status=status, report_url=None)
+        client.evals.runs.output_items.list.return_value = []
+        results = MagicMock()
+        results.record_run_result.return_value = {"saved": True}
+        runner = FoundryEvalsRunner(["relevance"], results, model="test-model", poll_timeout=-1)
+        if outcome == "timeout":
+            client.evals.runs.retrieve.return_value = SimpleNamespace(status="in_progress")
+        elif outcome == "status_error":
+            client.evals.runs.retrieve.side_effect = error
+        elif outcome in ("output_error", "output_cleanup_error"):
+            client.evals.runs.output_items.list.side_effect = error
+        elif outcome == "creation_unknown":
+            client.evals.runs.create.side_effect = APIConnectionError(request=request)
+        if outcome in ("cleanup_error", "output_cleanup_error"):
+            client.files.delete.side_effect = error
+        expected = (
+            TimeoutError if outcome in ("timeout", "canceled")
+            else RuntimeError if outcome == "failed"
+            else APIConnectionError if outcome == "creation_unknown"
+            else APIStatusError
+        )
+        with ExitStack() as stack:
+            collector = stack.enter_context(patch("_evals_runner.CompletionCollector")).return_value
+            collector.collect.return_value = [{"testcase": "case", "query": "q", "response": "a"}]
+            stack.enter_context(patch("_evals_runner.build_testing_criteria", return_value=[{"name": "relevance"}]))
+            stack.enter_context(patch.object(runner, "_retrieve_tool_calls", return_value={}))
+            stack.enter_context(patch("_evals_runner.time.sleep"))
+            log = stack.enter_context(patch("_evals_runner.logger"))
+            if outcome not in ("completed", "cleanup_error"):
+                raised = stack.enter_context(TestCase().assertRaises(expected))
+            result = runner.evaluate_run_completion(
+                client, [{"testcase": "case", "query": "q"}], "typespec", project_client=MagicMock(),
+            )
+        if outcome in ("completed", "cleanup_error"):
+            assert result == {"typespec_run-id": {"saved": True}}, outcome
+        if outcome in ("output_error", "output_cleanup_error"):
+            assert raised.exception is error
+        if outcome in ("completed", "failed", "output_error", "cleanup_error", "output_cleanup_error"):
+            client.files.delete.assert_called_once_with("file-input")
+        else:
+            client.files.delete.assert_not_called()
+        if outcome in ("cleanup_error", "output_cleanup_error"):
+            log.warning.assert_called_once()
 
 
 def test_retry_foundry_call_retries_transient_status_errors():
@@ -697,6 +814,8 @@ def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, stat
     project.__enter__.return_value = project
     client = MagicMock()
     project.get_openai_client.return_value.__enter__.return_value = client
+    client.files.create.return_value = SimpleNamespace(id="file-local")
+    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-local", status="processed")
     client.evals.create.return_value = SimpleNamespace(id="eval-local")
     client.evals.runs.create.return_value = SimpleNamespace(id="run-local")
     records = [
@@ -1129,6 +1248,122 @@ def test_without_eval_branch_keeps_message_unchanged():
     })())
     asyncio.run(collector._call_bot_api("unchanged query", None, session))
     assert session.post.call_args.kwargs["json"]["message"]["content"] == "unchanged query"
+
+
+def test_completion_collector_sends_channel_name_and_captures_route_fields():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    session = MagicMock()
+    session.__aenter__ = AsyncMock(return_value=session)
+    session.__aexit__ = AsyncMock(return_value=False)
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200,
+        "json": AsyncMock(return_value={
+            "id": "resp-1",
+            "answer": "Please check with release support.",
+            "route_channel_name": "SDK release support",
+            "route_channel_link": "https://teams.microsoft.com/l/channel/19%3A0848/SDK",
+        }),
+    })())
+
+    collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+    records = [{
+        "testcase": "route-case",
+        "query": "Need manual release",
+        "ground_truth": "Route to SDK release support",
+        "expected_route_channel": "SDK release support",
+    }]
+    with patch("aiohttp.ClientSession", return_value=session):
+        results = collector.collect(records, "general_qa_bot", channel_name="General")
+
+    assert session.post.call_args.kwargs["json"]["channel_name"] == "General"
+    assert results[0]["expected_route_channel"] == "SDK release support"
+    assert results[0]["route_channel_name"] == "SDK release support"
+    assert results[0]["route_channel_link"] == "https://teams.microsoft.com/l/channel/19%3A0848/SDK"
+
+
+def test_output_items_to_rows_grades_route_channel():
+    from _evals_result import EvalsResult
+
+    output_items = [
+        {
+            "datasource_item": {
+                "testcase": "no-route-pass",
+                "query": "q1",
+                "ground_truth": "gt1",
+                "response": "answered",
+                "expected_route_channel": None,
+                "route_channel_name": None,
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "unexpected-route-fail",
+                "query": "q2",
+                "ground_truth": "gt2",
+                "response": "answered",
+                "expected_route_channel": None,
+                "route_channel_name": "Azure API Stewardship Board - General",
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "expected-route-pass",
+                "query": "q3",
+                "ground_truth": "gt3",
+                "response": "escalated",
+                "expected_route_channel": "SDK release support",
+                "route_channel_name": "sdk release support",
+            },
+            "results": [],
+        },
+    ]
+    rows = output_items_to_rows(output_items, ["route_channel"])["rows"]
+    assert [r["outputs.route_channel.route_channel_result"] for r in rows] == ["pass", "fail", "pass"]
+    assert [r["outputs.route_channel.route_channel"] for r in rows] == [1.0, 0.0, 1.0]
+
+    er = EvalsResult(metrics={"route_channel": ["route_channel", "route_channel_result"]}, suppressions=None)
+    recorded = er.record_run_result({"rows": rows})
+    summary = recorded[-1]
+    assert summary["total_evals"] == 3
+    assert summary["route_channel_pass_rate"] == 2
+    assert summary["route_channel_fail_rate"] == 1
+
+
+def test_validate_case_expected_route_channel():
+    validate_case({
+        "testcase": "t",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "apispec",
+        "reviewed": "pass",
+        "expected_route_channel": None,
+    })
+    validate_case({
+        "testcase": "t",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "general",
+        "reviewed": "pass",
+        "expected_route_channel": "SDK release support",
+    })
+    try:
+        validate_case({
+            "testcase": "t",
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "general",
+            "reviewed": "pass",
+            "expected_route_channel": "  ",
+        })
+    except ValidationError as exc:
+        assert "expected_route_channel" in str(exc)
+    else:
+        raise AssertionError("expected ValidationError for blank expected_route_channel")
 
 
 def _run_all() -> int:

@@ -253,7 +253,7 @@ async def _send_server(client: httpx.AsyncClient, args, user_input: str):
                 print("\n  References:")
                 for r in refs:
                     print(f"    - [{r.get('title', '')}]({r.get('link', '')})")
-            routed = data.get("route_tenant")
+            routed = data.get("route_channel_name") or data.get("route_tenant")
             if routed:
                 print(f"  (Routed to: {routed})")
             print()

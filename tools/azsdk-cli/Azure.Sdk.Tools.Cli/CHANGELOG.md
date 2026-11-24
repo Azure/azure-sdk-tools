@@ -1,5 +1,24 @@
 # Release History
 
+## 0.6.59 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Overdue release-plan logs now show plan IDs, cleanup and email outcomes, skip reasons, and summary counts. Successfully sent generic reminders no longer fail the command because of an assessment warning; cleanup and actual reminder-send failures remain errors.
+- `api-review create`, `package get-approval-status`, and `package mark-released` now accept the same language aliases and normalize them for API Review Hub and APIView. Both `js` and `javascript` are sent to API Review Hub as `javascript`, to APIView as `JavaScript`, and default to `azure-sdk-for-js` when creating a review.
+
+### Other Changes
+
+## 0.6.58 (2026-11-10)
+
+### Features Added
+
+- Automatic overdue release-plan cleanup now skips recently updated plans and SDK PRs with recent commits, submitted reviews, or human comments. The inactivity window defaults to 30 days and can be set with `--inactivity-days`. Routine bot comments and CI checks do not reset it. Missing or unreadable activity prevents abandonment and reports an error. Overdue reminders describe abandonment as conditional on those activity checks.
+
 ## 0.6.57 (2026-11-06)
 
 ### Features Added

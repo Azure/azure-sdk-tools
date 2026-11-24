@@ -12,6 +12,7 @@ import pytest
 from azure.ai.projects.models import AgentVersionDetails
 from azure.core.async_paging import AsyncItemPaged
 
+from config.app_config import AppConfigSnapshot
 from models.chat import AdditionalInfo, ChatRequest, Message as ChatMessage
 from services import chat_service
 from services.chat_service import ChatService
@@ -78,13 +79,217 @@ async def test_image_attempt_limit_keeps_failure_and_limit_notices(monkeypatch, 
     assert "additional images were not read" in items[-1]["content"]
 
 
-@pytest.mark.parametrize("conversation_type, include_tag, last_lookup_fails", [
-    ("teams_channel", True, False), ("teams_channel", False, False),
-    (None, True, False), ("teams_channel", True, True),
-])
+@pytest.fixture
+def placeholder_chat(monkeypatch):
+    from models.identity import ResolvedGitHubUser, ResolveGitHubUsersResult, TeamsUser
+    from services.teams_mention_service import IdentityTools
+
+    user = ResolvedGitHubUser(
+        text="<at>reviewer@example.test</at>",
+        mentioned=TeamsUser(id="11111111-2222-3333-4444-555555555555", name="Reviewer"),
+        plain_text="Reviewer (reviewer@example.test)",
+    )
+    lookup = AsyncMock(return_value=ResolveGitHubUsersResult(users={"reviewer-a": user}))
+    monkeypatch.setattr(IdentityTools, "resolve_github_users", lookup)
+    service = ChatService(
+        settings=lambda key, default=None: default,
+        project_client=MagicMock(), openai_client=MagicMock(),
+    )
+    service._get_agent = AsyncMock(
+        return_value=SimpleNamespace(name="chat-agent", version="1"),
+    )
+    service._resolve_agent_configuration = MagicMock(return_value=("chat-agent", "1"))
+    service._resolve_conversation = AsyncMock(return_value=("hosted-conversation", True))
+    service._save_bot_answer_to_conversation = AsyncMock()
+    invoke = AsyncMock(return_value=("trace-id", SimpleNamespace(
+        id="response-1", status="completed", output=[],
+        output_text=(
+            "{{mention:reviewer-a}}, please help. Contact: {{contact:reviewer-a}}."
+            "\n\n**References**\n- [Guide](https://example.test/guide)"
+        ),
+    )))
+    monkeypatch.setattr(chat_service, "HostedAgentClient", lambda _: SimpleNamespace(invoke=invoke))
+    tasks = []
+    monkeypatch.setattr(
+        chat_service.BackgroundTaskTracker, "instance",
+        lambda: SimpleNamespace(track=tasks.append),
+    )
+    return SimpleNamespace(
+        service=service, lookup=lookup, user=user, invoke=invoke, tasks=tasks,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["/completion", "/agent/chat"])
+@pytest.mark.parametrize("conversation_type", ["teams_channel", None])
+@pytest.mark.parametrize("flag_value", [None, "true", "TRUE", "false", "FALSE", " TRUE ", "", "yes"])
+async def test_backend_resolves_before_returning_and_saving_the_answer(
+    monkeypatch, placeholder_chat, endpoint, conversation_type, flag_value,
+):
+    import httpx
+    import server
+
+    state = placeholder_chat
+    settings = AppConfigSnapshot(
+        endpoint="https://test.azconfig.io",
+        settings={} if flag_value is None else {"ENABLE_TEAMS_MENTION": flag_value},
+    )
+    state.service._settings = settings.get
+    monkeypatch.setattr(server, "_chat_service", state.service)
+    request = ChatRequest(
+        tenant_id="typespec_channel_qa_bot", conversation_id="thread",
+        conversation_type=conversation_type,
+        message=ChatMessage(role="user", content="Who can help?"),
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=server.app), base_url="http://test",
+    ) as client:
+        response = await client.post(endpoint, json=request.model_dump(mode="json"))
+    assert response.status_code == 200
+    result = response.json()
+    enabled = conversation_type == "teams_channel" and (flag_value or "true").lower() == "true"
+    expected = (
+        f"{state.user.text if enabled else state.user.plain_text}, please help. "
+        f"Contact: {state.user.plain_text}."
+    )
+    assert result["answer"] == expected
+    assert result["mentions"] == (
+        [{"text": state.user.text, "mentioned": state.user.mentioned.model_dump()}]
+        if enabled else None
+    )
+    assert result["references"][0]["link"] == "https://example.test/guide"
+    assert result["trace_id"] == "trace-id"
+    assert result["agent_name"] == "chat-agent"
+    assert result["has_result"]
+    state.lookup.assert_awaited_once_with(usernames=["reviewer-a"])
+    state.invoke.assert_awaited_once()
+    await asyncio.gather(*state.tasks)
+    state.service._save_bot_answer_to_conversation.assert_awaited_once_with(
+        request, "response-1", expected, "trace-id",
+    )
+
+
+@pytest.mark.asyncio
+async def test_failed_backend_lookup_saves_plain_handles(placeholder_chat):
+    from models.identity import ResolveGitHubUsersResult
+
+    state = placeholder_chat
+    state.lookup.return_value = ResolveGitHubUsersResult(
+        errors={"reviewer-a": "Unable to authenticate to the Microsoft Open Source portal."},
+    )
+    result = await state.service.chat(ChatRequest(
+        tenant_id="azure_sdk_qa_bot", conversation_id="thread",
+        conversation_type="teams_channel",
+        message=ChatMessage(role="user", content="Who can help?"),
+    ))
+    await asyncio.gather(*state.tasks)
+    assert result.answer == "@reviewer-a, please help. Contact: @reviewer-a."
+    assert result.mentions is None
+    assert state.service._save_bot_answer_to_conversation.await_args.args[2] == result.answer
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("with_placeholder", [False, True])
+async def test_backend_mentions_come_only_from_placeholders_not_identity_tool_output(
+    placeholder_chat, with_placeholder,
+):
+    import json
+
+    from openai.types.responses import ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem
+    from models.identity import ResolveGitHubUsersResult, TeamsMention
+
+    state = placeholder_chat
+    user = state.user
+    answer = f"{user.text}, please help."
+    if with_placeholder:
+        answer += " {{mention:reviewer-a}}, please confirm."
+    output = [
+        ResponseFunctionToolCall.model_construct(
+            type="function_call", name="resolve_github_users", call_id="identity-1",
+            arguments=json.dumps({"usernames": ["reviewer-a"]}),
+        ),
+        ResponseFunctionToolCallOutputItem.model_construct(
+            type="function_call_output", id="identity-1", call_id="identity-1",
+            status="completed",
+            output=ResolveGitHubUsersResult(users={"reviewer-a": user}).model_dump_json(),
+        ),
+    ]
+    state.invoke.return_value = ("trace-id", SimpleNamespace(
+        id="response-1", status="completed", output=output, output_text=answer,
+    ))
+    result = await state.service.chat(ChatRequest(
+        tenant_id="azure_sdk_qa_bot", conversation_id="thread",
+        conversation_type="teams_channel",
+        message=ChatMessage(role="user", content="Who can help?"),
+    ))
+    await asyncio.gather(*state.tasks)
+    assert result.mentions == (
+        [TeamsMention(text=user.text, mentioned=user.mentioned)] if with_placeholder else None
+    )
+    assert state.service._extract_tool_results(output) == {}
+    assert result.answer == answer.replace("{{mention:reviewer-a}}", user.text)
+    assert state.lookup.await_count == int(with_placeholder)
+
+
+@pytest.mark.asyncio
+async def test_backend_mentions_preserve_all_retrieved_evidence(placeholder_chat):
+    import json
+
+    from openai.types.responses import ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem
+
+    from models.knowledge import Reference, SearchKnowledgeBaseResult
+
+    state = placeholder_chat
+    references = [
+        Reference(
+            title="Guide", source="azure-sdk-docs-eng",
+            link="https://example.test/guide", content="KB evidence",
+        ),
+        Reference(
+            title="Wiki", source="azure-sdk-docs-eng",
+            link="https://example.test/wiki", content="Wiki evidence",
+        ),
+    ]
+    output = []
+    for name, reference in zip(["search_knowledge_base", "wiki_search"], references):
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call", name=name, call_id=name, arguments="{}",
+            ),
+            ResponseFunctionToolCallOutputItem.model_construct(
+                type="function_call_output", id=name, call_id=name, status="completed",
+                output=SearchKnowledgeBaseResult(results=[reference]).model_dump_json(),
+            ),
+        ])
+    state.invoke.return_value = ("trace-id", SimpleNamespace(
+        id="response-1", status="completed", output=output,
+        output_text=(
+            "{{mention:reviewer-a}}, please help.\n\n**References**\n"
+            "- [Guide](https://example.test/guide)\n"
+            "- [Wiki](https://example.test/wiki)"
+        ),
+    ))
+    result = await state.service.chat(ChatRequest(
+        tenant_id="azure_sdk_qa_bot", conversation_id="thread",
+        conversation_type="teams_channel", with_full_context=True,
+        message=ChatMessage(role="user", content="Who can help?"),
+    ))
+    await asyncio.gather(*state.tasks)
+    assert result.answer == f"{state.user.text}, please help."
+    assert result.mentions is not None and len(result.mentions) == 1
+    assert result.mentions[0].mentioned == state.user.mentioned
+    assert result.references == references
+    assert [item["document_content"] for item in json.loads(result.full_context)] == [
+        "KB evidence", "Wiki evidence",
+    ]
+    assert state.service._save_bot_answer_to_conversation.await_args.args[2] == result.answer
+
+
 @pytest.mark.parametrize("output_type", ["function_call_output", "message"])
-def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
-    conversation_type, include_tag, last_lookup_fails, output_type
+@pytest.mark.parametrize("with_full_context", [True, False])
+@pytest.mark.parametrize("searches", ["mixed", "wiki_only", "last_empty", "empty"])
+def test_references_and_full_context_use_all_search_calls(
+    output_type, with_full_context, searches
 ):
     import json
 
@@ -93,72 +298,118 @@ def test_mentions_come_from_verified_tool_results_and_explicit_markup_only(
         ResponseOutputMessage, ResponseOutputText,
     )
 
-    from models.identity import ResolveGitHubUsersResult, TeamsMention, TeamsUser
+    from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 
-    mention = TeamsMention(
-        text="<at>linked.person@microsoft.com</at>",
-        mentioned=TeamsUser(
-            name="Linked Person",
-            id="11111111-2222-3333-4444-555555555555",
-        ),
+    earlier = Reference(
+        title="Earlier section", source="azure-sdk-docs-eng",
+        link="https://example.test/shared", content="Earlier evidence",
     )
+    later = earlier.model_copy(update={
+        "title": "Later section", "content": "Additional evidence from the same document",
+    })
+    repeated = Reference(
+        title="Repeated document", source="azure-sdk-docs-eng",
+        link="https://example.test/repeated", content="Repeated evidence",
+    )
+    wiki = Reference(
+        title="Wiki guidance", source="azure-sdk-docs-eng",
+        link="https://example.test/wiki", content="Wiki evidence",
+    )
+    calls = {
+        "mixed": [
+            ("search_knowledge_base", [earlier, repeated]),
+            ("wiki_search", [wiki, repeated]),
+            ("search_knowledge_base", [later, repeated]),
+        ],
+        "wiki_only": [("wiki_search", [wiki, repeated])],
+        "last_empty": [
+            ("search_knowledge_base", [earlier, repeated]),
+            ("search_knowledge_base", []),
+            ("wiki_search", []),
+        ],
+        "empty": [("search_knowledge_base", []), ("wiki_search", [])],
+    }[searches]
+    expected_context = {
+        "mixed": [earlier, repeated, later, wiki],
+        "wiki_only": [wiki, repeated],
+        "last_empty": [earlier, repeated],
+        "empty": [],
+    }[searches]
     output = []
-    # Separate tool calls must not discard the previously resolved reviewer.
-    lookups = [
-        ResolveGitHubUsersResult(mentions={"linked-user": mention}),
-        ResolveGitHubUsersResult(errors={"unlinked": "No linked Microsoft account was found."}),
-        ResolveGitHubUsersResult(errors={"service": "Not a person."}),
-    ]
-    if last_lookup_fails:
-        lookups.append(ResolveGitHubUsersResult(errors={"linked-user": "HTTP 403"}))
-    for index, result in enumerate(lookups):
-        call_id = f"lookup-{index}"
+    for index, (name, references) in enumerate(calls):
+        call_id = f"search-{index}"
+        result = SearchKnowledgeBaseResult(results=references)
+        wrapped_output = json.dumps([result.model_dump_json()])
         tool_output: ResponseFunctionToolCallOutputItem | ResponseOutputMessage
         if output_type == "function_call_output":
             tool_output = ResponseFunctionToolCallOutputItem.model_construct(
                 type=output_type, id=call_id, call_id=call_id,
-                output=result.model_dump_json(), status="completed",
+                output=wrapped_output, status="completed",
             )
         else:
             tool_output = ResponseOutputMessage.model_construct(
                 type="message", id=call_id, role="assistant", status="completed", content=[],
-                call_id=call_id,
-                output=json.dumps([result.model_dump_json()]),
+                call_id=call_id, output=wrapped_output,
             )
         output.extend([
             ResponseFunctionToolCall.model_construct(
-                type="function_call",
-                name="resolve_github_users",
-                call_id=call_id,
-                arguments=json.dumps({"usernames": [*result.mentions, *result.errors]}),
+                type="function_call", name=name, call_id=call_id, arguments="{}",
             ),
             tool_output,
         ])
-    answer = f"Ping {mention.text if include_tag else '@linked-user'} or <at>unverified@microsoft.com</at>."
+    text = (
+        "Answer using retrieved evidence.\n\n**References**\n"
+        "- [Earlier section](https://example.test/shared)\n"
+        "- [Wiki guidance](https://example.test/wiki)\n"
+        "- [Repeated document](https://example.test/repeated)\n"
+        "- [Later section](https://example.test/shared)\n"
+        "- [Unmatched document](https://example.test/unmatched)"
+    )
     output.append(ResponseOutputMessage.model_construct(
         type="message", id="answer", role="assistant", status="completed",
         content=[ResponseOutputText.model_construct(
-            type="output_text", text=answer, annotations=[],
+            type="output_text", text=text, annotations=[],
         )],
     ))
     response = Response.model_construct(id="reply", output=output)
     request = ChatRequest(
         tenant_id="azure_sdk_qa_bot",
-        conversation_type=conversation_type,
-        message=ChatMessage(role="user", content="Who can review?"),
+        message=ChatMessage(role="user", content="Review this question"),
+        with_full_context=with_full_context,
     )
+    service = ChatService()
+    decoded_results = service._extract_tool_results(output)
+    assert decoded_results == {
+        name: [
+            SearchKnowledgeBaseResult(results=references)
+            for tool_name, references in calls if tool_name == name
+        ]
+        for name, _ in calls
+    }
+    cited = [
+        earlier, wiki, repeated, later,
+        Reference(title="Unmatched document", source="", link="https://example.test/unmatched"),
+    ]
+    expected_references = [
+        ref if ref in expected_context else Reference(title=ref.title, source="", link=ref.link)
+        for ref in cited
+    ]
+    if searches == "last_empty":
+        # Keep link-only fallback when the cited section was not retrieved.
+        expected_references[3] = earlier
 
-    result = ChatService()._postprocess(request, response, None)
+    result = service._postprocess(request, response, "conversation")
 
-    assert result.answer == answer
-    assert result.mentions == (
-        [mention] if conversation_type and include_tag and not last_lookup_fails else None
-    )
-    if result.mentions:
-        assert result.model_dump(mode="json")["mentions"] == [{
-            "text": mention.text,
-            "mentioned": {"id": mention.mentioned.id, "name": "Linked Person"},
-        }]
+    assert result.answer == "Answer using retrieved evidence."
+    assert result.references == expected_references
+    assert result.agent_conversation_id == "conversation"
+    if with_full_context and expected_context:
+        assert json.loads(result.full_context) == [
+            DocumentContext.from_reference(ref).model_dump(mode="json")
+            for ref in expected_context
+        ]
+    else:
+        assert result.full_context is None
 
 
 # -- Memory scope handling ------------
@@ -318,6 +569,9 @@ def _version(version, branch="feature/foo", status="active"):
 
 def _project_with_versions(*pages):
     project = MagicMock()
+    latest = SimpleNamespace(name="agent", version="99", status="active")
+    project.agents.get = AsyncMock(return_value=SimpleNamespace(versions=SimpleNamespace(latest=latest)))
+    project.agents.get_version = AsyncMock(return_value=latest)
 
     async def get_next(token):
         await asyncio.sleep(0)
@@ -427,20 +681,17 @@ async def test_branch_tag_in_channel_title(monkeypatch, trailing):
 
 
 @pytest.mark.asyncio
-async def test_missing_deployment_fails(monkeypatch):
-    from services.chat_service import AgentRoutingError
+async def test_missing_deployment_returns_none(monkeypatch, caplog):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([_version("42")])
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:missing] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:missing] q", "agent") is None
+    project.agents.get.assert_not_called()
+    assert "branch=missing; falling back to the configured default" in caplog.text
 
 
 @pytest.mark.asyncio
 async def test_metadata_selects_matching_branch_and_agent_across_pages(monkeypatch):
-    from services.chat_service import AgentRoutingError
-
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     chat_project = _project_with_versions(
         [_version("43", "other-branch")], [_version("42", "feature/Case/path")],
@@ -461,9 +712,8 @@ async def test_metadata_selects_matching_branch_and_agent_across_pages(monkeypat
         "[branch:other-branch] question", "chat-agent"
     ) == "43"
     for branch, agent in [("missing", "chat-agent"), ("other-branch", "mcp-agent")]:
-        with pytest.raises(AgentRoutingError) as exc:
-            await service._resolve_request_version(f"[branch:{branch}] question", agent)
-        assert exc.value.status_code == 404
+        assert await service._resolve_request_version(f"[branch:{branch}] question", agent) is None
+    project.agents.get.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -505,39 +755,29 @@ async def test_deleted_candidate_does_not_hide_older_active_version(monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_untagged_versions_are_not_selected(monkeypatch):
-    from services.chat_service import AgentRoutingError
-
+async def test_untagged_versions_do_not_match_branch(monkeypatch):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([AgentVersionDetails({
         "version": "43", "metadata": {}, "status": "active",
     })])
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:feature/foo] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
     project.agents.get_version.assert_not_called()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status", ["creating", "failed", None])
-async def test_no_active_version_returns_404(monkeypatch, status):
-    from services.chat_service import AgentRoutingError
-
+async def test_no_active_branch_version_returns_none(monkeypatch, status):
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     project = _project_with_versions([_version("43", status=status)])
     project.agents.get_version = AsyncMock(return_value=_version("43", status=status))
     service = ChatService(project_client=project)
-    with pytest.raises(AgentRoutingError) as exc:
-        await service._resolve_request_version("[branch:feature/foo] q", "agent")
-    assert exc.value.status_code == 404
+    assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("present", [True, False])
 async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present):
-    from services.chat_service import AgentRoutingError
-
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
     versions = [_version("42")] if present else []
     project = _project_with_versions(versions)
@@ -545,10 +785,7 @@ async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present
     results = await asyncio.gather(*(
         service._resolve_request_version("[branch:feature/foo] q", "agent") for _ in range(5)
     ), return_exceptions=True)
-    if present:
-        assert results == ["42"] * 5
-    else:
-        assert all(isinstance(result, AgentRoutingError) and result.status_code == 404 for result in results)
+    assert results == (["42"] if present else [None]) * 5
     assert project.agents.list_versions.call_count == 5
     project.agents.list_versions.assert_called_with("agent", order="desc")
     versions.insert(0, _version("43"))
@@ -560,17 +797,19 @@ async def test_branch_lookup_reads_foundry_for_each_request(monkeypatch, present
 @pytest.mark.parametrize("missing_agent", [True, False])
 async def test_foundry_errors_are_not_cached(monkeypatch, missing_agent):
     from azure.core.exceptions import ResourceNotFoundError, ServiceRequestError
-    from services.chat_service import AgentRoutingError
 
     monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
-    project = MagicMock()
+    project = _project_with_versions([])
     project.agents.list_versions.side_effect = (
         ResourceNotFoundError("missing") if missing_agent else ServiceRequestError("unavailable")
     )
     service = ChatService(project_client=project)
     for _ in range(2):
-        with pytest.raises(AgentRoutingError if missing_agent else ServiceRequestError):
-            await service._resolve_request_version("[branch:feature/foo] q", "agent")
+        if missing_agent:
+            assert await service._resolve_request_version("[branch:feature/foo] q", "agent") is None
+        else:
+            with pytest.raises(ServiceRequestError):
+                await service._resolve_request_version("[branch:feature/foo] q", "agent")
     assert project.agents.list_versions.call_count == 2
 
 
@@ -722,3 +961,220 @@ async def test_chat_selects_request_version_before_configured_version(
     else:
         project.agents.get_version.assert_awaited_once_with("agent", expected)
         project.agents.get.assert_not_called()
+
+
+def test_loaded_skills_never_set_route_tenant() -> None:
+    import json
+
+    from openai.types.responses import (
+        Response,
+        ResponseFunctionToolCall,
+        ResponseFunctionToolCallOutputItem,
+        ResponseOutputMessage,
+        ResponseOutputText,
+    )
+
+    output = []
+    for index, skill_name in enumerate(
+        ("api-stewardship-board", "typespec", "support-channels", "pr-review", "find-owner")
+    ):
+        call_id = f"skill-{index}"
+        output.extend([
+            ResponseFunctionToolCall.model_construct(
+                type="function_call",
+                name="load_skill",
+                call_id=call_id,
+                arguments=json.dumps({"skill_name": skill_name}),
+            ),
+            ResponseFunctionToolCallOutputItem.model_construct(
+                type="function_call_output",
+                id=call_id,
+                call_id=call_id,
+                output=f"Loaded {skill_name}",
+                status="completed",
+            ),
+        ])
+    output.append(
+        ResponseOutputMessage.model_construct(
+            type="message",
+            id="answer",
+            role="assistant",
+            status="completed",
+            content=[
+                ResponseOutputText.model_construct(
+                    type="output_text",
+                    text="Use Azure.ResourceManager ArmResourceCreateOrReplaceAsync for ARM PUT.",
+                    annotations=[],
+                )
+            ],
+        )
+    )
+    response = Response.model_construct(id="reply", output=output)
+    request = ChatRequest(
+        tenant_id="api_spec_review_bot",
+        message=ChatMessage(role="user", content="ARM PUT TypeSpec pattern?"),
+    )
+
+    result = ChatService()._postprocess(request, response, None)
+
+    assert result.has_result is True
+    assert result.route_tenant is None
+    assert result.route_channel_name is None
+    assert result.route_channel_link is None
+
+
+@pytest.mark.parametrize("placeholder_order", ["after_refs", "before_refs"])
+@pytest.mark.parametrize(
+    ("current_channel", "expected_name"),
+    [
+        ("Azure SDK Onboarding", "SDK release support"),
+        ("SDK release support", None),
+    ],
+)
+def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
+    placeholder_order, current_channel, expected_name
+) -> None:
+    from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
+
+    channel_link = (
+        "https://teams.microsoft.com/l/channel/"
+        "19%3A084875bb626242ed95f3ac8dddfaa12a%40thread.skype/"
+        "SDK%20release%20support?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121"
+        "&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"
+    )
+    refs_block = "**References**\n- [Release Guide](https://example.test/release)"
+    placeholder = "{{channel:sdk_release_support}}"
+    tail = (
+        f"{refs_block}\n\n{placeholder}"
+        if placeholder_order == "after_refs"
+        else f"{placeholder}\n\n{refs_block}"
+    )
+
+    response = Response.model_construct(
+        id="reply",
+        output=[
+            ResponseOutputMessage.model_construct(
+                type="message",
+                id="answer",
+                role="assistant",
+                status="completed",
+                content=[
+                    ResponseOutputText.model_construct(
+                        type="output_text",
+                        text=f"Please follow up with release support.\n\n{tail}",
+                        annotations=[],
+                    )
+                ],
+            ),
+        ],
+    )
+    request = ChatRequest(
+        tenant_id="azure_sdk_onboarding",
+        channel_name=current_channel,
+        message=ChatMessage(role="user", content="Release help"),
+    )
+
+    service = ChatService()
+    assert f"current_channel={current_channel}" in service._build_tenant_system_message(
+        request.tenant_id, request.channel_name
+    )
+
+    result = service._postprocess(request, response, None)
+
+    assert result.answer == "Please follow up with release support."
+    assert len(result.references or []) == 1
+    assert result.references[0].link == "https://example.test/release"
+    assert result.route_tenant is None
+    assert result.route_channel_name == expected_name
+    assert result.route_channel_link == (channel_link if expected_name else None)
+
+
+def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:
+    from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
+
+    response = Response.model_construct(
+        id="reply",
+        output=[
+            ResponseOutputMessage.model_construct(
+                type="message",
+                id="answer",
+                role="assistant",
+                status="completed",
+                content=[
+                    ResponseOutputText.model_construct(
+                        type="output_text",
+                        text="Answer.\n\n{{channel:nonexistent_channel}}",
+                        annotations=[],
+                    )
+                ],
+            ),
+        ],
+    )
+    request = ChatRequest(
+        tenant_id="api_spec_review_bot",
+        message=ChatMessage(role="user", content="Help"),
+    )
+
+    result = ChatService()._postprocess(request, response, None)
+
+    assert result.answer == "Answer."
+    assert result.route_channel_name is None
+    assert result.route_channel_link is None
+
+
+@pytest.mark.asyncio
+async def test_support_channel_catalog_loads_and_injects_into_skill() -> None:
+    from models.support_channel import get_support_channel, parse_support_channel_catalog
+    from skills.support_channels import create_support_channels_skill
+
+    skill = create_support_channels_skill()
+    assert skill is not None
+    assert skill.frontmatter.name == "support-channels"
+    content = (
+        await skill.get_content()
+        if hasattr(skill, "get_content")
+        else skill.content
+    )
+    assert "{{channel:<key>}}" in content
+    assert "sdk_release_support" in content
+    assert "https://teams.microsoft.com" not in content
+    assert get_support_channel("language_mobile") is None
+
+    empty = parse_support_channel_catalog(b"support_channels: []")
+    assert empty.support_channels == []
+
+    with pytest.raises(ValueError):
+        parse_support_channel_catalog(
+            b"""
+support_channels:
+  - key: bad
+    name: "Bad"
+    description: "Desc"
+    link: "https://example.com/not-teams"
+"""
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("configured_version", ["17", None])
+async def test_chat_branch_fallback_uses_default(monkeypatch, configured_version):
+    monkeypatch.setenv("ENABLE_AI_FOUNDRY_AGENT_ROUTING", "true")
+    project = _project_with_versions([])
+    service = ChatService(
+        project_client=project,
+        settings={"AI_FOUNDRY_AGENT_NAME": "agent", "AI_FOUNDRY_AGENT_VERSION": configured_version}.get,
+    )
+    service._get_openai_client = MagicMock(side_effect=RuntimeError("stop after agent selection"))
+    request = ChatRequest(
+        tenant_id="general_qa_bot", message=ChatMessage(role="user", content="[branch:feature/foo] q"),
+    )
+
+    with pytest.raises(RuntimeError, match="stop after agent selection"):
+        await service.chat(request)
+
+    if configured_version is None:
+        project.agents.get.assert_awaited_once_with("agent")
+    else:
+        project.agents.get.assert_not_called()
+        project.agents.get_version.assert_awaited_with("agent", configured_version)
+    service._get_openai_client.assert_called_once_with("agent")

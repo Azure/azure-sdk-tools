@@ -13,7 +13,6 @@ from azure.search.documents.indexes.models import IndexerExecutionStatus
 import config.app_config as app_config
 from config.tenant_config import (
     SRC_AZURE_REST_API_SPECS_DOCS,
-    SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_SDK_FOR_NET_DOCS,
     SRC_STATIC_ARM_DOCS,
     SRC_TYPESPEC_AZURE_DOCS,
@@ -76,7 +75,7 @@ async def test_list_knowledge_sources_includes_static_sources() -> None:
     source_names = {source.name for source in result.sources}
 
     assert SRC_AZURE_REST_API_SPECS_DOCS in source_names
-    assert SRC_AZURE_REST_API_SPECS_WIKI in source_names
+    assert "azure_rest_api_specs_wiki" not in source_names
     assert SRC_STATIC_ARM_DOCS in source_names
 
 
@@ -470,7 +469,7 @@ async def test_dotnet_search_returns_azure_and_upstream_docs(monkeypatch, servic
 async def test_search_knowledge_tool() -> None:
     await app_config.init()
     query = "how to solve tsv failure"
-    sources = [SRC_AZURE_REST_API_SPECS_WIKI]
+    sources = [SRC_AZURE_REST_API_SPECS_DOCS]
 
     result = await KnowledgeTools().search_knowledge_base(
         queries=[query], sources=sources, tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT

@@ -13,7 +13,7 @@ export interface RAGOptions {
 export type Source =
   | 'typespec_docs'
   | 'typespec_azure_docs'
-  | 'azure_rest_api_specs_wiki'
+  | 'azure_rest_api_specs_docs'
   | 'azure_sdk_for_python_docs'
   | 'azure_sdk_for_python_wiki'
   | 'static_typespec_qa'
@@ -53,6 +53,7 @@ export interface AdditionalInfo {
 // Completion request interface
 export interface CompletionRequestPayload {
   tenant_id: string;
+  channel_name?: string;
   message: Message;
   with_full_context?: boolean; // default is false
   additional_infos?: AdditionalInfo[];
@@ -78,7 +79,10 @@ export interface CompletionResponsePayload {
   intension?: IntensionResult;
   Category?: string;
   ReasoningProgress?: string;
+  /** @deprecated Use route_channel_name and route_channel_link instead. */
   route_tenant?: string;
+  route_channel_name?: string;
+  route_channel_link?: string;
   trace_id?: string;
   mentions?: TeamsMention[] | null;
 }

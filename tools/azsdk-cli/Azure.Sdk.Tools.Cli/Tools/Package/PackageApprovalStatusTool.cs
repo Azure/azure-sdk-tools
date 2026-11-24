@@ -15,13 +15,12 @@ public class PackageApprovalStatusTool(
     IPackageReleaseStatusService packageReleaseStatusService,
     ILogger<PackageApprovalStatusTool> logger) : MCPTool
 {
-    private static readonly string[] SupportedLanguages = [.. ApiReviewHubTool.DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
     private const string GetApprovalStatusToolName = "azsdk_package_get_approval_status";
     internal const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
-    private readonly Option<string> languageOption = CreateLanguageOption();
+    private readonly Option<string> languageOption = ApiReviewHubTool.CreateLanguageOption();
     private readonly Option<string> packageNameOption = RequiredOption("--package-name", "The package name.");
     private readonly Option<string> packageVersionOption = RequiredOption("--package-version", "The package version to check.");
     private readonly Option<string> apiHashOption = new("--api-hash")
@@ -259,20 +258,6 @@ public class PackageApprovalStatusTool(
             "APIView" => "APIView (Legacy)",
             _ => finalSource
         };
-    }
-
-    private static Option<string> CreateLanguageOption()
-    {
-        var option = RequiredOption("--language", $"The SDK language. Supported canonical values: {string.Join(", ", SupportedLanguages)}. Common aliases are accepted.");
-        option.Validators.Add(result =>
-        {
-            string? value = result.GetValueOrDefault<string>();
-            if (!string.IsNullOrWhiteSpace(value) && ApiReviewHubTool.ResolveLanguage(value) is null)
-            {
-                result.AddError($"Invalid language '{value}'. Supported canonical values: {string.Join(", ", SupportedLanguages)}.");
-            }
-        });
-        return option;
     }
 
     private static Option<string> RequiredOption(string name, string description) => new(name)

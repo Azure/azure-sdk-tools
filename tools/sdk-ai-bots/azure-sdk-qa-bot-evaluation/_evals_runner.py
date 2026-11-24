@@ -8,7 +8,7 @@ Driving the slow answer-generation step ourselves is the main lever for evaluati
 speed.
 
 Flow: concurrent ``/completion`` collection -> ``responses.retrieve`` -> ``evals.create``
-(inline item source) -> ``evals.runs.create`` -> poll -> ``output_items.list`` ->
+-> upload JSONL input -> ``evals.runs.create`` -> poll -> ``output_items.list`` ->
 ``output_items_to_rows`` -> the existing ``EvalsResult`` gate/baseline logic.
 
 """
@@ -23,7 +23,9 @@ import subprocess
 import time
 from contextlib import ExitStack
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
+
+from openai import APIConnectionError, APIError, APIStatusError, APITimeoutError
 
 from _evals_result import EvalsResult
 from eval.criteria import build_testing_criteria
@@ -49,6 +51,7 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
     "authoring": "Authoring Test",
     "mcpserver": "Azure MCP Server - General",
     "sdkagent": "AzSDK Tools Agent",
+    "apistewardshipboard": "API Stewardship Board - General",
 }
 
 # Composite weights
@@ -70,6 +73,9 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
         "expected_knowledges": {"type": "array", "items": {"type": "object"}},
         "references": {"type": "array", "items": {"type": "object"}},
         "knowledges": {"type": "array", "items": {"type": "object"}},
+        "expected_route_channel": {"type": ["string", "null"]},
+        "route_channel_name": {"type": ["string", "null"]},
+        "route_channel_link": {"type": ["string", "null"]},
     },
     "required": ["query", "response"],
 }
@@ -88,7 +94,87 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "expected_knowledges": it.get("expected_knowledges", []),
         "references": it.get("references", []),
         "knowledges": it.get("knowledges", []),
+        "expected_route_channel": it.get("expected_route_channel"),
+        "route_channel_name": it.get("route_channel_name"),
+        "route_channel_link": it.get("route_channel_link"),
     }
+
+
+def _retry_foundry_call(
+    operation: Callable[[], Any],
+    description: str,
+    *,
+    max_attempts: int = 3,
+    base_delay: float = 2.0,
+) -> Any:
+    """Retry transient Foundry operations without repeating answer collection."""
+    for attempt in range(1, max_attempts + 1):
+        error: Exception
+        try:
+            return operation()
+        except (APIConnectionError, APITimeoutError) as exc:
+            retryable = True
+            error = exc
+        except APIStatusError as exc:
+            retryable = exc.status_code == 429 or exc.status_code >= 500
+            error = exc
+        if not retryable or attempt == max_attempts:
+            raise error
+        delay = base_delay * (2 ** (attempt - 1))
+        logger.warning(
+            "%s failed transiently (attempt %d/%d): %s; retrying in %.1fs",
+            description,
+            attempt,
+            max_attempts,
+            error,
+            delay,
+        )
+        time.sleep(delay)
+
+
+def _delete_eval_input(openai_client: Any, file_id: str) -> None:
+    """Best-effort cleanup of this invocation's input without masking grading errors."""
+    try:
+        deleted = _retry_foundry_call(
+            lambda: openai_client.files.delete(file_id),
+            "Evaluation input cleanup",
+        )
+        if getattr(deleted, "deleted", None) is not True:
+            raise RuntimeError("The Files API did not confirm deletion")
+        logger.info("Deleted evaluation input file (id=%s)", file_id)
+    except (APIError, RuntimeError):
+        logger.warning(
+            "Could not delete evaluation input file (id=%s); manual cleanup is required",
+            file_id,
+            exc_info=True,
+        )
+
+
+def _upload_eval_items(openai_client: Any, items: list[dict[str, Any]], scenario: str) -> dict[str, Any]:
+    """Upload eval inputs as JSONL and return a file-backed run data source."""
+    content = "".join(
+        json.dumps(_completion_item(item), ensure_ascii=False) + "\n"
+        for item in items
+    ).encode("utf-8")
+    uploaded = _retry_foundry_call(
+        lambda: openai_client.files.create(
+            file=(f"{scenario}-eval-input.jsonl", content, "application/jsonl"),
+            purpose="evals",
+        ),
+        "Evaluation input upload",
+    )
+    try:
+        processed = _retry_foundry_call(
+            lambda: openai_client.files.wait_for_processing(uploaded.id),
+            "Evaluation input processing",
+        )
+        if processed.status != "processed":
+            raise RuntimeError(f"Evaluation input file {uploaded.id} processing ended with status {processed.status}")
+    except (APIError, TimeoutError, RuntimeError):
+        _delete_eval_input(openai_client, uploaded.id)
+        raise
+    logger.info("Uploaded evaluation input file (id=%s, size=%d bytes)", processed.id, len(content))
+    return {"type": "jsonl", "source": {"type": "file_id", "id": processed.id}}
 
 
 def extract_title_and_link_from_references(references: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -150,14 +236,26 @@ class CompletionCollector:
         if self._agent_branch is not None:
             self._agent_branch = self._agent_branch.removeprefix("refs/heads/")
 
-    def collect(self, records: list[dict[str, Any]], tenant_id: str | None) -> list[dict[str, Any]]:
+    def collect(
+        self,
+        records: list[dict[str, Any]],
+        tenant_id: str | None,
+        *,
+        channel_name: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Return enriched items (one per input record) in original order.
 
         Records whose bot call fails are dropped (logged).
         """
-        return asyncio.run(self._collect_async(records, tenant_id))
+        return asyncio.run(self._collect_async(records, tenant_id, channel_name=channel_name))
 
-    async def _collect_async(self, records: list[dict[str, Any]], tenant_id: str | None) -> list[dict[str, Any]]:
+    async def _collect_async(
+        self,
+        records: list[dict[str, Any]],
+        tenant_id: str | None,
+        *,
+        channel_name: str | None = None,
+    ) -> list[dict[str, Any]]:
         import aiohttp
 
         semaphore = asyncio.Semaphore(self._max_concurrency)
@@ -173,7 +271,9 @@ class CompletionCollector:
             async with semaphore:
                 start = time.time()
                 try:
-                    api_response = await self._call_bot_api(record["query"], tenant_id, session)
+                    api_response = await self._call_bot_api(
+                        record["query"], tenant_id, session, channel_name=channel_name
+                    )
                 except Exception as exc:  # noqa: BLE001
                     logger.error("❌ collect failed for %s: %s", record.get("testcase", "?"), exc)
                     return
@@ -194,6 +294,9 @@ class CompletionCollector:
                     "references": extract_title_and_link_from_references(references),
                     "expected_knowledges": record.get("expected_knowledges", []),
                     "knowledges": extract_title_and_link_from_context(full_context),
+                    "expected_route_channel": record.get("expected_route_channel"),
+                    "route_channel_name": api_response.get("route_channel_name"),
+                    "route_channel_link": api_response.get("route_channel_link"),
                 }
 
         timeout = aiohttp.ClientTimeout(total=self._timeout_seconds)
@@ -204,7 +307,14 @@ class CompletionCollector:
         logger.info("Collected %d/%d bot responses.", len(collected), len(records))
         return collected
 
-    async def _call_bot_api(self, question: str, tenant_id: str | None, session: Any) -> Any:
+    async def _call_bot_api(
+        self,
+        question: str,
+        tenant_id: str | None,
+        session: Any,
+        *,
+        channel_name: str | None = None,
+    ) -> Any:
         import aiohttp
 
         headers = {"Content-Type": "application/json; charset=utf8"}
@@ -212,11 +322,13 @@ class CompletionCollector:
             headers["Authorization"] = f"Bearer {self._access_token}"
         if self._agent_branch is not None:
             question = f"[branch:{self._agent_branch}] {question}"
-        payload = {
+        payload: dict[str, Any] = {
             "tenant_id": tenant_id if tenant_id is not None else "general_qa_bot",
             "message": {"role": "user", "content": question},
             "with_full_context": True,
         }
+        if channel_name:
+            payload["channel_name"] = channel_name
         last_status: int | None = None
         for attempt in range(self._max_retries):
             try:
@@ -378,9 +490,13 @@ def output_items_to_rows(
     """
     rows: list[dict[str, Any]] = []
     want_bot_evals = "bot_evals" in evaluators
+    want_route_channel = "route_channel" in evaluators
 
     for oi in output_items:
         item = _get(oi, "datasource_item", {}) or {}
+        nested_item = item.get("item")
+        if isinstance(nested_item, dict):
+            item = nested_item
         results = _get(oi, "results", []) or []
         context = item.get("context", "") or ""
         response_id = item.get("response_id", "") or ""
@@ -391,6 +507,7 @@ def output_items_to_rows(
             "inputs.ground_truth": item.get("ground_truth", ""),
             "inputs.expected_references": item.get("expected_references", []),
             "inputs.expected_knowledges": item.get("expected_knowledges", []),
+            "inputs.expected_route_channel": item.get("expected_route_channel"),
             "inputs.response": item.get("response", ""),
             "inputs.context": context,
             "inputs.execution": {
@@ -399,11 +516,18 @@ def output_items_to_rows(
             },
             "inputs.references": item.get("references", []) or [],
             "inputs.knowledges": item.get("knowledges", []) or [],
+            "inputs.route_channel_name": item.get("route_channel_name"),
+            "inputs.route_channel_link": item.get("route_channel_link"),
         }
 
         per_metric: dict[str, float] = {}
         for r in results:
             name = _get(r, "name", None)
+            if _get(r, "status", None) == "error":
+                sample = _get(r, "sample", {}) or {}
+                error = _get(sample, "error", {}) or {}
+                message = _get(error, "message", "Unknown grader error")
+                raise RuntimeError(f"Eval grader {name or 'unknown'} failed: {message}")
             if not name:
                 continue
             score = _coerce_score(_get(r, "score", 0.0))
@@ -423,6 +547,19 @@ def output_items_to_rows(
                 "response_completeness", 0.0
             )
             row["outputs.bot_evals.bot_evals_result"] = "pass" if composite >= threshold else "fail"
+
+        if want_route_channel:
+            expected_channel = (item.get("expected_route_channel") or "").strip() or None
+            actual_channel = (item.get("route_channel_name") or "").strip() or None
+            if expected_channel is None:
+                route_passed = actual_channel is None
+            else:
+                route_passed = (
+                    actual_channel is not None
+                    and actual_channel.casefold() == expected_channel.casefold()
+                )
+            row["outputs.route_channel.route_channel"] = 1.0 if route_passed else 0.0
+            row["outputs.route_channel.route_channel_result"] = "pass" if route_passed else "fail"
 
         rows.append(row)
 
@@ -466,6 +603,7 @@ class FoundryEvalsRunner:
         run_id: str,
         scenario: str,
         tool_calls_by_response_id: dict[str, list[dict[str, Any]]],
+        input_file_id: str,
         extra_failed_rows: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Shared poll-to-terminal + output_items -> rows -> record step.
@@ -475,13 +613,20 @@ class FoundryEvalsRunner:
         as failures in the gate rather than vanishing from the denominator.
         """
         deadline = time.time() + self._poll_timeout
-        run = openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id)
+        run = _retry_foundry_call(
+            lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
+            "Evaluation run status retrieval",
+        )
         while run.status not in ("completed", "failed"):
             if time.time() > deadline:
                 raise TimeoutError(f"Eval run {run_id} did not finish within {self._poll_timeout}s")
             time.sleep(self._poll_interval)
-            run = openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id)
+            run = _retry_foundry_call(
+                lambda: openai_client.evals.runs.retrieve(run_id=run_id, eval_id=eval_id),
+                "Evaluation run status retrieval",
+            )
             logger.info("  run status: %s", run.status)
+        _delete_eval_input(openai_client, input_file_id)
 
         report_url = getattr(run, "report_url", None)
         if report_url:
@@ -489,7 +634,10 @@ class FoundryEvalsRunner:
         if run.status == "failed":
             raise RuntimeError(f"Eval run {run_id} failed")
 
-        output_items = list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id))
+        output_items = _retry_foundry_call(
+            lambda: list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id)),
+            "Evaluation output retrieval",
+        )
         raw = output_items_to_rows(
             output_items,
             self._evaluators,
@@ -567,19 +715,15 @@ class FoundryEvalsRunner:
     ) -> dict[str, Any]:
         """Completion mode: concurrently collect bot answers, then grade them inline."""
         from openai.types.eval_create_params import DataSourceConfigCustom
-        from openai.types.evals.create_eval_jsonl_run_data_source_param import (
-            CreateEvalJSONLRunDataSourceParam,
-            SourceFileContent,
-            SourceFileContentContent,
-        )
-
         # 1) Collect bot answers concurrently (the slow, now-parallelized step).
         collector = CompletionCollector(
             api_url=self._completion_url or resolve_completion_url(),
             access_token=self._access_token,
             max_concurrency=self._max_concurrency,
         )
-        items = collector.collect(records, tenant_id)
+        items = collector.collect(
+            records, tenant_id, channel_name=SCENARIO_TO_CHANNEL.get(scenario)
+        )
 
         # Cases whose /completion call failed must still count as failures so the
         # gate is not blind to collection errors (agent mode grades every row).
@@ -607,7 +751,7 @@ class FoundryEvalsRunner:
         testing_criteria = build_testing_criteria(
             self._evaluators, model=self._model, threshold=self._threshold
         )
-        if not testing_criteria:
+        if not testing_criteria and "route_channel" not in self._evaluators:
             logger.warning("No testing criteria built for evaluators=%s", self._evaluators)
             return {}
 
@@ -623,25 +767,40 @@ class FoundryEvalsRunner:
         # and is joined back into cached results after Foundry grading.
         tool_calls_by_response_id = self._retrieve_tool_calls(project_client, items)
 
+        if not testing_criteria:
+            raw = output_items_to_rows(
+                [{"datasource_item": it, "results": []} for it in items],
+                self._evaluators,
+                threshold=float(self._threshold),
+                tool_calls_by_response_id=tool_calls_by_response_id,
+            )
+            if failed_rows:
+                raw["rows"].extend(failed_rows)
+            return {f"{scenario}_local": self._evals_result.record_run_result(raw)}
+
         data_source_config = DataSourceConfigCustom(
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False
         )
         name = evaluation_name or f"qa-bot-{scenario}"
-        eval_object = openai_client.evals.create(
-            name=name,
-            data_source_config=data_source_config,
-            testing_criteria=testing_criteria,  # type: ignore[arg-type]
+        eval_object = _retry_foundry_call(
+            lambda: openai_client.evals.create(
+                name=name,
+                data_source_config=data_source_config,
+                testing_criteria=testing_criteria,  # type: ignore[arg-type]
+            ),
+            "Evaluation creation",
         )
         logger.info("Evaluation created (id=%s, name=%s)", eval_object.id, name)
 
-        # 4) Grade the pre-collected answers as inline data (no agent target).
+        # 4) Upload and grade the pre-collected answers (no agent target).
         run_name = f"{name}-run"
-        content = [SourceFileContentContent(item=_completion_item(it)) for it in items]
-        data_source = CreateEvalJSONLRunDataSourceParam(
-            type="jsonl", source=SourceFileContent(type="file_content", content=content)
-        )
-        run = openai_client.evals.runs.create(
-            eval_id=eval_object.id, name=run_name, data_source=data_source  # type: ignore[arg-type]
+        data_source = _upload_eval_items(openai_client, items, scenario)
+        file_id = data_source["source"]["id"]
+        run = _retry_foundry_call(
+            lambda: openai_client.evals.runs.create(
+                eval_id=eval_object.id, name=run_name, data_source=data_source
+            ),
+            "Evaluation run creation",
         )
         logger.info("Evaluation run created (id=%s)", run.id)
         return self._poll_and_adapt(
@@ -650,6 +809,7 @@ class FoundryEvalsRunner:
             run.id,
             scenario,
             tool_calls_by_response_id,
+            file_id,
             failed_rows,
         )
 

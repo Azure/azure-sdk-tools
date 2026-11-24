@@ -151,6 +151,54 @@ def test_upload_eval_items_uses_file_backed_data_source():
     client.files.delete.assert_not_called()
 
 
+def test_upload_eval_items_strips_markdown_and_html_image_tags():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    client.files.create.return_value = SimpleNamespace(id="file-uploaded")
+    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-processed", status="processed")
+
+    raw_context = json.dumps([
+        {
+            "document_title": "TypeSpec Guide",
+            "document_link": "https://example.test/doc",
+            "content": (
+                "Step 1: ![diagram](https://github.com/user-attachments/assets/abc-123) "
+                "and ![](https://github.com/Azure/azure-rest-api-specs/assets/456) "
+                'and <img src="https://github.com/user-attachments/assets/def-789" alt="error shot" /> '
+                'and <img src="https://github.com/Azure/azure-rest-api-specs/assets/999">'
+            ),
+        }
+    ])
+    _upload_eval_items(
+        client,
+        [
+            {
+                "testcase": "001001-workflow-image-strip",
+                "query": "See ![my error](https://github.com/user-attachments/assets/q-1)",
+                "response": 'Check <img src="https://github.com/user-attachments/assets/r-1" alt="panel">',
+                "context": raw_context,
+                "knowledges": [{"title": "TypeSpec Guide", "link": "https://example.test/doc"}],
+            }
+        ],
+        "typespec",
+    )
+
+    _, content, _ = client.files.create.call_args.kwargs["file"]
+    uploaded_row = json.loads(content.decode("utf-8"))
+    assert uploaded_row["query"] == "See [Image: my error]"
+    assert uploaded_row["response"] == "Check [Image: panel]"
+    assert uploaded_row["knowledges"] == [{"title": "TypeSpec Guide", "link": "https://example.test/doc"}]
+
+    parsed_context = json.loads(uploaded_row["context"])
+    assert parsed_context[0]["content"] == (
+        "Step 1: [Image: diagram] and [Image] and [Image: error shot] and [Image]"
+    )
+    assert "user-attachments/assets" not in uploaded_row["context"]
+    assert "azure-rest-api-specs/assets" not in uploaded_row["context"]
+
+
 def test_upload_processing_failure_deletes_its_input():
     from types import SimpleNamespace
     from unittest import TestCase

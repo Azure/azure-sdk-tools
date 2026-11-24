@@ -107,24 +107,30 @@ def test_preprocess_message_plain_text_passthrough() -> None:
     assert "plain text message" in result
 
 
-@pytest.mark.parametrize("message,expected", [
-    ("[branch:feature/foo] question", "question"),
-    ("[branch:feature/foo]question", "question"),
-    ("[branch:feature/foo]问题", "问题"),
-    ("title: [branch:feature/foo]question", "title: question"),
-    ("<p>[branch:feature/foo] question</p>", "question"),
-    ("<p>[branch:feature/foo]</p><p>question</p>", "question"),
-    ("[branch:feature/foo]<br />question", "question"),
-    ("<div>[branch:feature/foo]</div><div>question</div>", "question"),
-    ("<p><span>[branch:feature/</span><b>foo]</b></p><p>question</p>", "question"),
-    (
-        'title: [branch:jiaqizhang-dev-api-stewardship-chatbot] test message\n\n<p>test</p>"',
-        'title: test message test"',
-    ),
-    ("title: [branch:feature/foo] question", "title: question"),
-    ("title: question\n\n<p>test</p>", "title: question test"),
-    ("Explain [branch:feature/foo] in this example", "Explain [branch:feature/foo] in this example"),
-    ("[agent:v42] question", "[agent:v42] question"),
-])
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("[branch:feature/foo] question", "question"),
+        ("[branch:feature/foo]question", "question"),
+        ("[branch:feature/foo]问题", "问题"),
+        ("title: [branch:feature/foo]question", "title: question"),
+        ("<p>[branch:feature/foo] question</p>", "question"),
+        ("<p>[branch:feature/foo]</p><p>question</p>", "question"),
+        ("[branch:feature/foo]<br />question", "question"),
+        ("<div>[branch:feature/foo]</div><div>question</div>", "question"),
+        ("<p><span>[branch:feature/</span><b>foo]</b></p><p>question</p>", "question"),
+        (
+            'title: [branch:jiaqizhang-dev-api-stewardship-chatbot] test message\n\n<p>test</p>"',
+            'title: test message test"',
+        ),
+        ("title: [branch:feature/foo] question", "title: question"),
+        ("title: question\n\n<p>test</p>", "title: question test"),
+        (
+            "Explain [branch:feature/foo] in this example",
+            "Explain [branch:feature/foo] in this example",
+        ),
+        ("[agent:v42] question", "[agent:v42] question"),
+    ],
+)
 def test_preprocess_message_branch_prefix(message: str, expected: str) -> None:
     assert preprocess_message(message) == expected

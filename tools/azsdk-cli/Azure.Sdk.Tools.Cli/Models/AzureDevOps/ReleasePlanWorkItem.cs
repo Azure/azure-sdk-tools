@@ -85,6 +85,11 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         public string LanguageExclusionApproverNote { get; set; } = string.Empty;
 
+        // Read-only here: deliberately not a [FieldName] so work-item creation never writes it.
+        public DateTime? OverdueLastNotifiedDate { get; set; }
+
+        public const string OverdueLastNotifiedDateField = "Custom.OverdueLastNotifiedDate";
+
         [FieldName("Custom.ApiSpecProjectPath")]
         public string APISpecProjectPath { get; set; } = string.Empty;
 

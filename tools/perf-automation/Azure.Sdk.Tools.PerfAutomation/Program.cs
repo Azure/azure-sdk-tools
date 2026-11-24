@@ -409,7 +409,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 {
                                     iterationResult = new IterationResult
                                     {
-                                        OperationsPerSecond = double.MinValue,
+                                        OperationsPerSecond = -1,
                                         Exception = e.ToString(),
                                     };
 
@@ -417,11 +417,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                     Console.WriteLine();
                                 }
 
-                                // Replace non-finite values with minvalue, since non-finite values
-                                // are not JSON serializable
+                                // Replace non-finite values with the failed-iteration sentinel.
                                 if (!double.IsFinite(iterationResult.OperationsPerSecond))
                                 {
-                                    iterationResult.OperationsPerSecond = double.MinValue;
+                                    iterationResult.OperationsPerSecond = -1;
                                 }
 
                                 result.Iterations.Add(iterationResult);

@@ -93,13 +93,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // Go perf runners in this scenario are CLI test apps.
-            await Util.RunAsync(
+            var result = await Util.RunAsync(
                 "go",
                 $"run . {testName} {arguments}",
                 projectDirectory,
                 outputBuilder: outputBuilder,
                 errorBuilder: errorBuilder,
-                throwOnError: false);
+                throwOnError: false,
+                trackStatistics: true);
 
             // Use the builders (which Util.RunAsync always appends to) so parsing works
             // regardless of how the underlying process result is populated.
@@ -121,7 +122,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = standardOutput,
-                StandardError = standardError
+                StandardError = standardError,
+                AverageCpu = result.AverageCpu,
+                AverageMemory = result.AverageMemory,
             };
         }
 

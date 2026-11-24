@@ -25,10 +25,13 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
 
         public ICollection<IterationResult> Iterations { get; set; } = new List<IterationResult>();
 
-        public double OperationsPerSecondMin => Iterations.Any() ? Iterations.Min(i => i.OperationsPerSecond) : -1;
-        public double OperationsPerSecondMean => Iterations.Any() ? Iterations.Average(i => i.OperationsPerSecond) : -1;
-        public double OperationsPerSecondMedian => Iterations.Any() ? Median(Iterations.Select(i => i.OperationsPerSecond)) : -1;
-        public double OperationsPerSecondMax => Iterations.Any() ? Iterations.Max(i => i.OperationsPerSecond) : -1;
+        private IEnumerable<double> SuccessfulOperationsPerSecond =>
+            Iterations.Select(i => i.OperationsPerSecond).Where(value => value != -1);
+
+        public double OperationsPerSecondMin => SuccessfulOperationsPerSecond.DefaultIfEmpty(-1).Min();
+        public double OperationsPerSecondMean => SuccessfulOperationsPerSecond.DefaultIfEmpty(-1).Average();
+        public double OperationsPerSecondMedian => Median(SuccessfulOperationsPerSecond.DefaultIfEmpty(-1));
+        public double OperationsPerSecondMax => SuccessfulOperationsPerSecond.DefaultIfEmpty(-1).Max();
 
         public double CpuMean => Iterations.Any() ? Math.Round(Iterations.Average(i => i.AverageCpu), 2) : -1;
         public long MemoryMean => Iterations.Any() ? (long)Iterations.Average(i => i.AverageMemory) : -1;

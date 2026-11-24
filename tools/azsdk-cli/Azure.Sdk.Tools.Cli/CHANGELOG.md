@@ -4,12 +4,15 @@
 
 ### Features Added
 
+- After the emailer accepts an overdue release-plan reminder, the CLI records the UTC send time in the release plan's `Custom.OverdueLastNotifiedDate` field. If the email is accepted but the date cannot be saved, the error is reported separately and the email is not resent. Each recorded reminder counts as plan activity for abandonment cleanup.
+
 ### Breaking Changes
 
 ### Bugs Fixed
 
 - Service API readiness checks ignore shared service-level build and CI files during package discovery. Unresolved package metadata remains Inconclusive without being reported as mixed API planes.
 - Explicit release-plan recording now returns an error when the validation environment is not configured.
+- Overdue release-plan logs now show plan IDs, cleanup and email outcomes, skip reasons, and summary counts. Successfully sent generic reminders no longer fail the command because of an assessment warning; cleanup and actual reminder-send failures remain errors.
 - `api-review create`, `package get-approval-status`, and `package mark-released` now accept the same language aliases and normalize them for API Review Hub and APIView. Both `js` and `javascript` are sent to API Review Hub as `javascript`, to APIView as `JavaScript`, and default to `azure-sdk-for-js` when creating a review.
 
 ### Other Changes

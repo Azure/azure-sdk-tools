@@ -157,7 +157,8 @@ POST /completion
     "needs_rag_processing": true
   },
   "reasoning": null,
-  "route_tenant": "azure_sdk_qa_bot"
+  "route_channel_name": null,
+  "route_channel_link": null
 }
 ```
 
@@ -172,7 +173,9 @@ POST /completion
 | `full_context` | string | Full RAG context (only returned if request had `with_full_context: true`). |
 | `intention` | object | Analyzed intent of the question with `question`, `category`, `needs_rag_processing`, etc. |
 | `reasoning` | string | The reasoning progress of generating the answer (for debugging/transparency). |
-| `route_tenant` | string | The tenant that processed the request (may differ from request if routing occurred). |
+| `route_channel_name` | string | Recommended support channel display name when an unresolved question needs another channel's experts. |
+| `route_channel_link` | string | Clickable Teams channel URL corresponding to `route_channel_name`. |
+| `route_tenant` | string | **Deprecated.** Legacy routed tenant ID; use `route_channel_name` and `route_channel_link` instead. |
 
 ## Generating Client SDKs with TypeSpec
 

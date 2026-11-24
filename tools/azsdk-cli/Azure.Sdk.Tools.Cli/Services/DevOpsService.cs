@@ -527,6 +527,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 LanguageExclusionRequesterNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionRequestNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 LanguageExclusionApproverNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionApprovalNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 APISpecProjectPath = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ApiSpecProjectPathField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                OverdueLastNotifiedDate = workItem.Fields.TryGetValue(ReleasePlanWorkItem.OverdueLastNotifiedDateField, out value) && value is DateTime overdueLastNotifiedDate ? overdueLastNotifiedDate : null,
                 SpecCommitSHA = workItem.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ServiceReadinessStatus = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessStatusField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ServiceReadinessCheckedAt = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessCheckedAtField, out value)

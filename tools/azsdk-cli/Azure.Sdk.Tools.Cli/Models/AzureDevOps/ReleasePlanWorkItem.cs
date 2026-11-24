@@ -97,6 +97,11 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         public const string ApiSpecProjectPathField = "Custom.ApiSpecProjectPath";
 
+        // Read-only here: deliberately not a [FieldName] so work-item creation never writes it.
+        public DateTime? OverdueLastNotifiedDate { get; set; }
+
+        public const string OverdueLastNotifiedDateField = "Custom.OverdueLastNotifiedDate";
+
         [FieldName(ApiSpecProjectPathField)]
         public string APISpecProjectPath { get; set; } = string.Empty;
 

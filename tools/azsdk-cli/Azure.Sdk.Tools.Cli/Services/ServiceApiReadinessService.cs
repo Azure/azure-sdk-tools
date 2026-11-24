@@ -148,15 +148,11 @@ public class ServiceApiReadinessService(IGitHubService github, IAzureService azu
     {
         var issues = discoveryIssues.Concat(packages.SelectMany(package => package.MetadataIssues)).Distinct(StringComparer.Ordinal).ToList();
         var planes = packages.Select(package => package.SdkType).ToHashSet();
-        if (discoveryIssues.Count > 0)
-        {
-            planes.Add(SdkType.Unknown);
-        }
-        if (planes.Count > 1)
+        if (planes.Contains(SdkType.Management) && planes.Contains(SdkType.Dataplane))
         {
             issues.Add("Mixed SDK API planes require separate checks.");
         }
-        result.Plane = planes.Count == 1 ? planes.Single() switch
+        result.Plane = discoveryIssues.Count == 0 && planes.Count == 1 ? planes.Single() switch
         {
             SdkType.Management => SdkPackageMetadataHelper.ManagementPlane,
             SdkType.Dataplane => SdkPackageMetadataHelper.DataPlane,

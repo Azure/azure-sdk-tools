@@ -834,6 +834,79 @@ public class ServiceApiReadinessServiceTests
         Assert.That(ArmRequests(), Is.Empty);
     }
 
+    [TestCase("azure-sdk-for-net", "sdk/apimanagement/Azure.ResourceManager.AIGateway", "metadata.json", "sdk/apimanagement/ci.mgmt.yml")]
+    [TestCase("azure-sdk-for-net", "sdk/costmanagement/Azure.ResourceManager.CostManagement.PriceEstimation", "metadata.json", "sdk/costmanagement/ci.mgmt.yml")]
+    [TestCase("azure-sdk-for-java", "sdk/apimanagement/azure-resourcemanager-aigateway", Metadata, "sdk/apimanagement/ci.yml")]
+    [TestCase("azure-sdk-for-java", "sdk/apimanagement/azure-resourcemanager-aigateway", Metadata, "sdk/apimanagement/pom.xml")]
+    [TestCase("azure-sdk-for-go", "sdk/resourcemanager/example/armexample", "testdata/_metadata.json", "sdk/resourcemanager/example/ci.yml")]
+    public async Task SharedServiceFilesDoNotPreventCheckingChangedPackages(string repository, string package, string metadata, string sharedFile)
+    {
+        _repository = $"helen229/{repository}";
+        _changedFiles.Clear();
+        AddPackage(package, metadata, Version);
+        _changedFiles.Add(sharedFile);
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Passed));
+        Assert.That(response.Plane, Is.EqualTo("management-plane"));
+        Assert.That(response.Packages.Select(value => value.DirectoryPath), Is.EqualTo(new[] { package }));
+        Assert.That(response.Projects.Single().ApiVersion.Version, Is.EqualTo(Version));
+        Assert.That(ArmRequests().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task SharedServiceFilesAloneDoNotDiscoverAPackage()
+    {
+        _changedFiles.Clear();
+        _changedFiles.Add("sdk/apimanagement/ci.yml");
+        _changedFiles.Add("sdk/apimanagement/pom.xml");
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(response.Packages, Is.Empty);
+        Assert.That(response.Detail, Does.Contain("No currently changed SDK packages"));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task UnresolvedPackageFilesRemainInconclusiveWithoutClaimingMixedPlanes(bool dataPlane)
+    {
+        if (dataPlane)
+        {
+            SetFile(SpecRepository, SpecCommit, $"{Project}/tspconfig.yaml", DataConfiguration);
+        }
+        _changedFiles.Add("sdk/example/unresolved/Generated.cs");
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(response.Plane, Is.EqualTo("unknown"));
+        Assert.That(response.Detail, Does.Contain("sdk/example/unresolved/Generated.cs").And.Contain("package root cannot be established"));
+        Assert.That(response.Detail, Does.Not.Contain("Mixed SDK API planes"));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
+    [Test]
+    public async Task ActualManagementAndDataPlanePackagesStillRequireSeparateChecks()
+    {
+        const string dataPackage = "sdk/data/azure-example";
+        AddPackage(dataPackage, Metadata, Version);
+        const string dataProject = "specification/example/data-plane/Example";
+        SetFile(_repository, Head, $"{dataPackage}/tsp-location.yaml", $"directory: {dataProject}\ncommit: {SpecCommit}\nrepo: {SpecRepository}\n");
+        SetFile(SpecRepository, SpecCommit, $"{dataProject}/tspconfig.yaml", DataConfiguration);
+
+        var response = await CheckAsync();
+
+        Assert.That(response.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Inconclusive));
+        Assert.That(response.Plane, Is.EqualTo("unknown"));
+        Assert.That(response.Detail, Does.Contain("Mixed SDK API planes"));
+        Assert.That(response.Packages, Has.Count.EqualTo(2));
+        Assert.That(ArmRequests(), Is.Empty);
+    }
+
     [Test]
     public async Task MissingLocationIsInconclusive()
     {

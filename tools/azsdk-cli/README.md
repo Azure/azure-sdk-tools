@@ -183,15 +183,33 @@ plan, the direct validator discovers metadata and checks ARM once. Confirmed
 data-plane metadata returns Inconclusive with `plane: "data-plane"` because ARM
 is not applicable; display consumers may label that Not applicable.
 
+Package discovery ignores shared files directly in a service directory, such as
+`sdk/apimanagement/ci.mgmt.yml` or `sdk/apimanagement/pom.xml`. Go service directories
+are under `sdk/resourcemanager/<service>/`. Changes inside package directories still
+require generation metadata; an unresolved package makes the check Inconclusive.
+Only actual management-plane and data-plane packages produce a mixed-plane diagnostic.
+
+Exit code `0` means the check completed, not that the service is ready. Read the
+JSON `status` to distinguish Passed, Not detected, and Inconclusive; execution
+errors return a nonzero exit code. Only Passed should produce a readiness label.
+
 #### Release-Plan Evidence
 
 Set `AZSDK_SERVICE_READINESS_ENVIRONMENT` to identify the trusted ARM validation
 environment and enable optional reuse through the existing `DevOpsService`.
+The explicit `--record-release-plan` option requires this environment variable;
+without it, the command returns `Error` instead of reporting a successful check
+that did not record evidence.
 It returns the associated plan, API-spec child, evidence, and scope histories in
 one owner lookup, not one HTTP request. The plan owns SDK PR association and
 project/commit scope; its API-spec child supplies `Custom.APISpecversion`.
 Missing associations or incomplete histories prevent reuse. Other API versions
 are checked directly and are not recorded under that plan.
+
+An empty API-version field on the linked API-spec item also prevents reuse and
+recording, but does not prevent a direct check from passing when the generated SDK
+metadata supplies the version and ARM advertises it. Missing API-version evidence
+in the SDK metadata instead makes a management-plane check Inconclusive.
 
 The lookup maps ADO items through the existing `ReleasePlanWorkItem` and
 `ApiSpecWorkItem` models before returning them to the coordinator. Readiness

@@ -388,7 +388,8 @@ public sealed class SdkPackageMetadataHelper(HttpClient http, string token)
     private static string[] GetPackageDirectories(string changedFile, SdkLanguage language)
     {
         var segments = changedFile.Split('/');
-        if (segments.Length < 3 || segments[0] != "sdk" || segments[1] == "test" ||
+        var serviceDirectoryDepth = language == SdkLanguage.Go ? 3 : 2;
+        if (segments.Length <= serviceDirectoryDepth + 1 || segments[0] != "sdk" || segments[1] == "test" ||
             segments.Any(segment => segment is "" or "." or ".." || segment.Contains('\\')) ||
             language == SdkLanguage.Go && segments[1] != "resourcemanager")
         {

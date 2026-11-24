@@ -148,6 +148,20 @@ public class ReleasePlanReadinessServiceTests
     }
 
     [Test]
+    public async Task ExplicitRecordingRequiresValidationEnvironment()
+    {
+        Environment.SetEnvironmentVariable("AZSDK_SERVICE_READINESS_ENVIRONMENT", null);
+
+        var result = await Check(true);
+
+        Assert.That(result.ReadinessStatus, Is.EqualTo(ServiceApiReadinessResponse.Error));
+        Assert.That(result.Detail, Does.Contain("AZSDK_SERVICE_READINESS_ENVIRONMENT"));
+        Assert.That(result.ResponseError, Is.EqualTo(result.Detail));
+        _ado.VerifyNoOtherCalls();
+        _readiness.VerifyNoOtherCalls();
+    }
+
+    [Test]
     public async Task ReusesCompactEvidenceUsingExistingPlanValuesAndHistory()
     {
         var result = await Check(false);

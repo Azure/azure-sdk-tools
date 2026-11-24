@@ -30,6 +30,16 @@ public sealed class ReleasePlanReadinessService(IDevOpsService devOps, IServiceA
         var environment = Environment.GetEnvironmentVariable("AZSDK_SERVICE_READINESS_ENVIRONMENT");
         if (string.IsNullOrWhiteSpace(environment))
         {
+            if (recordResult)
+            {
+                const string error = "Release-plan recording requires AZSDK_SERVICE_READINESS_ENVIRONMENT to be configured.";
+                return new ServiceApiReadinessResponse
+                {
+                    ReadinessStatus = ServiceApiReadinessResponse.Error,
+                    Detail = error,
+                    ResponseError = error
+                };
+            }
             return await readiness.CheckAsync(owner, repository, pullRequest, ct);
         }
         var callerToken = ct;

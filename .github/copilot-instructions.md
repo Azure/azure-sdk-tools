@@ -89,6 +89,10 @@ Follow conventions in `.editorconfig`:
 
 - Follow standard Python conventions
 - Use packages under `/packages/python-packages/`
+- For Python under `tools/sdk-ai-bots/`, read and apply the shared
+  [Python coding guidelines](../tools/sdk-ai-bots/docs/python-coding-guidelines.md).
+  In that subtree, following existing patterns means preserving integration and
+  compatibility, not reproducing maintainability problems.
 
 ### JavaScript/TypeScript
 

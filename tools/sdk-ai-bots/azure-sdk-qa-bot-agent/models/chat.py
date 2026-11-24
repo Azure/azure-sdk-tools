@@ -7,7 +7,7 @@ See: tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tsp/models.tsp
 from __future__ import annotations
 
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from config.tenant_config import TenantID
 from models.conversation import ConversationType, Role
 from models.knowledge import Reference
@@ -100,3 +100,32 @@ class ChatResponse(BaseModel):
     trace_id: str | None = None
     mentions: list[TeamsMention] | None = None
     agent_name: str | None = None
+
+
+class ChatAgentReference(BaseModel):
+    """Reference item in the hosted chat agent's structured output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(description="Concise display title of the source.")
+    link: str = Field(
+        description="Exact HTTP(S) URL of the source from retrieved tool results."
+    )
+
+
+class ChatAgentOutput(BaseModel):
+    """Structured output returned by the hosted chat agent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    answer: str = Field(
+        description=(
+            "Markdown answer without citation markers or a separate references section."
+        )
+    )
+    references: list[ChatAgentReference] = Field(
+        description=(
+            "Sources from retrieved tool results that directly support the answer, "
+            "or empty if none apply."
+        )
+    )

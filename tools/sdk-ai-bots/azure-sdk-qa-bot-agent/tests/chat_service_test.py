@@ -12,10 +12,15 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from azure.ai.projects.models import AgentVersionDetails
 from azure.core.async_paging import AsyncItemPaged
-from openai.types.responses import ResponseOutputMessage
 
 from config.app_config import AppConfigSnapshot
-from models.chat import AdditionalInfo, ChatRequest, Message as ChatMessage
+from models.chat import (
+    AdditionalInfo,
+    ChatAgentOutput,
+    ChatAgentReference,
+    ChatRequest,
+    Message as ChatMessage,
+)
 from models.knowledge import Reference
 from services import chat_service
 from services.chat_service import ChatService
@@ -291,8 +296,7 @@ async def test_backend_mentions_preserve_all_retrieved_evidence(placeholder_chat
 @pytest.mark.parametrize("output_type", ["function_call_output", "message"])
 @pytest.mark.parametrize("with_full_context", [True, False])
 @pytest.mark.parametrize("searches", ["mixed", "wiki_only", "last_empty", "empty"])
-@pytest.mark.asyncio
-async def test_references_and_full_context_use_all_search_calls(
+def test_references_and_full_context_use_all_search_calls(
     output_type, with_full_context, searches
 ):
     import json
@@ -402,7 +406,7 @@ async def test_references_and_full_context_use_all_search_calls(
         # Keep link-only fallback when the cited section was not retrieved.
         expected_references[3] = earlier
 
-    result = await service._postprocess(request, response, "conversation")
+    result = service._postprocess(request, response, "conversation")
 
     assert result.answer == "Answer using retrieved evidence."
     assert result.references == expected_references
@@ -565,143 +569,101 @@ def test_stateless_session_ids_are_isolated_by_agent() -> None:
     assert service._get_stateless_session_id("azure-sdk-agent", "2") == "sdk-session-v2"
 
 
-def test_extract_reference_candidates_from_multiple_tool_sources() -> None:
-    service = ChatService()
-    output = json.dumps(
-        {
-            "results": [
-                {
-                    "title": "Knowledge document",
-                    "source": "knowledge",
-                    "link": "https://example.com/knowledge",
-                    "content": "Supporting evidence",
-                },
-                {
-                    "title": "GitHub issue",
-                    "html_url": "https://github.com/Azure/example/issues/1",
-                    "body": "Issue evidence",
-                },
-                {
-                    "title": "Duplicate document",
-                    "url": "https://example.com/knowledge",
-                    "snippet": "Additional evidence",
-                },
-            ]
-        }
-    )
-    item = ResponseOutputMessage.model_validate(
-        {
-            "id": "tool-output",
-            "type": "message",
-            "role": "assistant",
-            "status": "completed",
-            "content": [],
-            "call_id": "call-1",
-            "output": output,
-        }
-    )
+def test_postprocess_parses_structured_output_and_enriches_references() -> None:
+    from openai.types.responses import ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem
 
-    candidates = service._extract_reference_candidates([item])
+    from models.knowledge import SearchKnowledgeBaseResult
 
-    assert [candidate.link for candidate in candidates] == [
-        "https://example.com/knowledge",
-        "https://github.com/Azure/example/issues/1",
-    ]
-    assert candidates[0].content == "Supporting evidence\nAdditional evidence"
-
-
-@pytest.mark.asyncio
-async def test_select_references_validates_and_deduplicates_model_urls() -> None:
-    selected_url = "https://example.com/selected"
-    openai_client = MagicMock()
-    openai_client.chat.completions.create = AsyncMock(
-        return_value=SimpleNamespace(
-            choices=[
-                SimpleNamespace(
-                    message=SimpleNamespace(
-                        content=json.dumps(
-                            {
-                                "urls": [
-                                    selected_url,
-                                    "https://example.com/unknown",
-                                    selected_url,
-                                ]
-                            }
-                        )
-                    )
-                )
-            ]
-        )
+    kb_ref = Reference(
+        title="Release Gate | Engineering Docs",
+        source="azure-sdk-docs-eng",
+        link="https://example.com/release-gate",
+        content="A 403 insufficientAppRole error means the calling identity lacks the ARH role.",
     )
-    project_client = MagicMock()
-    project_client.get_openai_client.return_value = openai_client
-    service = ChatService(
-        project_client=project_client,
-        settings=lambda _key, default=None: default,
-    )
-    candidates = [
-        Reference(
-            title="Selected",
-            source="test",
-            link=selected_url,
-            content="Direct support",
+    output = [
+        ResponseFunctionToolCall.model_construct(
+            type="function_call",
+            name="search_knowledge_base",
+            call_id="kb-1",
+            arguments="{}",
         ),
-        Reference(
-            title="Unused",
-            source="test",
-            link="https://example.com/unused",
-            content="Unrelated",
+        ResponseFunctionToolCallOutputItem.model_construct(
+            type="function_call_output",
+            id="kb-1",
+            call_id="kb-1",
+            status="completed",
+            output=json.dumps([SearchKnowledgeBaseResult(results=[kb_ref]).model_dump_json()]),
         ),
     ]
-
-    selected = await service._select_references("Grounded answer", candidates)
-
-    assert selected == [candidates[0]]
-    openai_client.chat.completions.create.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_postprocess_repairs_missing_references_from_tool_candidates() -> None:
-    candidate = Reference(
-        title="Supporting document",
-        source="test",
-        link="https://example.com/support",
-        content="Direct support",
-    )
-    tool_output = ResponseOutputMessage.model_validate(
-        {
-            "id": "tool-output",
-            "type": "message",
-            "role": "assistant",
-            "status": "completed",
-            "content": [],
-            "call_id": "call-1",
-            "output": candidate.model_dump_json(),
-        }
+    structured = ChatAgentOutput(
+        answer=(
+            "Check the pipeline service connection role."
+            " \ue200cite\ue202turn0search0\ue201\n\n{{channel:sdk_release_support}}"
+        ),
+        references=[
+            ChatAgentReference(
+                title="Release Gate",
+                link="https://example.com/release-gate",
+            ),
+            ChatAgentReference(
+                title="Release Gate",
+                link="https://example.com/release-gate",
+            ),
+            ChatAgentReference(
+                title="GitHub Issue",
+                link="https://github.com/Azure/azure-sdk-tools/issues/16652",
+            ),
+            ChatAgentReference(
+                title="Invalid link",
+                link="",
+            ),
+        ],
     )
     response = SimpleNamespace(
-        id="response-1",
-        output_text="Grounded answer without a References section.",
-        output=[tool_output],
+        id="response-structured",
+        output_text=structured.model_dump_json(),
+        output=output,
     )
-    service = ChatService(settings=lambda _key, default=None: default)
-    service._select_references = AsyncMock(return_value=[candidate])
+    request = ChatRequest(
+        tenant_id="azure_sdk_onboarding",
+        channel_name="Azure SDK Onboarding",
+        message=ChatMessage(role="user", content="Why did GA release fail with 403?"),
+    )
+
+    result = ChatService()._postprocess(request, response, "conv-1")
+
+    assert result.answer == "Check the pipeline service connection role."
+    assert result.route_channel_name == "SDK release support"
+    assert result.route_channel_link is not None
+    assert result.references == [
+        kb_ref,
+        Reference(
+            title="GitHub Issue",
+            source="",
+            link="https://github.com/Azure/azure-sdk-tools/issues/16652",
+            content="",
+        ),
+    ]
+
+
+def test_postprocess_recovers_truncated_structured_output() -> None:
+    response = SimpleNamespace(
+        id="response-truncated",
+        output_text='{"answer": "Partial answer cut off by token limit',
+        output=[],
+    )
     request = ChatRequest(
         tenant_id="azure_sdk_qa_bot",
         message=ChatMessage(role="user", content="Question"),
     )
 
-    result = await service._postprocess(request, response, None)
+    result = ChatService()._postprocess(request, response, None)
 
-    assert result.answer == response.output_text
-    assert result.references == [candidate]
-    service._select_references.assert_awaited_once_with(
-        response.output_text, [candidate]
-    )
+    assert result.answer == "Partial answer cut off by token limit"
+    assert result.references is None
 
 
-@pytest.mark.asyncio
-async def test_postprocess_keeps_model_references_without_repair_call() -> None:
+def test_postprocess_falls_back_to_markdown_references_for_plain_text() -> None:
     response = SimpleNamespace(
         id="response-1",
         output_text=(
@@ -710,21 +672,33 @@ async def test_postprocess_keeps_model_references_without_repair_call() -> None:
         ),
         output=[],
     )
-    service = ChatService(settings=lambda _key, default=None: default)
-    service._select_references = AsyncMock()
     request = ChatRequest(
-        tenant_id="azure_sdk_qa_bot",
+        tenant_id="azure_mcp_server",
         message=ChatMessage(role="user", content="Question"),
     )
 
-    result = await service._postprocess(request, response, None)
+    result = ChatService()._postprocess(request, response, None)
 
     assert result.answer == "Grounded answer."
-    assert result.references is not None
-    assert [reference.link for reference in result.references] == [
-        "https://example.com/support"
+    assert result.references == [
+        Reference(
+            title="Supporting document",
+            source="",
+            link="https://example.com/support",
+            content="",
+        )
     ]
-    service._select_references.assert_not_awaited()
+
+
+def test_chat_agent_structured_output_schema_is_strict() -> None:
+    from openai.lib._parsing._responses import type_to_text_format_param
+
+    format_param = type_to_text_format_param(ChatAgentOutput)
+    assert format_param["type"] == "json_schema"
+    assert format_param["strict"] is True
+    schema = format_param["schema"]
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == {"answer", "references"}
 
 
 def _version(version, branch="feature/foo", status="active"):
@@ -1129,8 +1103,7 @@ async def test_chat_selects_request_version_before_configured_version(
         project.agents.get.assert_not_called()
 
 
-@pytest.mark.asyncio
-async def test_loaded_skills_never_set_route_tenant() -> None:
+def test_loaded_skills_never_set_route_tenant() -> None:
     import json
 
     from openai.types.responses import (
@@ -1182,7 +1155,7 @@ async def test_loaded_skills_never_set_route_tenant() -> None:
         message=ChatMessage(role="user", content="ARM PUT TypeSpec pattern?"),
     )
 
-    result = await ChatService()._postprocess(request, response, None)
+    result = ChatService()._postprocess(request, response, None)
 
     assert result.has_result is True
     assert result.route_tenant is None
@@ -1198,8 +1171,7 @@ async def test_loaded_skills_never_set_route_tenant() -> None:
         ("SDK release support", None),
     ],
 )
-@pytest.mark.asyncio
-async def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
+def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
     placeholder_order, current_channel, expected_name
 ) -> None:
     from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
@@ -1247,7 +1219,7 @@ async def test_channel_placeholder_maps_to_route_fields_without_breaking_referen
         request.tenant_id, request.channel_name
     )
 
-    result = await service._postprocess(request, response, None)
+    result = service._postprocess(request, response, None)
 
     assert result.answer == "Please follow up with release support."
     assert len(result.references or []) == 1
@@ -1257,8 +1229,7 @@ async def test_channel_placeholder_maps_to_route_fields_without_breaking_referen
     assert result.route_channel_link == (channel_link if expected_name else None)
 
 
-@pytest.mark.asyncio
-async def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:
+def test_unrecognized_channel_placeholder_is_stripped_without_routing() -> None:
     from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
 
     response = Response.model_construct(
@@ -1284,7 +1255,7 @@ async def test_unrecognized_channel_placeholder_is_stripped_without_routing() ->
         message=ChatMessage(role="user", content="Help"),
     )
 
-    result = await ChatService()._postprocess(request, response, None)
+    result = ChatService()._postprocess(request, response, None)
 
     assert result.answer == "Answer."
     assert result.route_channel_name is None

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
 
@@ -11,7 +12,7 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from utils.text_util import clean_html_tags, preprocess_message
+from utils.text_util import clean_html_tags, decode_html_content, preprocess_message
 
 # ---------------------------------------------------------------------------
 # Fixtures: realistic Teams HTML payloads
@@ -85,6 +86,37 @@ def test_clean_html_tags_strips_non_link_html() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Tests: decode_html_content
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("%E2%9C%93%20source", "\u2713 source"),
+        ("%GG%2", "%GG%2"),
+        ("%FF", "\ufffd"),
+        (r"\u003csource\u003e", "<source>"),
+        ("source&amp;name", "source&name"),
+    ],
+)
+def test_decode_html_content(message: str, expected: str) -> None:
+    assert decode_html_content(message) == expected
+
+
+def test_decode_html_content_propagates_unexpected_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def failing_decoder(text: str) -> str:
+        raise RuntimeError("Unexpected decoder failure")
+
+    monkeypatch.setattr("utils.text_util.unquote", failing_decoder)
+
+    with pytest.raises(RuntimeError, match="Unexpected decoder failure"):
+        decode_html_content("source%20name")
+
+
+# ---------------------------------------------------------------------------
 # Tests: preprocess_message (full pipeline)
 # ---------------------------------------------------------------------------
 
@@ -105,6 +137,23 @@ def test_preprocess_message_plain_text_passthrough() -> None:
     """Plain text without HTML markers should pass through unchanged (except keywords/lowercase)."""
     result = preprocess_message(PLAIN_TEXT)
     assert "plain text message" in result
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "private question about swagger definitions",
+        "<p>private question about swagger definitions</p>",
+    ],
+)
+def test_preprocess_message_does_not_log_user_content(
+    message: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level(logging.DEBUG, logger="utils.text_util"):
+        result = preprocess_message(message)
+
+    assert result == "private question about Open API definitions"
+    assert "private question" not in caplog.text
 
 
 @pytest.mark.parametrize(

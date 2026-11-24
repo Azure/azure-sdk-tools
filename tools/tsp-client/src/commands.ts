@@ -6,7 +6,18 @@ import {
   resolveCompilerOptions,
   resolvePath,
 } from "@typespec/compiler";
-import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
+import {
+  addSpecFiles,
+  checkoutCommit,
+  checkoutWithExclusions,
+  cloneRepo,
+  getRepoRoot,
+  sparseCheckout,
+} from "./git.js";
+import {
+  clearStagedExclusions,
+  getSparseCheckoutExclusions,
+} from "./sparse-checkout-exclusions.js";
 import {
   createTempDirectory,
   getEmitterFromRepoConfig,
@@ -367,37 +378,53 @@ export async function syncCommand(argv: any) {
       );
     }
   } else {
+    const exclusions = getSparseCheckoutExclusions(tspLocation, tspLocation.directory);
+    const additionalDirectories = tspLocation.additionalDirectories ?? [];
     const cloneDir = await makeSparseSpecDir(repoRoot);
-    Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-    Logger.debug(`Cloning repo to ${cloneDir}`);
-    await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
-    await sparseCheckout(cloneDir);
-    await addSpecFiles(cloneDir, tspLocation.directory);
-    for (const dir of tspLocation.additionalDirectories ?? []) {
-      Logger.info(`Processing additional directory: ${dir}`);
-      await addSpecFiles(cloneDir, dir);
-    }
-    await checkoutCommit(cloneDir, tspLocation.commit);
-    const clonedTspProject = joinPaths(cloneDir, tspLocation.directory);
     try {
-      // Check if the cloned TypeSpec project exists
-      await stat(clonedTspProject);
-    } catch (err) {
-      Logger.error(
-        `Unexpected error reading the TypeSpec project directory after cloning the repository: '${clonedTspProject}'. Please verify that the TypeSpec directory path is correct and that it exists at the specified commit: '${tspLocation.commit}'.\n${err}`,
-      );
+      Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
+      Logger.debug(`Cloning repo to ${cloneDir}`);
+      await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
+      let ignoreCase = false;
+      if (exclusions.length) {
+        ignoreCase = await checkoutWithExclusions(
+          cloneDir,
+          tspLocation.commit,
+          tspLocation.directory,
+          additionalDirectories,
+          exclusions,
+        );
+      } else {
+        await sparseCheckout(cloneDir);
+        await addSpecFiles(cloneDir, tspLocation.directory);
+        for (const dir of additionalDirectories) {
+          Logger.info(`Processing additional directory: ${dir}`);
+          await addSpecFiles(cloneDir, dir);
+        }
+        await checkoutCommit(cloneDir, tspLocation.commit);
+      }
+      const clonedTspProject = joinPaths(cloneDir, tspLocation.directory);
+      try {
+        await stat(clonedTspProject);
+      } catch (err) {
+        Logger.error(
+          `Unexpected error reading the TypeSpec project directory after cloning the repository: '${clonedTspProject}'. Please verify that the TypeSpec directory path is correct and that it exists at the specified commit: '${tspLocation.commit}'.\n${err}`,
+        );
+        await removeDirectory(cloneDir);
+        process.exit(1);
+      }
+      if (exclusions.length) await clearStagedExclusions(tempRoot, srcDir, exclusions, ignoreCase);
+      await cp(clonedTspProject, srcDir, { recursive: true });
+      for (const dir of additionalDirectories) {
+        Logger.info(`Syncing additional directory: ${dir}`);
+        await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), {
+          recursive: true,
+        });
+      }
+    } finally {
+      Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
       await removeDirectory(cloneDir);
-      process.exit(1);
     }
-    await cp(clonedTspProject, srcDir, { recursive: true });
-    for (const dir of tspLocation.additionalDirectories!) {
-      Logger.info(`Syncing additional directory: ${dir}`);
-      await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), {
-        recursive: true,
-      });
-    }
-    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-    await removeDirectory(cloneDir);
   }
 
   try {

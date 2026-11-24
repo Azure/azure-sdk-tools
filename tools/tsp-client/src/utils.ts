@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
 import { normalizeDirectory, readTspLocation } from "./fs.js";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { getRepoRoot } from "./git.js";
 
 const defaultTspClientConfigPath = joinPaths("eng", "tsp-client-config.yaml");
@@ -115,6 +115,9 @@ export async function writeTspLocationYaml(
   }
   if (tspLocation.emitterPackageJsonPath) {
     tspLocationContent += `\nemitterPackageJsonPath: ${tspLocation.emitterPackageJsonPath}`;
+  }
+  if (tspLocation.sparseCheckoutExclusions !== undefined) {
+    tspLocationContent += `\n${stringifyYaml({ sparseCheckoutExclusions: tspLocation.sparseCheckoutExclusions })}`;
   }
   await writeFile(joinPaths(projectPath, "tsp-location.yaml"), tspLocationContent);
 }

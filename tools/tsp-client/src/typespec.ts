@@ -18,6 +18,7 @@ export interface TspLocation {
   commit?: string;
   repo?: string;
   additionalDirectories?: string[];
+  sparseCheckoutExclusions?: string[];
   entrypointFile?: string;
   emitterPackageJsonPath?: string;
   batch?: string[];

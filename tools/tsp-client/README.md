@@ -12,7 +12,7 @@
 npm install -g @azure-tools/typespec-client-generator-cli
 ```
 
-> NOTE: Repo owners should follow the steps in the [tsp-client repo setup](./repo_setup.md) doc.
+> NOTE: Repo owners should follow the steps in the [tsp-client repo setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/repo_setup.md) doc.
 
 ## Usage
 
@@ -266,6 +266,20 @@ additionalDirectories:
 ```
 
 ## Advanced scenarios
+
+### Omit unused directories from remote sync
+
+By default, remote sync stages the entire `directory` and all `additionalDirectories`. If you have verified that the TypeSpec compiler and emitters do not use certain direct child directories of `directory`, list those directories in `tsp-location.yaml`. For example, a TypeSpec project may keep old Swagger alongside its TypeSpec sources:
+
+```yaml
+sparseCheckoutExclusions:
+  - stable
+  - preview
+```
+
+This selects fewer files in the fresh checkout of the pinned commit, without changing the layout of the retained files in `TempTypeSpecFiles`. It also removes matching directories left in the staged project by a previous full sync. Removing the setting or setting it to `[]` restores full remote sync. `--local-spec-repo` ignores this setting.
+
+This opt-in requires Git 2.37 or newer. Names are literal and follow Git's case matching for the checkout; only direct children can be excluded. To use this setting, the project path, additional directory paths, and exclusions must use portable path components (ASCII letters, digits, dots, underscores, and hyphens; no trailing dots or reserved names). An exclusion cannot overlap an additional directory or contain the configured `entrypointFile`. Do not exclude a tree that contains TypeSpec imports, examples, or other emitter inputs, even if it is named `stable` or `preview`.
 
 ### Batch library generation
 

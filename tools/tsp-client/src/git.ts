@@ -1,5 +1,10 @@
-import { spawn } from "child_process";
+import { execFile, spawn } from "child_process";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { promisify } from "node:util";
 import { simpleGit } from "simple-git";
+
+const execFileAsync = promisify(execFile);
 
 export async function getRepoRoot(repoPath: string): Promise<string> {
   return simpleGit(repoPath)
@@ -56,6 +61,41 @@ export async function addSpecFiles(cloneDir: string, subDir: string): Promise<vo
       reject(new Error(`git sparse-checkout add failed with error: ${err}`));
     });
   });
+}
+
+export async function checkoutWithExclusions(
+  cloneDir: string,
+  commit: string,
+  project: string,
+  additionalDirectories: string[],
+  exclusions: string[],
+): Promise<boolean> {
+  const git = simpleGit(cloneDir);
+  // Let Git build its usual cone patterns, including the root and ancestor files.
+  await git.raw(["sparse-checkout", "set", "--cone", "--", project, ...additionalDirectories]);
+  const patternPath = (await git.revparse(["--git-path", "info/sparse-checkout"])).trimEnd();
+  const patterns = (await readFile(resolve(cloneDir, patternPath), "utf8"))
+    .split(/\r?\n/)
+    .filter(Boolean);
+  await git.raw([
+    "sparse-checkout",
+    "set",
+    "--no-cone",
+    "--",
+    ...patterns,
+    ...exclusions.map((name) => `!/${project}/${name}/`),
+  ]);
+  // Read before checkout detaches HEAD; onbranch includes can change afterward.
+  // GIT_CONFIG redirects `git config` only, not the checkout it is measuring.
+  const env = { ...process.env };
+  delete env["GIT_CONFIG"];
+  const { stdout } = await execFileAsync(
+    "git",
+    ["config", "--type=bool", "--default=false", "--get", "core.ignoreCase"],
+    { cwd: cloneDir, env },
+  );
+  await git.checkout(commit);
+  return stdout.trim() === "true";
 }
 
 export async function checkoutCommit(cloneDir: string, commit: string): Promise<void> {

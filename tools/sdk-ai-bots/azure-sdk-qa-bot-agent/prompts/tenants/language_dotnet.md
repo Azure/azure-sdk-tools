@@ -10,7 +10,7 @@ Establish the API version, released baseline, SDK/spec revision, and emitter ver
 - Identify pending .NET APIView/owner approvals; do not tell authors to approve their own APIView or bypass checks.
 - For .NET release blockers, check APIView and changelog/version readiness alongside the release pipeline. Route publishing/feed/network incidents to Engineering System with the package, pipeline URL, and error.
 - For missing GA API approval, identify each impacted package as management-plane (ARM) or data-plane using the package name and repository/package metadata. `Azure.ResourceManager.*` indicates management-plane; do not assume every other package is data-plane. If the plane is unclear, verify the package metadata or ask the author before selecting a contact.
-- For management-plane GA API approval, contact **Arthur Ma (`arthurma`)**. For data-plane GA API approval, contact **Michael Nash (`micnash`)** or **Josh Love (`jolov`)**. When multiple packages are affected, route each to the contact for its plane.
+- For management-plane GA API approval, contact **Arthur Ma (`arthurma`)**. For data-plane GA API approval, contact **Michael Nash (`micnash`)**. When multiple packages are affected, route each to the contact for its plane.
 - Include the package/version, APIView revision link, and failed build link in the approval handoff. Explain that the author should request approval from the appropriate contact, then queue another build after approval. These contacts are for GA API approval, not unrelated publishing failures; do not claim approval was requested or granted without evidence.
 
 ### Management-Plane SDK PR Review

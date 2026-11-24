@@ -67,35 +67,12 @@ Follow these steps in order.
    unless a human accepts the offer or asks for it. If the conversation is
    not complete, return `conversation_ongoing` and stop, unless `feedback`
    contains negative feedback; then continue to step 4 despite pending follow-ups.
-4. **Pin the question and decide whether the answer has a problem.** Read
-   the whole transcript, not just the last
-   message — weight follow-ups, rephrasings, feedback, and any expert correction.
-   Negative feedback is evidence, not proof; explain its effect in `reasoning`.
-   When an expert corrected the bot, treat the expert's message as ground
-  truth and work backward to what the bot missed. Extract the correction,
-  the claimed knowledge gap, and its supporting references. Verify those
-  claims against the referenced evidence, then use the verified gap as the
-  first KB hypothesis and the referenced owner as source-selection evidence.
-   If no defect is established and the thread is open, return `conversation_ongoing`.
-   If the completed conversation has no answer problem, return `no_issue` and
-   stop.
-5. **Inspect the failed turn.** Call `fetch_chat_trace(trace_id)` using the
-   `trace_id` of the final/converged failed answer to see what the bot
-   retrieved and answered. If `found=false`, return `remediation_failed`
-   with reason `trace_unavailable`.
-6. **Investigate the KB.** `list_knowledge_sources` to see which
-   sources should cover the question, then use `search_knowledge_base` with
-   the sources appropriate to the investigation.
-7. **Classify exactly one root cause** using the
-   [Classification taxonomy](#classification-taxonomy), and confirm it.
-8. **Choose the remediation target.** For a system defect, skip KB mutation and use `Azure/azure-sdk-pr`. For a KB defect, update the primary maintained source that owns the deficient guidance; follow [KB remediation](#kb-remediation) and [Issue routing](#issue-routing).
-9. **Validate the KB candidate.** Read the authoritative target document,
-   apply a grounded candidate with `update_knowledge`, then call
-   `chat` with `target="candidate"` and the complete original question. Evaluate the
-   answer against grounded acceptance criteria using [Validation semantics](#validation-semantics).
-   Tool completion alone is not a pass. If validation fails, strengthen the guidance in that same
-   authoritative document and retry within the attempt limit. If all attempts
-   fail, return `remediation_failed` without creating an issue.
+4. **Pin the question and decide whether the answer has a problem.** Read the whole transcript, not just the last message — weight follow-ups, rephrasings, feedback, and any expert correction. Negative feedback is evidence, not proof; explain its effect in `reasoning`. Unconfirmed thread opinions or unverified workarounds do not establish a defect. When an expert corrected the bot, verify their claims against referenced authoritative evidence and check whether the correction identifies durable documentation guidance versus a product/tooling bug, transient infrastructure/CI failure, or isolated one-off workaround. If the bot gave sound guidance for documented behavior and a human later diagnosed a live outage or undocumented bug outside KB/tool visibility, treat the completed thread as having no actionable defect (`no_issue`) unless the bot itself hallucinated or contradicted retrieved evidence. When a verified expert correction exposes durable guidance, use that verified gap as the first KB hypothesis and the referenced owner as source-selection evidence. If no defect is established and the thread is open, return `conversation_ongoing`. If the completed conversation has no answer problem, return `no_issue` and stop.
+5. **Inspect the failed turn.** Call `fetch_chat_trace(trace_id)` using the `trace_id` of the final/converged failed answer to see what the bot retrieved and answered. If `found=false`, return `remediation_failed` with reason `trace_unavailable`.
+6. **Investigate the KB.** Call `list_knowledge_sources` (for the tenant, and without `tenant_id` when checking broader ownership) to identify candidate sources, then run `search_knowledge_base` with both the concrete question and broader topic-level concept queries so you discover the owning guidance rather than locking onto a single narrow search hit.
+7. **Classify exactly one root cause** using the [Classification taxonomy](#classification-taxonomy) and its doc-worthiness gate, and confirm it.
+8. **Choose the remediation target.** For a system defect, skip KB mutation and use `Azure/azure-sdk-pr`. For a KB defect, compare plausible candidate documents and select the primary maintained document and section that own the concept; follow [KB remediation](#kb-remediation) and [Issue routing](#issue-routing).
+9. **Validate the KB candidate.** Read the full authoritative target document with `read_knowledge`, integrate a generalized, concise candidate edit with `update_knowledge`, and call `chat` with `target="candidate"` and the complete original question. Evaluate the answer against grounded acceptance criteria using [Validation semantics](#validation-semantics); tool completion alone is not a pass. Do not add repetitive or Q&A-specific caveats solely to steer validation—if a clean, natural edit in the owning document still fails `chat(target="candidate")`, refine genuine ambiguity in that document or re-evaluate whether the remaining failure is a `retrieval_mismatch` or `reasoning_gap` (restoring the original dev KB content with `update_knowledge` before filing a system issue). If KB validation cannot succeed within the attempt limit, return `remediation_failed` without creating an issue.
 10. **Register one remediation item** after a system diagnosis or successful KB validation. Search the resolved target for the exact machine marker, reuse a matching open item or create one, and follow the provider workflow in [Issue routing](#issue-routing). Return `issue_reused` or `issue_created` only after every required provider step succeeds.
 
 ### Validation mode
@@ -144,24 +121,20 @@ Choose the first matching cause below. Return exactly one.
 3. **`outdated_content`** — KB guidance contradicts or has drifted from the current source of truth.
 4. **`insufficient_content`** — related guidance exists, but a required rule, condition, connection, or action is missing, ambiguous, fragmented, or hard to discover.
 5. **`retrieval_mismatch`** — complete and usable guidance exists but was not retrieved because of search or routing behavior, including tenant or source filtering.
-6. **`reasoning_gap`** — the bot retrieved complete and usable guidance but ignored or misapplied it.
+6. **`reasoning_gap`** — the bot retrieved complete and usable guidance but ignored or misapplied it, or made ungrounded claims when retrieved evidence did not establish the answer.
 
-Boundary test: disconnected guidance, or guidance needing a material clarification or cross-reference, is `insufficient_content`; otherwise complete guidance that was missed is `retrieval_mismatch` and complete guidance that was misapplied is `reasoning_gap`.
+Boundary test: disconnected guidance, or guidance needing a material clarification or cross-reference, is `insufficient_content`; otherwise complete guidance that was missed is `retrieval_mismatch`, and misapplied guidance or ungrounded speculation beyond retrieved evidence is `reasoning_gap`.
 
-Confirm KB defects against the non-GitHub source of truth and resolve the owning KB source. Confirm system defects in the chat agent source with `get_file_contents` or `search_code`, citing the file and line.
+Doc-worthiness gate: use `missing_content`, `outdated_content`, or `insufficient_content` only when the gap represents durable, reusable documentation guidance. Do not propose documentation edits for product, emitter, or pipeline bugs, transient infrastructure failures, isolated one-off service workarounds, historical migration quirks, or unconfirmed thread opinions. When a confirmed bad bot answer involves a non-doc-worthy bug or incident, classify the dominant non-KB cause (`reasoning_gap` for ungrounded speculation or contradicting retrieved evidence, `retrieval_mismatch` when available non-KB tool/search evidence was missed, or `out_of_scope` when the intent is outside the project's domain) instead of fabricating a KB rule.
+
+Confirm KB defects against the non-GitHub source of truth and resolve the owning KB source. Confirm system defects in the chat agent source or prompts under `tools/sdk-ai-bots/azure-sdk-qa-bot-agent` with `get_file_contents` or `search_code`, citing the file and line (for ungrounded speculation, cite the grounding or abstention instruction or prompt rule that failed to constrain the answer).
 
 ## KB remediation
 
-Choose the primary maintained source that owns the deficient guidance. Prefer verified ownership and provenance; do not mutate a convenient search hit, mirror, historical answer, or summary when an authoritative source is available.
-
-Call `resolve_kb_source` with the selected result's `source` folder and exact
-`blob_path` before reading or updating. The resolved ownership and scope must
-match the guidance being changed. Use the exact `blob_path` and `link` from
-the same selected search result; never synthesize a document URL. If the
-authoritative source cannot be resolved or safely edited, return
-`remediation_failed` instead of patching a secondary source.
-
-Use only an exact `blob_path` returned by search. Apply the candidate with `update_knowledge`; after an ETag conflict, read the document again before retrying. Candidate knowledge operations are restricted to the development environment. Validate with `target="candidate"` and the complete original question, applying [Validation semantics](#validation-semantics). Keep retries in the same authoritative document; if they all fail, return `remediation_failed` without creating an issue. Never update production knowledge storage or its search index.
+- **Verify doc-worthiness first:** Mutate dev knowledge only for durable, reusable guidance that passed the doc-worthiness gate above.
+- **Compare ownership and structure with existing KB tools:** Do not patch the first convenient search hit. Reuse `list_knowledge_sources`, topic-level `search_knowledge_base` queries, `resolve_kb_source`, and `read_knowledge` across candidate documents to match document purpose, audience depth, domain/layer scope, and primary maintained provenance before choosing where to edit.
+- **Generalize and integrate:** Read the full target document with `read_knowledge` first, state the reusable rule and applicability conditions in general domain terms rather than Q&A-specific artifacts, and weave concise edits into the existing structure and style instead of appending standalone Q&A subsections or repetitive validation-steering caveats; if a clean edit in the owning document still fails `chat(target="candidate")`, re-evaluate whether the remaining failure is `retrieval_mismatch` or `reasoning_gap`.
+- **Safe candidate update:** Call `resolve_kb_source` with the selected result's `source` folder and exact `blob_path` before reading or updating. Use only an exact `blob_path` and `link` from the selected `search_knowledge_base` result; never synthesize a document URL. Apply the candidate in dev storage with `update_knowledge` (re-reading after an ETag conflict) and validate with `chat(target="candidate")` and the complete original question using [Validation semantics](#validation-semantics). Never update production knowledge storage or its search index. If the authoritative source cannot be resolved or safely validated within the attempt limit, return `remediation_failed` without creating an issue.
 
 ## Issue routing
 
@@ -210,17 +183,20 @@ Use this content for either provider. Only in `Azure/azure-sdk-pr`, create the i
 ### Root cause
 <One sentence naming the defect and why, with a source/file citation.>
 
-### Fixed document
-- **KB document:** `<the exact blob_path updated>`
+### Documentation goal
+- **Reusable guidance:** <1–3 sentences stating the generalized rule, applicability conditions, and rationale in domain terms, without Q&A-specific artifacts>
+- **Owning location:** `<recommended blob_path or proposed path>` (<target section heading>) — <why this document and section own the concept, and how to weave into existing prose, lists, or examples>
 - **Upstream:** <GitHub `owner/repo` or ADO `organization/project/repository`, plus `branch:path`, returned by `resolve_kb_source`; use the registered source folder when unavailable>
-- **Source:** <the exact `link` from the same selected `search_knowledge_base` result>
-- **Validated change:** <1–2 sentences describing the exact guidance added or corrected>
+- **Source:** <the exact `link` from the selected `search_knowledge_base` result, or `n/a` when proposing a new `missing_content` document>
 
-### Validation
-**Result:** <Passed or Failed> — <criterion-based reasoning identifying how the answer meets the requirements or the material gap that remains>
-**Trace ID:** <validation trace ID>
+### Candidate validation reference
+> Reference proof from the dev KB validation loop—integrate cleanly with the target document's structure and style rather than copying verbatim.
+- **Validated KB document:** `<the exact blob_path updated in dev KB>`
+- **Candidate summary:** <1–2 concise sentences summarizing the candidate edit validated>
+- **Result:** <Passed or Failed> — <criterion-based reasoning identifying how the answer meets the requirements or the material gap that remains>
+- **Trace ID:** <validation trace ID>
 
-<If no safe candidate could be applied, replace the Fixed document and Validation sections with a concise Remediation blocker section. Omit both sections for a system defect.>
+<If no safe candidate could be applied, keep `### Documentation goal` and replace `### Candidate validation reference` with a concise `### Remediation blocker` section. Omit both sections for a system defect.>
 
 ### Expected behavior
 <Concise, grounded acceptance criteria: the required outcome, applicable constraints, and material errors to avoid. Allow supported alternatives and conditional recommendations that satisfy the user's requirements; do not prescribe exact wording, presentation order, or one canonical solution unless the verified requirements demand it.>

@@ -171,9 +171,9 @@ async def test_harness_tool_result_is_not_spotlighted(tool_name: str):
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "tool_name",
-    ["tool_result_read", "tool_result_read_chars", "tool_result_grep"],
+    ["file_access_read", "file_access_read_lines", "file_access_grep"],
 )
-async def test_tool_result_content_is_spotlighted(tool_name: str):
+async def test_file_access_content_is_spotlighted(tool_name: str):
     middleware = ToolOutputSecurityMiddleware()
     context = _make_context(tool_name, "external data")
 
@@ -187,7 +187,7 @@ async def test_tool_result_content_is_spotlighted(tool_name: str):
 async def test_structured_tool_result_is_spotlighted():
     middleware = ToolOutputSecurityMiddleware()
     context = _make_context(
-        "tool_result_grep",
+        "file_access_grep",
         [{"file_name": "result.txt", "content": "external data"}],
     )
 

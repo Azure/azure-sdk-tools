@@ -9,6 +9,7 @@ from unittest.mock import Mock
 from agent_framework import (
     CompactionProvider,
     ContextWindowCompactionStrategy,
+    FileAccessProvider,
     InMemoryHistoryProvider,
     InlineSkill,
     SkillsProvider,
@@ -23,7 +24,6 @@ from utils.agent_harness import (
     create_hosted_agent,
 )
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
-from middleware.tool_output_storage import ToolOutputStorageProvider
 
 
 def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
@@ -73,14 +73,21 @@ def test_harness_adds_managed_providers(
         isinstance(provider, CompactionProvider)
         for provider in agent.context_providers
     )
-    assert any(
-        isinstance(provider, ToolOutputStorageProvider)
-        for provider in agent.context_providers
+    file_access = next(
+        (
+            provider
+            for provider in agent.context_providers
+            if isinstance(provider, FileAccessProvider)
+        ),
+        None,
     )
+    assert file_access is not None
+    assert file_access.session_scoped is True
+    assert file_access.disable_write_tools is True
+    assert file_access.disable_readonly_tool_approval is True
     assert not any(
         type(provider).__name__ in {
             "AgentModeProvider",
-            "FileAccessProvider",
             "FileMemoryProvider",
             "ShellEnvironmentProvider",
             "TodoProvider",
@@ -126,6 +133,6 @@ def test_harness_supports_agents_without_skills_or_memory(
     )
 
     assert any(
-        isinstance(provider, ToolOutputStorageProvider)
+        isinstance(provider, FileAccessProvider)
         for provider in agent.context_providers
     )

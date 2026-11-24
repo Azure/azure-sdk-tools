@@ -16,10 +16,7 @@ from agent_framework import (
 from agent_framework.foundry import FoundryChatClient
 from agent_framework.openai import OpenAIChatOptions
 
-from middleware.tool_output_storage import (
-    ToolOutputStorageMiddleware,
-    ToolOutputStorageProvider,
-)
+from middleware.tool_output_storage import ToolOutputStorageMiddleware
 
 # Conservative operating budgets independent of the configured model's maximums.
 HARNESS_CONTEXT_WINDOW_TOKENS = 256_000
@@ -57,13 +54,14 @@ def create_hosted_agent(
         disable_todo=True,
         disable_mode=True,
         disable_file_memory=True,
+        file_access_store=memory_store,
+        file_access_session_scoped=True,
+        file_access_disable_write_tools=True,
+        file_access_disable_readonly_tool_approval=True,
         disable_web_search=True,
         disable_tool_auto_approval=True,
         skills_provider=skills_provider,
-        context_providers=[
-            *context_providers,
-            ToolOutputStorageProvider(memory_store),
-        ],
+        context_providers=[*context_providers],
         middleware=[*middleware, ToolOutputStorageMiddleware(memory_store)],
         default_options=resolved_options,
     )

@@ -5,7 +5,7 @@
 ### Features Added
 
 - Integrate the Microsoft Agent Framework harness for hosted agents (`create_hosted_agent`) with `history_source="agent"`, token-aware context compaction, and OpenTelemetry instrumentation.
-- Offload large external tool results (>20,000 characters) to session-scoped storage with match-centered and reverse grep (`tool_result_grep`), bounded character-range reads (`tool_result_read_chars`), and line-range reads (`tool_result_read`).
+- Offload large external tool results (>20,000 characters) to session-scoped `FileAccessProvider` storage (with JSON pretty-printing) for read-only inspection via `file_access_grep` and `file_access_read_lines`.
 
 ### Breaking / Behavioral Changes
 

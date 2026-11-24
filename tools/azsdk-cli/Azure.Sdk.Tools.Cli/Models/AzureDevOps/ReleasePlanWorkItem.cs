@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Attributes;
 using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
@@ -10,6 +11,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
     {
         public const string DashboardBaseUrl = "https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=";
         public const string DashboardBaseUrlTest = "https://releaseplan-dashboard-test.azurewebsites.net/?releaseplan=";
+
+        // Snapshot revision used to reject automatic updates if the plan changed during the scan.
+        public int Revision { get; set; }
 
         [FieldName("Custom.ServiceTreeID")]
         public string ServiceTreeId { get; set; } = string.Empty;
@@ -37,6 +41,11 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         [FieldName("Custom.APISpecversion")]
         public string SpecAPIVersion { get; set; } = string.Empty;
+
+        public const string SpecCommitSHAField = "Custom.SpecCommitSHA";
+
+        [FieldName(SpecCommitSHAField)]
+        public string SpecCommitSHA { get; set; } = string.Empty;
 
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
@@ -137,7 +146,15 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public string PackageName { get; set; } = string.Empty;
         public string GenerationStatus { get; set; } = string.Empty;
         public string ReleaseStatus { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public string ReleasedVersion { get; set; } = string.Empty;
+
+        // Retain the stored ADO value for internal release-plan selection, but do not expose
+        // it as current PR status. GitHub and the release plan dashboard provide that information.
+        [JsonIgnore]
         public string PullRequestStatus { get; set; } = string.Empty;
+
         public string ReleaseExclusionStatus { get; set; } = string.Empty;
     }
 }

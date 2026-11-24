@@ -1,19 +1,11 @@
-schedules:
-  - cron: "0 2 * * 1"  # Runs every Monday at 02:00 UTC
-    displayName: "Weekly Perf Evaluation"
-    branches:
-      include:
-        - main
-    always: true
-
 trigger: none
 pr: none
 
 # Perf evaluation: large, incrementally-grown per-scenario datasets.
 #
 # Evaluates via completion mode (concurrent /completion collection + inline grading)
-# against the deployed bot's $(BOT_SERVICE_ENDPOINT) for the qa-bot-perf-<scenario>
-# datasets. Can also be run manually.
+# against a local backend started with development configuration for the
+# qa-bot-perf-<scenario> datasets. Can also be run manually.
 parameters:
   - name: scenarios
     type: object
@@ -21,10 +13,18 @@ parameters:
       - typespec
       - onboarding
       - python
+      - dotnet
+      - javascript
+      - go
       - apispec
       - general
       - releasesupport
       - authoring
+      - mcpserver
+      - apistewardshipboard
+  - name: maxConcurrency
+    type: number
+    default: 2
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -76,6 +76,7 @@ extends:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                       AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
                       AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                      ENABLE_AI_FOUNDRY_AGENT_ROUTING: 'true'
                   - script: |
                       pip install -r requirements.txt
                     displayName: 'install requirements'
@@ -91,7 +92,7 @@ extends:
                         python evals_run.py \
                           --dataset "qa-bot-perf-${{ scenario }}:latest" \
                           --run_context "perf-evaluation" \
-                          --max_concurrency 2 \
+                          --max_concurrency ${{ parameters.maxConcurrency }} \
                           --baseline_check False \
                           --cache_result full
                     env:
@@ -102,6 +103,7 @@ extends:
                       BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                       BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
                       EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
+                      EVAL_AGENT_BRANCH: $(Build.SourceBranch)
                 templateContext:
                   outputs:
                     - output: pipelineArtifact

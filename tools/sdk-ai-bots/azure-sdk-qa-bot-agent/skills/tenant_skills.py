@@ -28,14 +28,33 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
+    TenantID.API_STEWARDSHIP_BOARD_QA_BOT: (
+        "Data-plane only (not ARM/management-plane) spec-to-SDK lifecycle: "
+        "data-plane API modeling and REST design "
+        "(endpoints, LROs, service access boundaries); specification validation "
+        "and API Stewardship Board review "
+        "(readiness, scheduling, async reviews, Office Hours, signoff); "
+        "SDK design, clients, library/package naming and approval, "
+        "documentation and SDK exposure; preview/GA versioning, compatibility, "
+        "breaking changes, "
+        "deprecation, retirement and customer notification."
+    ),
     TenantID.API_SPEC_REVIEW_BOT: (
-        "Azure REST API specification PR review: validation errors, LintDiff, "
-        "Avocado, breaking changes, merge process in azure-rest-api-specs repos."
+        "Azure REST API specification PR review process: requirements, "
+        "validation errors, LintDiff, Avocado, breaking-change approvals, "
+        "review status, scheduling, blockers, and merge process in "
+        "azure-rest-api-specs repos. Prefer this skill when the primary "
+        "issue is PR validation checks, breaking-change approvals, or merge "
+        "blockers. Use typespec instead for TypeSpec authoring, API/resource "
+        "modeling, spec folder layout, or TypeSpec PR design reviews, even if "
+        "a PR link or check exposed it."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
         "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
-        "permissions, Azure SDK Tools Agent usage, and release plan creation, status, "
-        "readiness, lifecycle, and troubleshooting."
+        "Azure SDK Tools Agent usage, and release plan creation, status, readiness, "
+        "lifecycle, and troubleshooting. Use typespec instead for specification "
+        "service-folder organization or RPaaS registration paths coupled to that "
+        "folder layout."
     ),
     TenantID.AZSDK_TOOLS_AGENT_QA_BOT: (
         "Azure SDK Tools Agent (azsdk CLI/MCP): agent and MCP server setup and "
@@ -46,11 +65,16 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: (
         "Advanced TypeSpec authoring: ARM and data-plane API design, Azure Templates, "
-        "decorators, code generation, RPC compliance."
+        "decorators, code generation, RPC compliance, and complete transformations "
+        "of supplied TypeSpec code. Keep this preloaded skill for Authoring tenant "
+        "requests, including requests to apply diagnostics or suppressions."
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: (
-        "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
-        "migration from OpenAPI, validation, tspconfig."
+        "TypeSpec language and Azure API design (ARM/management-plane and data-plane): "
+        "syntax, decorators, patterns, Azure extensions, TypeSpec PR design reviews, "
+        "migration from OpenAPI, validation, tspconfig, specification service-folder "
+        "organization, and RPaaS registration paths coupled to that layout. Do not "
+        "replace a preloaded typespec-authoring skill for Authoring tenant requests."
     ),
     TenantID.TYPESPEC_EMITTER_QA_BOT: (
         "TypeSpec emitter framework (EF v2) and Alloy framework guidance: "

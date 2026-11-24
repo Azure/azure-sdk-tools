@@ -13,7 +13,7 @@ This is likely due to either:
 On the same shell that the dev will `test-proxy push` from:
 
 ```bash
-git clone -c core.longpaths=true --no-checkout --filter=tree:0 https://github.com/Azure/azure-sdk-assets.git
+git clone -c core.longpaths=true --no-checkout --filter=blob:none https://github.com/Azure/azure-sdk-assets.git
 git checkout -b a-test-branch
 git push -u origin a-test-branch # users should clean up after pushing a test branch, but in the case they don't devs may need to select a different test branch name
 ```
@@ -124,13 +124,13 @@ If the current date is outside of the valid date range of the certificate, then 
   - `windows` check task manager
   - `linux/mac` use `ps aux | grep TestProxy`. Kill any processes that match.
 - Delete any local copies of the certificate.
-- Follow any specific `import` directions in [trusting-cert-per-language](trusting-cert-per-language.md) for your current `language`.
+- Follow any specific `import` directions in [trusting-cert-per-language](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/documentation/test-proxy/trusting-cert-per-language.md) for your current `language`.
 
 ### Why does the dev cert expire, and how do I regenerate it?
 
 The dev certificate that secures the test-proxy's HTTPS endpoint is a **self-signed, localhost-rooted certificate**. Certificates rooted to `localhost` are capped at a **maximum lifetime of 365 days** by modern browsers and operating systems. This means the certificate checked into `eng/common/testproxy/` will periodically need to be regenerated.
 
-To regenerate the certificate, use the [`rotate.sh`](../../../../eng/common/testproxy/rotate.sh) script. The script uses `openssl` to produce a new `dotnet-devcert.crt` and `dotnet-devcert.pfx` that are valid for 365 days.
+To regenerate the certificate, use the [`rotate.sh`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/rotate.sh) script. The script uses `openssl` to produce a new `dotnet-devcert.crt` and `dotnet-devcert.pfx` that are valid for 365 days.
 
 ```bash
 # From WSL, Linux, or macOS — standing in the repo root:

@@ -8,6 +8,9 @@ parameters:
   - name: Feed
     type: string
     default: 'public/azure-sdk-for-net'
+  - name: UseEsrpForNugetOrg
+    type: boolean
+    default: true
   - name: PublishEnvironment
     type: string
     default: 'none'
@@ -110,13 +113,54 @@ jobs:
         runOnce:
           deploy:
             steps:
-              - task: 1ES.PublishNuget@1
-                displayName: Publish to ${{ parameters.Feed }}
-                inputs:
-                  packageParentPath: '$(Pipeline.Workspace)'
-                  packagesToPush: '$(Artifacts)/**/*.nupkg;!$(Artifacts)/**/*.symbols.nupkg'
-                  ${{ if eq(parameters.Feed, 'Nuget.org') }}:
-                    nuGetFeedType: external
-                    publishFeedCredentials: Nuget.org
-                  ${{ if ne(parameters.Feed, 'Nuget.org') }}:
-                    publishVstsFeed: ${{ parameters.Feed }}
+              - ${{ if and(eq(parameters.Feed, 'Nuget.org'), eq(parameters.UseEsrpForNugetOrg, true)) }}:
+                - pwsh: |
+                    $source = '$(Artifacts)'
+                    $destination = '$(Pipeline.Workspace)/esrp-release/nuget'
+                    $packages = @(Get-ChildItem -LiteralPath $source -Recurse -File -Filter '*.nupkg' |
+                      Where-Object { $_.Name -notlike '*.symbols.nupkg' })
+                    if ($packages.Count -eq 0) {
+                      throw "No product NuGet packages found in $source"
+                    }
+                    $duplicates = @($packages | Group-Object Name | Where-Object Count -gt 1)
+                    if ($duplicates.Count -gt 0) {
+                      throw "Duplicate NuGet package filenames found: $($duplicates.Name -join ', ')"
+                    }
+                    if (Test-Path -LiteralPath $destination) {
+                      Remove-Item -LiteralPath $destination -Recurse -Force
+                    }
+                    New-Item -ItemType Directory -Path $destination | Out-Null
+                    $packages | Copy-Item -Destination $destination
+                  displayName: Stage NuGet packages for ESRP
+
+                - task: EsrpRelease@14
+                  displayName: Publish to ${{ parameters.Feed }} via ESRP
+                  inputs:
+                    ConnectedServiceName: 'Azure SDK PME Managed Identity'
+                    ClientId: '5f81938c-2544-4f1f-9251-dd9de5b8a81b'
+                    DomainTenantId: '975f013f-7f24-47e8-a7d3-abc4752bf346'
+                    UseManagedIdentity: true
+                    KeyVaultName: 'kv-azuresdk-codesign'
+                    SignCertName: 'azure-sdk-esrp-release-certificate'
+                    Intent: 'PackageDistribution'
+                    ContentType: 'NuGet'
+                    OrganizationName: 'azure-sdk'
+                    ContentSource: 'Folder'
+                    FolderLocation: '$(Pipeline.Workspace)/esrp-release/nuget'
+                    WaitForReleaseCompletion: true
+                    Owners: ${{ coalesce(variables['Build.RequestedForEmail'], 'azuresdk@microsoft.com') }}
+                    Approvers: ${{ coalesce(variables['Build.RequestedForEmail'], 'azuresdk@microsoft.com') }}
+                    ServiceEndpointUrl: 'https://api.esrp.microsoft.com'
+                    MainPublisher: 'ESRPRELPACMAN'
+
+              - ${{ if or(ne(parameters.Feed, 'Nuget.org'), eq(parameters.UseEsrpForNugetOrg, false)) }}:
+                - task: 1ES.PublishNuget@1
+                  displayName: Publish to ${{ parameters.Feed }}
+                  inputs:
+                    packageParentPath: '$(Pipeline.Workspace)'
+                    packagesToPush: '$(Artifacts)/**/*.nupkg;!$(Artifacts)/**/*.symbols.nupkg'
+                    ${{ if eq(parameters.Feed, 'Nuget.org') }}:
+                      nuGetFeedType: external
+                      publishFeedCredentials: Nuget.org
+                    ${{ if ne(parameters.Feed, 'Nuget.org') }}:
+                      publishVstsFeed: ${{ parameters.Feed }}

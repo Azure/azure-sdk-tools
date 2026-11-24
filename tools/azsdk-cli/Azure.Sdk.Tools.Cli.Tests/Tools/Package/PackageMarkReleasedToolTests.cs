@@ -72,7 +72,7 @@ public class PackageMarkReleasedToolTests
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
             "python", "azure-test", "1.0.0", "hash", "tjprescott", It.IsAny<CancellationToken>(), false), Times.Once);
         apiViewService.Verify(x => x.MarkPackageReleasedAsync(
-            "azure-test", "python", "1.0.0",
+            "azure-test", "Python", "1.0.0",
             It.IsAny<CancellationToken>(), false), Times.Once);
     }
 
@@ -262,7 +262,7 @@ public class PackageMarkReleasedToolTests
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
         apiViewService.Verify(x => x.MarkPackageReleasedAsync(
-            "azure-test", "python", "1.0.0", It.IsAny<CancellationToken>(), false), Times.Once);
+            "azure-test", "Python", "1.0.0", It.IsAny<CancellationToken>(), false), Times.Once);
     }
 
     [Test]
@@ -311,7 +311,68 @@ public class PackageMarkReleasedToolTests
         apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
             "python", "azure-test", "1.0.0", "hash", string.Empty, It.IsAny<CancellationToken>(), true), Times.Once);
         apiViewService.Verify(x => x.MarkPackageReleasedAsync(
-            "azure-test", "python", "1.0.0", It.IsAny<CancellationToken>(), true), Times.Once);
+            "azure-test", "Python", "1.0.0", It.IsAny<CancellationToken>(), true), Times.Once);
+    }
+
+    [TestCase("js", "javascript", "JavaScript")]
+    [TestCase("javascript", "javascript", "JavaScript")]
+    [TestCase("TypeScript", "javascript", "JavaScript")]
+    [TestCase("ts", "javascript", "JavaScript")]
+    [TestCase("net", "csharp", "C#")]
+    [TestCase(".NET", "csharp", "C#")]
+    [TestCase("dotnet", "csharp", "C#")]
+    [TestCase("C#", "csharp", "C#")]
+    [TestCase("cs", "csharp", "C#")]
+    [TestCase("C++", "cpp", "C++")]
+    [TestCase("golang", "go", "Go")]
+    [TestCase("py", "python", "Python")]
+    public async Task Command_NormalizesLanguageForBothBackends(string language, string reviewHubLanguage, string apiViewLanguage)
+    {
+        var command = tool.GetCommandInstances().Single();
+        var parseResult = command.Parse(
+            $"--language {language} --package-name azure-test --package-version 1.0.0 --api-hash hash --repo-owner tjprescott");
+
+        Assert.That(parseResult.Errors, Is.Empty);
+        var response = await tool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ExitCode, Is.Zero);
+        apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
+            reviewHubLanguage, "azure-test", "1.0.0", "hash", "tjprescott", It.IsAny<CancellationToken>(), false), Times.Once);
+        apiViewService.Verify(x => x.MarkPackageReleasedAsync(
+            "azure-test", apiViewLanguage, "1.0.0", It.IsAny<CancellationToken>(), false), Times.Once);
+    }
+
+    [Test]
+    public async Task MarkReleasedAsync_WithoutApiHash_NormalizesLanguageForAPIView()
+    {
+        var response = await tool.MarkReleasedAsync("ts", "@azure/test", "1.0.0", "", "");
+
+        Assert.That(response.ApiReviewHubSkipped, Is.True);
+        Assert.That(response.ApiViewSucceeded, Is.True);
+        apiViewService.Verify(x => x.MarkPackageReleasedAsync(
+            "@azure/test", "JavaScript", "1.0.0", It.IsAny<CancellationToken>(), false), Times.Once);
+    }
+
+    [Test]
+    public void Command_RejectsUnknownLanguage()
+    {
+        var command = tool.GetCommandInstances().Single();
+        var parseResult = command.Parse("--language unknown --package-name pkg --package-version 1.0.0");
+
+        Assert.That(parseResult.Errors.Single().Message, Does.Contain("Invalid language 'unknown'"));
+    }
+
+    [Test]
+    public async Task MarkReleasedAsync_RejectsUnknownLanguageBeforeCallingBackends()
+    {
+        var response = await tool.MarkReleasedAsync("unknown", "pkg", "1.0.0", "hash", "");
+
+        Assert.That(response.ExitCode, Is.EqualTo(1));
+        Assert.That(response.ResponseErrors.Single(), Does.Contain("Unsupported SDK language 'unknown'"));
+        apiReviewHubService.Verify(x => x.MarkPackageReleasedAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
+        apiViewService.Verify(x => x.MarkPackageReleasedAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Test]

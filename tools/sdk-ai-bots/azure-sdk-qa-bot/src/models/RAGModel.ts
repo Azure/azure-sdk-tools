@@ -2,7 +2,7 @@ import { Memory, PromptCompletionModel, PromptFunctions, PromptTemplate, Tokeniz
 import { TurnContext } from 'botbuilder';
 import { AdditionalInfo, CompletionRequestPayload, getRAGReply, Message, RAGOptions } from '../backend/rag.js';
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
-import { ThinkingHandler } from '../turn/ThinkingHandler.js';
+import { ReplyHandler } from '../turn/ReplyHandler.js';
 import config from '../config/config.js';
 import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenerator.js';
 import { logger } from '../logging/logger.js';
@@ -44,27 +44,43 @@ export class RAGModel implements PromptCompletionModel {
     const token = await getAccessTokenByManagedIdentity(this.credential, config.ragScope);
     const meta = getTurnContextLogMeta(context);
     const { channelId } = parseConversationId(context.activity.conversation.id);
-    const ragTenantId = this.channelConfigManager.getRagTenant(channelId);
-    const ragEndpoint = this.channelConfigManager.getRagEndpoint(channelId);
-    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
+    const channelConfig = this.channelConfigManager.getChannelConfig(channelId);
+    const ragTenantId = channelConfig.tenant;
+    const ragEndpoint = channelConfig.endpoint;
+    const channelName =
+      channelConfig.name && channelConfig.name !== 'default'
+        ? channelConfig.name
+        : context.activity.channelData?.channel?.name;
+    logger.info(`Processing request for channel ${channelId} (${channelName ?? 'default'}) on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,
       accessToken: token ? token.token : undefined
     };
-    logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
+    logger.info('Received activity', {
+      activityId: context.activity.id,
+      attachmentCount: context.activity.attachments?.length ?? 0,
+      meta,
+    });
 
-    const thinkingHandler = new ThinkingHandler(context, this.conversationHandler, this.tenantConfigManager);
+    const replyHandler = new ReplyHandler(context, this.conversationHandler, this.tenantConfigManager);
 
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    const replyStartTimestamp = await thinkingHandler.start(conversationMessages);
+    const replyStartTimestamp = new Date();
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
-    const completionPayload = this.convertFullPromptToCompletionRequestPayload(fullPrompt, ragTenantId);
+    const completionPayload = this.convertFullPromptToCompletionRequestPayload(
+      fullPrompt,
+      ragTenantId,
+      channelName
+    );
 
-    logger.info('prompt to RAG', { prompt: fullPrompt, meta });
+    logger.info('prompt to RAG', {
+      prompt: { ...fullPrompt, additionalInfo: { imageCount: fullPrompt.additionalInfo.images.length } },
+      meta,
+    });
     let ragReply = await getRAGReply(completionPayload, ragOptions, meta);
     if (!ragReply) {
       ragReply = {
@@ -74,21 +90,15 @@ export class RAGModel implements PromptCompletionModel {
         references: undefined,
       };
     }
-    // Best-effort cancel: safeCancelTimer can throw if the thinking loop can't be stopped.
-    // Swallow the error so stop() still updates the activity with the final reply.
-    try {
-      await thinkingHandler.safeCancelTimer();
-    } catch (error: any) {
-      logger.warn('safeCancelTimer failed unexpectedly, proceeding to deliver reply', { error: error?.message, meta });
-    }
-    await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt, ragTenantId);
+    await replyHandler.sendReply(replyStartTimestamp, ragReply, currentPrompt, conversationMessages, ragTenantId);
 
     return { status: 'success' };
   }
 
   private convertFullPromptToCompletionRequestPayload(
     fullPrompt: MessageWithRemoteContent,
-    tenantId: string
+    tenantId: string,
+    channelName?: string
   ): CompletionRequestPayload {
     const message: Message = {
       role: 'user',
@@ -104,6 +114,7 @@ export class RAGModel implements PromptCompletionModel {
 
     const payload: CompletionRequestPayload = {
       tenant_id: tenantId,
+      ...(channelName ? { channel_name: channelName } : {}),
       message: message,
       additional_infos,
       conversation_id: fullPrompt.conversationID,

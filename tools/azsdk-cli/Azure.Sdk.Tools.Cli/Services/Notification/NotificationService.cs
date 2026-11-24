@@ -9,14 +9,29 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services.Notification
 {
+    public enum NotificationStatus
+    {
+        Sent,
+        Disabled,
+        SkippedNoRecipients,
+        Failed
+    }
+
+    public record NotificationResult(NotificationStatus Status, string? ErrorMessage = null)
+    {
+        public static NotificationResult Sent { get; } = new(NotificationStatus.Sent);
+
+        public bool IsFailure => Status == NotificationStatus.Failed;
+    }
+
     public interface INotificationService
     {
         /// <summary>
         /// Sends the email described by <paramref name="payload"/>.
-        /// The call silently completes when notifications are disabled or the notification
-        /// service URL is not configured.
+        /// Returns the delivery outcome so callers can surface failures. Notifications that are
+        /// disabled or have no valid recipients are reported as skipped outcomes, not failures.
         /// </summary>
-        Task SendEmailNotificationAsync(EmailPayload payload, CancellationToken ct = default);
+        Task<NotificationResult> SendEmailNotificationAsync(EmailPayload payload, CancellationToken ct = default);
     }
 
     public class NotificationService(
@@ -30,13 +45,13 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        public async Task SendEmailNotificationAsync(EmailPayload payload, CancellationToken ct = default)
+        public async Task<NotificationResult> SendEmailNotificationAsync(EmailPayload payload, CancellationToken ct = default)
         {
             ArgumentNullException.ThrowIfNull(payload);
 
             if (!IsNotificationEnabled(out var serviceUrl))
             {
-                return;
+                return new NotificationResult(NotificationStatus.Disabled);
             }
 
             payload.EmailTo = NormalizeRecipients(payload.EmailTo);
@@ -45,7 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
             if (payload.EmailTo.Count == 0)
             {
                 logger.LogWarning("Email notification has no valid recipients. Skipping notification.");
-                return;
+                return new NotificationResult(NotificationStatus.SkippedNoRecipients);
             }
 
             try
@@ -61,15 +76,22 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
                     logger.LogWarning(
                         "Failed to send email notification. Status: {StatusCode}. Response: {Response}",
                         response.StatusCode, responseBody);
-                    return;
+                    return new NotificationResult(
+                        NotificationStatus.Failed,
+                        $"Notification service returned HTTP {(int)response.StatusCode} ({response.StatusCode}). Response: {responseBody}");
                 }
 
                 logger.LogInformation("Email notification sent to {Recipients}.", string.Join(", ", payload.EmailTo));
+                return NotificationResult.Sent;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                // Notification failures should never break the calling workflow.
                 logger.LogWarning(ex, "An error occurred while sending the email notification.");
+                return new NotificationResult(NotificationStatus.Failed, ex.Message);
             }
         }
 

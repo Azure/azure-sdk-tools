@@ -15,7 +15,7 @@ using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec;
 
 [TestFixture]
-public class CustomizedCodeUpdateToolAutoTests
+public partial class CustomizedCodeUpdateToolAutoTests
 {
     // --- Shared helpers ---
 
@@ -32,6 +32,7 @@ public class CustomizedCodeUpdateToolAutoTests
     /// </summary>
     private static (CustomizedCodeUpdateTool tool, ToolMocks mocks) CreateTool(
         LanguageService? languageService = null,
+        Mock<IGitHelper>? gitHelper = null,
         Action<Mock<IGitHelper>>? configureGit = null,
         Action<Mock<IFeedbackClassifierService>>? configureClassifier = null,
         Action<Mock<ITypeSpecCustomizationService>>? configureTspCustomization = null,
@@ -39,9 +40,12 @@ public class CustomizedCodeUpdateToolAutoTests
         ITspClientHelper? tspHelper = null,
         INpxHelper? npxHelper = null)
     {
-        var gitHelper = new Mock<IGitHelper>();
-        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
-        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        if (gitHelper is null)
+        {
+            gitHelper = new Mock<IGitHelper>();
+            gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+            gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        }
         configureGit?.Invoke(gitHelper);
 
         var feedbackService = new Mock<IAPIViewFeedbackService>();
@@ -1840,6 +1844,7 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(result.SpecChangeRequired, Is.Null, "SpecInputs scope edits spec inputs, so spec items are not out of scope.");
         Assert.That(result.AppliedPatches, Is.Null.Or.Empty, "SpecInputs scope must not patch custom code.");
         Assert.That(patchCalls, Is.EqualTo(0), "SpecInputs scope must never invoke ApplyPatchesAsync.");
+        Assert.That(result.TypeSpecChangesSummary, Is.Not.Null.And.Count.EqualTo(1));
 
         mocks.TypeSpecCustomization.Verify(t => t.ApplyCustomizationAsync(
             It.IsAny<string>(),
@@ -2094,7 +2099,7 @@ public class CustomizedCodeUpdateToolAutoTests
                 g.Setup(x => x.DiscoverRepoRootAsync(pkg, cts.Token)).ReturnsAsync(repoRoot);
             });
 
-        var result = await tool.UpdateAsync(pkg, "Fix token accessibility", tspDir, editScope, cts.Token);
+        var result = await tool.UpdateAsync("Fix token accessibility", pkg, tspDir, editScope, cts.Token);
 
         Assert.That(operations, Is.EqualTo(new[] { "build", "patch", "prepare", "regenerate", "build" }));
         Assert.That(result.Success, Is.EqualTo(finalBuildSucceeds));
@@ -2132,7 +2137,7 @@ public class CustomizedCodeUpdateToolAutoTests
             configureClassifier: CodeCustomizationClassifier("Fix customization"),
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
 
-        var result = await tool.UpdateAsync(CreateTempDir(), "Fix customization", editScope: EditScope.CustomCode);
+        var result = await tool.UpdateAsync("Fix customization", CreateTempDir(), editScope: EditScope.CustomCode);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(hasCustomizations
@@ -2178,12 +2183,12 @@ public class CustomizedCodeUpdateToolAutoTests
         if (cancel)
         {
             var exception = Assert.ThrowsAsync<OperationCanceledException>(
-                () => tool.UpdateAsync(pkg, "Fix customization", editScope: EditScope.CustomCode, ct: cts.Token));
+                () => tool.UpdateAsync("Fix customization", pkg, editScope: EditScope.CustomCode, ct: cts.Token));
             Assert.That(exception!.CancellationToken, Is.EqualTo(cts.Token));
         }
         else
         {
-            var result = await tool.UpdateAsync(pkg, "Fix customization", editScope: EditScope.CustomCode, ct: cts.Token);
+            var result = await tool.UpdateAsync("Fix customization", pkg, editScope: EditScope.CustomCode, ct: cts.Token);
             Assert.That(result.Success, Is.False);
             Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
             Assert.That(result.BuildResult, Is.EqualTo("Preparation failed"));
@@ -2219,7 +2224,7 @@ public class CustomizedCodeUpdateToolAutoTests
             configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net"));
 
         var exception = Assert.ThrowsAsync<OperationCanceledException>(
-            () => tool.UpdateAsync(pkg, "Fix customization", editScope: EditScope.CustomCode, ct: cts.Token));
+            () => tool.UpdateAsync("Fix customization", pkg, editScope: EditScope.CustomCode, ct: cts.Token));
 
         Assert.That(exception!.CancellationToken, Is.EqualTo(cts.Token));
         Assert.That(buildCalls, Is.EqualTo(1));
@@ -2235,8 +2240,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
 
         var result = await tool.UpdateAsync(
-            packagePath: pkg,
             customizationRequest: "Rename FooClient to BarClient",
+            packagePath: pkg,
             editScope: EditScope.SpecInputs,
             ct: CancellationToken.None);
 
@@ -2254,18 +2259,189 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
 
         var result = await tool.UpdateAsync(
-            packagePath: pkg,
             customizationRequest: "Rename FooClient to BarClient",
+            packagePath: pkg,
             ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
     }
 
+    [Test]
+    public async Task SpecInputsScope_InvalidPackageProjectPath_NotReturnInvalidInput()
+    {
+        // SpecInputs scope, package path is optional. The tool should not fail fast with InvalidInput if the package path is invalid.
+        var gitHelper = MockGitHelper();
+        var (tool, _) = CreateTool(gitHelper: gitHelper);
+        var pkg = "invalid-path";
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            customizationRequest: "Rename FooClient to BarClient",
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+    }
+
+    [Test]
+    public async Task SpecInputsScope_NoPackageProjectPath_NotReturnInvalidInput()
+    {
+        // SpecInputs scope, package path is optional. The tool should not fail fast with InvalidInput if the package path is invalid.
+        var gitHelper = MockGitHelper();
+        var (tool, _) = CreateTool(gitHelper: gitHelper);
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(
+            customizationRequest: "Rename FooClient to BarClient",
+            tspProjectPath: tspDir,
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+    }
+
+    [Test]
+    public async Task CustomCodeScope_InvalidPackageProjectPath_ReturnInvalidInput()
+    {
+        // CustomCode scope edits local custom code, which requires a package path to locate the customization files.
+        // Invalid package path must fail fast with InvalidInput.
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
+        var pkg = "invalid-path";
+
+        var result = await tool.UpdateAsync(
+            customizationRequest: "Rename FooClient to BarClient",
+            packagePath: pkg,
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.ResponseError, Does.Contain("Package path").IgnoreCase); ;
+    }
+
+    [Test]
+    public async Task CustomCodeScope_NoPackageProjectPath_ReturnInvalidInput()
+    {
+        // CustomCode scope edits local custom code, which requires a package path to locate the customization files.
+        // Invalid package path must fail fast with InvalidInput.
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
+
+        var result = await tool.UpdateAsync(
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: EditScope.CustomCode,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.ResponseError, Does.Contain("Package path").IgnoreCase); ;
+    }
+
+    [Test]
+    public async Task AllScope_InvalidPackageProjectPath_ReturnInvalidInput()
+    {
+        // All scope edits both spec inputs and local custom code, which requires a package path to locate the customization files.
+        // Invalid package path must fail fast with InvalidInput.
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
+        var pkg = "invalid-path";
+
+        var result = await tool.UpdateAsync(
+            customizationRequest: "Rename FooClient to BarClient",
+            packagePath: pkg,
+            editScope: EditScope.All,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.ResponseError, Does.Contain("Package path").IgnoreCase); ;
+    }
+
+    [Test]
+    public async Task AllScope_NoPackageProjectPath_ReturnInvalidInput()
+    {
+        // All scope edits both spec inputs and local custom code, which requires a package path to locate the customization files.
+        // Invalid package path must fail fast with InvalidInput.
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
+
+        var result = await tool.UpdateAsync(
+            customizationRequest: "Rename FooClient to BarClient",
+            editScope: EditScope.All,
+            ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.ResponseError, Does.Contain("Package path").IgnoreCase); ;
+    }
+    [Test]
+    public async Task SpecInputsScope_InvalidPackageProjectPath_ReturnSuccess()
+    {
+        // SpecInputs scope edits local spec inputs, package path is optional.
+        // invalid package path will not cause failure. and the typespec customization will resolve the request.
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
+        var pkg = "invalid-path";
+        var tspDir = CreateTempDir();
+        var result = await tool.UpdateAsync(
+            customizationRequest: "Rename FooClient to BarClient",
+            packagePath: pkg,
+            tspProjectPath: tspDir,
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.TypeSpecChangesSummary, Is.Not.Null);
+        Assert.That(result.TypeSpecChangesSummary.Count, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public async Task SpecInputsScope_NoPackageProjectPath_ReturnSuccess()
+    {
+        // SpecInputs scope edits local spec inputs, package path is optional.
+        // invalid package path will not cause failure. and the typespec customization will resolve the request.
+        var (tool, _) = CreateTool(gitHelper: MockGitHelper());
+        var tspDir = CreateTempDir();
+        var result = await tool.UpdateAsync(
+            customizationRequest: "Rename FooClient to BarClient",
+            tspProjectPath: tspDir,
+            editScope: EditScope.SpecInputs,
+            ct: CancellationToken.None);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.TypeSpecChangesSummary, Is.Not.Null);
+        Assert.That(result.TypeSpecChangesSummary.Count, Is.GreaterThan(0));
+    }
     // ========================================================================
     // Mock helpers
     // ========================================================================
+    private static Mock<IGitHelper> MockGitHelper()
+    {
+        var gitHelper = new Mock<IGitHelper>();
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns<string, CancellationToken>((path, ct) =>
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException("Path cannot be null or empty", nameof(path));
+            }
+            if (!Directory.Exists(path))
+            {
+                throw new InvalidOperationException($"The directory '{path}' does not exist.");
+            }
+            return Task.FromResult("azure-sdk-for-java");
+        });
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns<string, CancellationToken>((path, ct) =>
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException("Path cannot be null or empty", nameof(path));
+            }
+            if (!Directory.Exists(path))
+            {
+                throw new InvalidOperationException($"The directory '{path}' does not exist.");
+            }
+            return Task.FromResult("/mock/repo/root");
+        });
 
+        return gitHelper;
+    }
     /// <summary>
     /// Flexible language service mock where all behaviors can be configured via constructor.
     /// </summary>
@@ -2279,6 +2455,9 @@ public class CustomizedCodeUpdateToolAutoTests
 
         public override SdkLanguage Language { get; }
         public override bool IsCustomizedCodeUpdateSupported => _isCustomizedCodeUpdateSupported;
+        public int RepairSessions { get; private set; }
+        public List<string> ValidationReasons { get; } = [];
+        public bool SkipAgentValidation { get; set; }
 
         public ConfigurableLanguageService(
             Func<(bool, string?, PackageInfo?)>? buildFunc = null,
@@ -2308,10 +2487,31 @@ public class CustomizedCodeUpdateToolAutoTests
         public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct)
             => Task.FromResult(_patchesFunc?.Invoke() ?? new List<AppliedPatch>());
 
+        public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+            string customizationRoot, string packagePath, string buildContext, CancellationToken ct,
+            int maxAttempts, Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
+        {
+            RepairSessions++;
+            List<AppliedPatch> patches = [];
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                patches.AddRange(await ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct));
+                if (SkipAgentValidation || validateResult == null) { return patches; }
+                try
+                {
+                    var validation = await validateResult(patches);
+                    if (validation.Success) { return patches; }
+                    ValidationReasons.Add(validation.Reason?.ToString() ?? "");
+                }
+                catch (InvalidOperationException) { return patches; }
+            }
+            return patches;
+        }
+
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
             => Task.FromResult(ValidationResult.CreateSuccess());
 
-        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, string? additionalArguments = null, int timeoutMinutes = 30, CancellationToken ct = default)
             => Task.FromResult(_buildFunc());
 
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)

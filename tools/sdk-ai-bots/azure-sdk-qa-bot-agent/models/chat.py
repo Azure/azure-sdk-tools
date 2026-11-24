@@ -7,10 +7,11 @@ See: tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tsp/models.tsp
 from __future__ import annotations
 
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from config.tenant_config import TenantID
 from models.conversation import ConversationType, Role
 from models.knowledge import Reference
+from models.identity import TeamsMention
 
 # ===== Enumerations =====
 
@@ -73,6 +74,7 @@ class ChatRequest(BaseModel):
     """Request for chat completion."""
 
     tenant_id: TenantID
+    channel_name: str | None = None
     conversation_id: str | None = None
     conversation_type: ConversationType | None = None
     message: Message
@@ -88,6 +90,13 @@ class ChatResponse(BaseModel):
     has_result: bool
     references: list[Reference] | None = None
     full_context: str | None = None
-    route_tenant: TenantID | None = None
+    route_tenant: TenantID | None = Field(
+        default=None,
+        description="Deprecated: use route_channel_name and route_channel_link instead.",
+    )
+    route_channel_name: str | None = None
+    route_channel_link: str | None = None
     agent_conversation_id: str | None = None
     trace_id: str | None = None
+    mentions: list[TeamsMention] | None = None
+    agent_name: str | None = None

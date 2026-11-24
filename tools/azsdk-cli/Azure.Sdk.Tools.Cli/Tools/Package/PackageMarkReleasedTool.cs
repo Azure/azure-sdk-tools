@@ -5,6 +5,8 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.ApiReviewHub;
 using Azure.Sdk.Tools.Cli.Services.APIView;
+using Azure.Sdk.Tools.Cli.Tools.ApiReviewHub;
+using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package;
@@ -22,7 +24,7 @@ public class PackageMarkReleasedTool(
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
-    private readonly Option<string> languageOption = RequiredOption("--language", "The SDK language.");
+    private readonly Option<string> languageOption = ApiReviewHubTool.CreateLanguageOption();
     private readonly Option<string> packageNameOption = RequiredOption("--package-name", "The package name.");
     private readonly Option<string> packageVersionOption = RequiredOption("--package-version", "The released package version.");
     private readonly Option<string> apiHashOption = new("--api-hash")
@@ -71,6 +73,8 @@ public class PackageMarkReleasedTool(
     {
         try
         {
+            string reviewHubLanguage = ApiReviewHubTool.ResolveLanguage(language)
+                ?? throw new ArgumentException($"Unsupported SDK language '{language}'.", nameof(language));
             JsonElement? reviewHubResponse = null;
             bool reviewHubSucceeded = false;
             bool reviewHubSkipped = false;
@@ -89,7 +93,7 @@ public class PackageMarkReleasedTool(
             {
                 try
                 {
-                    var result = await apiReviewHubService.MarkPackageReleasedAsync(language, packageName, packageVersion, apiHash, repoOwner, ct, dryRun);
+                    var result = await apiReviewHubService.MarkPackageReleasedAsync(reviewHubLanguage, packageName, packageVersion, apiHash, repoOwner, ct, dryRun);
                     reviewHubResponse = JsonSerializer.SerializeToElement(result, responseSerializerOptions);
                     reviewHubSucceeded = true;
                     string reviewHubAction = dryRun ? "Dry run resolved" : "Release request resolved";
@@ -109,7 +113,9 @@ public class PackageMarkReleasedTool(
             string apiViewMessage;
             try
             {
-                var result = await apiViewService.MarkPackageReleasedAsync(packageName, language, packageVersion, ct, dryRun);
+                string apiViewLanguage = APIViewReviewTool.ResolveLanguage(reviewHubLanguage)
+                    ?? throw new ArgumentException($"APIView does not support language '{language}'.", nameof(language));
+                var result = await apiViewService.MarkPackageReleasedAsync(packageName, apiViewLanguage, packageVersion, ct, dryRun);
                 apiViewResponse = JsonSerializer.SerializeToElement(result, responseSerializerOptions);
                 apiViewSucceeded = true;
                 string releaseState = result.IsReleased

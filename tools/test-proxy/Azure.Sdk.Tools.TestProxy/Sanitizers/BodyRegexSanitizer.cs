@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Text.RegularExpressions;
 
@@ -8,8 +11,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// </summary>
     public class BodyRegexSanitizer : RecordedTestSanitizer
     {
-        private string _newValue;
-        private string _groupForReplace = null;
+        private readonly string _newValue;
+        private readonly string _groupForReplace = null;
         private readonly Regex _regex;
 
         /// <summary>
@@ -25,12 +28,17 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
         /// </param>
         public BodyRegexSanitizer(string value = "Sanitized", string regex = null, string groupForReplace = null, ApplyCondition condition = null)
+            : this(GetRegex(regex), value, groupForReplace, condition)
+        {
+        }
+
+        internal BodyRegexSanitizer(Regex regex, string value = "Sanitized", string groupForReplace = null, ApplyCondition condition = null)
         {
             _scope = SanitizerScope.Body;
             _newValue = value;
             _groupForReplace = groupForReplace;
             Condition = condition;
-            _regex = GetRegex(regex);
+            _regex = regex;
         }
 
         public override string SanitizeTextBody(string contentType, string body)

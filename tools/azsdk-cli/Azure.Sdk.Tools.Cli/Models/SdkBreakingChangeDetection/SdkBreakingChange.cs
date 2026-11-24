@@ -25,10 +25,28 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
         public SdkBreakingChangeCategory Category { get; set; }
 
         /// <summary>
-        /// The resolution for the breaking change, if available.
+        /// Actionable instructions for resolving the breaking change, if available.
+        /// Retained for customization consumers; unlike MitigationStrategy, this describes what to do.
         /// </summary>
         [JsonPropertyName("resolution")]
         public string? Resolution { get; set; }
+
+        /// <summary>
+        /// Verified TypeSpec source code responsible for the breaking change, if available.
+        /// This is causal evidence, not a proposed mitigation.
+        /// </summary>
+        [JsonPropertyName("typespecCode")]
+        public string? TypespecCode { get; set; }
+
+        /// <summary>
+        /// The mitigation route (generator, client customization, or manual), not the fix instructions.
+        /// Client customization includes TypeSpec client customization and handwritten SDK custom
+        /// code, never generated code.
+        /// Detection and classification never apply the mitigation themselves.
+        /// </summary>
+        [JsonPropertyName("mitigationStrategy")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public SdkBreakingChangeMitigationStrategy? MitigationStrategy { get; set; }
 
         /// <summary>
         /// The original breaking changes that this change is related to, if any.

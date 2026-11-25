@@ -44,5 +44,5 @@ azure-mgmt-keyvault==12.0.0
 azure-mgmt-resource>=22.0.0,<23.0.0
 azure-mgmt-search==9.1.0
 azure-mgmt-web==8.0.0
-pylint==3.3.7
+pylint==4.0.9
 PyYAML==6.0.2

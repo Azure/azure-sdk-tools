@@ -156,6 +156,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
+        private readonly Option<bool> isProvisioningOpt = new("--is-provisioning")
+        {
+            Description = "Link the optional .NET or JavaScript provisioning SDK PR in a management-plane release plan."
+        };
+
         private readonly Option<int> pullRequestNumberOpt = new("--pr")
         {
             Description = "Pull request number",
@@ -339,7 +344,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             },
             new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
-            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
+            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, isProvisioningOpt },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
             new McpCommand(abandonOverdueReleasePlansCommandName, "Abandon inactive release plans after one full overdue calendar month") { dryRunOpt, inactivityDaysOpt },
             new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
@@ -403,7 +408,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return await CheckApiReadyForSDKGeneration(commandParser.GetValue(typeSpecProjectPathOpt), pullRequestNumber: commandParser.GetValue(pullRequestNumberOpt), workItemId: commandParser.GetValue(workItemIdOpt), ct: ct);
 
                 case linkSdkPrCommandName:
-                    return await LinkSdkPullRequestToReleasePlan(commandParser.GetValue(languageOpt), commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt), ct: ct);
+                    return await LinkSdkPullRequestToReleasePlan(commandParser.GetValue(languageOpt), commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt), ct: ct, isProvisioning: commandParser.GetValue(isProvisioningOpt));
 
                 case listOverdueReleasePlansCommandName:
                     return await ListOverdueReleasePlans(commandParser.GetValue(notifyOwnersOpt), commandParser.GetValue(azureSDKEmailerUriOpt), ct);
@@ -1024,6 +1029,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var sdkInfos = resolvedPackages.Select(p => new SDKInfo
                     {
                         Language = p.Language.ToWorkItemString(),
+                        IsProvisioning = p.IsProvisioning,
                         PackageName = p.PackageName ?? string.Empty
                     }).ToList();
 
@@ -1571,6 +1577,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             .Select(p => new SDKInfo
                             {
                                 Language = p.Language.ToWorkItemString(),
+                                IsProvisioning = p.IsProvisioning,
                                 PackageName = p.PackageName!
                             })];
 
@@ -1731,6 +1738,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     .Select(p => new SDKInfo
                     {
                         Language = p.Language.ToWorkItemString(),
+                        IsProvisioning = p.IsProvisioning,
                         PackageName = p.PackageName!
                     })
                     .ToList();
@@ -1763,7 +1771,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         sb.Append("Updated SDK details in release plan.").AppendLine();
                         foreach (var sdk in SdkInfos)
                         {
-                            sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
+                            sb.AppendLine($"Language: {sdk.Language}{(sdk.IsProvisioning ? " Provisioning" : "")}, Package name: {sdk.PackageName}");
                         }
                     }
                 }
@@ -1776,12 +1784,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Preserve an existing Requested/Approved exclusion status so intentional exclusions are not
                 // overwritten by the inferred MissingEmitterConfig state.
                 var languagesMissingEmitterConfig = requiredLanguages
-                    .Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase)
+                    .Except(SdkInfos.Where(sdk => !sdk.IsProvisioning).Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase)
                     .ToList();
                 var existingSdkInfos = releasePlan.SDKInfo ?? [];
                 var languagesToMarkMissingEmitterConfig = languagesMissingEmitterConfig
                     .Where(lang => !existingSdkInfos.Any(info =>
                         string.Equals(info.Language, lang, StringComparison.OrdinalIgnoreCase)
+                        && !info.IsProvisioning
                         && (string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
                             || string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))))
                     .ToList();
@@ -2108,8 +2117,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             };
         }
 
-        [McpServerTool(Name = LinkSdkPullRequestToolName), Description("Link SDK pull request to release plan work item")]
-        public async Task<ReleaseWorkflowResponse> LinkSdkPullRequestToReleasePlan(string language, string pullRequestUrl, int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default)
+        [McpServerTool(Name = LinkSdkPullRequestToolName), Description("Link SDK pull request to release plan work item. Pass isProvisioning=true to link the optional management-plane .NET or JavaScript provisioning SDK PR; omit it to link the normal SDK PR.")]
+        public async Task<ReleaseWorkflowResponse> LinkSdkPullRequestToReleasePlan(string language, string pullRequestUrl, int workItemId = 0, int releasePlanId = 0, CancellationToken ct = default,
+            [Description("Link the optional provisioning SDK PR. Supported only for management-plane .NET and JavaScript packages.")] bool isProvisioning = false)
         {
             try
             {
@@ -2153,10 +2163,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                var sdkInfoInRelease = devOpsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl, "Completed", ct: ct);
+                if (string.Equals(releasePlan.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                {
+                    response.ResponseError = "SDK pull requests cannot be linked to a Finished release plan.";
+                    return response;
+                }
+
+                DevOpsService.ValidateProvisioningSdk(language, isProvisioning, releasePlan.IsManagementPlane);
+                if (isProvisioning && releasePlan.SDKInfo.Count(sdk => sdk.IsProvisioning && string.Equals(sdk.Language, language, StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(sdk.PackageName)) != 1)
+                {
+                    response.ResponseError = "The release plan must contain exactly one configured provisioning package for the selected language.";
+                    return response;
+                }
+
+                var sdkInfoInRelease = isProvisioning
+                    ? devOpsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl, "Completed", true, ct)
+                    : devOpsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl, "Completed", ct: ct);
                 var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan, ct);
 
                 await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
+                if (!await sdkInfoInRelease)
+                {
+                    response.ResponseError = "Failed to save the SDK pull request in the release plan.";
+                    return response;
+                }
                 if (releasePlan.IsManagementPlane)
                 {
                     response.PackageType = SdkType.Management;
@@ -3022,6 +3053,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
 
             var apiVersions = packages
+                .Where(p => !p.IsProvisioning)
                 .Select(p => p.ApiVersion)
                 .Where(v => !string.IsNullOrEmpty(v))
                 .Distinct()

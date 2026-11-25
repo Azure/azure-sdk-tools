@@ -33,12 +33,90 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService
                 .Setup(x => x.GetReleasePlansBySdkPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync([]);
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlanForWorkItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((int workItemId, CancellationToken _) => ReadCurrentPlan(workItemId));
             logger = new TestLogger<PackageReleaseStatusTool>();
             mockNotificationService = new Mock<INotificationService>();
             mockNotificationService
                 .Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new NotificationResult(NotificationStatus.Sent));
             packageReleaseStatusTool = new PackageReleaseStatusTool(mockDevOpsService.Object, logger, mockNotificationService.Object);
+        }
+
+        [Test]
+        public async Task LegacyProvisioningLookup_UpdatesProvisioningFieldsAndCompletionOnly()
+        {
+            var provisioning = new SDKInfo
+            {
+                Language = ".NET",
+                IsProvisioning = true,
+                PackageName = "Azure.Provisioning.Test",
+                ReleaseStatus = "Pending",
+                SdkPullRequestUrl = "provisioning-pr"
+            };
+            var normal = new SDKInfo { Language = ".NET", PackageName = "Azure.Test", ReleaseStatus = "Released" };
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 100,
+                ReleasePlanId = 100,
+                IsManagementPlane = true,
+                SDKInfo =
+                [
+                    provisioning, normal,
+                    new SDKInfo { Language = "JavaScript", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Python", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Java", ReleaseStatus = "Released" },
+                    new SDKInfo { Language = "Go", ReleaseStatus = "Released" }
+                ]
+            };
+            mockDevOpsService.Setup(x => x.GetReleasePlansForPackageAsync("Azure.Provisioning.Test", ".NET", It.IsAny<bool>(), true, It.IsAny<CancellationToken>()))
+                .ReturnsAsync([plan]);
+            List<Dictionary<string, string>> writes = [];
+            mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(100, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) => writes.Add(fields))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 100 });
+
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("Azure.Provisioning.Test", ".NET",
+                "Released", "1.0.0", isProvisioning: true);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanFinished, Is.True);
+            Assert.That(writes[0], Is.EquivalentTo(new Dictionary<string, string>
+            {
+                ["Custom.ReleaseStatusForDotnetProvisioning"] = "Released",
+                ["Custom.ReleasedVersionForDotnetProvisioning"] = "1.0.0"
+            }));
+            Assert.That(writes, Has.Count.EqualTo(1));
+            mockDevOpsService.Verify(x => x.UpdateWorkItemAsync(100,
+                It.Is<Dictionary<string, string>>(d => d["System.State"] == "Finished"), 1, It.IsAny<CancellationToken>()), Times.Once);
+            Assert.That(provisioning.ReleaseStatus, Is.EqualTo("Released"));
+            Assert.That(normal.ReleasedVersion, Is.Empty);
+        }
+
+        [Test]
+        public async Task LegacyCompletion_ProvisioningPrLinkedAfterLookup_DoesNotFinish()
+        {
+            var plan = CreateCompleteManagementPlaneReleasePlan("2025-01-01");
+            plan.SDKInfo.Add(new SDKInfo { Language = ".NET", IsProvisioning = true, PackageName = "Azure.Provisioning.Test" });
+            var current = CreateCompleteManagementPlaneReleasePlan("2025-01-01");
+            current.Revision = 2;
+            current.SDKInfo.Single(s => s.Language == "Python").ReleaseStatus = "Released";
+            current.SDKInfo.Add(new SDKInfo { Language = ".NET", IsProvisioning = true, PackageName = "Azure.Provisioning.Test", SdkPullRequestUrl = "provisioning-pr" });
+            mockDevOpsService.Setup(x => x.GetReleasePlansForPackageAsync("azure-test", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([plan]);
+            mockDevOpsService.Setup(x => x.GetReleasePlanForWorkItemAsync(plan.WorkItemId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(current);
+            mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = plan.WorkItemId });
+
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test", "python", "Released", null);
+
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleasePlanFinished, Is.False);
+            mockDevOpsService.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(),
+                It.Is<Dictionary<string, string>>(d => d.ContainsKey("System.State")), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+            VerifyNoAutomation();
         }
 
         [Test]
@@ -780,7 +858,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Verify state was set to Finished
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("System.State") && d["System.State"] == "Finished"), It.IsAny<CancellationToken>()),
+                    d.ContainsKey("System.State") && d["System.State"] == "Finished"), It.IsAny<int>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
@@ -821,7 +899,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("System.State") && d["System.State"] == "Finished"), It.IsAny<CancellationToken>()),
+                    d.ContainsKey("System.State") && d["System.State"] == "Finished"), It.IsAny<int>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
@@ -863,7 +941,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Verify state was NOT set to Finished (only the release status update happened)
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("System.State")), It.IsAny<CancellationToken>()),
+                    d.ContainsKey("System.State")), It.IsAny<int>(), It.IsAny<CancellationToken>()),
                 Times.Never);
         }
 
@@ -904,7 +982,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("System.State") && d["System.State"] == "Finished"), It.IsAny<CancellationToken>()),
+                    d.ContainsKey("System.State") && d["System.State"] == "Finished"), It.IsAny<int>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
@@ -945,7 +1023,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("System.State")), It.IsAny<CancellationToken>()),
+                    d.ContainsKey("System.State")), It.IsAny<int>(), It.IsAny<CancellationToken>()),
                 Times.Never);
         }
 
@@ -987,7 +1065,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Only one UpdateWorkItemAsync call for the status update, none for System.State
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("System.State")), It.IsAny<CancellationToken>()),
+                    d.ContainsKey("System.State")), It.IsAny<int>(), It.IsAny<CancellationToken>()),
                 Times.Never);
         }
 
@@ -1028,7 +1106,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("System.State") && d["System.State"] == "Finished"), It.IsAny<CancellationToken>()),
+                    d.ContainsKey("System.State") && d["System.State"] == "Finished"), It.IsAny<int>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
@@ -1065,7 +1143,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Finished state update fails
             mockDevOpsService
                 .Setup(x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d =>
-                    d.ContainsKey("System.State")), It.IsAny<CancellationToken>()))
+                    d.ContainsKey("System.State")), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Exception("State transition not allowed"));
 
             // Act
@@ -1324,6 +1402,37 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             return completed;
         }
 
+        // Simulates the completion re-read: the plan found by the legacy lookup, with release-status writes applied.
+        private ReleasePlanWorkItem ReadCurrentPlan(int workItemId)
+        {
+            var plan = mockDevOpsService.Invocations
+                .Where(i => i.Method.Name == nameof(IDevOpsService.GetReleasePlansForPackageAsync))
+                .Select(i => ((Task<List<ReleasePlanWorkItem>>)i.ReturnValue!).Result)
+                .SelectMany(plans => plans)
+                .Last(p => p.WorkItemId == workItemId);
+            foreach (var fields in mockDevOpsService.Invocations
+                .Where(i => i.Method.Name == nameof(IDevOpsService.UpdateWorkItemAsync) && (int)i.Arguments[0] == workItemId)
+                .Select(i => (Dictionary<string, string>)i.Arguments[1]))
+            {
+                foreach (var sdk in plan.SDKInfo)
+                {
+                    if (fields.TryGetValue($"Custom.ReleaseStatusFor{DevOpsService.GetSdkFieldId(sdk.Language, sdk.IsProvisioning)}", out var status))
+                    {
+                        sdk.ReleaseStatus = status;
+                    }
+                }
+            }
+            if (string.IsNullOrEmpty(plan.Status))
+            {
+                plan.Status = "In Progress";
+            }
+            if (plan.Revision <= 0)
+            {
+                plan.Revision = 1;
+            }
+            return plan;
+        }
+
         private void VerifyNoAutomation()
         {
             mockDevOpsService.Verify(x => x.RunPipelineAsync(
@@ -1352,8 +1461,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var calls = new List<string>();
             mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(
                 completed.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .Callback<int, Dictionary<string, string>, CancellationToken>((_, fields, _) =>
-                    calls.Add(fields.ContainsKey("System.State") ? "finish" : "release"))
+                .Callback(() => calls.Add("release"))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = completed.WorkItemId });
+            mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(
+                completed.WorkItemId, It.Is<Dictionary<string, string>>(d => d["System.State"] == "Finished"), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .Callback(() => calls.Add("finish"))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = completed.WorkItemId });
             mockDevOpsService.Setup(x => x.EnsureReleasePlanAutomationRelationAsync(
                 23456, completed.WorkItemId, It.IsAny<CancellationToken>()))
@@ -1540,7 +1652,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             if (stage == "finish")
             {
                 mockDevOpsService.Setup(x => x.UpdateWorkItemAsync(
-                    completed.WorkItemId, It.Is<Dictionary<string, string>>(d => d.ContainsKey("System.State")), cts.Token))
+                    completed.WorkItemId, It.Is<Dictionary<string, string>>(d => d.ContainsKey("System.State")), It.IsAny<int>(), cts.Token))
                     .Callback(() => cts.Cancel()).ThrowsAsync(new OperationCanceledException(cts.Token));
             }
             else if (stage == "lookup")

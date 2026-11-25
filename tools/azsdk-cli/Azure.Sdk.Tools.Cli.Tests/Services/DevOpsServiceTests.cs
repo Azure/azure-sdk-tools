@@ -62,7 +62,177 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(result, Is.Empty);
         }
 
-        [TestCase("0123456789abcdef0123456789abcdef01234567")]
+        [TestCase(".NET", "Dotnet", "Azure.Provisioning.Contoso")]
+        [TestCase("JavaScript", "JavaScript", "@azure/provisioning-contoso")]
+        public async Task ProvisioningSdkDetails_RoundTripWithoutOverwritingNormalSdk(string language, string fieldId, string packageName)
+        {
+            var workItem = CreateReleasePlanWorkItem(100, "In Progress");
+            workItem.Fields["Custom.MgmtScope"] = "Yes";
+            workItem.Fields[$"Custom.{fieldId}PackageName"] = "normal-package";
+            workItem.Fields[$"Custom.SDKPullRequestFor{fieldId}"] = "normal-pr";
+            workItem.Fields[$"Custom.ReleaseStatusFor{fieldId}"] = "Released";
+            _connection.AddWorkItem(workItem);
+
+            await _devOpsService.UpdateReleasePlanSDKDetailsAsync(100,
+                [new SDKInfo { Language = language, IsProvisioning = true, PackageName = packageName }], CancellationToken.None);
+            await _devOpsService.AddSdkInfoInReleasePlanAsync(100, language, "provisioning-pipeline", "provisioning-pr", "Completed", true, CancellationToken.None);
+            await _devOpsService.UpdateWorkItemAsync(100, new Dictionary<string, string>
+            {
+                [$"Custom.ReleaseStatusFor{fieldId}Provisioning"] = "Pending",
+                [$"Custom.ReleasedVersionFor{fieldId}Provisioning"] = "1.0.0"
+            }, CancellationToken.None);
+            var plan = await _devOpsService.GetReleasePlanForWorkItemAsync(100, CancellationToken.None);
+
+            var normal = plan.SDKInfo.Single(sdk => sdk.Language == language && !sdk.IsProvisioning);
+            var provisioning = plan.SDKInfo.Single(sdk => sdk.Language == language && sdk.IsProvisioning);
+            Assert.That(normal.PackageName, Is.EqualTo("normal-package"));
+            Assert.That(normal.SdkPullRequestUrl, Is.EqualTo("normal-pr"));
+            Assert.That(normal.ReleaseStatus, Is.EqualTo("Released"));
+            Assert.That(provisioning.PackageName, Is.EqualTo(packageName));
+            Assert.That(provisioning.GenerationPipelineUrl, Is.EqualTo("provisioning-pipeline"));
+            Assert.That(provisioning.SdkPullRequestUrl, Is.EqualTo("provisioning-pr"));
+            Assert.That(provisioning.GenerationStatus, Is.EqualTo("Completed"));
+            Assert.That(provisioning.ReleaseStatus, Is.EqualTo("Pending"));
+            Assert.That(provisioning.ReleasedVersion, Is.EqualTo("1.0.0"));
+            Assert.That(plan.SDKInfo, Has.Count.EqualTo(6), "An absent optional SDK must not add a placeholder.");
+            Assert.That(workItem.Fields["Custom.SDKLanguages"].ToString(), Does.Not.Contain("Provisioning"));
+        }
+
+        [TestCase(".NET", "Dotnet", "net")]
+        [TestCase("JavaScript", "JavaScript", "js")]
+        public async Task ProvisioningLookup_UsesOnlyProvisioningPackageAndPrFields(string language, string fieldId, string repo)
+        {
+            await _devOpsService.GetReleasePlansForPackageAsync("provisioning-package", language, false, true, CancellationToken.None);
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[Custom.{fieldId}ProvisioningPackageName] = 'provisioning-package'"));
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[Custom.ReleaseStatusFor{fieldId}Provisioning] <> 'Released'"));
+
+            var pr = $"https://github.com/Azure/azure-sdk-for-{repo}/pull/100";
+            await _devOpsService.GetReleasePlansBySdkPullRequestAsync(pr, language, false, true, CancellationToken.None);
+            Assert.That(_connection.LastCapturedQuery, Does.Contain($"[Custom.SDKPullRequestFor{fieldId}Provisioning] = '{pr}'"));
+        }
+
+        [TestCase("Python", true)]
+        [TestCase(".NET", false)]
+        public void ProvisioningDetails_RejectUnsupportedLanguageOrDataPlaneBeforeWriting(string language, bool managementPlane)
+        {
+            var workItem = CreateReleasePlanWorkItem(100, "In Progress");
+            workItem.Fields["Custom.MgmtScope"] = managementPlane ? "Yes" : "No";
+            _connection.AddWorkItem(workItem);
+
+            Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateReleasePlanSDKDetailsAsync(100,
+                [new SDKInfo { Language = language, IsProvisioning = true, PackageName = "provisioning-package" }], CancellationToken.None));
+            Assert.That(_connection.WorkItemUpdateCount, Is.Zero);
+        }
+
+        [Test]
+        public void SdkDetails_RejectDuplicateIdentityBeforeWriting()
+        {
+            var workItem = CreateReleasePlanWorkItem(100, "In Progress");
+            workItem.Fields["Custom.MgmtScope"] = "Yes";
+            _connection.AddWorkItem(workItem);
+
+            Assert.ThrowsAsync<Exception>(() => _devOpsService.UpdateReleasePlanSDKDetailsAsync(100,
+            [
+                new SDKInfo { Language = ".NET", IsProvisioning = true, PackageName = "one" },
+                new SDKInfo { Language = "dotnet", IsProvisioning = true, PackageName = "two" }
+            ], CancellationToken.None));
+            Assert.That(_connection.WorkItemUpdateCount, Is.Zero);
+        }
+
+        [TestCase(".NET", 8473, "Dotnet")]
+        [TestCase("JavaScript", 8472, "JavaScript")]
+        public async Task ProvisioningGeneration_QueuesDedicatedPipelineAndSavesProvisioningLink(string language, int pipelineId, string fieldId)
+        {
+            var ct = CancellationToken.None;
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Fields["Custom.MgmtScope"] = "Yes";
+            plan.Fields[$"Custom.SDKGenerationPipelineFor{fieldId}"] = "normal-pipeline";
+            _connection.AddWorkItem(plan);
+            var buildClient = new Mock<BuildHttpClient>(new Uri("https://dev.azure.com/test"), new VssCredentials());
+            var projectClient = new Mock<ProjectHttpClient>(new Uri("https://dev.azure.com/test"), new VssCredentials());
+            var connection = new Mock<IDevOpsConnection>();
+            connection.Setup(x => x.GetWorkItemClient(ct)).Returns(_connection.GetWorkItemClient(ct));
+            connection.Setup(x => x.GetBuildClient(ct)).Returns(buildClient.Object);
+            connection.Setup(x => x.GetProjectClient(ct)).Returns(projectClient.Object);
+            buildClient.Setup(x => x.GetDefinitionAsync("internal", pipelineId, null, null, null, null, null, ct))
+                .ReturnsAsync(new BuildDefinition { Id = pipelineId });
+            projectClient.Setup(x => x.GetProject("internal", null, false, null))
+                .ReturnsAsync(new TeamProject { Id = Guid.NewGuid(), Name = "internal" });
+            Build? queuedBuild = null;
+            buildClient.Setup(x => x.QueueBuildAsync(It.IsAny<Build>(), null, null, null, null, null, ct))
+                .Callback(new InvocationAction(invocation => queuedBuild = (Build)invocation.Arguments[0]))
+                .ReturnsAsync(new Build { Id = 99 });
+
+            await new DevOpsService(_logger, connection.Object).RunSDKGenerationPipelineAsync(
+                "main", "specification/test/service", "2026-01-01", "stable", language, 100,
+                "provisioning-branch", "saved-commit", true, ct);
+
+            Assert.That(queuedBuild!.Definition.Id, Is.EqualTo(pipelineId));
+            Assert.That(queuedBuild.SourceVersion, Is.EqualTo("saved-commit"));
+            Assert.That(queuedBuild.TemplateParameters["SdkRepoBranch"], Is.EqualTo("provisioning-branch"));
+            Assert.That(plan.Fields[$"Custom.SDKGenerationPipelineFor{fieldId}"], Is.EqualTo("normal-pipeline"));
+            Assert.That(plan.Fields[$"Custom.SDKGenerationPipelineFor{fieldId}Provisioning"], Is.EqualTo(DevOpsService.GetPipelineUrl(99)));
+            Assert.That(plan.Fields[$"Custom.GenerationStatusFor{fieldId}Provisioning"], Is.EqualTo("In progress"));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SdkGeneration_RejectsFinishedPlanBeforeQueueing(bool isProvisioning)
+        {
+            var ct = CancellationToken.None;
+            var plan = CreateReleasePlanWorkItem(100, "Finished");
+            plan.Fields["Custom.MgmtScope"] = "Yes";
+            _connection.AddWorkItem(plan);
+            var connection = new Mock<IDevOpsConnection>();
+            connection.Setup(x => x.GetWorkItemClient(ct)).Returns(_connection.GetWorkItemClient(ct));
+
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(() => new DevOpsService(_logger, connection.Object)
+                .RunSDKGenerationPipelineAsync("main", "specification/test/service", "2026-01-01", "stable", ".NET", 100,
+                    "", null, isProvisioning, ct));
+
+            Assert.That(exception!.Message, Does.Contain("Finished"));
+            connection.Verify(x => x.GetBuildClient(It.IsAny<CancellationToken>()), Times.Never);
+            Assert.That(_connection.WorkItemUpdateCount, Is.Zero);
+        }
+
+        [TestCase(false, false)]
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        [TestCase(true, true)]
+        public async Task SdkLinks_RejectFinishedPlanBeforeWriting(bool isProvisioning, bool generationLink)
+        {
+            var plan = CreateReleasePlanWorkItem(100, "finished");
+            plan.Fields["Custom.MgmtScope"] = "Yes";
+            _connection.AddWorkItem(plan);
+
+            var result = await _devOpsService.AddSdkInfoInReleasePlanAsync(100, ".NET",
+                generationLink ? "pipeline-url" : "", generationLink ? "" : "sdk-pr", "Completed", isProvisioning, CancellationToken.None);
+
+            Assert.That(result, Is.False);
+            Assert.That(_connection.WorkItemUpdateCount, Is.Zero);
+        }
+
+        [Test]
+        public async Task SdkLinks_CompletionBetweenStateCheckAndWrite_IsRejectedByRevisionTest()
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Fields["Custom.MgmtScope"] = "Yes";
+            _connection.AddWorkItem(plan);
+            _connection.BeforeWorkItemUpdate = () =>
+            {
+                // Plan completion lands after the link path read "In Progress" but before its patch is applied.
+                _connection.BeforeWorkItemUpdate = null;
+                plan.Fields["System.State"] = "Finished";
+                plan.Rev++;
+            };
+
+            var result = await _devOpsService.AddSdkInfoInReleasePlanAsync(100, ".NET", "", "provisioning-pr", "", true, CancellationToken.None);
+
+            Assert.That(result, Is.False);
+            Assert.That(_connection.WorkItemUpdateCount, Is.EqualTo(1));
+            Assert.That(_connection.LastCapturedPatchDocument![0].Path, Is.EqualTo("/rev"));
+            Assert.That(plan.Fields.ContainsKey("Custom.SDKPullRequestForDotnetProvisioning"), Is.False);
+        }
         [TestCase("")]
         public async Task GetReleasePlanForWorkItemAsync_ReadsOptionalSavedCommit(string sha)
         {
@@ -790,7 +960,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                     { "System.TeamProject", "internal" },
                     { "Custom.ReleasePlanID", id.ToString() }
                 },
-                Relations = new List<WorkItemRelation>()
+                Relations = new List<WorkItemRelation>(),
+                Rev = 1
             };
             return workItem;
         }
@@ -1597,6 +1768,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches => _workItemClient.CapturedPatches;
 
+            public Action? BeforeWorkItemUpdate
+            {
+                get => _workItemClient.BeforeUpdate;
+                set => _workItemClient.BeforeUpdate = value;
+            }
+
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
@@ -1667,6 +1844,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public bool AddRelationBeforeFailure { get; set; }
 
             public int UpdateCount { get; private set; }
+
+            public Action? BeforeUpdate { get; set; }
 
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
@@ -1776,6 +1955,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 CancellationToken cancellationToken = default)
             {
                 UpdateCount++;
+                BeforeUpdate?.Invoke();
                 LastCapturedPatchDocument = document;
                 CapturedPatches.Add((id, document));
                 _workItems.TryGetValue(id, out var workItem);
@@ -1787,6 +1967,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                     {
                         throw new InvalidOperationException("Work item revision conflict.");
                     }
+                }
+                if (workItem != null)
+                {
                     foreach (var operation in document.Where(operation => operation.Operation == Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add
                         && operation.Path.StartsWith("/fields/", StringComparison.Ordinal)))
                     {

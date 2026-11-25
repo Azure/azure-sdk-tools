@@ -154,6 +154,72 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             gitHelperMock.Setup(ghm => ghm.GetRepoRemoteUriAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(getRepoRemoteUri);
             return gitHelperMock.Object;
         }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Metadata_PreservesNormalAndProvisioningEmittersInEitherOrder(bool provisioningFirst)
+        {
+            var dotnetEntries = new[]
+            {
+                """
+                    - emitterName: "@azure-tools/typespec-csharp"
+                      packageName: Azure.ResourceManager.Contoso
+                      apiVersion: 2026-01-01
+                """,
+                """
+                    - emitterName: "@azure-typespec/http-client-csharp-provisioning"
+                      packageName: Azure.Provisioning.Contoso
+                """
+            };
+            var javascriptEntries = new[]
+            {
+                """
+                    - emitterName: "@azure-tools/typespec-ts"
+                      packageName: "@azure/arm-contoso"
+                      apiVersion: 2026-01-01
+                """,
+                """
+                    - emitterName: "@azure-tools/typespec-ts-provisioning"
+                      packageName: "@azure/provisioning-contoso"
+                """
+            };
+            if (provisioningFirst)
+            {
+                Array.Reverse(dotnetEntries);
+                Array.Reverse(javascriptEntries);
+            }
+            var yaml = "languages:\n  csharp:\n" + string.Join("\n", dotnetEntries.Select(entry => "    " + entry.Replace("\n", "\n    ")))
+                + "\n  typescript:\n" + string.Join("\n", javascriptEntries.Select(entry => "    " + entry.Replace("\n", "\n    ")));
+
+            var packages = TypeSpecHelper.ParsePackageNamesFromMetadata(yaml);
+
+            Assert.That(packages, Has.Count.EqualTo(4));
+            Assert.That(packages!.Single(p => p.Language == SdkLanguage.DotNet && !p.IsProvisioning).PackageName, Is.EqualTo("Azure.ResourceManager.Contoso"));
+            Assert.That(packages.Single(p => p.Language == SdkLanguage.DotNet && p.IsProvisioning).PackageName, Is.EqualTo("Azure.Provisioning.Contoso"));
+            Assert.That(packages.Single(p => p.Language == SdkLanguage.JavaScript && !p.IsProvisioning).PackageName, Is.EqualTo("@azure/arm-contoso"));
+            Assert.That(packages.Single(p => p.Language == SdkLanguage.JavaScript && p.IsProvisioning).PackageName, Is.EqualTo("@azure/provisioning-contoso"));
+            Assert.That(packages.Where(p => !p.IsProvisioning).Select(p => p.ApiVersion), Is.All.EqualTo("2026-01-01"));
+        }
+
+        [Test]
+        public void Metadata_WithoutProvisioningEmitter_PreservesApiVersion()
+        {
+            var packages = TypeSpecHelper.ParsePackageNamesFromMetadata("""
+                languages:
+                  csharp:
+                    - emitterName: "@azure-tools/typespec-csharp"
+                      packageName: Azure.ResourceManager.Contoso
+                      apiVersion: 2026-01-01
+                  typescript:
+                    packageName: "@azure/arm-contoso"
+                    apiVersion: 2026-01-01
+                """);
+
+            Assert.That(packages, Has.Count.EqualTo(2));
+            Assert.That(packages!.Select(p => p.ApiVersion), Is.All.EqualTo("2026-01-01"));
+            Assert.That(packages.Select(p => p.IsProvisioning), Is.All.False);
+        }
+
         [Test]
         public async Task Test_ParseTypeSpecProjectAsync_parses_package_names_from_typespec_project()
         {

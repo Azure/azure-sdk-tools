@@ -14,6 +14,30 @@ namespace Azure.Sdk.Tools.Cli.Tests.Models;
 
 internal class ReleasePlanResponseSerializationTests
 {
+    [TestCase(OutputHelper.OutputModes.Json)]
+    [TestCase(OutputHelper.OutputModes.Mcp)]
+    public void ReleasePlanOutput_PreservesProvisioningIdentityForSameLanguage(OutputHelper.OutputModes outputMode)
+    {
+        var response = new ReleasePlanResponse
+        {
+            ReleasePlanDetails = new ReleasePlanWorkItem
+            {
+                SDKInfo =
+                [
+                    new SDKInfo { Language = ".NET", PackageName = "Azure.ResourceManager.Test" },
+                    new SDKInfo { Language = ".NET", PackageName = "Azure.Provisioning.Test", IsProvisioning = true }
+                ]
+            }
+        };
+
+        using var document = JsonDocument.Parse(new OutputHelper(outputMode).Format(response));
+        var sdkInfos = document.RootElement.GetProperty("release_plan_details").GetProperty("SDKInfo");
+        Assert.That(sdkInfos.GetArrayLength(), Is.EqualTo(2));
+        Assert.That(sdkInfos[0].GetProperty("IsProvisioning").GetBoolean(), Is.False);
+        Assert.That(sdkInfos[1].GetProperty("IsProvisioning").GetBoolean(), Is.True);
+        Assert.That(sdkInfos[1].GetProperty("PackageName").GetString(), Is.EqualTo("Azure.Provisioning.Test"));
+    }
+
     [TestCase(OutputHelper.OutputModes.Json, false)]
     [TestCase(OutputHelper.OutputModes.Json, true)]
     [TestCase(OutputHelper.OutputModes.Mcp, false)]

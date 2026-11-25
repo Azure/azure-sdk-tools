@@ -102,6 +102,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public Dictionary<string, string>? LastRunPipelineTemplateParams { get; private set; }
 
+        Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus, bool isProvisioning, CancellationToken ct) =>
+            ((IDevOpsService)this).AddSdkInfoInReleasePlanAsync(workItemId, language, sdkGenerationPipelineUrl, sdkPullRequestUrl, generationStatus, ct);
+
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan, bool isProvisioning, CancellationToken ct) =>
+            ((IDevOpsService)this).GetReleasePlansForPackageAsync(packageName, language, isTestReleasePlan, ct);
+
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan, bool isProvisioning, CancellationToken ct) =>
+            ((IDevOpsService)this).GetReleasePlansBySdkPullRequestAsync(sdkPullRequest, language, isTestReleasePlan, ct);
+
+        Task<string> IDevOpsService.GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId, bool isProvisioning, CancellationToken ct) =>
+            ((IDevOpsService)this).GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId, ct);
+
+        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch, string? specCommitSha, bool isProvisioning, CancellationToken ct) =>
+            ((IDevOpsService)this).RunSDKGenerationPipelineAsync(apiSpecBranchRef, typespecProjectRoot, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch, specCommitSha, ct);
+
         Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus, CancellationToken ct)
         {
             return Task.FromResult(true);

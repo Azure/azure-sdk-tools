@@ -47,7 +47,9 @@ the prior active page and leaves it marked for retry.
 
 The first run against an empty manifest is a full build.
 
-The build only writes blobs; `azure-sdk-knowledge-wiki-indexer` projects them into the search index on its own daily schedule, so a fresh build is not queryable until the indexer runs.
+The build writes blobs and then starts the deployment-provisioned
+`azure-sdk-knowledge-wiki-indexer`, so successful pipeline output is queryable
+without waiting for its daily fallback schedule.
 
 ### Full rebuild
 
@@ -84,9 +86,13 @@ Settings are read from the environment first and then from Azure App Configurati
 | `AZURE_OPENAI_ENDPOINT` | — | Azure OpenAI endpoint |
 | `WIKI_SYNTHESIS_DEPLOYMENT` | `gpt-5.6-sol` | chat deployment |
 | `STORAGE_ACCOUNT_RESOURCE_ID` | — | storage account the indexer reads (setup only) |
-| `SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID` | — | identity the indexer runs as (setup only) |
 
-Authentication uses `DefaultAzureCredential`; `AZURE_OPENAI_API_KEY` is used for Azure OpenAI when set. The skillset always embeds with `text-embedding-ada-002` to match the vectors already in the shared index.
+Authentication uses `DefaultAzureCredential`; `AZURE_OPENAI_API_KEY` is used for
+Azure OpenAI when set. Provisioning grants the Search service's system-assigned
+identity access to Storage and Azure OpenAI. Both source and wiki skillsets use
+`AI_SEARCH_EMBEDDING_MODEL` (default `text-embedding-3-small`) so vectors in the
+shared index remain compatible. The deployment hook is authoritative for Search
+resource creation; `setup_indexer.py` is a compatible repair tool.
 
 ## Index fields
 

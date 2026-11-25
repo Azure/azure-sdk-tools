@@ -105,7 +105,9 @@ vi.mock('@octokit/rest', () => {
     },
   });
 
-  const MockOctokit: any = vi.fn().mockImplementation(() => createMockOctokit());
+  const MockOctokit: any = vi.fn().mockImplementation(function MockOctokit() {
+    return createMockOctokit();
+  });
   MockOctokit.plugin = vi.fn().mockReturnValue(MockOctokit);
 
   return {

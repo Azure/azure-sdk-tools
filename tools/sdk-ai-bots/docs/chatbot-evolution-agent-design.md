@@ -310,7 +310,7 @@ In the isolated dev environment, the Agent reads the full target document struct
 2. Call `validate_agent_response` with `target="candidate"` and the original bad case.
 3. If validation fails, refine genuine ambiguity without adding Q&A-specific steering bloat; if a clean edit in the owning document still fails, re-evaluate whether the bottleneck is `retrieval_mismatch` or `reasoning_gap`. When validation passes, create the goal-oriented issue with candidate validation reference proof.
 
-After all agent sessions finish, fail, or time out, the feedback pipeline triggers the knowledge-sync pipeline once if any session mutated the KB. The feedback job waits for restoration from the authoritative sources and is marked failed if restoration does not succeed.
+The feedback pipeline does not trigger knowledge sync after candidate mutation. Operators must use the existing knowledge-sync process when candidate content needs to be restored from authoritative sources.
 
 ### 2.6 Issue creation
 

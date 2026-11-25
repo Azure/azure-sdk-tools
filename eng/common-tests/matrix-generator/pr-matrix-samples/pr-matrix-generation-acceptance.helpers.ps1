@@ -47,16 +47,17 @@ Function Get-Repo {
         try {
             Write-Host "Push-Location $repoPath"
             Push-Location $repoPath
-            Write-Host "git clone --no-checkout --filter=tree:0 `"https://github.com/$Repo.git`" ."
-            git clone --no-checkout --filter=tree:0 "https://github.com/$Repo.git" .
-            Write-Host "git config gc.auto"
-            git config gc.auto
-            Write-Host "git sparse-checkout init"
-            git sparse-checkout init
-            Write-Host "git sparse-checkout set --no-cone '/*'"
-            git sparse-checkout set --no-cone '/*'
-            Write-Host "git -c advice.detachedHead=false checkout $Reference"
-            git -c advice.detachedHead=false checkout $Reference
+            # Fetch only the pinned commit in one request. A treeless clone fetches missing objects lazily
+            # during checkout, and those large follow-up requests fail intermittently on CI agents.
+            Write-Host "git init --quiet"
+            git init --quiet
+            Write-Host "git fetch --depth 1 `"https://github.com/$Repo.git`" $Reference"
+            git fetch --depth 1 "https://github.com/$Repo.git" $Reference
+            Write-Host "git -c advice.detachedHead=false checkout FETCH_HEAD"
+            git -c advice.detachedHead=false checkout FETCH_HEAD
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to check out $Repo at $Reference"
+            }
         }
         finally {
             Pop-Location | Out-Null

@@ -428,7 +428,9 @@ class QARecordService:
         status: FeedbackStatus = FeedbackStatus.pending_validation,
     ) -> QARecord:
         """Update a validation record's feedback status, preserving fresh Cosmos fields."""
-        existing_doc = await read_qa_record(record.id, record.tenant_id)
+        existing_doc = await read_qa_record(
+            record_id=record.id, tenant_id=record.tenant_id
+        )
         target = QARecord.from_cosmos(existing_doc) if existing_doc else record
         if not target.feedback:
             raise ValueError("Cannot reset validation status without feedback state")

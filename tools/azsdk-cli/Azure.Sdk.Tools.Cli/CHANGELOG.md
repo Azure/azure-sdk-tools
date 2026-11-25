@@ -5,6 +5,7 @@
 ### Features Added
 
 - After the emailer accepts an overdue release-plan reminder, the CLI records the UTC send time in the release plan's `Custom.OverdueLastNotifiedDate` field. If the email is accepted but the date cannot be saved, the error is reported separately and the email is not resent. Each recorded reminder counts as plan activity for abandonment cleanup.
+- When `update-release-status` marks a Public Preview or GA release plan Finished and `AZSDKTOOLS_NOTIFICATION_SERVICE_URL` is set, the CLI emails the release plan owner a summary of the plan and its released SDKs, including package registry links. Management-plane plans include a feedback survey link. The shared `mark-release-completion.yml` pipeline step now passes the emailer URI.
 
 ### Breaking Changes
 

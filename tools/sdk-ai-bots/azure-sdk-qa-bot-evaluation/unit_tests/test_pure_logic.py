@@ -653,7 +653,7 @@ def test_output_items_to_rows_unwraps_file_item_envelope():
     assert rows[0]["inputs.query"] == "q3"
 
 
-def test_output_items_to_rows_raises_for_grader_error():
+def test_output_items_to_rows_records_grader_error_without_aborting():
     output_items = [
         {
             "datasource_item": {"testcase": "t4"},
@@ -667,13 +667,11 @@ def test_output_items_to_rows_raises_for_grader_error():
         }
     ]
 
-    try:
-        output_items_to_rows(output_items, ["similarity"])
-    except RuntimeError as exc:
-        assert "similarity" in str(exc)
-        assert "Missing inputs" in str(exc)
-    else:
-        raise AssertionError("Expected grader errors to fail the evaluation")
+    rows = output_items_to_rows(output_items, ["similarity"])["rows"]
+    assert len(rows) == 1
+    assert rows[0]["outputs.similarity.similarity"] == 0.0
+    assert rows[0]["outputs.similarity.similarity_result"] == "fail"
+    assert "Missing inputs" in rows[0]["outputs.similarity.similarity_error"]
 
 
 def test_build_testing_criteria_all_builtins():

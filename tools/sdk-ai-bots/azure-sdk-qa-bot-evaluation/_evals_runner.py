@@ -556,7 +556,18 @@ def output_items_to_rows(
                 sample = _get(r, "sample", {}) or {}
                 error = _get(sample, "error", {}) or {}
                 message = _get(error, "message", "Unknown grader error")
-                raise RuntimeError(f"Eval grader {name or 'unknown'} failed: {message}")
+                logging.warning(
+                    "Eval grader %s failed for testcase %s: %s",
+                    name or "unknown",
+                    row["inputs.testcase"],
+                    message,
+                )
+                if name:
+                    per_metric[name] = 0.0
+                    row[f"outputs.{name}.{name}"] = 0.0
+                    row[f"outputs.{name}.{name}_result"] = "fail"
+                    row[f"outputs.{name}.{name}_error"] = message
+                continue
             if not name:
                 continue
             score = _coerce_score(_get(r, "score", 0.0))

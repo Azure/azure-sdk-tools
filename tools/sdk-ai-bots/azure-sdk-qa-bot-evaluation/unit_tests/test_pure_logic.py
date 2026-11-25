@@ -1658,6 +1658,55 @@ def test_output_items_to_rows_grades_route_channel():
     assert summary["route_channel_fail_rate"] == 1
 
 
+def test_route_channel_verdict_allows_skipped_and_fails_on_errors():
+    from _evals_result import EvalsResult, VerificationResult
+
+    er = EvalsResult(metrics={"route_channel": ["route_channel", "route_channel_result"]}, suppressions=None)
+
+    mixed_pass = er.record_run_result(output_items_to_rows([
+        {
+            "datasource_item": {
+                "testcase": "expected-route-pass",
+                "query": "q1",
+                "ground_truth": "gt1",
+                "response": "escalated",
+                "expected_route_channel": "SDK release support",
+                "route_channel_name": "SDK release support",
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "omitted-route-skipped",
+                "query": "q2",
+                "ground_truth": "gt2",
+                "response": "answered",
+                "route_channel_name": "TypeSpec Discussion",
+            },
+            "results": [],
+        },
+    ], ["route_channel"]))
+    assert er.verify_result({"scenario": mixed_pass}, with_baseline=False) == VerificationResult.PASS
+
+    all_skipped = er.record_run_result(output_items_to_rows([
+        {
+            "datasource_item": {
+                "testcase": "omitted-only",
+                "query": "q3",
+                "ground_truth": "gt3",
+                "response": "answered",
+                "route_channel_name": "TypeSpec Discussion",
+            },
+            "results": [],
+        },
+    ], ["route_channel"]))
+    assert er.verify_result({"scenario": all_skipped}, with_baseline=False) == VerificationResult.PASS
+
+    runner = FoundryEvalsRunner(["route_channel"], er, model="gpt-4o")
+    failed_collection = er.record_run_result({"rows": [runner._failed_row({"testcase": "uncollected", "query": "q4"})]})
+    assert er.verify_result({"scenario": failed_collection}, with_baseline=False) == VerificationResult.FAIL
+
+
 def test_validate_case_expected_route_channel():
     validate_case({
         "testcase": "001001-routing-no-expected-channel",

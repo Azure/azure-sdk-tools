@@ -408,7 +408,7 @@ describe('workflow', () => {
       await workflowValidateSdkConfig(mockWorkflowContext);
 
       expect(findSDKToGenerateFromTypeSpecProject).toHaveBeenCalledTimes(1);
-      expect(findSDKToGenerateFromTypeSpecProject).toHaveBeenCalledWith('mock content', { name: 'test-spec-config' });
+      expect(findSDKToGenerateFromTypeSpecProject).toHaveBeenCalledWith('mock content', { name: 'test-spec-config' }, undefined);
     });
 
     it('should only check the supported SDK once with findSwaggerToSDKConfiguration function', async () => {
@@ -449,6 +449,129 @@ describe('workflow', () => {
       await workflowValidateSdkConfig(mockWorkflowContext);
 
       expect(mockWorkflowContext.status).toBe('notEnabled');
+    });
+  });
+
+  describe.each([
+    ['@azure-tools/typespec-ts', '@azure-tools/typespec-ts-provisioning', 'azure-sdk-for-js'],
+    ['@azure-tools/typespec-csharp', '@azure-tools/typespec-csharp-provisioning', 'azure-sdk-for-net'],
+  ])('selected emitter validation for %s', (regularEmitter, selectedEmitter, repository) => {
+    beforeEach(async () => {
+      const actual = await vi.importActual<typeof import('../../src/utils/typespecUtils')>('../../src/utils/typespecUtils');
+      vi.mocked(findSDKToGenerateFromTypeSpecProject).mockImplementationOnce(actual.findSDKToGenerateFromTypeSpecProject);
+      mockWorkflowContext.config.typespecEmitter = selectedEmitter;
+      mockWorkflowContext.config.sdkName = repository;
+      mockWorkflowContext.config.readmePath = undefined;
+      mockWorkflowContext.specRepoConfig.typespecEmitterToSdkRepositoryMapping = {
+        [regularEmitter]: repository,
+        [selectedEmitter]: repository,
+      };
+      vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from(`options:\n  "${regularEmitter}": {}`));
+      vi.mocked(findSwaggerToSDKConfiguration).mockReturnValue({
+        repositories: [{ repo: repository, after_scripts: [] }],
+      });
+    });
+
+    it.each([undefined, 'test/readme.md'])('skips init and generation when the selected emitter is absent (readme: %s)', async (readmePath) => {
+      mockWorkflowContext.config.readmePath = readmePath;
+
+      await workflowMain(mockWorkflowContext);
+
+      expect(mockWorkflowContext.status).toBe('notEnabled');
+      expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining(selectedEmitter));
+      expect(findSwaggerToSDKConfiguration).not.toHaveBeenCalled();
+      expect(runSdkAutoCustomScript).not.toHaveBeenCalled();
+      expect(workflowCallGenerateScript).not.toHaveBeenCalled();
+      expect(setSdkAutoStatus).not.toHaveBeenCalled();
+    });
+
+    it.each(['false', 'null'])('skips disabled selected emitters (%s)', async (value) => {
+      vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from(`options:\n  "${regularEmitter}": {}\n  "${selectedEmitter}": ${value}`));
+
+      await workflowMain(mockWorkflowContext);
+
+      expect(mockWorkflowContext.status).toBe('notEnabled');
+      expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining(selectedEmitter));
+      expect(runSdkAutoCustomScript).not.toHaveBeenCalled();
+      expect(workflowCallGenerateScript).not.toHaveBeenCalled();
+    });
+
+    it.each([undefined, 'test/readme.md'])('uses TypeSpec when the selected emitter is enabled (readme: %s)', async (readmePath) => {
+      mockWorkflowContext.config.readmePath = readmePath;
+      vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from(`options:\n  "${selectedEmitter}": {}`));
+
+      await workflowValidateSdkConfig(mockWorkflowContext);
+
+      expect(mockWorkflowContext.status).toBe('inProgress');
+      expect(mockWorkflowContext.specConfigPath).toBe(mockWorkflowContext.config.tspConfigPath);
+    });
+
+    it('rejects a selected emitter mapped to a different SDK repository', async () => {
+      mockWorkflowContext.specRepoConfig.typespecEmitterToSdkRepositoryMapping[selectedEmitter] = 'azure-sdk-for-other';
+      vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from(`options:\n  "${selectedEmitter}": {}`));
+
+      await workflowMain(mockWorkflowContext);
+
+      expect(mockWorkflowContext.status).toBe('notEnabled');
+      expect(runSdkAutoCustomScript).not.toHaveBeenCalled();
+      expect(workflowCallGenerateScript).not.toHaveBeenCalled();
+    });
+
+    it('does not fall back to readme-only generation with an explicit emitter', async () => {
+      mockWorkflowContext.config.tspConfigPath = undefined;
+      mockWorkflowContext.config.readmePath = 'test/readme.md';
+      vi.mocked(findSDKToGenerateFromTypeSpecProject).mockReset();
+
+      await workflowMain(mockWorkflowContext);
+
+      expect(mockWorkflowContext.status).toBe('notEnabled');
+      expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("'tspConfigPath'"));
+      expect(findSwaggerToSDKConfiguration).not.toHaveBeenCalled();
+      expect(runSdkAutoCustomScript).not.toHaveBeenCalled();
+      expect(workflowCallGenerateScript).not.toHaveBeenCalled();
+    });
+
+    it.each([undefined, ''])('preserves OpenAPI fallback without a selected emitter (%s)', async (selection) => {
+      mockWorkflowContext.config.typespecEmitter = selection;
+      mockWorkflowContext.config.readmePath = 'test/readme.md';
+      vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from('options: {}'));
+
+      await workflowValidateSdkConfig(mockWorkflowContext);
+
+      expect(mockWorkflowContext.status).toBe('inProgress');
+      expect(mockWorkflowContext.specConfigPath).toBe('test/readme.md');
+    });
+
+    it('preserves malformed TypeSpec configuration errors', async () => {
+      vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from('options: ['));
+
+      await expect(workflowMain(mockWorkflowContext)).rejects.toThrow('The parsing of the file was unsuccessful');
+
+      expect(mockWorkflowContext.status).not.toBe('notEnabled');
+      expect(runSdkAutoCustomScript).not.toHaveBeenCalled();
+      expect(workflowCallGenerateScript).not.toHaveBeenCalled();
+    });
+
+    it('preserves language automation failures for an enabled selected emitter', async () => {
+      vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from(`options:\n  "${selectedEmitter}": {}`));
+      vi.mocked(runSdkAutoCustomScript).mockRejectedValueOnce(new Error('Language automation failed'));
+
+      await expect(workflowMain(mockWorkflowContext)).rejects.toThrow('Language automation failed');
+
+      expect(mockWorkflowContext.status).not.toBe('notEnabled');
+      expect(runSdkAutoCustomScript).toHaveBeenCalled();
+    });
+
+    it('preserves generation failures for an enabled selected emitter', async () => {
+      vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from(`options:\n  "${selectedEmitter}": {}`));
+      vi.mocked(runSdkAutoCustomScript).mockResolvedValueOnce('succeeded');
+      vi.mocked(workflowCallGenerateScript).mockRejectedValueOnce(new Error('SDK generation failed'));
+
+      await expect(workflowMain(mockWorkflowContext)).rejects.toThrow('SDK generation failed');
+
+      expect(mockWorkflowContext.status).not.toBe('notEnabled');
+      expect(workflowCallGenerateScript).toHaveBeenCalled();
+      expect(setSdkAutoStatus).not.toHaveBeenCalled();
     });
   });
 

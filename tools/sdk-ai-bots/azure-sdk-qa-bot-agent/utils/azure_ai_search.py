@@ -123,6 +123,80 @@ def _chunk_key(chunk: KnowledgeChunk) -> str:
     return f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}|{chunk.header3}"
 
 
+def _static_qa_key(chunk: KnowledgeChunk) -> tuple[str, str, str] | None:
+    if (
+        not chunk.page_type
+        and chunk.source.startswith("static_")
+        and chunk.source.endswith("_qa")
+        and chunk.title
+        and chunk.header1
+    ):
+        return chunk.source, chunk.title, chunk.header1
+    return None
+
+
+def _format_surrounding_section(siblings: list[KnowledgeChunk]) -> list[str]:
+    parts: list[str] = []
+    current_h1 = current_h2 = current_h3 = ""
+    for sibling in siblings:
+        if sibling.header1 != current_h1:
+            current_h1, current_h2, current_h3 = sibling.header1, "", ""
+            if current_h1:
+                parts.append(f"# {current_h1}")
+        if sibling.header2 != current_h2:
+            current_h2, current_h3 = sibling.header2, ""
+            if current_h2:
+                parts.append(f"## {current_h2}")
+        if sibling.header3 != current_h3:
+            current_h3 = sibling.header3
+            if current_h3:
+                parts.append(f"### {current_h3}")
+        if sibling.content:
+            parts.append(sibling.content)
+    return ["", "## Surrounding section", *parts] if parts else []
+
+
+def _format_document_context(chunk: KnowledgeChunk, siblings: list[KnowledgeChunk]) -> str:
+    parts = [f"# {chunk.title}"]
+    if chunk.content:
+        parts.extend(["", "## Matched passage", chunk.content])
+    surrounding = [
+        sibling for sibling in siblings
+        if not sibling.chunk_id or sibling.chunk_id != chunk.chunk_id
+    ]
+    parts.extend(_format_surrounding_section(surrounding))
+    return "\n".join(parts)
+
+
+def _format_qa_context(chunk: KnowledgeChunk, siblings: list[KnowledgeChunk]) -> str:
+    """Put paired answers before diagnostic questions without modifying retrieved chunks."""
+    if chunk.content and not any(_chunk_key(sibling) == _chunk_key(chunk) for sibling in siblings):
+        siblings = [*siblings, chunk]
+    answers = [sibling for sibling in siblings if sibling.header2.casefold() == "answer"]
+    surrounding = [sibling for sibling in siblings if sibling.header2.casefold() != "answer"]
+    answer_parts: list[str] = []
+    answer_header = ""
+    for answer in answers:
+        if answer.header3 != answer_header:
+            answer_header = answer.header3
+            if answer_header:
+                answer_parts.append(f"### {answer_header}")
+        if answer.content:
+            answer_parts.append(answer.content)
+    parts = [f"# {chunk.title}"]
+    if answer_parts:
+        parts.extend(["", "## Paired answer", *answer_parts])
+    else:
+        logger.info(
+            "No paired answer found: source=%s, title=%s, question=%s",
+            chunk.source,
+            chunk.title,
+            chunk.header1,
+        )
+    parts.extend(_format_surrounding_section(surrounding))
+    return "\n".join(parts)
+
+
 def fuse_with_rrf(
     ranked_lists: list[list[KnowledgeChunk]],
     k: int = _RRF_K,
@@ -416,6 +490,7 @@ class SearchClient:
         """Remove chunks whose header section is already covered by a broader expansion."""
         unique: list[KnowledgeChunk] = []
         seen_chunk_ids: set[str] = set()
+        expanded_qa: set[tuple[str, str, str]] = set()
         expanded_h1: set[str] = set()
         expanded_h2: set[str] = set()
         expanded_h3: set[str] = set()
@@ -424,6 +499,13 @@ class SearchClient:
             if chunk.chunk_id in seen_chunk_ids:
                 continue
             seen_chunk_ids.add(chunk.chunk_id)
+
+            qa_key = _static_qa_key(chunk)
+            if qa_key is not None:
+                if qa_key not in expanded_qa:
+                    expanded_qa.add(qa_key)
+                    unique.append(chunk)
+                continue
 
             hierarchy = _detect_hierarchy(chunk.header1, chunk.header2, chunk.header3)
 
@@ -466,19 +548,27 @@ class SearchClient:
         return unique
 
     async def expand_by_hierarchy(self, chunk: KnowledgeChunk) -> KnowledgeChunk:
-        """Fetch sibling chunks for a single ref and assemble content."""
+        """Expand a section, or the whole header-1 topic for raw static Q&A.
+
+        Static Q&A reads all result pages before the caller's content limit is
+        applied. Other documents retain their section scope and chunk limit.
+        """
+        is_static_qa = _static_qa_key(chunk) is not None
+        header2 = "" if is_static_qa else chunk.header2
+        header3 = "" if is_static_qa else chunk.header3
         hierarchy_filter = _build_hierarchy_filter(
             title=chunk.title,
             context_id=chunk.source,
             header1=chunk.header1,
-            header2=chunk.header2,
-            header3=chunk.header3,
+            header2=header2,
+            header3=header3,
         )
-
-        sibling_results = await self._search_client.search(
+        if is_static_qa:
+            hierarchy_filter = _and_extra(f"({hierarchy_filter})", NON_WIKI_FILTER)
+        results = await self._search_client.search(
             search_text="*",
             filter=hierarchy_filter,
-            top=_HIERARCHY_EXPANSION_TOP,
+            top=None if is_static_qa else _HIERARCHY_EXPANSION_TOP,
             order_by=["ordinal_position asc"],
             select=[
                 "chunk_id",
@@ -490,36 +580,11 @@ class SearchClient:
                 "header_3",
             ],
         )
-
-        content_parts: list[str] = [f"# {chunk.title}"]
-        if chunk.content:
-            content_parts.extend(["", "## Matched passage", chunk.content])
-        section_parts: list[str] = []
-        current_h1 = ""
-        current_h2 = ""
-        current_h3 = ""
-
-        async for s in sibling_results:
-            sibling = KnowledgeChunk.model_validate(dict(s))
-            if sibling.chunk_id and sibling.chunk_id == chunk.chunk_id:
-                continue
-
-            if sibling.header1 != current_h1:
-                current_h1, current_h2, current_h3 = sibling.header1, "", ""
-                if current_h1:
-                    section_parts.append(f"# {current_h1}")
-            if sibling.header2 != current_h2:
-                current_h2, current_h3 = sibling.header2, ""
-                if current_h2:
-                    section_parts.append(f"## {current_h2}")
-            if sibling.header3 != current_h3:
-                current_h3 = sibling.header3
-                if current_h3:
-                    section_parts.append(f"### {current_h3}")
-            if sibling.content:
-                section_parts.append(sibling.content)
-        if section_parts:
-            content_parts.extend(["", "## Surrounding section", *section_parts])
+        siblings = [KnowledgeChunk.model_validate(dict(doc)) async for doc in results]
+        content = (
+            _format_qa_context(chunk, siblings) if is_static_qa
+            else _format_document_context(chunk, siblings)
+        )
 
         # Resolve link via the source's link config
         source_def = get_knowledge_source(chunk.source)
@@ -529,11 +594,11 @@ class SearchClient:
             source=chunk.source,
             title=chunk.title,
             link=link,
-            content="\n".join(content_parts),
+            content=content,
             chunk_id=chunk.chunk_id,
             header1=chunk.header1,
-            header2=chunk.header2,
-            header3=chunk.header3,
+            header2=header2,
+            header3=header3,
         )
 
     async def backfill_wiki_sources(
@@ -587,14 +652,20 @@ class SearchClient:
 
         backfilled: list[KnowledgeChunk] = []
         per_doc_count: dict[tuple[str, str], int] = {}
+        expanded_qa: set[tuple[str, str, str]] = set()
         for chunk in ranked:
             if not chunk.chunk_id or chunk.chunk_id in seen_ids:
+                continue
+            qa_key = _static_qa_key(chunk)
+            if qa_key is not None and qa_key in expanded_qa:
                 continue
             key = (chunk.title, chunk.source)
             # Limit to 2 chunks per source doc.
             if per_doc_count.get(key, 0) >= 2:
                 continue
             seen_ids.add(chunk.chunk_id)
+            if qa_key is not None:
+                expanded_qa.add(qa_key)
             per_doc_count[key] = per_doc_count.get(key, 0) + 1
             backfilled.append(chunk)
             if len(backfilled) >= max_total:

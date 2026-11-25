@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 # sources, re-search (tenant-scoped and whole-KB), read chat-agent source
 # to diagnose system defects, fetch a source URL, and file an issue in one
 # turn.
-MAX_TOOL_CALLS_PER_TURN = 20
+MAX_TOOL_CALLS_PER_TURN = 40
 # Reserve a tool-free iteration for the final structured response.
 MAX_TOOL_CALL_ITERATIONS = MAX_TOOL_CALLS_PER_TURN + 1
 

@@ -37,16 +37,20 @@ branch before running evaluations.
 ## Run an evaluation pipeline
 
 Open [Azure SDK Pipelines](https://dev.azure.com/azure-sdk/internal/_build) and
-find the pipeline for your goal:
-
-| Pipeline | Use it to |
-|---|---|
-| **tools - azure-sdk-ai-bot-evaluate-ci** | Check bot regressions against the basic scenarios. |
-| **tools - azure-sdk-ai-bot-perf-ci** | Check bot improvements against the performance scenarios. |
+find **tools - azure-sdk-ai-bot-evaluation**.
 
 Select **Run pipeline**, choose the **same branch you deployed**, and select the
-`scenarios` you want to run. Both pipelines start a backend using dev configuration
-and test your branch's deployed agent automatically. They do not deploy the agent.
+evaluation `scope` and `scenarios`. The pipeline starts a backend using dev
+configuration and tests your branch's deployed agent automatically. It does not
+deploy the agent.
+
+Recommended practice:
+
+| Change type | Recommended evaluation |
+|---|---|
+| **Scenario-specific** | Run **full only for the affected scenarios**. |
+| **Agent-wide or shared behavior** | Run **core across all scenarios**. |
+| **High-risk cross-cutting change or major production release** | Run **full across all scenarios**. |
 
 After the run, inspect the published per-scenario results, including failed cases
 and `server.log`. You can ask Copilot to analyze the failed cases, identify prompt
@@ -80,7 +84,7 @@ The tag selects your branch's newest active Foundry version for that agent and
 message only, skipping failed or provisioning versions. If listing omits readiness,
 the server checks version details; versions with unknown readiness are not selected.
 Without a tag, the server uses the configured agent version, or latest if none is configured.
-A missing branch deployment returns an error instead of using a different version.
+If no active branch deployment exists, the server logs a warning and falls back to the configured default version of the same agent, or Foundry's latest version if no default is configured.
 
 Each branch-tagged request looks up the matching version directly in Foundry.
 

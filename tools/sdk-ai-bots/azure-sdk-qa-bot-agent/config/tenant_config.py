@@ -35,6 +35,7 @@ class TenantID(str, Enum):
     AZURE_SDK_ONBOARDING = "azure_sdk_onboarding"
     AZURE_TYPESPEC_AUTHORING = "azure_typespec_authoring"
     API_SPEC_REVIEW_BOT = "api_spec_review_bot"
+    API_STEWARDSHIP_BOARD_QA_BOT = "api_stewardship_board_qa_bot"
     AZURE_MCP_SERVER = "azure_mcp_server"
     AZSDK_TOOLS_AGENT_QA_BOT = "azsdk_tools_agent_qa_bot"
     AZURE_SDK_QA_BOT = "azure_sdk_qa_bot"
@@ -63,9 +64,9 @@ SRC_ALLOY_FRAMEWORK_SAMPLES = "alloy_framework_samples"
 # -- Azure Guidelines & Standards --
 SRC_AZURE_API_GUIDELINES = "azure_api_guidelines"
 SRC_AZURE_RESOURCE_MANAGER_RPC = "azure_resource_manager_rpc"
-SRC_AZURE_REST_API_SPECS_WIKI = "azure_rest_api_specs_wiki"
 SRC_AZURE_REST_API_SPECS_DOCS = "azure_rest_api_specs_docs"
 SRC_AZURE_OPENAPI_DIFF_DOCS = "azure_openapi_diff_docs"
+SRC_AZURE_AVOCADO_DOCS = "azure_avocado_docs"
 SRC_STATIC_CPEX_DOCS = "static_cpex_docs"
 
 # -- SDK language docs --
@@ -197,20 +198,19 @@ _register(
         base_url="https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/",
     ),
     KnowledgeSource(
-        name=SRC_AZURE_REST_API_SPECS_WIKI,
-        description="Guidelines for Azure REST API specifications using Swagger or TypeSpec, including PR review process.",
-        base_url="https://github.com/Azure/azure-rest-api-specs/wiki/",
-        trim_format=True,
-    ),
-    KnowledgeSource(
         name=SRC_AZURE_REST_API_SPECS_DOCS,
-        description="Azure REST API specification documentation covering spec structure and conventions.",
+        description="Azure REST API specification documentation covering contributor workflows, spec structure and conventions, PR review, validation checks, suppressions, REST/SDK breaking changes, ARM leases, SDK package-name approval, and CI troubleshooting.",
         base_url="https://github.com/Azure/azure-rest-api-specs/blob/main/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_OPENAPI_DIFF_DOCS,
         description="OpenAPI diff documentation for detecting and managing breaking changes in API specifications.",
         base_url="https://github.com/Azure/openapi-diff/blob/main/",
+    ),
+    KnowledgeSource(
+        name=SRC_AZURE_AVOCADO_DOCS,
+        description="Avocado validation rules, default-tag API coverage, known issues, and troubleshooting for Azure REST API specifications.",
+        base_url="https://github.com/Azure/avocado/blob/main/",
     ),
     KnowledgeSource(
         name=SRC_STATIC_CPEX_DOCS,
@@ -398,7 +398,7 @@ _TYPESPEC_SOURCES = _sources(
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
-    SRC_AZURE_REST_API_SPECS_WIKI,
+    SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_STATIC_TYPESPEC_MIGRATION_DOCS,
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
@@ -415,7 +415,7 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_STATIC_TYPESPEC_QA,
     SRC_TYPESPEC_AZURE_HTTP_SPECS,
     SRC_TYPESPEC_DOCS,
-    SRC_AZURE_REST_API_SPECS_WIKI,
+    SRC_AZURE_REST_API_SPECS_DOCS,
     SRC_STATIC_TYPESPEC_MIGRATION_DOCS,
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
@@ -427,7 +427,6 @@ _SDK_SOURCES = _sources(
     SRC_AZURE_SDK_DOCS_ENG,
     SRC_AZURE_SDK_INTERNAL_WIKI,
     SRC_TYPESPEC_AZURE_DOCS,
-    SRC_AZURE_REST_API_SPECS_WIKI,
     SRC_AZURE_REST_API_SPECS_DOCS,
 )
 
@@ -452,7 +451,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('python', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-python', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=[
             "tenants/language_channel.md",
@@ -475,7 +473,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('dotnet', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-csharp', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=[
             "tenants/language_channel.md",
@@ -498,7 +495,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('golang', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-go', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=["tenants/language_channel.md"],
     ),
@@ -522,7 +518,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('java', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-java', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=["tenants/language_channel.md"],
     ),
@@ -542,7 +537,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         source_filter={
             SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript', 'title')",
             SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-ts', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_files=["tenants/language_channel.md"],
     ),
@@ -592,7 +586,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         scope="Azure API specification and SDK onboarding, release plan lifecycle, Azure MCP, and retirement processes.",
         topics=[
             "Prerequisites and setup for onboarding Azure API or SDK",
-            "Permission issues for specification repo or SDK repo access, workflow visibility",
             "Release plan creation, status, readiness, lifecycle, and troubleshooting",
             "SDK development, SDK generation (reproduce SDK validation locally), SDK release tooling and guidance",
             "Service, API and SDK deprecation guidance",
@@ -635,12 +628,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Language-specific SDK generation/validation errors — route to that language's SDK tenant",
             "TypeSpec validation errors — route to typespec_channel_qa_bot",
             "API design or spec authoring questions — route to typespec_channel_qa_bot",
-            "Permission or access issues for API spec repos — route to azure_sdk_onboarding",
         ],
         sources=_sources(
             SRC_STATIC_AZURE_DOCS,
             SRC_STATIC_API_SPEC_VIEW_QA,
-            SRC_AZURE_REST_API_SPECS_WIKI,
             SRC_AZURE_REST_API_SPECS_DOCS,
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,
@@ -649,11 +640,43 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_SDK_INTERNAL_WIKI,
         ),
         source_filter={
-            SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
             SRC_STATIC_CPEX_DOCS: "search.ismatch('/.*breaking.*/', 'title', 'full', 'any')",
         },
         qa_guideline_files=["tenants/api_spec_review.md"],
         enable_routing=True,
+    ),
+    TenantID.API_STEWARDSHIP_BOARD_QA_BOT: TenantConfig(
+        display_name="API Stewardship Board - General",
+        skill_name="api-stewardship-board",
+        scope="Data-plane API design and API Stewardship Board review guidance; advisory only, without approval authority.",
+        topics=[
+            "Data-plane REST and SDK design, endpoints, LROs, clients, packages, and naming",
+            "Internal API modeling, documentation/SDK exposure, and service-side access boundaries",
+            "Board review requests, readiness, async reviews, virtual Office Hours, and signoff process",
+            "REST versus SDK compatibility, preview/GA versioning, migration, and validation triage",
+            "API deprecation, retirement, affected versions, and customer-notification requirements",
+            "Safe review-scheduler troubleshooting and evidence-based operational referrals",
+        ],
+        exclusions=[
+            "ARM/management-plane reviews — direct to ARM Office Hours: https://armwiki.azurewebsites.net/introduction/office_hours.html",
+            "Detailed TypeSpec authoring or emitter failures — use the TypeSpec skill",
+            "Release-plan lifecycle — use the SDK Onboarding skill",
+            "Language-specific SDK failures — use the corresponding language skill",
+        ],
+        sources=_sources(
+            SRC_AZURE_API_GUIDELINES,
+            SRC_TYPESPEC_DOCS,
+            SRC_TYPESPEC_AZURE_DOCS,
+            SRC_AZURE_SDK_GUIDELINES,
+            SRC_AZURE_SDK_DOCS_ENG,
+            SRC_AZURE_REST_API_SPECS_DOCS,
+            SRC_AZURE_OPENAPI_DIFF_DOCS,
+            SRC_AZURE_AVOCADO_DOCS,
+            SRC_STATIC_CPEX_DOCS,
+        ),
+        qa_guideline_files=["tenants/api_stewardship_board.md"],
+        enable_routing=True,
+        enable_wiki_cross_document_pages=False,
     ),
     TenantID.AZURE_MCP_SERVER: TenantConfig(
         display_name="Azure MCP Server",
@@ -772,7 +795,7 @@ def get_tenant_scope_description(tenant_id: TenantID) -> str:
     """Return a human-readable description of the tenant's scope and topics.
 
     Used to inject into the system message so the LLM knows the current
-    tenant's domain without calling route_tenant first.
+    tenant's domain without loading a skill first.
     """
     config = get_tenant_config(tenant_id)
     if config is None:
@@ -787,7 +810,7 @@ def get_tenant_scope_description(tenant_id: TenantID) -> str:
         for topic in config.topics:
             parts.append(f"- {topic}")
     if config.exclusions:
-        parts.append("**Exclusions** (out of scope — requires routing):")
+        parts.append("**Exclusions** (outside this tenant's default skill — load the matching skill to answer):")
         for exc in config.exclusions:
             parts.append(f"- {exc}")
     return "\n".join(parts)

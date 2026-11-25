@@ -24,11 +24,18 @@ there is no default emitter. When the option is omitted, the serialized input
 omits `typespecEmitter`, preserving existing language automation behavior.
 Programmatic callers can supply the same optional field in `SdkAutoOptions`.
 
-This field only communicates the requested emitter to language automation. It
-does not install the emitter, modify `tspconfig.yaml`, or change spec-gen-sdk's
-existing SDK enablement checks. Language automation must support the field to
-use it; provisioning pipeline configuration and language-specific generation
-support are separate changes.
+When a non-empty emitter is selected, spec-gen-sdk requires that emitter to have
+an enabled (truthy) entry under `options` (or legacy `emitters` when `options` is
+absent) in `tspconfig.yaml` and map to the requested SDK repository in the
+specification repository configuration. Otherwise, it logs a configuration
+warning and returns `notEnabled` without invoking language automation. An
+explicit emitter request requires `tspConfigPath` and does not fall back to
+OpenAPI generation through `readmePath`. Omitted or empty emitter selections
+preserve the existing repository-level enablement and fallback behavior.
+
+The field does not install the emitter or modify `tspconfig.yaml`. Language
+automation must support the field to use it; provisioning pipeline configuration
+and language-specific generation support are separate changes.
 
 ## Development
 

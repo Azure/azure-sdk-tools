@@ -1,4 +1,6 @@
 import unittest
+import sys
+import main
 import parameterized
 from main import (
     break_down_aggregated_dotnet_example,
@@ -10,8 +12,44 @@ from typing import List
 from unittest.mock import patch
 import os
 
+sys.path.append(os.path.abspath("../directory"))
+from test_examples_dir import create_mock_unified_test_folder
+
 
 class TestMain(unittest.TestCase):
+    def test_unified_example_preserves_nested_output_path(self):
+        code = """using System;
+namespace Samples
+{
+    public class Sample
+    {
+        public void Example()
+        {
+            // Generated from example definition: Compute/examples/VirtualMachines.yaml#virtualMachineExamples/Foo
+            Console.WriteLine("sample");
+        }
+    }
+}
+"""
+        with create_mock_unified_test_folder() as temporary:
+            filename = os.path.join(temporary, "Sample.cs")
+            with open(filename, "w", encoding="utf-8") as fout:
+                fout.write(code)
+            with patch.multiple(
+                main,
+                specs_path=os.path.join(temporary, "specs"),
+                sdk_package_path=os.path.join(temporary, "sdk"),
+                create=True,
+            ):
+                examples = main.process_dotnet_example(filename)
+            self.assertEqual(1, len(examples))
+            self.assertEqual("Foo", examples[0].target_filename)
+            self.assertEqual(
+                "specification/compute/resource-manager/Microsoft.Compute/Compute/"
+                "stable/2026-04-01/examples-dotnet/virtualMachineExamples",
+                examples[0].target_dir,
+            )
+
     @parameterized.parameterized.expand(
         [
             """// Copyright (c) Microsoft Corporation. All rights reserved.

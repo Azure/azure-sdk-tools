@@ -154,7 +154,7 @@ def format_dotnet(lines: List[str]) -> List[str]:
     return new_lines
 
 
-def process_dotnet_example(filepath: str) -> List[DotNetExample]:
+def process_dotnet_example(filepath: str, namespace_cache=None) -> List[DotNetExample]:
     # process aggregated DotNet sample to examples
 
     filename = os.path.basename(filepath)
@@ -174,16 +174,14 @@ def process_dotnet_example(filepath: str) -> List[DotNetExample]:
                 example_lines = aggregated_dotnet_example.class_opening + format_dotnet(dotnet_example_method.content)
 
                 example_filepath = dotnet_example_method.example_relative_path
-                example_dir, example_filename = os.path.split(example_filepath)
-
                 try:
-                    example_dir = examples_dir.try_find_resource_manager_example(
-                        specs_path, sdk_package_path, example_dir, example_filename
+                    example_dir, example_filename = examples_dir.resolve_example_path(
+                        specs_path, sdk_package_path, example_filepath, namespace_cache
                     )
                 except NameError:
-                    pass
+                    example_dir, example_filename = os.path.split(example_filepath)
 
-                filename = example_filename.split(".")[0]
+                filename = os.path.splitext(example_filename)[0]
                 # use the examples-dotnet folder for DotNet example
                 md_dir = (
                     (example_dir + "-dotnet")
@@ -258,8 +256,9 @@ def create_dotnet_examples(
 
     logging.info(f"Processing SDK examples: {release.package}")
     dotnet_examples = []
+    namespace_cache = {}
     for filepath in dotnet_paths:
-        dotnet_examples += process_dotnet_example(filepath)
+        dotnet_examples += process_dotnet_example(filepath, namespace_cache)
 
     files = []
     if dotnet_examples:

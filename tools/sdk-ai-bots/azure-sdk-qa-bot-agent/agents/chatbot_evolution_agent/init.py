@@ -127,7 +127,7 @@ async def main() -> None:
     )
     web_tools = WebTools()
 
-    shell_tool = agent_client.get_shell_tool(environment={"type": "container_auto"})
+    shell_tool = agent_client.get_shell_tool()
     tools = [
         monitor_tools.fetch_chat_trace,
         conversation_tools.resolve_conversation_by_trace_id,

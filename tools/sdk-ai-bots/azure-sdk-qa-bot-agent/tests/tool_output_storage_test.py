@@ -179,6 +179,17 @@ async def test_shell_files_middleware_injects_session_file_ids():
         state=state,
     )
     try:
+        before_ctx = SimpleNamespace(
+            options={
+                "tools": [
+                    {"type": "function", "name": "other"},
+                    {"type": "shell", "environment": {"type": "container_auto"}},
+                ]
+            }
+        )
+        await shell_files.process(before_ctx, _noop_next)
+        assert [t["type"] for t in before_ctx.options["tools"]] == ["function"]
+
         fn_ctx = _make_context("pull_request_read", "x" * 25_000, session)
         await offload.process(fn_ctx, _noop_next)
 

@@ -82,7 +82,7 @@ async def main() -> None:
     knowledge_tools = KnowledgeTools()
     web_tools = WebTools()
     web_search_tool = agent_client.get_web_search_tool(search_context_size="medium")
-    shell_tool = agent_client.get_shell_tool(environment={"type": "container_auto"})
+    shell_tool = agent_client.get_shell_tool()
     tools = [
         knowledge_tools.search_knowledge_base,
         knowledge_tools.wiki_search,

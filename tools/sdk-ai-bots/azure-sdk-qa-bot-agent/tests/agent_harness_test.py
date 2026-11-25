@@ -56,7 +56,7 @@ def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
         id="test-agent:1",
         harness_instructions="Treat large tool results as datasets.",
         agent_instructions="Test instructions.",
-        tools=[client.get_shell_tool(environment={"type": "container_auto"})],
+        tools=[client.get_shell_tool()],
         skills_provider=skills_provider,
         context_providers=[Mock(), OffloadedFilesProvider()],
         middleware=[
@@ -77,9 +77,7 @@ def test_harness_adds_managed_providers(
     agent, client = _create_agent(tmp_path, monkeypatch)
 
     assert agent.require_per_service_call_history_persistence
-    client.get_shell_tool.assert_called_once_with(
-        environment={"type": "container_auto"}
-    )
+    client.get_shell_tool.assert_called_once_with()
     history_provider = next(
         (
             provider

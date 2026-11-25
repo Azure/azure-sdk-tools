@@ -105,7 +105,7 @@ class OffloadedFilesProvider(ContextProvider):
 
 
 class ShellFilesMiddleware(ChatMiddleware):
-    """Attach session offloaded file_ids to the hosted container_auto shell tool."""
+    """Expose the hosted shell tool only when session offloaded files exist."""
 
     async def process(
         self,
@@ -114,17 +114,26 @@ class ShellFilesMiddleware(ChatMiddleware):
     ) -> None:
         file_ids = _session_file_ids.get()
         tools = context.options.get("tools")
-        if file_ids and isinstance(tools, list):
-            bounded_ids = list(file_ids[-_MAX_SESSION_FILES:])
-            updated_tools = []
-            for tool in tools:
-                if isinstance(tool, dict) and tool.get("type") == "shell":
-                    env = dict(tool.get("environment") or {"type": "container_auto"})
-                    env["file_ids"] = bounded_ids
-                    updated_tools.append({**tool, "environment": env})
-                else:
-                    updated_tools.append(tool)
-            context.options["tools"] = updated_tools
+        if isinstance(tools, list):
+            if not file_ids:
+                context.options["tools"] = [
+                    tool
+                    for tool in tools
+                    if not (isinstance(tool, dict) and tool.get("type") == "shell")
+                ]
+            else:
+                bounded_ids = list(file_ids[-_MAX_SESSION_FILES:])
+                updated_tools = []
+                for tool in tools:
+                    if isinstance(tool, dict) and tool.get("type") == "shell":
+                        env = dict(
+                            tool.get("environment") or {"type": "container_auto"}
+                        )
+                        env["file_ids"] = bounded_ids
+                        updated_tools.append({**tool, "environment": env})
+                    else:
+                        updated_tools.append(tool)
+                context.options["tools"] = updated_tools
         await call_next()
 
 

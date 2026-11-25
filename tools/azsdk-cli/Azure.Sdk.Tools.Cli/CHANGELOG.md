@@ -10,7 +10,7 @@
 
 ### Bugs Fixed
 
-- Release-plan lookup prefers a supplied PR link, then falls back to exact project/version matching. Different-version plans cannot be reused or block a valid no-match result. Version-specific lookups accept only `In Progress` or `Finished` plans.
+- Concrete-version release-plan lookup uses exact project/version matching without PR or unversioned path fallback. Different-version plans cannot be reused or block a valid no-match result. Version-specific lookups accept only `In Progress` or `Finished` plans.
 - Multi-version aliases, differing versions, and missing versions use the supported empty-version flow: reuse an applicable PR-linked plan, then a matching project/release-type plan, or create an empty-version plan. Empty versions do not act as wildcards for concrete requests.
 - Version-specific lookups propagate API Spec child-read failures for every release type instead of reporting missing plans and allowing duplicate creation.
 - `api-review create`, `package get-approval-status`, and `package mark-released` now accept the same language aliases and normalize them for API Review Hub and APIView. Both `js` and `javascript` are sent to API Review Hub as `javascript`, to APIView as `JavaScript`, and default to `azure-sdk-for-js` when creating a review.

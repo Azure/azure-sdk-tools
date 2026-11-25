@@ -146,11 +146,12 @@ When testing is enabled, release plans will be automatically generated in the te
 
 `release-plan get --typespec-path <project> --api-version <version> --api-release-type <type>`
 searches for the same API version and release type in `In Progress` or `Finished`
-status. Concrete versions match exactly. An explicitly empty version or either
+status. Concrete versions use only exact project/version lookup, without PR or
+unversioned path fallback. An explicitly empty version or either
 multi-version alias (`all`, `multiple-versions`) selects the unversioned flow.
-When `--pull-request` is supplied, a matching PR-linked plan is preferred before
-project lookup. A different project, version, release type, or unsupported status
-does not match and cannot bypass the exact project/version lookup.
+In that flow, a supplied `--pull-request` prefers a matching PR-linked plan before
+empty-version project lookup. A different project, version, release type, or
+unsupported status does not match.
 JSON/MCP output reports `outcome: "existing"` when a plan is found and
 `outcome: "not_found"` when no plan matches. The existing no-match exit code of 1 is preserved.
 If an API Spec child cannot be read, version-specific lookup fails instead of

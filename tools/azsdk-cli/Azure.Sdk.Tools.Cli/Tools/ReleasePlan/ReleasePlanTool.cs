@@ -2949,7 +2949,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private async Task<ReleasePlanWorkItem?> FindReleasePlanForVersionAsync(
             string projectPath, string apiVersion, ApiReleaseType releaseType, string? specPr, CancellationToken ct)
         {
-            if (!string.IsNullOrWhiteSpace(specPr))
+            if (string.IsNullOrEmpty(apiVersion) && !string.IsNullOrWhiteSpace(specPr))
             {
                 var plan = await devOpsService.GetReleasePlanAsync(specPr, releaseType, ct);
                 if (plan != null &&

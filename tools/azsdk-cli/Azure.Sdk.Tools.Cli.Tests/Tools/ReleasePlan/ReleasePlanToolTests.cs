@@ -919,6 +919,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ReleasePlanDetails?.ReleasePlanId, Is.EqualTo(123));
             Assert.That(response.ReleasePlanDetails?.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
             service.Verify(s => s.GetReleasePlanAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(),
+                It.IsAny<CancellationToken>()), Times.Never);
+            service.Verify(s => s.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(
+                "specification/testcontoso/Contoso.Management", "2026-05-02-preview", ApiReleaseType.GA,
                 It.IsAny<CancellationToken>()), Times.Once);
             service.Verify(s => s.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(),
                 It.IsAny<CancellationToken>()), Times.Once);
@@ -1470,7 +1473,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             service.Verify(s => s.CreateReleasePlanWorkItemAsync(It.IsAny<ReleasePlanWorkItem>(),
                 It.IsAny<CancellationToken>()), Times.Never);
             service.Verify(s => s.GetReleasePlanAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(),
-                It.IsAny<CancellationToken>()), create ? Times.Once() : Times.Never());
+                It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [TestCase("")]
@@ -1487,8 +1490,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ReleasePlanDetails, Is.Null);
         }
 
-        [Test]
-        public async Task Test_Get_Release_Plan_by_spec_pull_request_and_api_version_uses_typespec_version_lookup()
+        [TestCase(true)]
+        [TestCase(false)]
+        public async Task Test_Get_Release_Plan_by_spec_pull_request_and_api_version_uses_typespec_version_lookup(bool versionPlanExists)
         {
             const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
             const string specPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
@@ -1498,7 +1502,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 WorkItemId = 779,
                 ReleasePlanId = 79,
-                SpecAPIVersion = apiVersion
+                SpecAPIVersion = apiVersion,
+                APISpecProjectPath = typeSpecProjectPath,
+                ApiReleaseType = ApiReleaseType.PublicPreview,
+                Status = "In Progress"
             };
             string? capturedTypeSpecProjectPath = null;
             string? capturedApiVersion = null;
@@ -1510,19 +1517,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     capturedApiVersion = version;
                     capturedApiReleaseType = releaseType;
                 })
+                .ReturnsAsync(versionPlanExists ? expectedReleasePlan : null!);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedReleasePlan);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
 
             var response = await tool.GetReleasePlan(specPullRequestUrl: specPullRequestUrl, typeSpecProjectPath: typeSpecProjectPath, apiReleaseType: "Public Preview", apiVersion: apiVersion);
 
-            Assert.That(response.ResponseError, Is.Null);
-            Assert.That(response.ReleasePlanDetails?.WorkItemId, Is.EqualTo(779));
+            Assert.That(response.Outcome, Is.EqualTo(versionPlanExists ? ReleasePlanResponse.ExistingOutcome : ReleasePlanResponse.NotFoundOutcome));
+            Assert.That(response.ReleasePlanDetails?.WorkItemId, Is.EqualTo(versionPlanExists ? 779 : (int?)null));
             Assert.That(capturedTypeSpecProjectPath, Is.EqualTo(typeSpecProjectPath));
             Assert.That(capturedApiVersion, Is.EqualTo(apiVersion));
             Assert.That(capturedApiReleaseType, Is.EqualTo(ApiReleaseType.PublicPreview));
             mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAndApiVersionAsync(typeSpecProjectPath, apiVersion, ApiReleaseType.PublicPreview, It.IsAny<CancellationToken>()), Times.Once);
-            mockDevOps.Verify(x => x.GetReleasePlanAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.GetReleasePlanAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]

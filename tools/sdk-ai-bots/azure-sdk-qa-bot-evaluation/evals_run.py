@@ -82,15 +82,13 @@ def _load_suppression(script_dir: Path) -> dict[str, list[str]]:
 def _dataset_label(dataset_spec: str, scenario: str) -> str:
     """Stable dataset identity for the evaluation name.
 
-    ``qa-bot-<target>-<scenario>[:version]`` -> ``qa-bot-<target>-<scenario>``;
-    a ``.../<target>/<scenario>.jsonl`` path -> ``qa-bot-<target>-<scenario>``;
+    ``qa-bot-<scenario>[:version]`` -> ``qa-bot-<scenario>``;
+    a ``<path>/<scenario>.jsonl`` path -> ``qa-bot-<scenario>``;
     anything else falls back to ``qa-bot-<scenario>``.
     """
     base = dataset_spec.split(":", 1)[0]
     if base.endswith(".jsonl"):
-        p = Path(base)
-        target = "perf" if p.parent.name == "evaluation_datasets" else p.parent.name
-        return f"qa-bot-{target}-{p.stem}" if target else f"qa-bot-{p.stem}"
+        return f"qa-bot-{Path(base).stem}"
     if base.startswith("qa-bot-"):
         return base
     return f"qa-bot-{scenario}"
@@ -107,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
     logging.info("🚀 Starting evaluation ...")
 
     parser = argparse.ArgumentParser(description="Run QA bot evaluation on the Foundry evals surface.")
-    parser.add_argument("--dataset", required=True, help="<path.jsonl> | qa-bot-<target>-<scenario>[:version]")
+    parser.add_argument("--dataset", required=True, help="<path.jsonl> | qa-bot-<scenario>[:version]")
     parser.add_argument("--scope", choices=("core", "full"), default="core", help="case selection; default core")
     parser.add_argument("--max_concurrency", type=int, default=8, help="parallel /completion calls")
     parser.add_argument("--evaluators", type=str, default=None, help="comma-separated subset; default all")

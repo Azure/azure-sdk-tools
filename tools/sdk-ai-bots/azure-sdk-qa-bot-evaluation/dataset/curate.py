@@ -42,7 +42,7 @@ _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 def _repo_paths(script_dir: Path) -> dict[str, Path]:
     return {
         "staging": script_dir / "evaluation_datasets" / "_staging",
-        "perf": script_dir / "evaluation_datasets",
+        "curated": script_dir / "evaluation_datasets",
         "md_download": script_dir / "online-qa-tests",
     }
 
@@ -150,7 +150,7 @@ def parse_markdown(file_path: Path) -> list[CanonicalCase]:
 def load_existing_hashes(paths: dict[str, Path]) -> set[str]:
     """Collect curated/staged dedup identities so production Q&A remains incremental."""
     hashes: set[str] = set()
-    for key in ("perf", "staging"):
+    for key in ("curated", "staging"):
         folder = paths[key]
         if not folder.exists():
             continue

@@ -489,7 +489,7 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         staging = root / "_staging"
-        target = root / "perf"
+        target = root / "evaluation_datasets"
         staging.mkdir()
         sf = staging / "typespec.jsonl"
         with sf.open("w", encoding="utf-8") as fh:

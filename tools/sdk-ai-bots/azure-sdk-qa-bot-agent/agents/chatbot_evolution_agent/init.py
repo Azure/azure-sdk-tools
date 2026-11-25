@@ -40,7 +40,7 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
 from services.chat_service import ChatService
-from utils.agent_harness import create_hosted_agent
+from utils.agent_harness import create_file_store, create_hosted_agent
 from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
     create_project_client,
@@ -49,6 +49,7 @@ from utils.azure_ai_foundry import (
 )
 from utils.azure_storage import create_blob_service_client
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_storage import ToolOutputStorageMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +156,7 @@ async def main() -> None:
         )
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
+    file_store = create_file_store()
     agent = create_hosted_agent(
         agent_client,
         name=agent_name,
@@ -162,8 +164,10 @@ async def main() -> None:
         harness_instructions=harness_instructions,
         instructions=instructions,
         tools=tools,
+        file_access_store=file_store,
         middleware=[
             ToolOutputSecurityMiddleware(),
+            ToolOutputStorageMiddleware(file_store),
         ],
         default_options={
             "reasoning": {"effort": reasoning_effort},

@@ -45,9 +45,10 @@ from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import (
     ensure_user_memory_store,
 )
-from utils.agent_harness import create_hosted_agent
+from utils.agent_harness import create_file_store, create_hosted_agent
 from utils.memory_context_provider import MemoryContextProvider
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_storage import ToolOutputStorageMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +166,7 @@ async def main() -> None:
     )
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
+    file_store = create_file_store()
     agent = create_hosted_agent(
         agent_client,
         name=agent_name,
@@ -173,9 +175,11 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         skills_provider=skills_provider,
+        file_access_store=file_store,
         context_providers=[memory_provider],
         middleware=[
             ToolOutputSecurityMiddleware(),
+            ToolOutputStorageMiddleware(file_store),
         ],
         default_options={
             "reasoning": {"effort": reasoning_effort},

@@ -10,6 +10,7 @@ from agent_framework import (
     CompactionProvider,
     ContextWindowCompactionStrategy,
     FileAccessProvider,
+    InMemoryAgentFileStore,
     InMemoryHistoryProvider,
     InlineSkill,
     SkillsProvider,
@@ -18,17 +19,19 @@ from agent_framework import (
 from agent_framework.foundry import FoundryChatClient
 from pytest import MonkeyPatch
 
+from middleware.tool_output_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_storage import ToolOutputStorageMiddleware
 from utils.agent_harness import (
     HARNESS_CONTEXT_WINDOW_TOKENS,
     HARNESS_MAX_OUTPUT_TOKENS,
     create_hosted_agent,
 )
-from middleware.tool_output_security import ToolOutputSecurityMiddleware
 
 
 def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
     monkeypatch.chdir(tmp_path)
     client = Mock(spec=FoundryChatClient)
+    file_store = InMemoryAgentFileStore()
     skills_provider = SkillsProvider(
         [
             InlineSkill(
@@ -48,9 +51,11 @@ def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
         instructions="Test instructions.",
         tools=[],
         skills_provider=skills_provider,
+        file_access_store=file_store,
         context_providers=[Mock()],
         middleware=[
             ToolOutputSecurityMiddleware(),
+            ToolOutputStorageMiddleware(file_store),
         ],
         default_options={"max_tool_calls": 10},
     )
@@ -94,14 +99,13 @@ def test_harness_adds_managed_providers(
         }
         for provider in agent.context_providers
     )
-    assert any(
-        type(middleware).__name__ == "ToolOutputStorageMiddleware"
-        for middleware in agent.middleware or []
+    middleware_names = [type(m).__name__ for m in agent.middleware or []]
+    assert "ToolOutputSecurityMiddleware" in middleware_names
+    assert "ToolOutputStorageMiddleware" in middleware_names
+    assert middleware_names.index("ToolOutputSecurityMiddleware") < middleware_names.index(
+        "ToolOutputStorageMiddleware"
     )
-    assert not any(
-        type(middleware).__name__ == "ToolApprovalMiddleware"
-        for middleware in agent.middleware or []
-    )
+    assert "ToolApprovalMiddleware" not in middleware_names
     assert isinstance(agent.compaction_strategy, ContextWindowCompactionStrategy)
     assert (
         agent.compaction_strategy.max_context_window_tokens
@@ -128,11 +132,10 @@ def test_harness_supports_agents_without_skills_or_memory(
         harness_instructions="Use bounded external results.",
         instructions="Complete the job.",
         tools=[],
-        middleware=[ToolOutputSecurityMiddleware()],
         default_options={"max_tool_calls": 10},
     )
 
-    assert any(
+    assert not any(
         isinstance(provider, FileAccessProvider)
         for provider in agent.context_providers
     )

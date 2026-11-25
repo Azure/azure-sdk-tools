@@ -994,11 +994,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ValidateProvisioningSdk(language, isProvisioning,
                     workItem.Fields.TryGetValue("Custom.MgmtScope", out var managementScope) && managementScope?.ToString() == "Yes");
                 var languageId = GetSdkFieldId(language, isProvisioning);
-                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
-                // Add work item as child of release plan work item
+                var fieldOperations = new List<JsonPatchOperation>();
                 if (!string.IsNullOrEmpty(sdkGenerationPipelineUrl))
                 {
-                    jsonLinkDocument.Add(
+                    fieldOperations.Add(
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
@@ -1008,7 +1007,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
                 if (!string.IsNullOrEmpty(generationStatus))
                 {
-                    jsonLinkDocument.Add(
+                    fieldOperations.Add(
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
@@ -1018,7 +1017,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
                 {
-                    jsonLinkDocument.Add(
+                    fieldOperations.Add(
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
@@ -1041,7 +1040,22 @@ namespace Azure.Sdk.Tools.Cli.Services
                             logger.LogError("SDK generation runs and pull requests cannot be linked to Finished release plan {workItemId}.", workItemId);
                             return false;
                         }
+                        if (workItem.Rev is not > 0)
+                        {
+                            throw new InvalidOperationException($"Work item {workItemId} has no valid revision.");
+                        }
 
+                        // Rebuilt per attempt so the state check above and this write use the same revision.
+                        var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+                        {
+                            new JsonPatchOperation
+                            {
+                                Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test,
+                                Path = "/rev",
+                                Value = workItem.Rev.Value
+                            }
+                        };
+                        jsonLinkDocument.AddRange(fieldOperations);
                         await connection.GetWorkItemClient(ct).UpdateWorkItemAsync(jsonLinkDocument, workItemId, cancellationToken: ct);
                         return true;
                     }

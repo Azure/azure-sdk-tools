@@ -212,7 +212,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(_connection.WorkItemUpdateCount, Is.Zero);
         }
 
-        [TestCase("0123456789abcdef0123456789abcdef01234567")]
+        [Test]
+        public async Task SdkLinks_CompletionBetweenStateCheckAndWrite_IsRejectedByRevisionTest()
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Fields["Custom.MgmtScope"] = "Yes";
+            _connection.AddWorkItem(plan);
+            _connection.BeforeWorkItemUpdate = () =>
+            {
+                // Plan completion lands after the link path read "In Progress" but before its patch is applied.
+                _connection.BeforeWorkItemUpdate = null;
+                plan.Fields["System.State"] = "Finished";
+                plan.Rev++;
+            };
+
+            var result = await _devOpsService.AddSdkInfoInReleasePlanAsync(100, ".NET", "", "provisioning-pr", "", true, CancellationToken.None);
+
+            Assert.That(result, Is.False);
+            Assert.That(_connection.WorkItemUpdateCount, Is.EqualTo(1));
+            Assert.That(_connection.LastCapturedPatchDocument![0].Path, Is.EqualTo("/rev"));
+            Assert.That(plan.Fields.ContainsKey("Custom.SDKPullRequestForDotnetProvisioning"), Is.False);
+        }
         [TestCase("")]
         public async Task GetReleasePlanForWorkItemAsync_ReadsOptionalSavedCommit(string sha)
         {
@@ -940,7 +960,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                     { "System.TeamProject", "internal" },
                     { "Custom.ReleasePlanID", id.ToString() }
                 },
-                Relations = new List<WorkItemRelation>()
+                Relations = new List<WorkItemRelation>(),
+                Rev = 1
             };
             return workItem;
         }
@@ -1747,6 +1768,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public List<(int WorkItemId, DevOpsJsonPatchDocument Document)> CapturedPatches => _workItemClient.CapturedPatches;
 
+            public Action? BeforeWorkItemUpdate
+            {
+                get => _workItemClient.BeforeUpdate;
+                set => _workItemClient.BeforeUpdate = value;
+            }
+
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
@@ -1817,6 +1844,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public bool AddRelationBeforeFailure { get; set; }
 
             public int UpdateCount { get; private set; }
+
+            public Action? BeforeUpdate { get; set; }
 
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
@@ -1926,6 +1955,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 CancellationToken cancellationToken = default)
             {
                 UpdateCount++;
+                BeforeUpdate?.Invoke();
                 LastCapturedPatchDocument = document;
                 CapturedPatches.Add((id, document));
                 _workItems.TryGetValue(id, out var workItem);

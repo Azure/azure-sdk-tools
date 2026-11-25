@@ -350,39 +350,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             if (string.Equals(releaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
             {
-                var currentLanguageName = response.Language.ToWorkItemString();
-                var sdkInfo = releasePlan.SDKInfo.SingleOrDefault(s => s.IsProvisioning == isProvisioning && string.Equals(s.Language, currentLanguageName, StringComparison.OrdinalIgnoreCase));
-                if (sdkInfo != null)
-                {
-                    sdkInfo.ReleaseStatus = releaseStatus;
-                }
-
-                if (IsReleasePlanComplete(releasePlan))
-                {
-                    try
-                    {
-                        logger.LogInformation("All required languages are complete for release plan {workItemId}. Marking as Finished.", releasePlan.WorkItemId);
-                        await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
-                        {
-                            { "System.State", "Finished" }
-                        }, ct);
-                        response.ReleasePlanFinished = true;
-                    }
-                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Failed to mark release plan {workItemId} as Finished", releasePlan.WorkItemId);
-                        response.Message = "Release status updated successfully but failed to auto-finish the release plan.";
-                    }
-
-                    if (response.ReleasePlanFinished)
-                    {
-                        await QueueNextReleasePlanAsync(releasePlan, response, ct);
-                    }
-                }
+                await TryFinishReleasePlanAsync(releasePlan, response, ct);
             }
 
             return response;

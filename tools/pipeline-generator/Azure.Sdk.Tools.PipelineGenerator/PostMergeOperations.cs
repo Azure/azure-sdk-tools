@@ -65,24 +65,11 @@ namespace PipelineGenerator
             DescriptorRequest[] descriptors, string branch, CancellationToken cancellationToken)
         {
             var definitions = new List<PipelineGenerationResult>();
-            var internalGroups = _context.Prefix switch
-            {
-                "java" => new[] { 1, 58, 93 },
-                "js" => new[] { 24, 58, 93 },
-                "net" => new[] { 13, 58, 93 },
-                "go" => new[] { 58, 93, 64 },
-                "python" => new[] { 58, 93 },
-                _ => throw new InvalidOperationException($"Unsupported resource profile '{_context.Prefix}'.")
-            };
-            var testGroups = _context.Prefix == "go" ? Array.Empty<int>() : new[] { 64 };
-            var testConnections = new[] { "Azure", "azure-sdk-tests", "azure-sdk-tests-preview", "azure-sdk-tests-public",
-                "Azure SDK Test Resources - LiveTestSecrets" };
-            var internalConnections = new List<string> { "Azure", "Azure SDK Artifacts", "Azure SDK Engineering System",
-                "opensource-api-connection", "AzureSDKEngKeyVault Secrets", "Azure SDK PME Managed Identity", "APIView prod deployment" };
-            if (_context.Prefix == "net")
-            {
-                internalConnections.AddRange(new[] { "Azure SDK Symbols Publishing", "Nuget.org" });
-            }
+            var profile = PostMergeResourceProfile.For(_context.Prefix);
+            var internalGroups = profile.InternalVariableGroups;
+            var testGroups = profile.TestVariableGroups;
+            var testConnections = profile.TestServiceConnections;
+            var internalConnections = profile.InternalServiceConnections;
             var index = 0;
             foreach (var directory in PostMergeRequest.GetDirectories(descriptors))
             {

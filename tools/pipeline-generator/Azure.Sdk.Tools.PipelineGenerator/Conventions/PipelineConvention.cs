@@ -131,13 +131,6 @@ namespace PipelineGenerator.Conventions
                 hasChanges = DescriptorRequest.Relocate(definition, Context.Repository, definitionName,
                     component.RelativeYamlPath.Replace('\\', '/'), PreviousPath);
             }
-            else if (definition.Process is YamlProcess yaml &&
-                yaml.YamlFilename != component.RelativeYamlPath.Replace('\\', '/'))
-            {
-                // A changed leaf directory changes the pipeline name and requires an explicit rename map.
-                yaml.YamlFilename = component.RelativeYamlPath.Replace('\\', '/');
-                hasChanges = true;
-            }
             hasChanges |= await ApplyConventionAsync(definition, component);
 
             if (hasChanges || Context.OverwriteTriggers)

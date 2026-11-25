@@ -94,7 +94,8 @@ scanner-incompatible filenames fail closed and need explicit operator reconcilia
 Obsolete definitions are never deleted.
 
 The post-merge deployment job invokes the command, whose internal resource
-profile mirrors the existing manual/nightly configuration for the five enabled SDKs.
+profile mirrors the existing manual/nightly configuration for the five enabled SDKs
+(`PostMergeResourceProfileTests` fails if the two drift apart).
 It reuses the `generate` implementation and conventions, deduplicates recursive scan
 directories, and limits unified generation and release selection to the exact descriptor
 targets. It also prepares applicable test definitions, without queueing
@@ -105,7 +106,10 @@ post-merge preparation stops before any release submission, while the existing m
 path leaves it unchanged. Failures are not converted into `continueOnError` successes.
 
 The `generate` verb's `--request <json-file> --results <json-file>` mode applies strict identity
-checks and writes results only after authorization succeeds. Each JSON array entry has:
+checks and writes results only after authorization succeeds. If any requested descriptor is not
+found under the scanned path, it fails before changing any definition or permission. Without
+`--request`, `generate` behaves exactly as before; it never repoints an existing definition's YAML
+path. Each JSON array entry has:
 
 ```json
 {

@@ -207,6 +207,13 @@ namespace PipelineGenerator
                 if (requests != null)
                 {
                     components = components.Where(c => requests.Any(r => r.Path == c.RelativeYamlPath.Replace('\\', '/'))).ToArray();
+                    var missing = requests.Select(r => r.Path)
+                        .Except(components.Select(c => c.RelativeYamlPath.Replace('\\', '/')), StringComparer.Ordinal).ToArray();
+                    if (missing.Length > 0)
+                    {
+                        // Fail before any definition or permission change rather than preparing a subset.
+                        throw new ArgumentException($"Requested descriptors were not found under '{path}': {string.Join(", ", missing)}");
+                    }
                 }
 
                 if (components.Count() == 0)

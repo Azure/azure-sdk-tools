@@ -227,6 +227,11 @@ def test_strip_image_tags_unclosed_markdown_is_linear_time():
     )
     assert _strip_image_tags(truncated_badge) == "[Image: Install]\\n... [truncated]"
     assert _strip_image_tags('<img alt="badge" src="https://img.shields.io/badge/a') == "[Image: badge]"
+    multiline_unclosed = "![alt](not-a-url\nnext line (with parens)"
+    assert _strip_image_tags(multiline_unclosed) == multiline_unclosed
+    from _evals_runner import _completion_item
+
+    assert _completion_item({"ground_truth": "See ![gt](https://example.test/gt.png)"})["ground_truth"] == "See [Image: gt]"
 
 
 def test_upload_processing_failure_deletes_its_input():

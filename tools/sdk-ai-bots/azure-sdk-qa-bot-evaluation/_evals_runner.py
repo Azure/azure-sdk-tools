@@ -82,7 +82,7 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
 }
 
 
-_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)")
+_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:[^()\r\n]|\([^()\r\n]*\))*\)")
 _UNCLOSED_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:https?://|data:)[^)\s\"'\\]*", re.IGNORECASE)
 _HTML_IMAGE_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
 _UNCLOSED_HTML_IMAGE_RE = re.compile(r"<img\b[^>]*(?:https?://|data:)[^>]*", re.IGNORECASE)
@@ -119,7 +119,7 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
     item = {
         "testcase": it.get("testcase", "unknown"),
         "query": _strip_image_tags(it.get("query", "") or ""),
-        "ground_truth": it.get("ground_truth", ""),
+        "ground_truth": _strip_image_tags(it.get("ground_truth", "") or ""),
         "response": _strip_image_tags(it.get("response", "") or ""),
         "context": _strip_image_tags(it.get("context", "") or ""),
         "response_id": it.get("response_id", "") or "",

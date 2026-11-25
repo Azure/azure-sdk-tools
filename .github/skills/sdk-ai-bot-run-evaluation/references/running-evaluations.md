@@ -7,11 +7,11 @@ Flags, recipes, and result handling for `evals_run.py`. Run from
 
 | Flag                | Default  | Notes                                                                                                                                                                     |
 | ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dataset`         | required | Local `<...>.jsonl` path or `qa-bot-<target>-<scenario>[:version]`.                                                                                                       |
-| `--scope`           | `core`   | `core` selects tagged representative cases; `full` selects all cases.                                                                                                    |
+| `--dataset`         | required | Local `<...>.jsonl` path or `qa-bot-<scenario>[:version]`.                                                                                                               |
+| `--scope`           | `core`   | `core` selects `"core"`-tagged cases; `full` selects `"full"`-tagged cases.                                                                                               |
 | `--evaluators`      | all      | Comma-separated subset of the evaluators below.                                                                                                                           |
 | `--max_concurrency` | 8        | Parallel `/completion` calls.                                                                                                                                             |
-| `--run_context`     | `local`  | Context tag appended to the dataset name (e.g. `local` or the pipeline name). The eval name is `<dataset>-<run_context>`, kept stable to avoid flooding the Foundry list. |
+| `--run_context`     | `local`  | Context tag appended to the dataset and scope (e.g. `local` or the pipeline name). The eval name is `<dataset>-<scope>-<run_context>`, kept stable to avoid flooding the Foundry list. |
 | `--baseline_check`  | `True`   | `True` gates against the stored baseline; `False` just reports.                                                                                                           |
 | `--is_ci`           | `True`   | Use `False` locally (uses `az login` credential).                                                                                                                         |
 | `--cache_result`    | `none`   | `none` \| `score` \| `full` (full writes per-case + failed-case JSON to `cache/`).                                                                                        |

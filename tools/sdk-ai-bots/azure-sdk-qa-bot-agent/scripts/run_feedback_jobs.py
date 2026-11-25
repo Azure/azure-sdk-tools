@@ -38,7 +38,6 @@ from models.feedback import (
     ChatbotEvolutionAgentMode,
     ChatbotEvolutionAgentOutcome,
 )
-from models.qa_record import FeedbackStatus
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
 from tools.issue_tracker import get_issue_state, reopen_issue
@@ -137,37 +136,8 @@ async def _run(args: argparse.Namespace) -> None:
         "skipped": 0,
     }
 
-    # 2. Reset validation-failed records whose linked issue has been reopened,
-    # then validate fixes. Newly created issues from this run wait until the
-    # next daily scan before their closure is checked.
-    issue_states: dict[str, str] = {}
-    for record in await qa_service.list_validation_failed(tenant_id=args.tenant):
-        if QARecordService.channel_key_of(record) in excluded_channels:
-            continue
-        issue_url = record.feedback.issue_url if record.feedback else None
-        if not issue_url:
-            continue
-        if issue_url not in issue_states:
-            try:
-                issue_states[issue_url] = await get_issue_state(issue_url)
-            except Exception:
-                logger.exception("Failed to read issue state for %s", record.id)
-                continue
-        if issue_states[issue_url] == "open":
-            try:
-                await qa_service.reset_to_pending_validation(record)
-                logger.info(
-                    "Reset validation_failed record %s (%s) to pending_validation after issue reopen",
-                    record.id,
-                    issue_url,
-                )
-            except Exception:
-                logger.exception(
-                    "Failed to reset validation_failed record %s", record.id
-                )
-                counts["validation_failed"] += 1
-                continue
-
+    # 2. Validate fixes first. Newly created issues from this run wait until
+    # the next daily scan before their closure is checked.
     reopened_issues: set[str] = set()
     pending = await qa_service.list_pending_validation(tenant_id=args.tenant)
     for record in pending:
@@ -208,33 +178,18 @@ async def _run(args: argparse.Namespace) -> None:
             logger.info("Validation skipped for %s (%s)", record.id, issue_url)
         else:
             counts["validation_failed"] += 1
-            if result.outcome == ChatbotEvolutionAgentOutcome.validation_failed:
-                reopened = issue_url in reopened_issues
-                if not reopened:
-                    try:
-                        await reopen_issue(issue_url)
-                        reopened_issues.add(issue_url)
-                        reopened = True
-                        logger.info(
-                            "Reopened issue after validation failure: %s", issue_url
-                        )
-                    except Exception:
-                        logger.exception("Failed to reopen issue %s", issue_url)
-                next_status = (
-                    FeedbackStatus.pending_validation
-                    if reopened
-                    else FeedbackStatus.failed
-                )
+            if (
+                result.outcome == ChatbotEvolutionAgentOutcome.validation_failed
+                and issue_url not in reopened_issues
+            ):
                 try:
-                    await qa_service.reset_to_pending_validation(
-                        record, status=next_status
+                    await reopen_issue(issue_url)
+                    reopened_issues.add(issue_url)
+                    logger.info(
+                        "Reopened issue after validation failure: %s", issue_url
                     )
                 except Exception:
-                    logger.exception(
-                        "Failed to update feedback status to %s for %s",
-                        next_status.value,
-                        record.id,
-                    )
+                    logger.exception("Failed to reopen issue %s", issue_url)
 
     # 3. Ask the Evolution Agent to evaluate and, when necessary, diagnose
     # each conversation. The pipeline does not make either decision itself.

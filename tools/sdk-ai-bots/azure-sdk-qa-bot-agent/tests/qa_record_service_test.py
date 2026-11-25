@@ -1070,7 +1070,7 @@ async def test_failed_validation_processing_is_listed_as_pending() -> None:
     record.feedback.error = "agent_processing_failed"
     with patch(
         "services.qa_record_service.query_qa_records_by_feedback_status",
-        new=AsyncMock(side_effect=[[], [record.to_cosmos()]]),
+        new=AsyncMock(side_effect=[[], [record.to_cosmos()], []]),
     ):
         records = await QARecordService().list_pending_validation()
 
@@ -1404,41 +1404,36 @@ async def test_run_job_rejects_outcome_for_wrong_mode(
 
 
 @pytest.mark.asyncio
-async def test_list_validation_failed_and_reset_to_pending_validation() -> None:
-    record = _record(
+async def test_list_pending_validation_includes_validation_failed() -> None:
+    pending_record = _record(
+        qa_status=QAStatus.finished,
+        feedback_status=FeedbackStatus.pending_validation,
+    )
+    pending_record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/1"
+    failed_record = _record(
         qa_status=QAStatus.finished,
         feedback_status=FeedbackStatus.validation_failed,
     )
-    record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
-    fresh = _record(
-        qa_status=QAStatus.finished,
-        feedback_status=FeedbackStatus.validation_failed,
-    )
-    fresh.feedback.issue_url = record.feedback.issue_url
-    fresh.reasoning = "Latest validation evidence."
+    failed_record.id = "teams_channel:conversation-2"
+    failed_record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
     no_issue = _record(
         qa_status=QAStatus.finished,
         feedback_status=FeedbackStatus.validation_failed,
     )
+    no_issue.id = "teams_channel:conversation-3"
     no_issue.feedback.issue_url = None
-    upsert = AsyncMock()
-    with (
-        patch(
-            "services.qa_record_service.query_qa_records_by_feedback_status",
-            new=AsyncMock(return_value=[record.to_cosmos(), no_issue.to_cosmos()]),
-        ),
-        patch(
-            "services.qa_record_service.read_qa_record",
-            new=AsyncMock(return_value=fresh.to_cosmos()),
-        ),
-        patch("services.qa_record_service.upsert_qa_record", new=upsert),
-    ):
-        service = QARecordService()
-        failed = await service.list_validation_failed(tenant_id=record.tenant_id)
-        assert [r.id for r in failed] == [record.id]
-        updated = await service.reset_to_pending_validation(failed[0])
 
-    assert updated.feedback is not None
-    assert updated.feedback.status == FeedbackStatus.pending_validation
-    assert updated.reasoning == "Latest validation evidence."
-    upsert.assert_awaited_once()
+    async def query_by_status(*, feedback_status: str, tenant_id: str | None = None):
+        if feedback_status == FeedbackStatus.pending_validation.value:
+            return [pending_record.to_cosmos()]
+        if feedback_status == FeedbackStatus.validation_failed.value:
+            return [failed_record.to_cosmos(), no_issue.to_cosmos()]
+        return []
+
+    with patch(
+        "services.qa_record_service.query_qa_records_by_feedback_status",
+        side_effect=query_by_status,
+    ):
+        records = await QARecordService().list_pending_validation()
+
+    assert [r.id for r in records] == [pending_record.id, failed_record.id]

@@ -379,7 +379,7 @@ class QARecordService:
         *,
         tenant_id: str | None = None,
     ) -> list[QARecord]:
-        """Return pending and failed remediation-issue validations."""
+        """Return pending, failed, and validation-failed remediation validations."""
         docs = await query_qa_records_by_feedback_status(
             feedback_status=FeedbackStatus.pending_validation.value,
             tenant_id=tenant_id,
@@ -388,10 +388,15 @@ class QARecordService:
             feedback_status=FeedbackStatus.failed.value,
             tenant_id=tenant_id,
         )
+        validation_failed_docs = await query_qa_records_by_feedback_status(
+            feedback_status=FeedbackStatus.validation_failed.value,
+            tenant_id=tenant_id,
+        )
         records = {
             (record.tenant_id, record.id): record
             for record in (
-                QARecord.from_cosmos(doc) for doc in [*docs, *failed_docs]
+                QARecord.from_cosmos(doc)
+                for doc in [*docs, *failed_docs, *validation_failed_docs]
             )
         }.values()
         return [
@@ -400,46 +405,12 @@ class QARecordService:
             if record.feedback
             and record.feedback.issue_url
             and record.feedback.status
-            in (FeedbackStatus.pending_validation, FeedbackStatus.failed)
+            in (
+                FeedbackStatus.pending_validation,
+                FeedbackStatus.failed,
+                FeedbackStatus.validation_failed,
+            )
         ]
-
-    async def list_validation_failed(
-        self,
-        *,
-        tenant_id: str | None = None,
-    ) -> list[QARecord]:
-        """Return validation-failed records that have an associated issue URL."""
-        docs = await query_qa_records_by_feedback_status(
-            feedback_status=FeedbackStatus.validation_failed.value,
-            tenant_id=tenant_id,
-        )
-        return [
-            record
-            for record in (QARecord.from_cosmos(doc) for doc in docs)
-            if record.feedback
-            and record.feedback.issue_url
-            and record.feedback.status == FeedbackStatus.validation_failed
-        ]
-
-    async def reset_to_pending_validation(
-        self,
-        record: QARecord,
-        *,
-        status: FeedbackStatus = FeedbackStatus.pending_validation,
-    ) -> QARecord:
-        """Update a validation record's feedback status, preserving fresh Cosmos fields."""
-        existing_doc = await read_qa_record(
-            record_id=record.id, tenant_id=record.tenant_id
-        )
-        target = QARecord.from_cosmos(existing_doc) if existing_doc else record
-        if not target.feedback:
-            raise ValueError("Cannot reset validation status without feedback state")
-        now = _now()
-        target.feedback.status = status
-        target.feedback.updated_at = now
-        target.updated_at = now
-        await upsert_qa_record(target.to_cosmos())
-        return target
 
 
 def _now() -> datetime:

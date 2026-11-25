@@ -350,13 +350,8 @@ async def test_run_validates_only_after_issue_closes(
         reopen_mock.assert_awaited_once_with(
             "https://github.com/Azure/azure-sdk-pr/issues/123"
         )
-        qa_service.reset_to_pending_validation.assert_awaited_once_with(
-            qa_service.list_pending_validation.return_value[0],
-            status=FeedbackStatus.pending_validation,
-        )
     else:
         reopen_mock.assert_not_awaited()
-        qa_service.reset_to_pending_validation.assert_not_awaited()
 
     assert (
         evolution.run_job.await_args.kwargs["mode"]
@@ -409,64 +404,24 @@ async def test_analysis_failures_warn_without_skipping_remaining_jobs(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("issue_state,should_reset", [("open", True), ("closed", False)])
-async def test_scan_resets_validation_failed_only_when_issue_reopened(
-    issue_state: str, should_reset: bool
-) -> None:
-    record = _record(
-        qa_status=QAStatus.finished,
-        feedback_status=FeedbackStatus.validation_failed,
-    )
-    record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
-    qa_service = MagicMock()
-    qa_service.get_messages_in_period = AsyncMock(return_value=[])
-    qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
-    qa_service.close_inactive_threads = AsyncMock(return_value=0)
-    qa_service.list_validation_failed = AsyncMock(return_value=[record])
-    qa_service.reset_to_pending_validation = AsyncMock(return_value=record)
-    qa_service.list_pending_validation = AsyncMock(return_value=[])
-    qa_service.list_analyzable = AsyncMock(return_value=[])
-    evolution = MagicMock()
-    evolution.recover_stale_jobs = AsyncMock(return_value=0)
-
-    with (
-        patch.object(run_feedback_jobs, "QARecordService", return_value=qa_service),
-        patch.object(run_feedback_jobs, "ChatbotEvolutionAgentService", return_value=evolution),
-        patch.object(run_feedback_jobs, "_load_excluded_channels", new=AsyncMock(return_value=set())),
-        patch.object(run_feedback_jobs, "get_issue_state", new=AsyncMock(return_value=issue_state)),
-        patch.object(run_feedback_jobs.app_config, "get", return_value="true"),
-    ):
-        await run_feedback_jobs._run(_args())
-
-    if should_reset:
-        qa_service.reset_to_pending_validation.assert_awaited_once_with(record)
-    else:
-        qa_service.reset_to_pending_validation.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_scan_continues_when_reset_fails_and_marks_failed_reopen_retryable() -> None:
-    open_record = _record(
-        qa_status=QAStatus.finished,
-        feedback_status=FeedbackStatus.validation_failed,
-    )
-    open_record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
-    pending_record = _record(
+async def test_scan_retries_reopen_after_reopen_failure() -> None:
+    record_1 = _record(
         qa_status=QAStatus.finished,
         feedback_status=FeedbackStatus.pending_validation,
     )
-    pending_record.id = "teams_channel:conversation-2"
-    pending_record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/3057"
+    record_1.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
+    record_2 = _record(
+        qa_status=QAStatus.finished,
+        feedback_status=FeedbackStatus.pending_validation,
+    )
+    record_2.id = "teams_channel:conversation-2"
+    record_2.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
 
     qa_service = MagicMock()
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
     qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
     qa_service.close_inactive_threads = AsyncMock(return_value=0)
-    qa_service.list_validation_failed = AsyncMock(return_value=[open_record])
-    qa_service.reset_to_pending_validation = AsyncMock(
-        side_effect=[RuntimeError("cosmos transient"), pending_record]
-    )
-    qa_service.list_pending_validation = AsyncMock(return_value=[pending_record])
+    qa_service.list_pending_validation = AsyncMock(return_value=[record_1, record_2])
     qa_service.list_analyzable = AsyncMock(return_value=[])
 
     evolution = MagicMock()
@@ -474,19 +429,16 @@ async def test_scan_continues_when_reset_fails_and_marks_failed_reopen_retryable
     evolution.run_job = AsyncMock(
         return_value=_result(ChatbotEvolutionAgentOutcome.validation_failed)
     )
+    reopen_mock = AsyncMock(side_effect=[RuntimeError("patch failed"), None])
 
     with (
         patch.object(run_feedback_jobs, "QARecordService", return_value=qa_service),
         patch.object(run_feedback_jobs, "ChatbotEvolutionAgentService", return_value=evolution),
         patch.object(run_feedback_jobs, "_load_excluded_channels", new=AsyncMock(return_value=set())),
-        patch.object(run_feedback_jobs, "get_issue_state", new=AsyncMock(side_effect=["open", "closed"])),
-        patch.object(run_feedback_jobs, "reopen_issue", new=AsyncMock(side_effect=RuntimeError("patch failed"))),
+        patch.object(run_feedback_jobs, "get_issue_state", new=AsyncMock(return_value="closed")),
+        patch.object(run_feedback_jobs, "reopen_issue", new=reopen_mock),
         patch.object(run_feedback_jobs.app_config, "get", return_value="true"),
     ):
         await run_feedback_jobs._run(_args())
 
-    evolution.run_job.assert_awaited_once()
-    assert qa_service.reset_to_pending_validation.await_count == 2
-    assert qa_service.reset_to_pending_validation.await_args_list[1].kwargs == {
-        "status": FeedbackStatus.failed
-    }
+    assert reopen_mock.await_count == 2

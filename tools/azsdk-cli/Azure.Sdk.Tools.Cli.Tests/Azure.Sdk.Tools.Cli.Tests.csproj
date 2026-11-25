@@ -23,6 +23,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj" />
+    <!-- Avoid shadowing Moq.Mock in existing tests. -->
+    <ProjectReference Include="../Azure.Sdk.Tools.Mock/Azure.Sdk.Tools.Mock.csproj" Aliases="MockServer" />
   </ItemGroup>
 
   <ItemGroup>

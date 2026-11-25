@@ -91,8 +91,16 @@ public class UpdateReleasePlanHandler : IMockToolHandler
 public class CheckApiSpecReadyForSdkHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_check_api_spec_ready_for_sdk";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) =>
-        ReleasePlanMockResponses.Workflow("Ready", "API spec is signed off and ready for SDK generation (mock)");
+    public CommandResponse Handle(Dictionary<string, object?>? arguments)
+    {
+        if (arguments?.GetValueOrDefault("workItemId")?.ToString() == "35010"
+            || arguments?.GetValueOrDefault("pullRequestNumber")?.ToString() == "50010")
+        {
+            return ReleasePlanMockResponses.Workflow("Awaiting API review", "API spec review and approval are required before SDK generation (mock)");
+        }
+
+        return ReleasePlanMockResponses.Workflow("Ready", "API spec is signed off and ready for SDK generation (mock)");
+    }
 }
 
 /// <summary>Mock handler for azsdk_get_kpi_attestation_status.</summary>

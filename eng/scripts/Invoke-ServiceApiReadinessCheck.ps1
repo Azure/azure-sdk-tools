@@ -41,17 +41,42 @@ function Get-PullRequestState([string]$Repository, [int]$Number) {
   return Invoke-GitHubApi "repos/$Repository/pulls/$Number" | ConvertFrom-Json
 }
 
-function Set-ResultComment([string]$Repository, [int]$Number, [string]$Body) {
+function Get-ResultCommentIds([string]$Repository, [int]$Number) {
   $query = '.[] | select(.user.type == "Bot" and (.body | startswith("{0}"))) | .id' -f $ServiceApiReadinessCommentMarker
-  $commentId = Invoke-GitHubApi --paginate "repos/$Repository/issues/$Number/comments" --jq $query | Select-Object -First 1
+  return Invoke-GitHubApi --paginate "repos/$Repository/issues/$Number/comments" --jq $query
+}
+
+function Remove-ResultComment([string]$Repository, [string]$CommentId) {
+  $output = gh api -X DELETE "repos/$Repository/issues/comments/$CommentId" 2>&1
+  $exitCode = $LASTEXITCODE
+  if ($exitCode -eq 0) {
+    return
+  }
+
+  if (($output -join "`n") -match 'HTTP 404') {
+    Write-Host "Duplicate result comment $CommentId was already removed."
+    return
+  }
+
+  throw "Failed to remove duplicate result comment $CommentId (gh api exit code $exitCode): $($output -join ' ')"
+}
+
+function Set-ResultComment([string]$Repository, [int]$Number, [string]$Body) {
+  $commentIds = @(Get-ResultCommentIds $Repository $Number)
   $request = @{ body = $Body } | ConvertTo-Json -Compress
-  if ($commentId) {
+  if ($commentIds.Count -gt 0) {
+    $commentId = $commentIds[0]
     $request | Invoke-GitHubApi -X PATCH "repos/$Repository/issues/comments/$commentId" --input - | Out-Null
     Write-Host "Updated result comment $commentId."
   }
   else {
     $request | Invoke-GitHubApi -X POST "repos/$Repository/issues/$Number/comments" --input - | Out-Null
     Write-Host 'Created result comment.'
+  }
+
+  $commentIds = @(Get-ResultCommentIds $Repository $Number)
+  foreach ($duplicateId in $commentIds | Select-Object -Skip 1) {
+    Remove-ResultComment $Repository $duplicateId
   }
 }
 

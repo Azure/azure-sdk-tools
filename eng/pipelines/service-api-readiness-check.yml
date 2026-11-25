@@ -2,7 +2,8 @@
 # (https://github.com/Azure/azure-sdk-tools/issues/17122).
 #
 # The azure-sdk-automation app queues this pipeline from main when an SDK PR gets
-# the `service-api-version-check-requested` label, passing only the PR URL.
+# the `service-api-version-check-requested` label, passing the PR URL and the
+# Azure service connection to use for ARM and release-plan access.
 # The pipeline builds the azsdk CLI from this repository, reads the SDK PR
 # through the GitHub API, saves the result to the release plan, posts one result
 # comment, and adds `service-api-version-check-passed` only when the result is
@@ -14,6 +15,9 @@ pr: none
 parameters:
   - name: PullRequestUrl
     displayName: SDK pull request URL, such as https://github.com/Azure/azure-sdk-for-net/pull/123
+    type: string
+  - name: ReadinessServiceConnection
+    displayName: Azure service connection for ARM and release-plan access
     type: string
 
 variables:
@@ -47,7 +51,7 @@ jobs:
       - task: AzureCLI@2
         displayName: Check and publish readiness result
         inputs:
-          azureSubscription: opensource-api-connection
+          azureSubscription: ${{ parameters.ReadinessServiceConnection }}
           scriptType: pscore
           scriptLocation: scriptPath
           scriptPath: eng/scripts/Invoke-ServiceApiReadinessCheck.ps1

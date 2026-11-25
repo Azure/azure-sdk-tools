@@ -105,6 +105,18 @@ Describe 'Format-ServiceApiReadinessComment' -Tag 'UnitTest' {
     $body | Should -Match '(?m)^- type100$'
     $body | Should -Match 'Regions are omitted'
   }
+
+  It 'uses a bounded summary when omitting regions is not enough' {
+    $matched = @(1..1000 | ForEach-Object {
+        [pscustomobject]@{ resourceType = ('resource-type-' + ('x' * 100) + $_); regions = @('East US') }
+      })
+    $body = Format-ServiceApiReadinessComment (New-ReadinessResult -MatchedTypes $matched) 'https://dev.azure.com/run/1'
+
+    $body.Length | Should -BeLessOrEqual $GitHubCommentLimit
+    $body | Should -Match 'The result is too large to include in a comment'
+    $body | Should -Match '\[pipeline run\]\(https://dev.azure.com/run/1\)'
+    $body | Should -Not -Match 'resource-type-'
+  }
 }
 
 Describe 'Format-ServiceApiReadinessErrorComment' -Tag 'UnitTest' {

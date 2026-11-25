@@ -53,6 +53,11 @@ function Format-ServiceApiReadinessComment($Result, [string]$PipelineRunUrl) {
 
   $lines = Format-ServiceApiReadinessCommentLines $Result $PipelineRunUrl
   $lines += @('', "Regions are omitted because the full result is longer than a GitHub comment allows. See the [pipeline run]($PipelineRunUrl) for the full result.")
+  $body = $lines -join "`n"
+  if ($body.Length -le $GitHubCommentLimit) { return $body }
+
+  $lines = Format-CommentHeader $Result.headSha (Get-ReadinessDisplayStatus $Result.status $Result.plane)
+  $lines += "The result is too large to include in a comment. See the [pipeline run]($PipelineRunUrl) for details."
   return $lines -join "`n"
 }
 

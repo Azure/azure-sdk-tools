@@ -7,7 +7,7 @@ See: tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tsp/models.tsp
 from __future__ import annotations
 
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 from config.tenant_config import TenantID
 from models.conversation import ConversationType, Role
 from models.knowledge import Reference
@@ -105,16 +105,12 @@ class ChatResponse(BaseModel):
 class ChatAgentReference(BaseModel):
     """Reference item in the hosted chat agent's structured output."""
 
-    model_config = ConfigDict(extra="forbid")
-
     title: str
     link: str
 
 
 class ChatAgentOutput(BaseModel):
     """Structured output returned by the hosted chat agent."""
-
-    model_config = ConfigDict(extra="forbid")
 
     answer: str
     references: list[ChatAgentReference]

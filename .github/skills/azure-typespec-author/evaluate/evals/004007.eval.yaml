@@ -1,0 +1,198 @@
+# Source discussion 104023: typespec_2026_05_09.md
+# Expected fixture overlays are reference-only and are never mounted in a trial.
+
+name: azure-typespec-author-eval
+description: Distinguish model accessibility from constructor visibility. Source discussion case
+  104023; no-edit evidence guardrail, not a verified constructor fix.
+version: "1.0"
+type: capability
+area: decorators
+environment: azsdk-mcp
+defaults:
+  runs: 1
+  timeout: 660s
+  model: gpt-5.6-sol
+  executor: copilot-sdk
+stimuli:
+  - name: 004007-decorate-constructor-access-diagnosis-trigger
+    tags:
+      suite: decorators
+      mode: trigger
+    prompt: >-
+      The supplied Widget project imports the client-generator-core library. A generated Employee
+      model reportedly has an internal constructor, but no SDK language, language-emitter version,
+      or generated-code reproduction has been supplied.
+
+
+      Assess whether the TypeSpec @access decorator is a portable switch that makes only this
+      constructor public. This is a bounded diagnosis, not an edit or SDK-generation request. Do not
+      edit any file, fetch documentation, call MCP, compile, or generate an SDK.
+
+
+      Return only a JSON object with boolean fields constructorVisibilityVerified,
+      typeSpecChangeApproved, sdkLanguageRequired, and generatorEvidenceRequired, plus explanation
+      and missingEvidence. Explain the distinction between model accessibility and constructor
+      generation, and list the language/emitter/version and minimal generated-constructor evidence
+      needed before a constructor-only change can be approved. Do not invent a successful target or
+      claim @access(Access.public) guarantees a public constructor.
+    environment: &a1
+      files:
+        - src: ../fixtures/004007-decorate-constructor-access-diagnosis/input/main.tsp
+          dest: main.tsp
+        - src: ../fixtures/004007-decorate-constructor-access-diagnosis/input/employee.tsp
+          dest: employee.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+          dest: shared.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+          dest: readme.md
+        - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: tspconfig.yaml
+        - src: ../fixtures/004007-decorate-constructor-access-diagnosis/input/client.tsp
+          dest: client.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/package.json
+          dest: package.json
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
+        - src: ../scripts/check-discussion-case.mjs
+          dest: check-discussion-case.mjs
+        - src: ../fixtures/004007-decorate-constructor-access-diagnosis/contract.json
+          dest: discussion-contract.json
+      commands:
+        - node -e "const fs=require('fs');const
+          t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+    rubric: &a2
+      - Do not present @access(Access.public) as a generic constructor fix.
+      - Identify the SDK language/emitter and distinguish model accessibility from constructor
+        generation before approving a target.
+      - Do not claim unexecuted SDK, external lint, or ARM review validation.
+    graders:
+      - &a3
+        type: run-command
+        name: fixture-dependencies
+        config:
+          command: node check-node-dependencies.cjs packages
+          expected_exit_code: 0
+      - &a4
+        type: run-command
+        name: fresh-compiled-contract
+        config:
+          command: node check-discussion-case.mjs
+          expected_exit_code: 0
+      - &a5
+        type: tool-calls
+        name: no-edit-or-generation
+        config:
+          disallowed:
+            - name: azsdk_
+            - name: ^(edit|create|apply_patch|web_fetch|web_search)$
+            - name: ^(bash|powershell|terminal|run_in_terminal|shell)$
+      - &a6
+        type: output-matches
+        name: constructor-evidence-boundary
+        config:
+          pattern: ^\s*\{(?=[\s\S]*"constructorVisibilityVerified"\s*:\s*false)(?=[\s\S]*"typeSpecChangeApproved"\s*:\s*false)(?=[\s\S]*"sdkLanguageRequired"\s*:\s*true)(?=[\s\S]*"generatorEvidenceRequired"\s*:\s*true)[\s\S]*\}\s*$
+      - &a7
+        type: prompt
+        name: semantic-answer-and-limitations
+        config:
+          prompt: >-
+            Evaluate the completed task against the stimulus rubric. Accept semantically equivalent
+            valid TypeSpec, not just matching text or comments. Require the actual requested
+            wire/version/client-metadata behavior, preservation of unrelated contracts, and the
+            scenario's stated qualifications. Require one valid JSON object that withholds a
+            constructor-only target, distinguishes @access model/operation accessibility from
+            emitter-specific constructor rules, and identifies the missing SDK language,
+            emitter/version, and minimal generated constructor reproduction. No edits or SDK
+            execution are authorized.
+
+
+            Scenario-specific expectations:
+
+            - Do not present @access(Access.public) as a generic constructor fix.
+
+            - Identify the SDK language/emitter and distinguish model accessibility from constructor
+            generation before approving a target.
+
+            - Do not claim unexecuted SDK, external lint, or ARM review validation.
+          model: gpt-5.6-sol
+          scoring: scale_1_10
+          threshold: 0.8
+    constraints:
+      max_turns: 8
+      max_tokens: 100000
+  - name: 004007-decorate-constructor-access-diagnosis-forced
+    tags:
+      suite: decorators
+      mode: forced
+    prompt: >-
+      @azure-typespec-author The supplied Widget project imports the client-generator-core library.
+      A generated Employee model reportedly has an internal constructor, but no SDK language,
+      language-emitter version, or generated-code reproduction has been supplied.
+
+
+      Assess whether the TypeSpec @access decorator is a portable switch that makes only this
+      constructor public. This is a bounded diagnosis, not an edit or SDK-generation request. Do not
+      edit any file, fetch documentation, call MCP, compile, or generate an SDK.
+
+
+      Return only a JSON object with boolean fields constructorVisibilityVerified,
+      typeSpecChangeApproved, sdkLanguageRequired, and generatorEvidenceRequired, plus explanation
+      and missingEvidence. Explain the distinction between model accessibility and constructor
+      generation, and list the language/emitter/version and minimal generated-constructor evidence
+      needed before a constructor-only change can be approved. Do not invent a successful target or
+      claim @access(Access.public) guarantees a public constructor.
+    environment: *a1
+    rubric: *a2
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+      - *a3
+      - *a4
+      - *a5
+      - *a6
+      - *a7
+    constraints:
+      max_turns: 8
+      max_tokens: 100000
+  - name: 004007-decorate-constructor-access-diagnosis-no-skill
+    tags:
+      suite: decorators
+      mode: no-skill
+    prompt: >-
+      The supplied Widget project imports the client-generator-core library. A generated Employee
+      model reportedly has an internal constructor, but no SDK language, language-emitter version,
+      or generated-code reproduction has been supplied.
+
+
+      Assess whether the TypeSpec @access decorator is a portable switch that makes only this
+      constructor public. This is a bounded diagnosis, not an edit or SDK-generation request. Do not
+      edit any file, fetch documentation, call MCP, compile, or generate an SDK.
+
+
+      Return only a JSON object with boolean fields constructorVisibilityVerified,
+      typeSpecChangeApproved, sdkLanguageRequired, and generatorEvidenceRequired, plus explanation
+      and missingEvidence. Explain the distinction between model accessibility and constructor
+      generation, and list the language/emitter/version and minimal generated-constructor evidence
+      needed before a constructor-only change can be approved. Do not invent a successful target or
+      claim @access(Access.public) guarantees a public constructor.
+    environment: *a1
+    rubric: *a2
+    graders:
+      - *a3
+      - *a4
+      - *a5
+      - *a6
+      - *a7
+    constraints:
+      max_turns: 8
+      max_tokens: 100000
+scoring:
+  weights:
+    run-command: 0.35
+    tool-calls: 0.2
+    output-matches: 0.25
+    prompt: 0.15
+    skill-invocation: 0.05
+  threshold: 0.97

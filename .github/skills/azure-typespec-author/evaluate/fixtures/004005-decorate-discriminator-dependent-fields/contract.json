@@ -1,0 +1,136 @@
+{
+  "id": "004005",
+  "sourceCase": "104029",
+  "sourceFile": "typespec_2026_03_06.md",
+  "sourceHeading": "Mark an object field as required based on another field",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Foo/discriminator",
+      "equals": "fooType"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/FooVariantA/x-ms-discriminator-value",
+      "equals": "a"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/FooVariantB/x-ms-discriminator-value",
+      "equals": "b"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/FooVariantA/required",
+      "includes": "fooA"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/FooVariantB/required",
+      "includes": "fooB"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Foo/properties/fooA",
+      "absent": true
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Foo/properties/fooB",
+      "absent": true
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/FooVariantA/allOf/0/$ref",
+      "equals": "#/definitions/Foo"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/foo/$ref",
+      "equals": "#/definitions/Foo"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Foo/discriminator",
+      "equals": "fooType"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/FooVariantA/x-ms-discriminator-value",
+      "equals": "a"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/FooVariantB/x-ms-discriminator-value",
+      "equals": "b"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/FooVariantA/required",
+      "includes": "fooA"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/FooVariantB/required",
+      "includes": "fooB"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Foo/properties/fooA",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Foo/properties/fooB",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/FooVariantA/allOf/0/$ref",
+      "equals": "#/definitions/Foo"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/foo/$ref",
+      "equals": "#/definitions/Foo"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/FooVariantB/allOf/0/$ref",
+      "equals": "#/definitions/Foo"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/FooVariantA/properties/fooB",
+      "absent": true
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/FooVariantB/properties/fooA",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/FooVariantB/allOf/0/$ref",
+      "equals": "#/definitions/Foo"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/FooVariantA/properties/fooB",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/FooVariantB/properties/fooA",
+      "absent": true
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,28 @@
+{
+  "id": "001015",
+  "sourceCase": "105057",
+  "sourceFile": "typespec_2026_03_06.md",
+  "sourceHeading": "Updating description for property updates across all api versions instead of just one.",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/city/description",
+      "equals": "The employee city. City filtering is supported starting with 2024-10-01-preview."
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/city/description",
+      "equals": "The employee city. City filtering is supported starting with 2024-10-01-preview."
+    }
+  ],
+  "notes": [
+    "Documentation-only corrections intentionally update both projections; this does not version decorator application."
+  ]
+}

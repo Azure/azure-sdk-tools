@@ -1,0 +1,28 @@
+{
+  "id": "001018",
+  "sourceCase": "105083",
+  "sourceFile": "typespec_2026_06_05.md",
+  "sourceHeading": "Mix of GA ready and preview endpoints",
+  "mode": "edit",
+  "status": "needs-review",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/info/version",
+      "equals": "2021-11-01"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/paths/~1subscriptions~1{subscriptionId}~1resourceGroups~1{resourceGroupName}~1providers~1Microsoft.Widget~1employees~1{employeeName}/put",
+      "absent": true
+    }
+  ],
+  "notes": [
+    "The source does not establish ARM approval to ship without create. The target demonstrates package exclusion, not an approved lifecycle design; the isolated private files are candidates, not a separately validated entry point.",
+    "The runner records expected_outputs; it must contain only stable/2021-11-01/widget.json."
+  ]
+}

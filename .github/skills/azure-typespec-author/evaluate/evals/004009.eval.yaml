@@ -1,0 +1,203 @@
+# Source discussion 105058: typespec_2026_03_06.md
+# Expected fixture overlays are reference-only and are never mounted in a trial.
+
+name: azure-typespec-author-eval
+description: Declare multipart media type without inventing an inference failure. Source discussion
+  case 105058; needs-review.
+version: "1.0"
+type: capability
+area: decorators
+environment: azsdk-mcp
+defaults:
+  runs: 1
+  timeout: 660s
+  model: gpt-5.6-sol
+  executor: copilot-sdk
+stimuli:
+  - name: 004009-decorate-explicit-multipart-content-type-trigger
+    tags:
+      suite: decorators
+      mode: trigger
+    prompt: >-
+      Adapt Widget into a separate data-plane Employee profile upload fixture (not an ARM action).
+      The multipart body omits contentType. Add an explicit multipart/form-data header and preserve
+      both file and metadata parts, while checking rather than assuming the historical claim that
+      omission cannot infer a media type.
+
+      This request is only for the already supplied data-plane upload service. Do not recreate it as
+      an ARM service or change the operation, route, Employee metadata model, or multipart parts.
+      State whether the supplied compiler already infers the omitted header's media type.
+
+
+      Work in the supplied Widget project at the workspace root. The API design decisions above are
+      approved for this isolated authoring exercise. Keep unrelated schemas, API versions, and
+      operations unchanged. I opt out of additional SDK client configuration or naming work; make
+      only the explicitly requested source or client-metadata changes. Do not generate SDKs or claim
+      an SDK, external lint, or ARM review was run when it was not.
+    environment: &a1
+      files:
+        - src: ../fixtures/004009-decorate-explicit-multipart-content-type/input/main.tsp
+          dest: main.tsp
+        - src: ../fixtures/004009-decorate-explicit-multipart-content-type/input/employee.tsp
+          dest: employee.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+          dest: shared.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+          dest: readme.md
+        - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: tspconfig.yaml
+        - src: ../fixtures/Microsoft.Widget/Widget/package.json
+          dest: package.json
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
+        - src: ../scripts/check-discussion-case.mjs
+          dest: check-discussion-case.mjs
+        - src: ../fixtures/004009-decorate-explicit-multipart-content-type/contract.json
+          dest: discussion-contract.json
+      commands:
+        - node -e "const fs=require('fs');const
+          t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+    rubric: &a2
+      - This is explicitly data-plane-only; multipart is not legitimized as an ARM management contract.
+      - Both the omitted-header and explicit-header output are inspected.
+      - The expected operation consumes multipart/form-data and exposes formData parts.
+      - The valid target explicitly declares the media type. Pinned HTTP/AutoRest may already infer
+        multipart/form-data for the input; the source answer's categorical 'required/no inference'
+        assertion must not be treated as fact. Use bytes as file content, not an undefined File
+        model.
+      - The original answer overstates contentType requirements; the pinned compiler's actual input
+        behavior is evidence, not an error fabricated to match that claim.
+      - No multipart/mixed support or ARM acceptance is claimed.
+      - Do not claim unexecuted SDK, external lint, or ARM review validation.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+      - &a3
+        type: run-command
+        name: fixture-dependencies
+        config:
+          command: node check-node-dependencies.cjs packages
+          expected_exit_code: 0
+      - &a4
+        type: run-command
+        name: compile-typespec
+        config:
+          command: tsp compile .
+          expected_exit_code: 0
+      - &a5
+        type: run-command
+        name: fresh-compiled-contract
+        config:
+          command: node check-discussion-case.mjs
+          expected_exit_code: 0
+      - &a6
+        type: prompt
+        name: semantic-answer-and-limitations
+        config:
+          prompt: >-
+            Evaluate the completed task against the stimulus rubric. Accept semantically equivalent
+            valid TypeSpec, not just matching text or comments. Require the actual requested
+            wire/version/client-metadata behavior, preservation of unrelated contracts, and the
+            scenario's stated qualifications. Reject unsupported claims that compiling TypeSpec or
+            AutoRest proves generated SDK behavior, external LintDiff success, or management-plane
+            approval.
+
+
+            Scenario-specific expectations:
+
+            - This is explicitly data-plane-only; multipart is not legitimized as an ARM management
+            contract.
+
+            - Both the omitted-header and explicit-header output are inspected.
+
+            - The expected operation consumes multipart/form-data and exposes formData parts.
+
+            - The valid target explicitly declares the media type. Pinned HTTP/AutoRest may already
+            infer multipart/form-data for the input; the source answer's categorical 'required/no
+            inference' assertion must not be treated as fact. Use bytes as file content, not an
+            undefined File model.
+
+            - The original answer overstates contentType requirements; the pinned compiler's actual
+            input behavior is evidence, not an error fabricated to match that claim.
+
+            - No multipart/mixed support or ARM acceptance is claimed.
+
+            - Do not claim unexecuted SDK, external lint, or ARM review validation.
+          model: gpt-5.6-sol
+          scoring: scale_1_10
+          threshold: 0.8
+    constraints:
+      max_turns: 14
+      max_tokens: 100000
+  - name: 004009-decorate-explicit-multipart-content-type-forced
+    tags:
+      suite: decorators
+      mode: forced
+    prompt: >-
+      @azure-typespec-author Adapt Widget into a separate data-plane Employee profile upload fixture
+      (not an ARM action). The multipart body omits contentType. Add an explicit multipart/form-data
+      header and preserve both file and metadata parts, while checking rather than assuming the
+      historical claim that omission cannot infer a media type.
+
+      This request is only for the already supplied data-plane upload service. Do not recreate it as
+      an ARM service or change the operation, route, Employee metadata model, or multipart parts.
+      State whether the supplied compiler already infers the omitted header's media type.
+
+
+      Work in the supplied Widget project at the workspace root. The API design decisions above are
+      approved for this isolated authoring exercise. Keep unrelated schemas, API versions, and
+      operations unchanged. I opt out of additional SDK client configuration or naming work; make
+      only the explicitly requested source or client-metadata changes. Do not generate SDKs or claim
+      an SDK, external lint, or ARM review was run when it was not.
+    environment: *a1
+    rubric: *a2
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+      - *a3
+      - *a4
+      - *a5
+      - *a6
+    constraints:
+      max_turns: 14
+      max_tokens: 100000
+  - name: 004009-decorate-explicit-multipart-content-type-no-skill
+    tags:
+      suite: decorators
+      mode: no-skill
+    prompt: >-
+      Adapt Widget into a separate data-plane Employee profile upload fixture (not an ARM action).
+      The multipart body omits contentType. Add an explicit multipart/form-data header and preserve
+      both file and metadata parts, while checking rather than assuming the historical claim that
+      omission cannot infer a media type.
+
+      This request is only for the already supplied data-plane upload service. Do not recreate it as
+      an ARM service or change the operation, route, Employee metadata model, or multipart parts.
+      State whether the supplied compiler already infers the omitted header's media type.
+
+
+      Work in the supplied Widget project at the workspace root. The API design decisions above are
+      approved for this isolated authoring exercise. Keep unrelated schemas, API versions, and
+      operations unchanged. I opt out of additional SDK client configuration or naming work; make
+      only the explicitly requested source or client-metadata changes. Do not generate SDKs or claim
+      an SDK, external lint, or ARM review was run when it was not.
+    environment: *a1
+    rubric: *a2
+    graders:
+      - *a3
+      - *a4
+      - *a5
+      - *a6
+    constraints:
+      max_turns: 14
+      max_tokens: 100000
+scoring:
+  weights:
+    run-command: 0.85
+    prompt: 0.1
+    skill-invocation: 0.05
+  threshold: 0.97

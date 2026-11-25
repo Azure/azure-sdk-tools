@@ -1,0 +1,23 @@
+{
+  "id": "004007",
+  "sourceCase": "104023",
+  "sourceFile": "typespec_2026_05_09.md",
+  "sourceHeading": "Question on TypeSpec Settings for Constructor Visibility in SDK Generation",
+  "mode": "diagnosis",
+  "status": "blocked",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [],
+  "notes": [
+    "Target: null. Candidate only (not a verified fix): @@access(Microsoft.Widget.Employee, Access.public) would affect model accessibility, not guarantee a public constructor."
+  ],
+  "unchangedTypeSpec": {
+    "main.tsp": "95be312edd7602fc924fae7301e767b742621c31d1c92d840f0b2760561ff308",
+    "employee.tsp": "34dc9e5c72ac5646f4a61c2716e575b699a6f541e1a5de009fd4c695efcd7e67",
+    "shared.tsp": "a48c2227a1efcc4e154396c126fa4b8dfdf1a87f975675ea3bdb3ceec3c2022f",
+    "client.tsp": "35e40178d1869fd5303de475e7401dc5209522a8cebf86252dc81cadb95235af"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "002015",
+  "sourceCase": "105071",
+  "sourceFile": "typespec_2026_04_10.md",
+  "sourceHeading": "Breaking change to PATCH",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [],
+  "notes": []
+}

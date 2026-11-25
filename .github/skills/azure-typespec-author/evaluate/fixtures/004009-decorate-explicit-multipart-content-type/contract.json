@@ -1,0 +1,18 @@
+{
+  "id": "004009",
+  "sourceCase": "105058",
+  "sourceFile": "typespec_2026_03_06.md",
+  "sourceHeading": "Does it require to write `contentType` header, when using `@multipartData`?",
+  "mode": "edit",
+  "status": "needs-review",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [],
+  "notes": [
+    "The original answer overstates contentType requirements; the pinned compiler's actual input behavior is evidence, not an error fabricated to match that claim.",
+    "No multipart/mixed support or ARM acceptance is claimed."
+  ]
+}

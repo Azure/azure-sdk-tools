@@ -1,0 +1,36 @@
+{
+  "id": "004004",
+  "sourceCase": "105056",
+  "sourceFile": "typespec_2026_03_06.md",
+  "sourceHeading": "Underscore in field names for arm resources",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/priorityValue8021ActionCluster/type",
+      "equals": "string"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/priorityValue8021Action_Cluster",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/priorityValue8021ActionCluster/type",
+      "equals": "string"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/priorityValue8021Action_Cluster",
+      "absent": true
+    }
+  ],
+  "notes": []
+}

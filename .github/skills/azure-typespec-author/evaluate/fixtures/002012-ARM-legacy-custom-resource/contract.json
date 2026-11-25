@@ -1,0 +1,98 @@
+{
+  "id": "002012",
+  "sourceCase": "104026",
+  "sourceFile": "typespec_2026_02_06.md",
+  "sourceHeading": "When to use CustomAzureResource?",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [
+    "@typespec/http/duplicate-operation"
+  ],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Employee/properties/someId/type",
+      "equals": "string"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Employee/properties/someOtherProperty/type",
+      "equals": "string"
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Employee/properties/name",
+      "absent": true
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Employee/properties/id",
+      "absent": true
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Employee/properties/type",
+      "absent": true
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Employee/required",
+      "absent": true
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/Employee/allOf",
+      "absent": true
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/paths/~1subscriptions~1{subscriptionId}~1resourceGroups~1{resourceGroupName}~1providers~1Microsoft.Widget~1employees~1{employeeName}/get/operationId",
+      "equals": "Employees_Get"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Employee/properties/someId/type",
+      "equals": "string"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Employee/properties/someOtherProperty/type",
+      "equals": "string"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Employee/properties/name",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Employee/properties/id",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Employee/properties/type",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Employee/required",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/Employee/allOf",
+      "absent": true
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/paths/~1subscriptions~1{subscriptionId}~1resourceGroups~1{resourceGroupName}~1providers~1Microsoft.Widget~1employees~1{employeeName}/get/operationId",
+      "equals": "Employees_Get"
+    }
+  ],
+  "notes": []
+}

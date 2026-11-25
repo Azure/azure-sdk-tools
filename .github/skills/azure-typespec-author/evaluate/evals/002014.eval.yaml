@@ -1,0 +1,202 @@
+# Source discussion 105059: typespec_2026_03_06.md
+# Expected fixture overlays are reference-only and are never mounted in a trial.
+
+name: azure-typespec-author-eval
+description: Replace a finite parameter dictionary without changing string values. Source discussion
+  case 105059; ready.
+version: "1.0"
+type: capability
+area: armtemplate
+environment: azsdk-mcp
+defaults:
+  runs: 1
+  timeout: 660s
+  model: gpt-5.6-sol
+  executor: copilot-sdk
+stimuli:
+  - name: 002014-ARM-finite-parameter-model-trigger
+    tags:
+      suite: armtemplate
+      mode: trigger
+    prompt: >-
+      EmployeeProperties.parameters is a Record<string> holding serialized parameter values such as
+      max_connections="{value:200, type:'abc'}" and log_min_error_statement="{value:error,
+      type:'abc'}". Its supported key set is these two names. Replace the dictionary with an
+      explicit EmployeeParameters model whose optional properties retain string values. Explain the
+      ARM review/suppression alternative for a genuinely open key space without fabricating a
+      TypeSpec suppression for the external AvoidAdditionalProperties rule.
+
+
+      Work in the supplied Widget project at the workspace root. The API design decisions above are
+      approved for this isolated authoring exercise. Keep unrelated schemas, API versions, and
+      operations unchanged. I opt out of additional SDK client configuration or naming work; make
+      only the explicitly requested source or client-metadata changes. Do not generate SDKs or claim
+      an SDK, external lint, or ARM review was run when it was not.
+    environment: &a1
+      files:
+        - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+          dest: main.tsp
+        - src: ../fixtures/002014-ARM-finite-parameter-model/input/employee.tsp
+          dest: employee.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+          dest: shared.tsp
+        - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+          dest: readme.md
+        - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+          dest: tspconfig.yaml
+        - src: ../fixtures/Microsoft.Widget/Widget/package.json
+          dest: package.json
+        - src: ../scripts/check-node-dependencies.cjs
+          dest: check-node-dependencies.cjs
+        - src: ../scripts/check-discussion-case.mjs
+          dest: check-discussion-case.mjs
+        - src: ../fixtures/002014-ARM-finite-parameter-model/contract.json
+          dest: discussion-contract.json
+      commands:
+        - node -e "const fs=require('fs');const
+          t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+    rubric: &a2
+      - The two known parameter keys remain optional string-valued properties.
+      - No additionalProperties dictionary is emitted for EmployeeParameters.
+      - The review exception is described rather than falsely 'fixed' by a nonexistent compiler
+        suppression.
+      - The source recommends explicitly named keys/values for ARM and a justified review exception only
+        if an actual open dictionary is required. The source's example values are strings containing
+        object-like text, so this fixture preserves strings rather than inventing a value/type
+        object wire migration. It concretely assumes the two documented keys form this service's
+        supported set; if keys are actually unbounded, this target is not equivalent and the
+        dictionary requires an ARM review exception. AvoidAdditionalProperties/LintDiff is external
+        to this compiler runner.
+      - Explicit-key modeling is valid only for a finite supported set. Do not use this edit to silently
+        remove legitimate dynamic parameter keys.
+      - Do not claim unexecuted SDK, external lint, or ARM review validation.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+      - &a3
+        type: run-command
+        name: fixture-dependencies
+        config:
+          command: node check-node-dependencies.cjs packages
+          expected_exit_code: 0
+      - &a4
+        type: run-command
+        name: compile-typespec
+        config:
+          command: tsp compile .
+          expected_exit_code: 0
+      - &a5
+        type: run-command
+        name: fresh-compiled-contract
+        config:
+          command: node check-discussion-case.mjs
+          expected_exit_code: 0
+      - &a6
+        type: prompt
+        name: semantic-answer-and-limitations
+        config:
+          prompt: >-
+            Evaluate the completed task against the stimulus rubric. Accept semantically equivalent
+            valid TypeSpec, not just matching text or comments. Require the actual requested
+            wire/version/client-metadata behavior, preservation of unrelated contracts, and the
+            scenario's stated qualifications. Reject unsupported claims that compiling TypeSpec or
+            AutoRest proves generated SDK behavior, external LintDiff success, or management-plane
+            approval.
+
+
+            Scenario-specific expectations:
+
+            - The two known parameter keys remain optional string-valued properties.
+
+            - No additionalProperties dictionary is emitted for EmployeeParameters.
+
+            - The review exception is described rather than falsely 'fixed' by a nonexistent
+            compiler suppression.
+
+            - The source recommends explicitly named keys/values for ARM and a justified review
+            exception only if an actual open dictionary is required. The source's example values are
+            strings containing object-like text, so this fixture preserves strings rather than
+            inventing a value/type object wire migration. It concretely assumes the two documented
+            keys form this service's supported set; if keys are actually unbounded, this target is
+            not equivalent and the dictionary requires an ARM review exception.
+            AvoidAdditionalProperties/LintDiff is external to this compiler runner.
+
+            - Explicit-key modeling is valid only for a finite supported set. Do not use this edit
+            to silently remove legitimate dynamic parameter keys.
+
+            - Do not claim unexecuted SDK, external lint, or ARM review validation.
+          model: gpt-5.6-sol
+          scoring: scale_1_10
+          threshold: 0.8
+    constraints:
+      max_turns: 14
+      max_tokens: 100000
+  - name: 002014-ARM-finite-parameter-model-forced
+    tags:
+      suite: armtemplate
+      mode: forced
+    prompt: >-
+      @azure-typespec-author EmployeeProperties.parameters is a Record<string> holding serialized
+      parameter values such as max_connections="{value:200, type:'abc'}" and
+      log_min_error_statement="{value:error, type:'abc'}". Its supported key set is these two names.
+      Replace the dictionary with an explicit EmployeeParameters model whose optional properties
+      retain string values. Explain the ARM review/suppression alternative for a genuinely open key
+      space without fabricating a TypeSpec suppression for the external AvoidAdditionalProperties
+      rule.
+
+
+      Work in the supplied Widget project at the workspace root. The API design decisions above are
+      approved for this isolated authoring exercise. Keep unrelated schemas, API versions, and
+      operations unchanged. I opt out of additional SDK client configuration or naming work; make
+      only the explicitly requested source or client-metadata changes. Do not generate SDKs or claim
+      an SDK, external lint, or ARM review was run when it was not.
+    environment: *a1
+    rubric: *a2
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
+      - *a3
+      - *a4
+      - *a5
+      - *a6
+    constraints:
+      max_turns: 14
+      max_tokens: 100000
+  - name: 002014-ARM-finite-parameter-model-no-skill
+    tags:
+      suite: armtemplate
+      mode: no-skill
+    prompt: >-
+      EmployeeProperties.parameters is a Record<string> holding serialized parameter values such as
+      max_connections="{value:200, type:'abc'}" and log_min_error_statement="{value:error,
+      type:'abc'}". Its supported key set is these two names. Replace the dictionary with an
+      explicit EmployeeParameters model whose optional properties retain string values. Explain the
+      ARM review/suppression alternative for a genuinely open key space without fabricating a
+      TypeSpec suppression for the external AvoidAdditionalProperties rule.
+
+
+      Work in the supplied Widget project at the workspace root. The API design decisions above are
+      approved for this isolated authoring exercise. Keep unrelated schemas, API versions, and
+      operations unchanged. I opt out of additional SDK client configuration or naming work; make
+      only the explicitly requested source or client-metadata changes. Do not generate SDKs or claim
+      an SDK, external lint, or ARM review was run when it was not.
+    environment: *a1
+    rubric: *a2
+    graders:
+      - *a3
+      - *a4
+      - *a5
+      - *a6
+    constraints:
+      max_turns: 14
+      max_tokens: 100000
+scoring:
+  weights:
+    run-command: 0.85
+    prompt: 0.1
+    skill-invocation: 0.05
+  threshold: 0.97

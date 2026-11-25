@@ -1,0 +1,30 @@
+{
+  "id": "004006",
+  "sourceCase": "104045",
+  "sourceFile": "typespec_2026_04_03.md",
+  "sourceHeading": "Custom annotation support",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [
+    "invalid-ref"
+  ],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/retryHint/type",
+      "equals": "string"
+    },
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/retryHint",
+      "absent": true
+    }
+  ],
+  "notes": [
+    "The source answer's assertion that arbitrary custom decorators are rejected by pipeline policy is not demonstrated by Unknown decorator. No such policy claim is adopted."
+  ]
+}

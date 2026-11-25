@@ -1,0 +1,28 @@
+{
+  "id": "001016",
+  "sourceCase": "105079",
+  "sourceFile": "typespec_2026_05_22.md",
+  "sourceHeading": "Versioning doc strings",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [
+    {
+      "file": "stable/2021-11-01/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/city/description",
+      "equals": "The city in which this employee is based."
+    },
+    {
+      "file": "preview/2024-10-01-preview/widget.json",
+      "pointer": "/definitions/EmployeeProperties/properties/city/description",
+      "equals": "The city in which this employee is based."
+    }
+  ],
+  "notes": [
+    "Documentation-only corrections intentionally update both projections; this does not version decorator application."
+  ]
+}

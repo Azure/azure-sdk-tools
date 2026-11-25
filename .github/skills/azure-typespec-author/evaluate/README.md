@@ -291,6 +291,71 @@ export FIXTURE_NODE_MODULES="$PWD/fixtures/Microsoft.Widget/Widget/node_modules"
 export PATH="$FIXTURE_NODE_MODULES/.bin:$PATH"
 ```
 
+## Discussion-Derived Scenarios
+
+The following 17 cases preserve the new scenarios identified in the 2026 discussion
+comparison. Their source chapter IDs are recorded in the eval descriptions and fixture
+`contract.json` files. Both documentation chapters remain separate cases.
+
+| Eval | Source chapter | Scenario |
+| ---- | -------------- | -------- |
+| [001014](evals/001014.eval.yaml) | 104039 | Remove an obsolete Azure.Core version dependency |
+| [001015](evals/001015.eval.yaml) | 105057 | Document filtering availability in all historical projections |
+| [001016](evals/001016.eval.yaml) | 105079 | Correct a docstring across historical projections |
+| [001017](evals/001017.eval.yaml) | 104008 | Add a preview-only optional action body |
+| [001018](evals/001018.eval.yaml) | 105083 | Isolate an unready private preview from the public entry |
+| [001019](evals/001019.eval.yaml) | 105086 | Version client-model accessibility |
+| [002012](evals/002012.eval.yaml) | 104026 | Route a legacy resource without changing its JSON envelope |
+| [002013](evals/002013.eval.yaml) | 104044 | Use the ARM-provided management endpoint |
+| [002014](evals/002014.eval.yaml) | 105059 | Replace a finite dictionary while preserving string values |
+| [002015](evals/002015.eval.yaml) | 105071 | Restore agreed public PATCH model names |
+| [004004](evals/004004.eval.yaml) | 105056 | Rename an unshipped underscore-bearing property |
+| [004005](evals/004005.eval.yaml) | 104029 | Require discriminator-dependent payload fields |
+| [004006](evals/004006.eval.yaml) | 104045 | Replace an undeclared custom versioning decorator |
+| [004007](evals/004007.eval.yaml) | 104023 | Diagnose constructor visibility without inventing a fix |
+| [004008](evals/004008.eval.yaml) | 105080 | Use an extensible discriminator without an unsupported suppression |
+| [004009](evals/004009.eval.yaml) | 105058 | Declare multipart media type without inventing an inference failure |
+| [004010](evals/004010.eval.yaml) | 105098 | Return a single-leaf polymorphic success base while preserving errors |
+
+These add six Versioning (`001`), four ARM Template (`002`), and seven Decorators
+(`004`) evals. None of the selected new scenarios primarily concerns LRO, so this
+conversion does not add a `003` case. Discriminator, header, casing, and accessibility
+diagnoses are grouped by their decorator-related authoring intent.
+
+Each eval has trigger, forced, and no-skill stimuli with the same outcome assertions.
+The constructor diagnosis requires authoring-skill invocation only in forced mode;
+its trigger mode permits an appropriate out-of-scope diagnosis without forcing an edit.
+The converted cases use the original, smaller Widget Employee seed in
+`fixtures/discussion-widget/employee.tsp`; they do not modify the richer existing
+`Microsoft.Widget/Widget/employee.tsp` fixture. Other unchanged files and the
+setup-generated package are shared with the existing Widget fixtures.
+
+Case-specific `input/` and `expected/` files independently overlay that seed.
+Expected files are reference solutions for local checks and are **never mounted in
+agent trials**. The compiled-contract grader emits fresh AutoRest output instead of
+trusting existing Swagger, checks the intended API versions and wire shapes, and
+inspects actual HTTP/versioning/TCGC metadata where Swagger is insufficient.
+
+`004007` is a runnable, no-edit evidence-boundary test, not a verified constructor
+fix. Its source chapter remains blocked until a language emitter and generated-code
+reproduction are supplied. It has no reference code target. `004009` retains the
+qualification that the compiler already infers multipart media type without the
+explicit header. `001018` checks source isolation, but its private files are
+authoring candidates; shipping without a public create operation still requires
+ARM review and SDK-team coordination. Compilation does not certify SDK constructor
+visibility, Go/Rust generation, external LintDiff, or release approval.
+
+After preparing `FIXTURE_NODE_MODULES` as described above, run the deterministic
+fixture checks without starting model trials:
+
+```bash
+node --test scripts/check-discussion-case.test.mjs
+```
+
+The checks cover YAML mappings and all 51 stimuli, declared input diagnostics,
+independently overlaid reference targets, rejection of unchanged inputs, and
+comment-only/stale-output regressions.
+
 ## Results and Troubleshooting
 
 Each run writes:

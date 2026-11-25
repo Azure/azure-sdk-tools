@@ -1,0 +1,15 @@
+{
+  "id": "001017",
+  "sourceCase": "104008",
+  "sourceFile": "typespec_2026_04_10.md",
+  "sourceHeading": "Adding optional request body to existing operation that was previously void?",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [],
+  "notes": []
+}

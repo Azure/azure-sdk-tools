@@ -1,0 +1,17 @@
+{
+  "id": "001019",
+  "sourceCase": "105086",
+  "sourceFile": "typespec_2026_06_26.md",
+  "sourceHeading": "SDK client.tsp Dynamic Versioning",
+  "mode": "edit",
+  "status": "ready",
+  "inputErrorCodes": [],
+  "expectedOutputs": [
+    "preview/2024-10-01-preview/widget.json",
+    "stable/2021-11-01/widget.json"
+  ],
+  "checks": [],
+  "notes": [
+    "Compilation validates decorator applicability and versioning. Visibility in each language SDK still needs client-generator assertions, not Swagger-only certification."
+  ]
+}

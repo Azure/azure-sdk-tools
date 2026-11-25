@@ -46,10 +46,14 @@ from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import (
     ensure_user_memory_store,
 )
-from utils.agent_harness import create_file_store, get_harness_defaults
+from utils.agent_harness import get_harness_defaults
 from utils.memory_context_provider import MemoryContextProvider
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
-from middleware.tool_output_storage import ToolOutputStorageMiddleware
+from middleware.tool_output_storage import (
+    OffloadedFilesProvider,
+    ShellFilesMiddleware,
+    ToolOutputStorageMiddleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -106,12 +110,14 @@ async def main() -> None:
     knowledge_tools = KnowledgeTools()
     web_tools = WebTools()
     web_search_tool = agent_client.get_web_search_tool(search_context_size="medium")
+    shell_tool = agent_client.get_shell_tool(environment={"type": "container_auto"})
 
     tools = [
         knowledge_tools.search_knowledge_base,
         knowledge_tools.wiki_search,
         web_tools.web_fetch,
         web_search_tool,
+        shell_tool,
     ]
 
     # Parallelise slow async startup tasks to reduce cold-start latency.
@@ -167,7 +173,6 @@ async def main() -> None:
     )
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
-    file_store = create_file_store()
     agent = create_harness_agent(  # pyright: ignore[reportCallIssue]
         agent_client,
         name=agent_name,
@@ -176,17 +181,18 @@ async def main() -> None:
         agent_instructions=instructions,
         tools=tools,
         skills_provider=skills_provider,
-        context_providers=[memory_provider],
+        context_providers=[memory_provider, OffloadedFilesProvider()],
         middleware=[
             ToolOutputSecurityMiddleware(),
-            ToolOutputStorageMiddleware(file_store),
+            ToolOutputStorageMiddleware(project_client.get_openai_client()),
+            ShellFilesMiddleware(),
         ],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
             "include": ["web_search_call.action.sources"],
         },
-        **get_harness_defaults(file_store),
+        **get_harness_defaults(),
     )
 
     server = ResponsesHostServer(

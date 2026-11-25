@@ -5,7 +5,7 @@
 ### Features Added
 
 - Integrate the Microsoft Agent Framework harness for hosted agents (`create_harness_agent`) with `history_source="agent"`, token-aware context compaction, and OpenTelemetry instrumentation.
-- Offload large external tool results (>20,000 characters) to session-scoped `FileAccessProvider` storage (with JSON pretty-printing) for read-only inspection via `file_access_grep` and `file_access_read_lines`.
+- Offload large external tool results (>20,000 characters) to Foundry Files (with JSON pretty-printing) for inspection inside Foundry's per-conversation `container_auto` shell sandbox.
 
 ### Breaking / Behavioral Changes
 

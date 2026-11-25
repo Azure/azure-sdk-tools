@@ -9,8 +9,6 @@ from unittest.mock import Mock
 from agent_framework import (
     CompactionProvider,
     ContextWindowCompactionStrategy,
-    FileAccessProvider,
-    InMemoryAgentFileStore,
     InMemoryHistoryProvider,
     InlineSkill,
     SkillsProvider,
@@ -21,7 +19,11 @@ from agent_framework.foundry import FoundryChatClient
 from pytest import MonkeyPatch
 
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
-from middleware.tool_output_storage import ToolOutputStorageMiddleware
+from middleware.tool_output_storage import (
+    OffloadedFilesProvider,
+    ShellFilesMiddleware,
+    ToolOutputStorageMiddleware,
+)
 from utils.agent_harness import (
     HARNESS_CONTEXT_WINDOW_TOKENS,
     HARNESS_MAX_OUTPUT_TOKENS,
@@ -32,7 +34,11 @@ from utils.agent_harness import (
 def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
     monkeypatch.chdir(tmp_path)
     client = Mock(spec=FoundryChatClient)
-    file_store = InMemoryAgentFileStore()
+    client.get_shell_tool.return_value = {
+        "type": "shell",
+        "environment": {"type": "container_auto"},
+    }
+    openai_client = Mock()
     skills_provider = SkillsProvider(
         [
             InlineSkill(
@@ -50,15 +56,16 @@ def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
         id="test-agent:1",
         harness_instructions="Treat large tool results as datasets.",
         agent_instructions="Test instructions.",
-        tools=[],
+        tools=[client.get_shell_tool(environment={"type": "container_auto"})],
         skills_provider=skills_provider,
-        context_providers=[Mock()],
+        context_providers=[Mock(), OffloadedFilesProvider()],
         middleware=[
             ToolOutputSecurityMiddleware(),
-            ToolOutputStorageMiddleware(file_store),
+            ToolOutputStorageMiddleware(openai_client),
+            ShellFilesMiddleware(),
         ],
         default_options={"max_tool_calls": 10},
-        **get_harness_defaults(file_store),
+        **get_harness_defaults(),
     )
     return agent, client
 
@@ -70,7 +77,9 @@ def test_harness_adds_managed_providers(
     agent, client = _create_agent(tmp_path, monkeypatch)
 
     assert agent.require_per_service_call_history_persistence
-    client.get_shell_tool.assert_not_called()
+    client.get_shell_tool.assert_called_once_with(
+        environment={"type": "container_auto"}
+    )
     history_provider = next(
         (
             provider
@@ -87,21 +96,14 @@ def test_harness_adds_managed_providers(
         isinstance(provider, CompactionProvider)
         for provider in agent.context_providers
     )
-    file_access = next(
-        (
-            provider
-            for provider in agent.context_providers
-            if isinstance(provider, FileAccessProvider)
-        ),
-        None,
+    assert any(
+        isinstance(provider, OffloadedFilesProvider)
+        for provider in agent.context_providers
     )
-    assert file_access is not None
-    assert file_access.session_scoped is True
-    assert file_access.disable_write_tools is True
-    assert file_access.disable_readonly_tool_approval is True
     assert not any(
         type(provider).__name__ in {
             "AgentModeProvider",
+            "FileAccessProvider",
             "FileMemoryProvider",
             "ShellEnvironmentProvider",
             "TodoProvider",
@@ -111,6 +113,7 @@ def test_harness_adds_managed_providers(
     middleware_names = [type(m).__name__ for m in agent.middleware or []]
     assert "ToolOutputSecurityMiddleware" in middleware_names
     assert "ToolOutputStorageMiddleware" in middleware_names
+    assert "ShellFilesMiddleware" in middleware_names
     assert middleware_names.index("ToolOutputSecurityMiddleware") < middleware_names.index(
         "ToolOutputStorageMiddleware"
     )
@@ -146,6 +149,6 @@ def test_harness_supports_agents_without_skills_or_memory(
     )
 
     assert not any(
-        isinstance(provider, FileAccessProvider)
+        type(provider).__name__ == "FileAccessProvider"
         for provider in agent.context_providers
     )

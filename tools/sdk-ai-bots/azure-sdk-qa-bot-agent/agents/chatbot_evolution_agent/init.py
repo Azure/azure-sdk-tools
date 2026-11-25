@@ -41,7 +41,7 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
 from services.chat_service import ChatService
-from utils.agent_harness import create_file_store, get_harness_defaults
+from utils.agent_harness import get_harness_defaults
 from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
     create_project_client,
@@ -50,7 +50,11 @@ from utils.azure_ai_foundry import (
 )
 from utils.azure_storage import create_blob_service_client
 from middleware.tool_output_security import ToolOutputSecurityMiddleware
-from middleware.tool_output_storage import ToolOutputStorageMiddleware
+from middleware.tool_output_storage import (
+    OffloadedFilesProvider,
+    ShellFilesMiddleware,
+    ToolOutputStorageMiddleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +127,7 @@ async def main() -> None:
     )
     web_tools = WebTools()
 
+    shell_tool = agent_client.get_shell_tool(environment={"type": "container_auto"})
     tools = [
         monitor_tools.fetch_chat_trace,
         conversation_tools.resolve_conversation_by_trace_id,
@@ -135,6 +140,7 @@ async def main() -> None:
         chatagent_tools.chat,
         web_tools.web_fetch,
         create_ado_issue,
+        shell_tool,
     ]
 
     # GitHub MCP tool with write access for remediation issues and comments.
@@ -157,7 +163,6 @@ async def main() -> None:
         )
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
-    file_store = create_file_store()
     agent = create_harness_agent(  # pyright: ignore[reportCallIssue]
         agent_client,
         name=agent_name,
@@ -165,15 +170,17 @@ async def main() -> None:
         harness_instructions=harness_instructions,
         agent_instructions=instructions,
         tools=tools,
+        context_providers=[OffloadedFilesProvider()],
         middleware=[
             ToolOutputSecurityMiddleware(),
-            ToolOutputStorageMiddleware(file_store),
+            ToolOutputStorageMiddleware(prod_project_client.get_openai_client()),
+            ShellFilesMiddleware(),
         ],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
         },
-        **get_harness_defaults(file_store),
+        **get_harness_defaults(),
     )
 
     server = ResponsesHostServer(agent, history_source="agent")

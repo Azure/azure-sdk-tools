@@ -28,7 +28,7 @@ and references are produced at run time by the bot and read by the evaluators.
 | Field                 | Required | Notes                                                             |
 | --------------------- | -------- | ----------------------------------------------------------------- |
 | `testcase`            | yes      | Stable `CCCSSS-category-situation` identifier.                   |
-| `tags`                | yes      | `["core"]` for core + full; `[]` for full only.                  |
+| `tags`                | yes      | `["core"]` (included in `core` and `full` scopes) or `[]` (`full` scope only). |
 | `query`               | yes      | The question; the **normalized query is the dedup key**.          |
 | `ground_truth`        | yes      | Expected answer the evaluators compare against.                   |
 | `scenario`            | yes      | Scenario id; should match the `<scenario>` file stem.             |

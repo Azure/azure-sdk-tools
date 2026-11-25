@@ -13,7 +13,7 @@ There are **two independent parts**:
    into curated per-scenario JSONL, and publishes them as Foundry versioned
    Dataset assets.
 2. **Evaluation runs** (`evals_run.py`) — evaluate core or full scenario datasets
-   locally or in the perf pipeline.
+   locally or in the evaluation pipeline.
 
 ## Prerequisites
 

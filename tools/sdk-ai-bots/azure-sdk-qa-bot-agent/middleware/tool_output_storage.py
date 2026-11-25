@@ -23,8 +23,9 @@ logger = logging.getLogger(__name__)
 
 _OPAQUE_RESULT_OFFLOAD_CHARS = 20_000
 _LARGE_RESULT_PREVIEW_CHARS = 2_000
-_MAX_FILE_ACCESS_OUTPUT_CHARS = 20_000
+_MAX_FILE_ACCESS_OUTPUT_CHARS = 12_000
 _MAX_GREP_LINE_CHARS = 500
+_MIN_MULTILINE_EXPAND_CHARS = 200
 _SKIP_TOOL_PREFIXES = ("file_access_",)
 _SKIP_TOOLS = {"load_skill", "read_skill_resource", "run_skill_script"}
 _FILE_ACCESS_NAMESPACE = "~access-"
@@ -52,12 +53,51 @@ def _session_path(session_id: str, file_name: str) -> str:
     return f"{_FILE_ACCESS_NAMESPACE}/{segment}/{file_name}"
 
 
+def _extract_multiline_sections(
+    node: object,
+    path: str,
+    sections: list[tuple[str, str]],
+) -> object:
+    if isinstance(node, dict):
+        return {
+            key: _extract_multiline_sections(
+                val,
+                f"{path}.{key}" if path else str(key),
+                sections,
+            )
+            for key, val in node.items()
+        }
+    if isinstance(node, list):
+        return [
+            _extract_multiline_sections(item, f"{path}[{idx}]", sections)
+            for idx, item in enumerate(node)
+        ]
+    if (
+        isinstance(node, str)
+        and "\n" in node
+        and len(node) > _MIN_MULTILINE_EXPAND_CHARS
+    ):
+        label = path or "content"
+        sections.append((label, node))
+        return f"[see section: {label}]"
+    return node
+
+
 def _format_for_storage(text: str) -> str:
-    """Pretty-print JSON payloads so line-based file_access tools stay readable."""
+    """Pretty-print JSON and expand long multiline fields for line-based access."""
     stripped = text.lstrip()
     if stripped.startswith(("{", "[")):
         try:
-            return json.dumps(json.loads(text), indent=2, ensure_ascii=False)
+            parsed = json.loads(text)
+            sections: list[tuple[str, str]] = []
+            compact = _extract_multiline_sections(parsed, "", sections)
+            formatted = json.dumps(compact, indent=2, ensure_ascii=False)
+            if sections:
+                expanded = "\n\n".join(
+                    f"--- {label} ---\n{content}" for label, content in sections
+                )
+                return f"{formatted}\n\n{expanded}"
+            return formatted
         except (ValueError, TypeError):
             pass
     return text

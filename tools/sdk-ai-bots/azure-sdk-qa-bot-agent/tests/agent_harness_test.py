@@ -71,10 +71,18 @@ def test_harness_adds_managed_providers(
 
     assert agent.require_per_service_call_history_persistence
     client.get_shell_tool.assert_not_called()
-    assert any(
-        isinstance(provider, InMemoryHistoryProvider)
-        for provider in agent.context_providers
+    history_provider = next(
+        (
+            provider
+            for provider in agent.context_providers
+            if isinstance(provider, InMemoryHistoryProvider)
+        ),
+        None,
     )
+    assert history_provider is not None
+    assert history_provider.load_messages is False
+    assert history_provider.store_inputs is False
+    assert history_provider.store_outputs is False
     assert any(
         isinstance(provider, CompactionProvider)
         for provider in agent.context_providers

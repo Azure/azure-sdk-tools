@@ -6,6 +6,7 @@ from typing import Any
 from agent_framework import (
     AgentFileStore,  # pyright: ignore[reportAttributeAccessIssue]
     FileSystemAgentFileStore,  # pyright: ignore[reportAttributeAccessIssue]
+    InMemoryHistoryProvider,
 )
 
 # Conservative operating budgets independent of the configured model's maximums.
@@ -25,6 +26,13 @@ def get_harness_defaults(
     return {
         "max_context_window_tokens": HARNESS_CONTEXT_WINDOW_TOKENS,
         "max_output_tokens": HARNESS_MAX_OUTPUT_TOKENS,
+        # FoundryChatClient stores conversation history server-side (store=True);
+        # avoid duplicating full transcripts inside Foundry's 1 MB session state.
+        "history_provider": InMemoryHistoryProvider(
+            load_messages=False,
+            store_inputs=False,
+            store_outputs=False,
+        ),
         "disable_todo": True,
         "disable_mode": True,
         "disable_file_memory": True,

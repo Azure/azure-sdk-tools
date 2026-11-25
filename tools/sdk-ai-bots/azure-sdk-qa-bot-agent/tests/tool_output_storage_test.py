@@ -242,7 +242,7 @@ async def test_file_access_grep_output_is_bounded_keeping_tail_errors():
 
     await middleware.process(context, _noop_next)
 
-    assert len(json.dumps(context.result)) <= 22_000
+    assert len(json.dumps(context.result)) <= 14_000
     assert context.result[0]["omitted_matches"] > 0
     returned_lines = [m["line"] for m in context.result[0]["matching_lines"]]
     assert any("version-progression" in line for line in returned_lines)
@@ -255,5 +255,44 @@ async def test_file_access_read_output_is_bounded():
 
     await middleware.process(context, _noop_next)
 
-    assert len(context.result) < 21_000
-    assert "[Output truncated at 20,000 characters." in context.result
+    assert len(context.result) < 13_000
+    assert "[Output truncated at 12,000 characters." in context.result
+
+
+@pytest.mark.asyncio
+async def test_offloaded_json_multiline_logs_content_is_line_searchable():
+    store = InMemoryAgentFileStore()
+    middleware = ToolOutputStorageMiddleware(store)
+    logs_content = ("2026-11-25 VERBOSE: noise line\n" * 800) + (
+        "2026-11-25 error @azure-tools/typespec-azure-resource-manager/version-progression\n"
+    )
+    payload = json.dumps({"job_id": 123, "logs_content": logs_content})
+    session = AgentSession(session_id="test-session")
+    context = _make_context("get_job_logs", payload, session)
+    await middleware.process(context, _noop_next)
+
+    match_file = re.search(r"`(tool-result-[^`]+\.txt)`", context.result)
+    assert match_file is not None
+    file_name = match_file.group(1)
+    provider = FileAccessProvider(
+        store,
+        session_scoped=True,
+        disable_write_tools=True,
+        disable_readonly_tool_approval=True,
+    )
+    session_context = SessionContext(session_id="test-session", input_messages=[])
+    await provider.before_run(
+        agent=None,
+        session=session,
+        context=session_context,
+        state={},
+    )
+    tools = {tool.name: tool for tool in session_context.tools}
+    matches = await tools["file_access_grep"].func(
+        regex_pattern="version-progression",
+        glob_pattern=file_name,
+    )
+    assert len(matches) == 1
+    assert len(matches[0]["matching_lines"]) == 1
+    assert matches[0]["matching_lines"][0]["line_number"] > 800
+    assert "version-progression" in matches[0]["matching_lines"][0]["line"]

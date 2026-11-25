@@ -62,6 +62,9 @@ function Set-PackageReleased([string] $PackageName, [string] $PackageVersion, [s
     $response = $commandResult.ParsedResponse
     if ($null -eq $response) {
         $capturedOutput = "stdout:`n$($commandResult.Stdout)`nstderr:`n$($commandResult.Stderr)"
+        if ($exitCode -ne 0) {
+            throw "Mark released failed for $PackageName $PackageVersion (azsdk exit code $exitCode): $($commandResult.ParseError) Captured output:`n$capturedOutput"
+        }
         throw "Mark released returned malformed JSON for $PackageName $PackageVersion (azsdk exit code $exitCode): $($commandResult.ParseError) Captured output:`n$capturedOutput"
     }
 

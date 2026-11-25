@@ -173,9 +173,7 @@ class PackageProps {
                 $this.ArtifactDetails = [Hashtable]$ciArtifactResult.ArtifactConfig
 
                 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot ".." ".." "..")
-                $ciYamlFullPath = (Resolve-Path -Path $ciArtifactResult.Location).Path
-                $ciYamlRelativePath = [System.IO.Path]::GetRelativePath($repoRoot, $ciYamlFullPath).Replace("\", "/")
-                $ciYamlPath = "/$ciYamlRelativePath"
+                $ciYamlPath = (Resolve-Path -Path $ciArtifactResult.Location -Relative -RelativeBasePath $repoRoot).TrimStart(".").Replace("`\", "/")
                 $relRoot = [System.IO.Path]::GetDirectoryName($ciYamlPath).Replace("`\", "/")
 
                 if (-not $this.ArtifactDetails["triggeringPaths"]) {
@@ -203,9 +201,7 @@ class PackageProps {
                     # if it doesn't, we should just leave it as is. Otherwise we would _crash_ here when a user accidentally
                     # left a triggeringPath on a file that had been deleted
                     if (Test-Path $newPath) {
-                        $resolvedPath = (Resolve-Path -Path $newPath).Path
-                        $relativePath = [System.IO.Path]::GetRelativePath($repoRoot, $resolvedPath).Replace("\", "/").TrimEnd("/")
-                        $adjustedPaths += "/$relativePath"
+                        $adjustedPaths += (Resolve-Path -Path $newPath -Relative -RelativeBasePath $repoRoot).TrimStart(".").Replace("`\", "/")
                     }
                 }
                 $this.ArtifactDetails["triggeringPaths"] = $adjustedPaths

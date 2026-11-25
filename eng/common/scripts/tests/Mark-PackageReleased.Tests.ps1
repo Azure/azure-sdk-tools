@@ -166,7 +166,7 @@ APIView release check reported a missing review.
         $caughtError.Exception.Message | Should Match "APIView: APIView failed"
     }
 
-    It "includes raw output when azsdk returns malformed output" {
+    It "reports the CLI failure and raw output when azsdk returns no response" {
         $global:AzSdkExitCode = 1
         $global:AzSdkOutput = "distinct raw command output"
         $caughtError = $null
@@ -179,7 +179,26 @@ APIView release check reported a missing review.
         }
 
         $caughtError | Should Not BeNullOrEmpty
+        $caughtError.Exception.Message | Should Match "Mark released failed for azure-test 1\.0\.0 \(azsdk exit code 1\)"
+        $caughtError.Exception.Message | Should Not Match "malformed JSON"
         $caughtError.Exception.Message | Should Match "distinct raw command output"
+        $caughtError.Exception.Message | Should Match "No valid JSON object was found"
+    }
+
+    It "reports malformed output after a successful CLI invocation" {
+        $global:AzSdkOutput = "not json"
+        $caughtError = $null
+
+        try {
+            & $scriptPath -PackageInfoFiles $packageInfoPath
+        }
+        catch {
+            $caughtError = $_
+        }
+
+        $caughtError | Should Not BeNullOrEmpty
+        $caughtError.Exception.Message | Should Match "returned malformed JSON"
+        $caughtError.Exception.Message | Should Match "not json"
     }
 
     It "accepts a successful response with a missing backend result" {

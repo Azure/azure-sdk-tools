@@ -2,8 +2,8 @@
 .SYNOPSIS
 Sparse-checks out merged SDK descriptors for the trusted post-merge preparation pipeline.
 .DESCRIPTION
-Owns the Git trust boundary: resolves the SDK default branch, verifies commit ancestry and
-tracked current/previous paths, disables hooks, and checks out the exact requested SHA.
+Owns the Git trust boundary: verifies the merged SHA is in the SDK default branch history,
+checks tracked current/previous paths, disables hooks, and checks out the exact requested SHA.
 Does not create definitions, grant permissions, or submit releases.
 #>
 #Requires -Version 7.0
@@ -17,6 +17,9 @@ param(
 
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
+
+# Must match PostMergeConstants.SdkDefaultBranch in tools/pipeline-generator.
+Set-Variable -Name SdkDefaultBranch -Value 'main' -Option Constant
 
 function Invoke-CheckoutGit {
     param([string[]] $Arguments, [string] $WorkingDirectory = '')
@@ -63,26 +66,12 @@ if (Test-Path -LiteralPath $Directory) {
     throw "SDK checkout directory already exists: $Directory"
 }
 $remote = "https://github.com/Azure/$RepositoryName.git"
-# Resolve HEAD with Git rather than the unauthenticated GitHub REST API, which is rate limited on shared CI agents.
-$branch = $null
-foreach ($line in @(Invoke-CheckoutGit @('ls-remote', '--symref', $remote, 'HEAD'))) {
-    if ($line -cmatch '\Aref: refs/heads/(?<branch>[^\t]+)\tHEAD\z') {
-        $branch = $Matches['branch']
-        break
-    }
-}
-if (-not $branch) {
-    throw "Unable to resolve the default branch for Azure/$RepositoryName."
-}
-if ($branch -cne 'main') {
-    throw "Default branch '$branch' needs a release-gate compatibility review before enabling preparation."
-}
-Write-Host "Sparse-checking out Azure/$RepositoryName at $MergeCommitSha from $branch history into $Directory"
+Write-Host "Sparse-checking out Azure/$RepositoryName at $MergeCommitSha from $SdkDefaultBranch history into $Directory"
 # tree:0 matches the shared sparse-checkout pattern; Git lazily fetches only the trees and blobs it reads.
-$null = Invoke-CheckoutGit @('clone', '--filter=tree:0', '--no-checkout', '--single-branch', '--branch', $branch,
+$null = Invoke-CheckoutGit @('clone', '--filter=tree:0', '--no-checkout', '--single-branch', '--branch', $SdkDefaultBranch,
     $remote, $Directory)
 $null = Invoke-CheckoutGit @('cat-file', '-e', "${MergeCommitSha}^{commit}") $Directory
-$null = Invoke-CheckoutGit @('merge-base', '--is-ancestor', $MergeCommitSha, "refs/remotes/origin/$branch") $Directory
+$null = Invoke-CheckoutGit @('merge-base', '--is-ancestor', $MergeCommitSha, "refs/remotes/origin/$SdkDefaultBranch") $Directory
 foreach ($descriptor in $descriptors) {
     $entry = @(Invoke-CheckoutGit @('ls-tree', $MergeCommitSha, '--', $descriptor.path) $Directory)
     if ($entry.Count -ne 1 -or $entry[0] -cnotmatch '\A100(?:644|755) blob [0-9a-f]+\t[^\r\n]+\z') {

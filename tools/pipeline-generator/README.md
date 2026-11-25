@@ -32,9 +32,10 @@ Exclusive lock before any preparation step starts. The same job checks out the t
 commit, sparse-checks out SDK data, installs the pinned generator and launches it with credentials, and
 publishes the Build artifact even after later failures. It disables deployment-hook artifact
 downloads. The shared `eng/common` preparation job and its manual/nightly interface remain unchanged.
-Its trusted `eng/scripts/Initialize-PostMergeSdk.ps1` checkout step resolves the default
-branch, confirms the requested SHA is in its history, checks the tracked current/previous
-descriptor paths, disables Git hooks, sparse-checks out the exact SHA, and verifies HEAD.
+Its trusted `eng/scripts/Initialize-PostMergeSdk.ps1` checkout step clones the SDK `main`
+branch (`PostMergeConstants.SdkDefaultBranch`), confirms the requested SHA is in its history,
+checks that each descriptor is a tracked regular file and each previous path is absent,
+disables Git hooks, sparse-checks out the exact SHA, and verifies HEAD.
 It follows the existing non-cone sparse-checkout pattern without loading SDK scripts.
 This script only checks out source: release orchestration remains in C#.
 
@@ -42,10 +43,9 @@ The `prepare-post-merge` C# command consumes the **already prepared local SDK ro
 It does not invoke or require the Git CLI, clone/fetch/checkout source, discover Git metadata,
 or independently establish commit ancestry. The trusted pipeline step must perform those
 checks before calling it; an arbitrary local directory is not evidence of a trusted merge.
-The command validates request/trust/lock inputs and local descriptor boundaries, requires current
-files and absent previous paths, and rejects linked/reparse-point paths in selected scan scopes.
-It uses the explicit SDK root for scanning, so no `.git` directory is required. It owns
-definition and permission preparation, run recognition, durable submission, and results.
+The command validates request and trusted-context inputs and fails if a requested descriptor is not
+found when scanning. It uses the explicit SDK root for scanning, so no `.git` directory is required. It owns
+definition and permission preparation, run recognition, submission, and results.
 Its `--repository-name` option defaults to `azure-sdk-for-net`:
 
 ```powershell
@@ -80,8 +80,9 @@ classification; neither it nor the observer should queue SDK releases separately
 The initial rollout supports exactly `azure-sdk-for-java`, `azure-sdk-for-js`,
 `azure-sdk-for-python`, `azure-sdk-for-net`, and `azure-sdk-for-go`, owned by `Azure`.
 `RepositoryName` defaults to `azure-sdk-for-net`; C++ and Rust are not enabled.
-The pipeline checkout step resolves the default branch with `git ls-remote --symref`;
-currently only `main` is supported because the SDK auto-release gates require it.
+The pipeline checkout step always uses the SDK `main` branch, set by the
+`PostMergeConstants.SdkDefaultBranch` constant (mirrored in the checkout script), because the
+SDK auto-release gates require it.
 That step verifies the full lowercase SHA is in the branch's history. Each target must be an existing
 regular file at that SHA, with a canonical `sdk/<directory>/ci.yml` or
 `sdk/<directory>/ci.<variant>.yml` path. Variants follow the scanner's .NET `\w+` rule
@@ -89,7 +90,7 @@ regular file at that SHA, with a canonical `sdk/<directory>/ci.yml` or
 Directory segments allow Unicode letters/numbers, `_`, `-`, and `.` (but never `.` or `..`
 segments). Requests contain 1-100 distinct descriptors. Paths use `/`, never `\`.
 Rename mappings are one-to-one; the old descriptor must no longer exist at the merged SHA.
-Rename chains/swaps, ambiguous definitions, manual identity changes, symlinks, and
+Rename chains/swaps, ambiguous definitions, manual identity changes, symlinked descriptors, and
 scanner-incompatible filenames fail closed and need explicit operator reconciliation.
 Obsolete definitions are never deleted.
 
@@ -105,11 +106,13 @@ permissions are granted. A permission an administrator explicitly revoked is nev
 post-merge preparation stops before any release submission, while the existing manual/nightly
 path leaves it unchanged. Failures are not converted into `continueOnError` successes.
 
-The `generate` verb's `--request <json-file> --results <json-file>` mode applies strict identity
-checks and writes results only after authorization succeeds. If any requested descriptor is not
-found under the scanned path, it fails before changing any definition or permission. Without
-`--request`, `generate` behaves exactly as before; it never repoints an existing definition's YAML
-path. Each JSON array entry has:
+`prepare-post-merge` calls the `generate` implementation in-process with the exact descriptor
+targets, which enables strict identity checks; `generate`'s command line is unchanged. If any
+requested descriptor is not found under the scanned path, generation fails before changing any
+definition or permission. Without exact targets (manual/nightly), `generate` behaves exactly as
+before; it never repoints an existing definition's YAML path. After all resource authorizations
+succeed, each prepared definition (release and test) is added to `definitions.json` in the
+`release-run-results` artifact for diagnosis. Each JSON array entry has:
 
 ```json
 {
@@ -160,7 +163,8 @@ build ID when necessary; an API self URL is not presented as a run link. Matchin
 another submission, including completed or failed runs. Preparation does not retry failed releases.
 The artifact is updated after each successful submission/recognition, and publication uses
 `always()` so later errors preserve partial results while the agent remains alive. Queue
-responses and definition results are also included for diagnosis. An agent loss before upload
+responses (`queue-response-<definitionId>.json`) and `definitions.json` are also included for
+diagnosis. An agent loss before upload
 cannot guarantee artifact availability.
 
 The preparation deployment job holds a sequential Azure DevOps environment lock. Build history
@@ -195,13 +199,15 @@ No production deployment or release submission is performed by development/tests
 2. Register the internal preparation definition at the
    exact entry-point path. Restrict its queue/edit permissions and allowlist its ID in the app.
 3. Provision `post-merge-pipeline-preparation` in `azure-sdk/internal`, enable its **Exclusive
-   lock** check, and authorize only the trusted preparation pipeline. The command verifies the
-   enabled check before definition changes. Keep `lockBehavior: sequential`. Do not add Approval
+   lock** check, and authorize only the trusted preparation pipeline. The command does not
+   re-verify this setup on each run; keep the check enabled, because it is what prevents
+   overlapping runs for the same merge from queueing duplicate releases. Keep
+   `lockBehavior: sequential`. Do not add Approval
    or other manual checks: the lock is granted and released automatically, so runs never need
    someone to unblock them.
 4. Give the `opensource-api-connection` identity the existing definition/resource permission
-   management rights plus Build queue/read rights. It must also
-   read the environment/check configuration. Do not grant the app those resource-management rights.
+   management rights plus Build queue/read rights. Do not grant the app those
+   resource-management rights.
 5. Validate the compiled Azure DevOps YAML, service-connection authorization, queue reason,
    returned web link, and artifact download in an isolated non-production setup before enabling
    the merge handler. Local mocked tests cannot establish those deployment permissions.

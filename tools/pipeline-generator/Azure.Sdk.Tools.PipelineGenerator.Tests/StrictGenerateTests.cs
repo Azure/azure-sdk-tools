@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,13 +27,12 @@ namespace PipelineGenerator.Tests
             // Exists on disk but outside the scanned directory, so it is out of scope for this request.
             Directory.CreateDirectory(Path.Combine(_root, "sdk", "outside"));
             File.WriteAllText(Path.Combine(_root, "sdk", "outside", "ci.yml"), "");
-            var requestPath = Path.Combine(_root, "request.json");
-            var resultsPath = Path.Combine(_root, "results.json");
-            File.WriteAllText(requestPath, JsonSerializer.Serialize(new[]
+            var requests = new[]
             {
                 new DescriptorRequest { Path = "sdk/service/ci.yml" },
                 new DescriptorRequest { Path = missingPath }
-            }));
+            };
+            var results = new List<PipelineGenerationResult>();
 
             var services = new ServiceCollection()
                 .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
@@ -47,13 +45,13 @@ namespace PipelineGenerator.Tests
             // An unreachable organization: without the up-front check, generation would fail later on a network call.
             var result = await program.RunAsync("https://unused.invalid", "internal", "net", scanPath, "Azure",
                 "Azure/azure-sdk-for-net", "refs/heads/main", "Hosted", "up", Array.Empty<int>(), Array.Empty<string>(),
-                "\\net", false, false, false, false, true, false, CancellationToken.None, requestPath, resultsPath, _root);
+                "\\net", false, false, false, false, true, false, CancellationToken.None, requests, results, _root);
 
             Assert.Equal(ExitCondition.Exception, result);
             var error = Assert.IsType<ArgumentException>(log.Exception);
             Assert.Contains(missingPath, error.Message);
             Assert.DoesNotContain("sdk/service/ci.yml", error.Message);
-            Assert.False(File.Exists(resultsPath));
+            Assert.Empty(results);
         }
 
         [Fact]
@@ -61,22 +59,21 @@ namespace PipelineGenerator.Tests
         {
             var scanPath = Directory.CreateDirectory(Path.Combine(_root, "sdk", "service")).FullName;
             File.WriteAllText(Path.Combine(scanPath, "ci.yml"), "");
-            var requestPath = Path.Combine(_root, "request.json");
-            var resultsPath = Path.Combine(_root, "results.json");
-            File.WriteAllText(requestPath, JsonSerializer.Serialize(new[] { new DescriptorRequest { Path = "sdk/service/ci.yml" } }));
+            var requests = new[] { new DescriptorRequest { Path = "sdk/service/ci.yml" } };
+            var results = new List<PipelineGenerationResult>();
             var log = new CapturingLogger();
             var program = new FakeContextProgram(Services(), log);
 
             var result = await program.RunAsync("https://unused.invalid", "internal", "net", scanPath, "Azure",
                 "Azure/azure-sdk-for-net", "refs/heads/main", "Hosted", "up", Array.Empty<int>(), new[] { "Azure", "Missing" },
-                "\\net", false, false, false, false, true, false, CancellationToken.None, requestPath, resultsPath, _root);
+                "\\net", false, false, false, false, true, false, CancellationToken.None, requests, results, _root);
 
             Assert.Equal(ExitCondition.Exception, result);
             var error = Assert.IsType<InvalidOperationException>(log.Exception);
             Assert.Contains("Missing", error.Message);
             // Definition lookup starts with the project reference; it must never be reached.
             Assert.False(program.Context.DefinitionLookupStarted);
-            Assert.False(File.Exists(resultsPath));
+            Assert.Empty(results);
         }
 
         [Fact]

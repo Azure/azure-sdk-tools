@@ -12,7 +12,6 @@ using PipelineGenerator.Conventions;
 using PipelineGenerator.CommandParserOptions;
 using Microsoft.TeamFoundation.Build.WebApi;
 using System.Text.Json.Nodes;
-using System.Text.Json;
 
 namespace PipelineGenerator
 {
@@ -78,9 +77,7 @@ namespace PipelineGenerator
                         g.NoSchedule,
                         g.SetManagedVariables,
                         g.OverwriteTriggers,
-                        cancellationTokenSource.Token,
-                        g.Request,
-                        g.Results
+                        cancellationTokenSource.Token
                     );
 
                     break;
@@ -157,16 +154,12 @@ namespace PipelineGenerator
             bool setManagedVariables,
             bool overwriteTriggers,
             CancellationToken cancellationToken,
-            string requestPath = null,
-            string resultsPath = null,
+            IReadOnlyList<DescriptorRequest> requests = null,
+            List<PipelineGenerationResult> results = null,
             string repositoryRoot = null)
         {
             try
             {
-                if (resultsPath != null)
-                {
-                    File.Delete(resultsPath);
-                }
                 logger.LogDebug("Creating context.");
 
                 // Fall back to a form of prefix if DevOps path is not specified
@@ -188,16 +181,15 @@ namespace PipelineGenerator
                     setManagedVariables,
                     overwriteTriggers
                     );
-                context.Strict = requestPath != null;
-                if (context.Strict && (whatIf || destroy || string.IsNullOrEmpty(resultsPath)))
+                // Strict mode is used only by prepare-post-merge, which passes exact descriptor targets.
+                context.Strict = requests != null;
+                if (context.Strict && (whatIf || destroy || results == null))
                 {
-                    throw new ArgumentException("--request requires --results and cannot be combined with --whatif or --destroy.");
+                    throw new ArgumentException("Exact descriptor requests require a results list and cannot be combined with --whatif or --destroy.");
                 }
-                var requests = requestPath == null ? null :
-                    JsonSerializer.Deserialize<DescriptorRequest[]>(File.ReadAllText(requestPath));
-                if (context.Strict && (requests == null || requests.Length == 0 ||
+                if (context.Strict && (requests.Count == 0 ||
                     requests.Any(r => r == null || string.IsNullOrEmpty(r.Path)) ||
-                    requests.Select(r => r.Path).Distinct(StringComparer.Ordinal).Count() != requests.Length))
+                    requests.Select(r => r.Path).Distinct(StringComparer.Ordinal).Count() != requests.Count))
                 {
                     throw new ArgumentException("The descriptor request must contain distinct nonempty targets.");
                 }
@@ -230,7 +222,7 @@ namespace PipelineGenerator
                 }
 
                 var definitions = new List<BuildDefinition>();
-                var results = new List<PipelineGenerationResult>();
+                var generated = new List<PipelineGenerationResult>();
                 // Strict callers must not change any definition when a configured service connection is missing.
                 var serviceConnectionObjects = context.Strict
                     ? await context.GetServiceConnectionsAsync(serviceConnections, cancellationToken)
@@ -253,7 +245,7 @@ namespace PipelineGenerator
                         }
 
                         definitions.Add(definition);
-                        results.Add(new PipelineGenerationResult(component.RelativeYamlPath.Replace('\\', '/'),
+                        generated.Add(new PipelineGenerationResult(component.RelativeYamlPath.Replace('\\', '/'),
                             definition.Id, convention, pipelineConvention.PipelineCategory, pipelineConvention.LastOperation));
                     }
                 }
@@ -289,10 +281,8 @@ namespace PipelineGenerator
                         }
                     }
                 }
-                if (resultsPath != null)
-                {
-                    File.WriteAllText(resultsPath, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
-                }
+                // Report definitions only after every resource authorization has succeeded.
+                results?.AddRange(generated);
                 return ExitCondition.Success;
 
             }

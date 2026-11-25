@@ -25,7 +25,6 @@ Describe 'Trusted post-merge SDK checkout' {
         $global:SdkCheckoutTree = "100644 blob abcd`tsdk/a/ci.yml"
         $global:SdkCheckoutOldExists = $false
         $global:SdkCheckoutHead = 'a' * 40
-        $global:SdkCheckoutDefaultBranch = 'main'
         Mock git {
             $global:SdkCheckoutCommands.Add(@($args))
             $global:LASTEXITCODE = 0
@@ -38,9 +37,6 @@ Describe 'Trusted post-merge SDK checkout' {
                 if ($global:SdkCheckoutTree) { return $global:SdkCheckoutTree }
             }
             if ($args -contains 'rev-parse') { return $global:SdkCheckoutHead }
-            if ($args -contains 'ls-remote') {
-                return @("ref: refs/heads/$($global:SdkCheckoutDefaultBranch)`tHEAD", "$('c' * 40)`tHEAD")
-            }
         }
         $script:arguments = @{
             Directory = Join-Path $TestDrive ("sdk-data-" + [Guid]::NewGuid().ToString('N'))
@@ -54,7 +50,7 @@ Describe 'Trusted post-merge SDK checkout' {
         foreach ($name in $script:savedEnvironment.Keys) {
             [Environment]::SetEnvironmentVariable($name, $script:savedEnvironment[$name])
         }
-        Remove-Variable SdkCheckoutCommands, SdkCheckoutFailure, SdkCheckoutTree, SdkCheckoutOldExists, SdkCheckoutHead, SdkCheckoutDefaultBranch -Scope Global
+        Remove-Variable SdkCheckoutCommands, SdkCheckoutFailure, SdkCheckoutTree, SdkCheckoutOldExists, SdkCheckoutHead -Scope Global
         Remove-Variable SdkCheckoutNativeGit, SdkCheckoutLocalSource -Scope Global -ErrorAction SilentlyContinue
     }
 
@@ -63,27 +59,21 @@ Describe 'Trusted post-merge SDK checkout' {
         $commands = $global:SdkCheckoutCommands.ToArray()
         @($commands | Where-Object { $_ -contains 'clone' }).Count | Should -Be 1
         @($commands | Where-Object { $_ -contains '--filter=tree:0' -and $_ -contains '--no-checkout' -and
-            $_ -contains 'https://github.com/Azure/azure-sdk-for-net.git' }).Count | Should -Be 1
+            ($_ -join ' ').Contains('--branch main') -and $_ -contains 'https://github.com/Azure/azure-sdk-for-net.git' }).Count |
+            Should -Be 1
         @($commands | Where-Object { $_ -notcontains 'core.hooksPath=/dev/null' }).Count | Should -Be 0
         $names = @($commands | ForEach-Object { $_ -join ' ' })
         [array]::FindIndex($names, [Predicate[string]] { param($value) $value.Contains('merge-base --is-ancestor') }) |
             Should -BeLessThan ([array]::FindIndex($names, [Predicate[string]] { param($value) $value.Contains('checkout --detach') }))
+        @($commands | Where-Object { $_ -contains 'merge-base' -and $_ -contains 'refs/remotes/origin/main' }).Count | Should -Be 1
         @($commands | Where-Object { $_ -contains 'sparse-checkout' -and $_ -contains '/sdk/**/*.yml' }).Count | Should -Be 1
         @($commands | Where-Object { $_ -contains '--detach' -and $_ -contains ('a' * 40) }).Count | Should -Be 1
-        @($commands | Where-Object { $_ -contains 'ls-remote' -and $_ -contains '--symref' -and
-            $_ -contains 'https://github.com/Azure/azure-sdk-for-net.git' }).Count | Should -Be 1
     }
 
     It 'blocks checkout when the SHA is outside default-branch history' {
         $global:SdkCheckoutFailure = 'merge-base'
         { & $entrypoint @arguments } | Should -Throw '*Git command failed*merge-base*'
         @($global:SdkCheckoutCommands.ToArray() | Where-Object { $_ -contains '--detach' }).Count | Should -Be 0
-    }
-
-    It 'rejects a changed default branch without cloning' {
-        $global:SdkCheckoutDefaultBranch = 'other'
-        { & $entrypoint @arguments } | Should -Throw '*compatibility review*'
-        @($global:SdkCheckoutCommands.ToArray() | Where-Object { $_ -contains 'clone' }).Count | Should -Be 0
     }
 
     It 'rejects missing or symlinked tracked descriptors' -ForEach @('', "120000 blob abcd`tsdk/a/ci.yml") {

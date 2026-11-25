@@ -27,7 +27,7 @@ variables:
 
 stages:
 - stage: PrepareAndQueue
-  # Trusted context and environment name must match PostMergeConstants.cs and Initialize-PostMergeSdk.ps1.
+  # Trusted context must match PostMergeConstants.cs and Initialize-PostMergeSdk.ps1.
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.Repository.Name'], 'Azure/azure-sdk-tools'))
   lockBehavior: sequential
   jobs:

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -33,42 +32,16 @@ namespace PipelineGenerator
                 $"\\{language}", language, false, false, true, false) { Strict = true };
         }
 
-        public async Task ValidateLockAsync(CancellationToken cancellationToken)
-        {
-            var environments = await GetJsonAsync(
-                $"distributedtask/environments?name={PostMergeConstants.LockEnvironment}&api-version=7.1", cancellationToken);
-            var values = environments["value"].AsArray();
-            if (values.Count != 1)
-            {
-                throw new InvalidOperationException("The post-merge preparation environment must be provisioned first.");
-            }
-            var id = values[0]["id"].GetValue<int>();
-            var checks = await GetJsonAsync(
-                $"pipelines/checks/configurations?resourceType=environment&resourceId={id}&api-version=7.1-preview.1", cancellationToken);
-            ValidateLockConfiguration(checks);
-        }
-
-        public static void ValidateLockConfiguration(JsonNode checks)
-        {
-            var enabledLocks = checks["value"].AsArray().Count(check =>
-                check["type"]?["id"]?.GetValue<string>() == PostMergeConstants.ExclusiveLockCheckTypeId &&
-                check["isDisabled"]?.GetValue<bool>() != true);
-            if (enabledLocks != 1)
-            {
-                throw new InvalidOperationException("The preparation environment must have an enabled Exclusive lock check; refusing unlocked mutations.");
-            }
-        }
-
         public async Task<IReadOnlyList<PipelineGenerationResult>> PrepareAsync(PreparePostMergeOptions options,
             DescriptorRequest[] descriptors, string branch, CancellationToken cancellationToken)
         {
             var definitions = new List<PipelineGenerationResult>();
+            var allDefinitions = new List<PipelineGenerationResult>();
             var profile = PostMergeResourceProfile.For(_context.Prefix);
             var internalGroups = profile.InternalVariableGroups;
             var testGroups = profile.TestVariableGroups;
             var testConnections = profile.TestServiceConnections;
             var internalConnections = profile.InternalServiceConnections;
-            var index = 0;
             foreach (var directory in PostMergeRequest.GetDirectories(descriptors))
             {
                 var scanPath = Path.Combine(options.SdkDirectory, directory);
@@ -89,21 +62,23 @@ namespace PipelineGenerator
                     }
                 }
 
-                async Task<PipelineGenerationResult[]> GenerateAsync(string convention, DescriptorRequest[] requests,
+                async Task<List<PipelineGenerationResult>> GenerateAsync(string convention, DescriptorRequest[] requests,
                     int[] groups, string[] connections)
                 {
-                    var requestPath = Path.Combine(options.ResultsDirectory, $"descriptor-request-{index}.json");
-                    var outputPath = Path.Combine(options.ResultsDirectory, $"definitions-{index++}.json");
-                    File.WriteAllText(requestPath, JsonSerializer.Serialize(requests));
+                    var results = new List<PipelineGenerationResult>();
                     var result = await _generator.RunAsync(PostMergeConstants.Organization, PostMergeConstants.Project,
                         _context.Prefix, scanPath, "Azure", _context.Repository, $"refs/heads/{branch}", "Hosted",
                         convention, groups, connections, _context.DevOpsPath, false, false, false, false, true, false,
-                        cancellationToken, requestPath, outputPath, options.SdkDirectory);
+                        cancellationToken, requests, results, options.SdkDirectory);
                     if (result != ExitCondition.Success)
                     {
                         throw new InvalidOperationException($"Pipeline generation/authorization failed for '{directory}' ({convention}): {result}.");
                     }
-                    return JsonSerializer.Deserialize<PipelineGenerationResult[]>(File.ReadAllText(outputPath));
+                    // Diagnostics only: every prepared definition (release and test) so far, rewritten after each step.
+                    allDefinitions.AddRange(results);
+                    File.WriteAllText(Path.Combine(options.ResultsDirectory, "definitions.json"),
+                        JsonSerializer.Serialize(allDefinitions, new JsonSerializerOptions { WriteIndented = true }));
+                    return results;
                 }
             }
             return definitions;
@@ -170,14 +145,5 @@ namespace PipelineGenerator
             response.EnsureSuccessStatusCode();
             return JsonConvert.DeserializeObject<Build>(await response.Content.ReadAsStringAsync(cancellationToken));
         }
-
-        private async Task<JsonNode> GetJsonAsync(string path, CancellationToken cancellationToken)
-        {
-            var client = await _context.GetRawHttpClient(cancellationToken);
-            using var response = await client.GetAsync(PostMergeConstants.ApiBaseUrl + path, cancellationToken);
-            response.EnsureSuccessStatusCode();
-            return JsonNode.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-        }
-
     }
 }

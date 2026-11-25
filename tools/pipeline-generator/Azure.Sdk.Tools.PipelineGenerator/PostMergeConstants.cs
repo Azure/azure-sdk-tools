@@ -2,8 +2,8 @@ namespace PipelineGenerator
 {
     /// <summary>
     /// Fixed Azure DevOps targets for post-merge preparation. These are intentionally not configurable.
-    /// Copies outside C# must match: eng/pipelines/pipeline-generation-post-merge.yml (stage condition and
-    /// environment) and eng/scripts/Initialize-PostMergeSdk.ps1 (trusted context check).
+    /// Copies outside C# must match: eng/pipelines/pipeline-generation-post-merge.yml (stage condition)
+    /// and eng/scripts/Initialize-PostMergeSdk.ps1 (trusted context check and SDK default branch).
     /// </summary>
     public static class PostMergeConstants
     {
@@ -17,10 +17,8 @@ namespace PipelineGenerator
         public const string ToolsRepository = "Azure/azure-sdk-tools";
         public const string ToolsBranch = "refs/heads/main";
 
-        public const string LockEnvironment = "post-merge-pipeline-preparation";
-
-        // Azure DevOps check type ID for "Exclusive lock".
-        public const string ExclusiveLockCheckTypeId = "2ef31ad6-baa0-403a-8b45-2cbc9b4e5563";
+        // SDK branch whose history must contain the merged SHA and on which release runs are queued.
+        public const string SdkDefaultBranch = "main";
 
         // Build property key that correlates a queued release run with its preparation request.
         public const string PropertyName = "postMergePreparation";

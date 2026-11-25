@@ -31,10 +31,8 @@ namespace PipelineGenerator
             var runs = new List<ReleaseRunResult>();
             WriteResults(options, repository, runs);
 
-            PreparedSdkDirectory.Validate(options, requests);
-            await _operations.ValidateLockAsync(cancellationToken);
-            // The trusted checkout step only admits the currently supported default branch, main.
-            const string branch = "main";
+            // Overlapping runs are serialized by the deployment environment's Exclusive lock (one-time setup).
+            const string branch = PostMergeConstants.SdkDefaultBranch;
             var definitions = await _operations.PrepareAsync(options, requests, branch, cancellationToken);
             if (!definitions.Select(d => d.DescriptorPath).OrderBy(p => p, StringComparer.Ordinal)
                     .SequenceEqual(requests.Select(r => r.Path).OrderBy(p => p, StringComparer.Ordinal)) ||

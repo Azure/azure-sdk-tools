@@ -53,11 +53,5 @@ namespace PipelineGenerator.CommandParserOptions
 
         [Option("overwrite-triggers", Required = false, HelpText = "Overwrite existing pipeline triggers (triggers may be manually modified, use with caution)")]
         public bool OverwriteTriggers { get; set; }
-
-        [Option("request", HelpText = "JSON array of exact descriptor targets: {path, previousPath?}. Enables strict identity and resource checks.")]
-        public string Request { get; set; }
-
-        [Option("results", HelpText = "Write JSON definition results after all resource authorizations succeed.")]
-        public string Results { get; set; }
     }
 }

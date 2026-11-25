@@ -8,7 +8,6 @@ namespace PipelineGenerator
 {
     public interface IPostMergeOperations
     {
-        Task ValidateLockAsync(CancellationToken cancellationToken);
         Task<IReadOnlyList<PipelineGenerationResult>> PrepareAsync(PreparePostMergeOptions options,
             DescriptorRequest[] descriptors, string branch, CancellationToken cancellationToken);
         Task<Build> FindBuildAsync(int definitionId, string repository, string sha, string branch, CancellationToken cancellationToken);

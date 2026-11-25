@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -19,25 +18,6 @@ namespace PipelineGenerator.Tests
     public class PostMergeOperationsTests : IDisposable
     {
         private readonly string _directory = Path.Combine(Path.GetTempPath(), "preparation-operations-" + Guid.NewGuid().ToString("N"));
-
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void RequiresExactlyOneEnabledExclusiveLock(bool disabled)
-        {
-            var checks = JsonNode.Parse(
-                $"{{\"value\":[{{\"type\":{{\"id\":\"2ef31ad6-baa0-403a-8b45-2cbc9b4e5563\"}},\"isDisabled\":{disabled.ToString().ToLowerInvariant()}}}]}}");
-            if (disabled)
-            {
-                Assert.Throws<InvalidOperationException>(() => PostMergeOperations.ValidateLockConfiguration(checks));
-            }
-            else
-            {
-                PostMergeOperations.ValidateLockConfiguration(checks);
-            }
-            Assert.Throws<InvalidOperationException>(() =>
-                PostMergeOperations.ValidateLockConfiguration(JsonNode.Parse("{\"value\":[]}")));
-        }
 
         [Fact]
         public async Task QueueUsesOnePostWithExactShaCiReasonAndStableCorrelation()
@@ -91,6 +71,11 @@ namespace PipelineGenerator.Tests
             Assert.All(generator.Calls, c => Assert.Equal("refs/heads/main", c.Branch));
             Assert.DoesNotContain("sdk/a/ci.unrelated.yml", unified.Requests.Select(r => r.Path));
             Assert.Single(generator.Calls[1].Requests);
+            // One diagnostic file lists every prepared definition, release and test.
+            var written = JsonSerializer.Deserialize<PipelineGenerationResult[]>(
+                File.ReadAllText(Path.Combine(options.ResultsDirectory, "definitions.json")));
+            Assert.Equal(new[] { "up", "up", "tests" }, written.Select(d => d.Convention));
+            Assert.Equal(new[] { "definitions.json" }, Directory.GetFiles(options.ResultsDirectory).Select(Path.GetFileName));
         }
 
         [Fact]
@@ -223,22 +208,21 @@ namespace PipelineGenerator.Tests
                 string endpoint, string repository, string branch, string agentPool, string convention, int[] variableGroups,
                 IEnumerable<string> serviceConnections, string devOpsPath, bool whatIf, bool open, bool destroy,
                 bool noSchedule, bool setManagedVariables, bool overwriteTriggers, CancellationToken cancellationToken,
-                string requestPath = null, string resultsPath = null, string repositoryRoot = null)
+                IReadOnlyList<DescriptorRequest> requests = null, List<PipelineGenerationResult> results = null,
+                string repositoryRoot = null)
             {
                 Assert.False(whatIf || destroy || overwriteTriggers);
                 Assert.True(setManagedVariables);
                 Assert.NotNull(repositoryRoot);
                 Assert.StartsWith(repositoryRoot, path, StringComparison.Ordinal);
                 Assert.False(Directory.Exists(Path.Combine(repositoryRoot, ".git")));
-                var requests = JsonSerializer.Deserialize<DescriptorRequest[]>(File.ReadAllText(requestPath));
-                Calls.Add((convention, branch, variableGroups, serviceConnections.ToArray(), requests));
+                Calls.Add((convention, branch, variableGroups, serviceConnections.ToArray(), requests.ToArray()));
                 if (convention == FailConvention)
                 {
                     return Task.FromResult(ExitCondition.Exception);
                 }
-                var results = requests.Select((r, i) =>
-                    new PipelineGenerationResult(r.Path, 123 + i, convention, convention == "up" ? "unified" : "tests", "updated")).ToArray();
-                File.WriteAllText(resultsPath, JsonSerializer.Serialize(results));
+                results.AddRange(requests.Select((r, i) =>
+                    new PipelineGenerationResult(r.Path, 123 + i, convention, convention == "up" ? "unified" : "tests", "updated")));
                 return Task.FromResult(ExitCondition.Success);
             }
         }

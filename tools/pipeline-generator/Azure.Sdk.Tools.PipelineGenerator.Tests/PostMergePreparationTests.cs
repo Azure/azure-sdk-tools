@@ -40,15 +40,13 @@ namespace PipelineGenerator.Tests
                 SdkDirectory = Path.Combine(_directory, "sdk"),
                 ResultsDirectory = Path.Combine(_directory, "results")
             };
-            Directory.CreateDirectory(Path.Combine(_options.SdkDirectory, "sdk", "a"));
-            File.WriteAllText(Path.Combine(_options.SdkDirectory, "sdk", "a", "ci.yml"), "");
         }
 
         [Fact]
         public async Task PreparesBeforeSubmittingUpdatedDefinitionsAndWritesTheExactContract()
         {
             await RunAsync();
-            Assert.Equal(new[] { "lock", "prepare", "find:123", "queue:123" },
+            Assert.Equal(new[] { "prepare", "find:123", "queue:123" },
                 _operations.Events);
             using var manifest = Results();
             Assert.Equal(new[] { "schemaVersion", "repository", "sourceVersion", "releaseRuns" },
@@ -64,7 +62,6 @@ namespace PipelineGenerator.Tests
         }
 
         [Theory]
-        [InlineData("lock")]
         [InlineData("prepare")]
         [InlineData("find")]
         public async Task BlocksQueueingWhenAPrerequisiteFails(string failure)
@@ -82,32 +79,6 @@ namespace PipelineGenerator.Tests
             Environment.SetEnvironmentVariable("BUILD_SOURCEBRANCH", "refs/heads/untrusted");
             await Assert.ThrowsAsync<InvalidOperationException>(RunAsync);
             Assert.Empty(_operations.Events);
-        }
-
-        [Fact]
-        public async Task RejectsUnpreparedDirectoryBeforePrivilegedOperations()
-        {
-            _options.SdkDirectory = Path.Combine(_directory, "missing");
-            var error = await Assert.ThrowsAsync<InvalidOperationException>(RunAsync);
-            Assert.Contains("already be prepared", error.Message);
-            Assert.Empty(_operations.Events);
-        }
-
-        [Fact]
-        public async Task ConsumesPreparedDirectoryWithoutGitOnPathOrGitMetadata()
-        {
-            var path = Environment.GetEnvironmentVariable("PATH");
-            try
-            {
-                Environment.SetEnvironmentVariable("PATH", "");
-                Assert.False(Directory.Exists(Path.Combine(_options.SdkDirectory, ".git")));
-                await RunAsync();
-                Assert.Contains("queue:123", _operations.Events);
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable("PATH", path);
-            }
         }
 
         [Theory]
@@ -221,8 +192,6 @@ namespace PipelineGenerator.Tests
         private void AddSecondTarget()
         {
             _options.DescriptorPaths = "[{\"path\":\"sdk/a/ci.yml\"},{\"path\":\"sdk/b/ci.yml\"}]";
-            Directory.CreateDirectory(Path.Combine(_options.SdkDirectory, "sdk", "b"));
-            File.WriteAllText(Path.Combine(_options.SdkDirectory, "sdk", "b", "ci.yml"), "");
             _operations.Definitions = new[] { Definition(), new PipelineGenerationResult("sdk/b/ci.yml", 124, "up", "unified", "unchanged") };
         }
 
@@ -273,12 +242,6 @@ namespace PipelineGenerator.Tests
                 {
                     throw new InvalidOperationException($"{action} failed");
                 }
-            }
-
-            public Task ValidateLockAsync(CancellationToken cancellationToken)
-            {
-                Record("lock");
-                return Task.CompletedTask;
             }
 
             public Task<IReadOnlyList<PipelineGenerationResult>> PrepareAsync(PreparePostMergeOptions options,

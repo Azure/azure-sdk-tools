@@ -606,15 +606,11 @@ def test_postprocess_parses_structured_output_and_enriches_references() -> None:
                 link="https://example.com/release-gate",
             ),
             ChatAgentReference(
-                title="Release Gate",
-                link="https://example.com/release-gate",
-            ),
-            ChatAgentReference(
                 title="GitHub Issue",
                 link="https://github.com/Azure/azure-sdk-tools/issues/16652",
             ),
             ChatAgentReference(
-                title="Invalid link",
+                title="Empty link",
                 link="",
             ),
         ],
@@ -644,23 +640,6 @@ def test_postprocess_parses_structured_output_and_enriches_references() -> None:
             content="",
         ),
     ]
-
-
-def test_postprocess_recovers_truncated_structured_output() -> None:
-    response = SimpleNamespace(
-        id="response-truncated",
-        output_text='{"answer": "Partial answer cut off by token limit',
-        output=[],
-    )
-    request = ChatRequest(
-        tenant_id="azure_sdk_qa_bot",
-        message=ChatMessage(role="user", content="Question"),
-    )
-
-    result = ChatService()._postprocess(request, response, None)
-
-    assert result.answer == "Partial answer cut off by token limit"
-    assert result.references is None
 
 
 def test_postprocess_falls_back_to_markdown_references_for_plain_text() -> None:

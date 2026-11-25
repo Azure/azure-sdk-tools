@@ -14,7 +14,6 @@ from urllib.parse import urlparse
 import httpx
 from azure.core.exceptions import AzureError
 from pydantic import ValidationError
-from pydantic_core import from_json
 
 from config.app_config import Settings, get as cfg
 from config.tenant_config import (
@@ -683,28 +682,16 @@ class ChatService:
         raw_output_text = response.output_text or ""
         structured_output = self._parse_structured_output(raw_output_text)
         if structured_output is not None:
-            answer = _CITATION_RE.sub("", structured_output.answer)
+            output_text = _CITATION_RE.sub("", structured_output.answer)
             answer, route_channel_name, route_channel_link = (
-                self._extract_support_channel_from_text(answer)
+                self._extract_support_channel_from_text(output_text)
             )
-            answer, inline_references = self._extract_references_from_text(
-                answer, retrieved_references
-            )
-            raw_pairs: list[tuple[str, str]] = []
-            seen_pairs: set[tuple[str, str]] = set()
-            for item in structured_output.references:
-                title = item.title.strip()
-                link = item.link.strip()
-                if urlparse(link).scheme not in {"http", "https"}:
-                    continue
-                key = (link, title)
-                if key not in seen_pairs:
-                    seen_pairs.add(key)
-                    raw_pairs.append((title or urlparse(link).netloc, link))
-            references = (
-                self._enrich_references(raw_pairs, retrieved_references)
-                or inline_references
-            )
+            raw_pairs = [
+                (item.title.strip(), item.link.strip())
+                for item in structured_output.references
+                if item.title.strip() and item.link.strip()
+            ]
+            references = self._enrich_references(raw_pairs, retrieved_references)
         else:
             output_text = _CITATION_RE.sub("", raw_output_text)
             output_text, route_channel_name, route_channel_link = (
@@ -760,23 +747,6 @@ class ChatService:
         try:
             return ChatAgentOutput.model_validate_json(stripped)
         except ValidationError:
-            try:
-                partial = from_json(stripped, allow_partial="trailing-strings")
-            except ValueError:
-                partial = None
-            if isinstance(partial, dict) and isinstance(partial.get("answer"), str):
-                raw_refs = partial.get("references")
-                valid_refs = [
-                    item
-                    for item in (raw_refs if isinstance(raw_refs, list) else [])
-                    if isinstance(item, dict)
-                    and isinstance(item.get("title"), str)
-                    and isinstance(item.get("link"), str)
-                ]
-                logger.warning("Recovered truncated structured agent output")
-                return ChatAgentOutput.model_validate(
-                    {"answer": partial["answer"], "references": valid_refs}
-                )
             logger.warning(
                 "Agent output started with '{' but did not match ChatAgentOutput"
             )

@@ -107,10 +107,8 @@ class ChatAgentReference(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(description="Concise display title of the source.")
-    link: str = Field(
-        description="Exact HTTP(S) URL of the source from retrieved tool results."
-    )
+    title: str
+    link: str
 
 
 class ChatAgentOutput(BaseModel):
@@ -118,14 +116,5 @@ class ChatAgentOutput(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    answer: str = Field(
-        description=(
-            "Markdown answer without citation markers or a separate references section."
-        )
-    )
-    references: list[ChatAgentReference] = Field(
-        description=(
-            "Sources from retrieved tool results that directly support the answer, "
-            "or empty if none apply."
-        )
-    )
+    answer: str
+    references: list[ChatAgentReference]

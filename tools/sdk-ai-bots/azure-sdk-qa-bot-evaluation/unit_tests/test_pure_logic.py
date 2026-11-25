@@ -1686,7 +1686,7 @@ def test_route_channel_verdict_allows_skipped_and_fails_on_errors():
             "results": [],
         },
     ], ["route_channel"]))
-    assert er.verify_result({"scenario": mixed_pass}, with_baseline=False) == VerificationResult.PASS
+    assert er.verify_results({"scenario": mixed_pass}, with_baseline=False) == VerificationResult.PASS
 
     all_skipped = er.record_run_result(output_items_to_rows([
         {
@@ -1700,11 +1700,11 @@ def test_route_channel_verdict_allows_skipped_and_fails_on_errors():
             "results": [],
         },
     ], ["route_channel"]))
-    assert er.verify_result({"scenario": all_skipped}, with_baseline=False) == VerificationResult.PASS
+    assert er.verify_results({"scenario": all_skipped}, with_baseline=False) == VerificationResult.PASS
 
     runner = FoundryEvalsRunner(["route_channel"], er, model="gpt-4o")
     failed_collection = er.record_run_result({"rows": [runner._failed_row({"testcase": "uncollected", "query": "q4"})]})
-    assert er.verify_result({"scenario": failed_collection}, with_baseline=False) == VerificationResult.FAIL
+    assert er.verify_results({"scenario": failed_collection}, with_baseline=False) == VerificationResult.FAIL
 
 
 def test_validate_case_expected_route_channel():

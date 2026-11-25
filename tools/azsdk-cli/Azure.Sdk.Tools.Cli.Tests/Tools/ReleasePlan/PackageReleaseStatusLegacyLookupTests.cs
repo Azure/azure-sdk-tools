@@ -33,8 +33,30 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService
                 .Setup(x => x.GetReleasePlansBySdkPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync([]);
+            // The legacy finish rereads the plan; serve the looked-up plan as ADO would after the status write.
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlanForWorkItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((int workItemId, CancellationToken _) =>
+                {
+                    var plan = mockDevOpsService.Invocations
+                        .Where(i => i.Method.Name == nameof(IDevOpsService.GetReleasePlansForPackageAsync))
+                        .SelectMany(i => ((Task<List<ReleasePlanWorkItem>>)i.ReturnValue).Result)
+                        .Last(p => p.WorkItemId == workItemId);
+                    if (string.IsNullOrEmpty(plan.Status))
+                    {
+                        plan.Status = "In Progress";
+                    }
+                    plan.Revision = Math.Max(plan.Revision, 1);
+                    return plan;
+                });
+            // Route revision-checked writes through the existing 3-argument setups and verifications.
+            mockDevOpsService
+                .Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .Returns((int workItemId, Dictionary<string, string> fields, int _, CancellationToken ct) =>
+                    mockDevOpsService.Object.UpdateWorkItemAsync(workItemId, fields, ct));
             logger = new TestLogger<PackageReleaseStatusTool>();
             mockNotificationService = new Mock<INotificationService>();
+            mockNotificationService.SetupGet(x => x.IsEnabled).Returns(true);
             mockNotificationService
                 .Setup(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new NotificationResult(NotificationStatus.Sent));

@@ -68,9 +68,9 @@ public class PackageReleaseCompletionNotificationTests
         _devOps.Setup(s => s.GetActiveReleasePlansByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
         _devOps.Setup(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .Returns<int, Dictionary<string, string>, int, CancellationToken>((_, fields, _, _) => Task.FromResult(ApplyUpdate(fields, refreshVersion: true)));
+            .Returns<int, Dictionary<string, string>, int, CancellationToken>((_, fields, _, _) => Task.FromResult(ApplyUpdate(fields)));
         _devOps.Setup(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-            .Returns<int, Dictionary<string, string>, CancellationToken>((_, fields, _) => Task.FromResult(ApplyUpdate(fields, refreshVersion: false)));
+            .Returns<int, Dictionary<string, string>, CancellationToken>((_, fields, _) => Task.FromResult(ApplyUpdate(fields)));
 
         _devOps.Setup(s => s.GetPackageWorkItemAsync("Java-package", "Java", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PackageWorkitemResponse
@@ -214,6 +214,35 @@ public class PackageReleaseCompletionNotificationTests
     }
 
     [Test]
+    public async Task RevisionConflictOnFinishedWrite_DoesNotSend([Values(false, true)] bool legacy)
+    {
+        // Another invocation finished the plan between the fresh read and this revision-checked write.
+        _devOps.Setup(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.Is<Dictionary<string, string>>(f => f.ContainsKey("System.State")), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Revision conflict."));
+
+        var result = await UpdateAsync(legacy);
+
+        Assert.That(result.ReleasePlanFinished, Is.False);
+        Assert.That(_emails, Is.Empty);
+        _devOps.Verify(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.Is<Dictionary<string, string>>(f => f.ContainsKey("System.State")), It.IsAny<CancellationToken>()), Times.Never(),
+            "The Finished write must always carry the fresh revision.");
+    }
+
+    [Test]
+    public async Task DisabledNotifications_SkipEmailMetadataLookups([Values(false, true)] bool legacy)
+    {
+        _environment.Setup(e => e.GetStringVariable(Constants.NOTIFICATION_SERVICE_URL_ENV_VAR, It.IsAny<string>())).Returns("");
+        _plan.ProductTreeId = Guid.NewGuid().ToString();
+        _plan.ServiceTreeId = Guid.NewGuid().ToString();
+
+        var result = await UpdateAsync(legacy);
+
+        Assert.That(result.ReleasePlanFinished, Is.True);
+        _devOps.Verify(s => s.GetProductOnboardingAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never());
+        _devOps.Verify(s => s.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never());
+    }
+
+    [Test]
     public async Task OnboardedServiceName_IsPreferredOverPackageServiceName([Values(false, true)] bool onboardingFound)
     {
         var productId = Guid.NewGuid();
@@ -258,7 +287,7 @@ public class PackageReleaseCompletionNotificationTests
     private Task<ReleaseStatusUpdateResponse> UpdateAsync(bool legacy) =>
         _tool.UpdatePackageReleaseStatus("Python-package", "Python", "Released", "2.0.0", legacy ? 0 : 100);
 
-    private WorkItem ApplyUpdate(Dictionary<string, string> fields, bool refreshVersion)
+    private WorkItem ApplyUpdate(Dictionary<string, string> fields)
     {
         if (fields.TryGetValue("System.State", out var state))
         {
@@ -275,9 +304,7 @@ public class PackageReleaseCompletionNotificationTests
             {
                 sdk.ReleaseStatus = status;
             }
-            // Legacy lookups must populate the new version in memory themselves.
-            if (fields.TryGetValue($"Custom.ReleasedVersionFor{languageId}", out var version) &&
-                refreshVersion)
+            if (fields.TryGetValue($"Custom.ReleasedVersionFor{languageId}", out var version))
             {
                 sdk.ReleasedVersion = version;
             }

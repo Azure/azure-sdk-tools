@@ -1629,15 +1629,25 @@ def test_output_items_to_rows_grades_route_channel():
             },
             "results": [],
         },
+        {
+            "datasource_item": {
+                "testcase": "omitted-route-skipped",
+                "query": "q4",
+                "ground_truth": "gt4",
+                "response": "answered",
+                "route_channel_name": "TypeSpec Discussion",
+            },
+            "results": [],
+        },
     ]
     rows = output_items_to_rows(output_items, ["route_channel"])["rows"]
-    assert [r["outputs.route_channel.route_channel_result"] for r in rows] == ["pass", "fail", "pass"]
-    assert [r["outputs.route_channel.route_channel"] for r in rows] == [1.0, 0.0, 1.0]
+    assert [r.get("outputs.route_channel.route_channel_result") for r in rows] == ["pass", "fail", "pass", None]
+    assert [r.get("outputs.route_channel.route_channel") for r in rows] == [1.0, 0.0, 1.0, None]
 
     er = EvalsResult(metrics={"route_channel": ["route_channel", "route_channel_result"]}, suppressions=None)
     recorded = er.record_run_result({"rows": rows})
     summary = recorded[-1]
-    assert summary["total_evals"] == 3
+    assert summary["total_evals"] == 4
     assert summary["route_channel_pass_rate"] == 2
     assert summary["route_channel_fail_rate"] == 1
 

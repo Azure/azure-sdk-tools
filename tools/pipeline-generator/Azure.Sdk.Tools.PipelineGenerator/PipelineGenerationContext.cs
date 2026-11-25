@@ -110,7 +110,7 @@ namespace PipelineGenerator
 
         private TeamProjectReference cachedProjectReference;
 
-        public async Task<TeamProjectReference> GetProjectReferenceAsync(CancellationToken cancellationToken)
+        public virtual async Task<TeamProjectReference> GetProjectReferenceAsync(CancellationToken cancellationToken)
         {
             if (cachedProjectReference == null)
             {
@@ -170,7 +170,7 @@ namespace PipelineGenerator
             return cachedServiceEndpoint;
         }
 
-        public async Task<IEnumerable<ServiceEndpoint>> GetServiceConnectionsAsync(IEnumerable<string> serviceConnections, CancellationToken cancellationToken)
+        public virtual async Task<IEnumerable<ServiceEndpoint>> GetServiceConnectionsAsync(IEnumerable<string> serviceConnections, CancellationToken cancellationToken)
         {
             var serviceEndpointClient = await GetServiceEndpointClientAsync(cancellationToken);
             var projectReference = await GetProjectReferenceAsync(cancellationToken);
@@ -189,13 +189,18 @@ namespace PipelineGenerator
             }
             if (Strict)
             {
-                var missing = serviceConnections.Except(endpoints.Select(e => e.Name)).ToArray();
-                if (missing.Length > 0)
-                {
-                    throw new InvalidOperationException($"Configured service connections were not found: {string.Join(", ", missing)}");
-                }
+                EnsureAllServiceConnectionsFound(serviceConnections, endpoints);
             }
             return endpoints;
+        }
+
+        public static void EnsureAllServiceConnectionsFound(IEnumerable<string> requested, IEnumerable<ServiceEndpoint> found)
+        {
+            var missing = requested.Except(found.Select(e => e.Name)).ToArray();
+            if (missing.Length > 0)
+            {
+                throw new InvalidOperationException($"Configured service connections were not found: {string.Join(", ", missing)}");
+            }
         }
 
         private HttpClient cachedRawHttpClient = null;

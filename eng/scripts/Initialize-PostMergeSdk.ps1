@@ -29,6 +29,7 @@ function Invoke-CheckoutGit {
     return $output
 }
 
+# Must match PostMergeConstants in tools/pipeline-generator and the post-merge pipeline condition.
 if ($env:BUILD_REPOSITORY_NAME -cne 'Azure/azure-sdk-tools' -or
     $env:BUILD_SOURCEBRANCH -cne 'refs/heads/main' -or
     $env:SYSTEM_TEAMPROJECT -cne 'internal' -or

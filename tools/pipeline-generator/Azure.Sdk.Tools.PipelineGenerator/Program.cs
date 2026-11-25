@@ -172,7 +172,7 @@ namespace PipelineGenerator
                 // Fall back to a form of prefix if DevOps path is not specified
                 var devOpsPathValue = string.IsNullOrEmpty(devOpsPath) ? $"\\{prefix}" : devOpsPath;
 
-                var context = new PipelineGenerationContext(
+                var context = CreateContext(
                     this.logger,
                     organization,
                     project,
@@ -231,6 +231,10 @@ namespace PipelineGenerator
 
                 var definitions = new List<BuildDefinition>();
                 var results = new List<PipelineGenerationResult>();
+                // Strict callers must not change any definition when a configured service connection is missing.
+                var serviceConnectionObjects = context.Strict
+                    ? await context.GetServiceConnectionsAsync(serviceConnections, cancellationToken)
+                    : null;
                 foreach (var component in components)
                 {
                     logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
@@ -254,7 +258,7 @@ namespace PipelineGenerator
                     }
                 }
 
-                var serviceConnectionObjects = await context.GetServiceConnectionsAsync(serviceConnections, cancellationToken);
+                serviceConnectionObjects ??= await context.GetServiceConnectionsAsync(serviceConnections, cancellationToken);
                 var definitionIds = definitions.Select(d => d.Id).ToArray();
 
                 foreach (var serviceConnection in serviceConnectionObjects)
@@ -298,6 +302,12 @@ namespace PipelineGenerator
                 return ExitCondition.Exception;
             }
         }
+
+        protected virtual PipelineGenerationContext CreateContext(ILogger logger, string organization, string project,
+            string endpoint, string repository, string branch, string agentPool, int[] variableGroups,
+            string devOpsPath, string prefix, bool whatIf, bool noSchedule, bool setManagedVariables, bool overwriteTriggers)
+            => new PipelineGenerationContext(logger, organization, project, endpoint, repository, branch, agentPool,
+                variableGroups, devOpsPath, prefix, whatIf, noSchedule, setManagedVariables, overwriteTriggers);
 
         public static int AddPipelinePermissions(JsonNode permissions, IEnumerable<int> definitionIds, bool strict)
         {

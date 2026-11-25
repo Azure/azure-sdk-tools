@@ -30,7 +30,7 @@ namespace PipelineGenerator
             _generator = generator;
             _logger = logger;
             var language = repositoryName.Replace("azure-sdk-for-", "", StringComparison.Ordinal);
-            _context = new PipelineGenerationContext(logger, "https://dev.azure.com/azure-sdk", "internal",
+            _context = new PipelineGenerationContext(logger, PostMergeConstants.Organization, PostMergeConstants.Project,
                 "Azure", $"Azure/{repositoryName}", "refs/heads/main", "Hosted", Array.Empty<int>(),
                 $"\\{language}", language, false, false, true, false) { Strict = true };
         }
@@ -38,7 +38,7 @@ namespace PipelineGenerator
         public async Task ValidateLockAsync(CancellationToken cancellationToken)
         {
             var environments = await GetJsonAsync(
-                "distributedtask/environments?name=post-merge-pipeline-preparation&api-version=7.1", cancellationToken);
+                $"distributedtask/environments?name={PostMergeConstants.LockEnvironment}&api-version=7.1", cancellationToken);
             var values = environments["value"].AsArray();
             if (values.Count != 1)
             {
@@ -53,7 +53,7 @@ namespace PipelineGenerator
         public static void ValidateLockConfiguration(JsonNode checks)
         {
             var enabledLocks = checks["value"].AsArray().Count(check =>
-                check["type"]?["id"]?.GetValue<string>() == "2ef31ad6-baa0-403a-8b45-2cbc9b4e5563" &&
+                check["type"]?["id"]?.GetValue<string>() == PostMergeConstants.ExclusiveLockCheckTypeId &&
                 check["isDisabled"]?.GetValue<bool>() != true);
             if (enabledLocks != 1)
             {
@@ -97,7 +97,7 @@ namespace PipelineGenerator
                     var requestPath = Path.Combine(options.ResultsDirectory, $"descriptor-request-{index}.json");
                     var outputPath = Path.Combine(options.ResultsDirectory, $"definitions-{index++}.json");
                     File.WriteAllText(requestPath, JsonSerializer.Serialize(requests));
-                    var result = await _generator.RunAsync("https://dev.azure.com/azure-sdk", "internal",
+                    var result = await _generator.RunAsync(PostMergeConstants.Organization, PostMergeConstants.Project,
                         _context.Prefix, scanPath, "Azure", _context.Repository, $"refs/heads/{branch}", "Hosted",
                         convention, groups, connections, _context.DevOpsPath, false, false, false, false, true, false,
                         cancellationToken, requestPath, outputPath, options.SdkDirectory);
@@ -114,9 +114,9 @@ namespace PipelineGenerator
         public async Task<PostMergeJournal> ReadJournalAsync(int definitionId, string sha, CancellationToken cancellationToken)
         {
             var client = await _context.GetBuildHttpClientAsync(cancellationToken);
-            var properties = await client.GetDefinitionPropertiesAsync("internal", definitionId,
-                filter: new[] { $"postMergePreparation.{sha}" }, cancellationToken: cancellationToken);
-            if (!properties.TryGetValue($"postMergePreparation.{sha}", out var value))
+            var properties = await client.GetDefinitionPropertiesAsync(PostMergeConstants.Project, definitionId,
+                filter: new[] { PostMergeConstants.JournalProperty(sha) }, cancellationToken: cancellationToken);
+            if (!properties.TryGetValue(PostMergeConstants.JournalProperty(sha), out var value))
             {
                 return null;
             }
@@ -138,7 +138,7 @@ namespace PipelineGenerator
                 new JsonPatchOperation
                 {
                     Operation = Operation.Add,
-                    Path = $"/postMergePreparation.{sha}",
+                    Path = "/" + PostMergeConstants.JournalProperty(sha),
                     Value = JsonSerializer.Serialize(journal)
                 }
             };
@@ -158,7 +158,7 @@ namespace PipelineGenerator
             Build match = null;
             do
             {
-                var page = await client.GetBuildsAsync2("internal", definitions: new[] { definitionId },
+                var page = await client.GetBuildsAsync2(PostMergeConstants.Project, definitions: new[] { definitionId },
                     branchName: $"refs/heads/{branch}", reasonFilter: BuildReason.IndividualCI,
                     queryOrder: BuildQueryOrder.QueueTimeDescending, top: 100, continuationToken: continuation,
                     cancellationToken: cancellationToken);
@@ -178,7 +178,7 @@ namespace PipelineGenerator
         public async Task<Build> GetBuildAsync(int runId, CancellationToken cancellationToken)
         {
             var client = await _context.GetBuildHttpClientAsync(cancellationToken);
-            return await client.GetBuildAsync("internal", runId, cancellationToken: cancellationToken);
+            return await client.GetBuildAsync(PostMergeConstants.Project, runId, cancellationToken: cancellationToken);
         }
 
         public async Task<Build> QueueBuildAsync(int definitionId, string repository, string sha, string branch, CancellationToken cancellationToken)
@@ -198,11 +198,11 @@ namespace PipelineGenerator
                 sourceBranch = $"refs/heads/{branch}",
                 sourceVersion = sha,
                 reason = "individualCI",
-                properties = new Dictionary<string, string> { ["postMergePreparation"] = $"{repository}/{sha}/{definitionId}" }
+                properties = new Dictionary<string, string> { [PostMergeConstants.PropertyName] = $"{repository}/{sha}/{definitionId}" }
             };
             using var content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
             using var response = await client.PostAsync(
-                "https://dev.azure.com/azure-sdk/internal/_apis/build/builds?api-version=7.1", content, cancellationToken);
+                PostMergeConstants.ApiBaseUrl + "build/builds?api-version=7.1", content, cancellationToken);
             response.EnsureSuccessStatusCode();
             return JsonConvert.DeserializeObject<Build>(await response.Content.ReadAsStringAsync(cancellationToken));
         }
@@ -210,7 +210,7 @@ namespace PipelineGenerator
         private async Task<JsonNode> GetJsonAsync(string path, CancellationToken cancellationToken)
         {
             var client = await _context.GetRawHttpClient(cancellationToken);
-            using var response = await client.GetAsync($"https://dev.azure.com/azure-sdk/internal/_apis/{path}", cancellationToken);
+            using var response = await client.GetAsync(PostMergeConstants.ApiBaseUrl + path, cancellationToken);
             response.EnsureSuccessStatusCode();
             return JsonNode.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
         }

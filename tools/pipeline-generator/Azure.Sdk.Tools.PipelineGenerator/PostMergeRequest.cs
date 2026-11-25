@@ -82,10 +82,10 @@ namespace PipelineGenerator
 
         public static void ValidateTrustedEnvironment(Func<string, string> environment)
         {
-            if (environment("BUILD_REPOSITORY_NAME") != "Azure/azure-sdk-tools" ||
-                environment("BUILD_SOURCEBRANCH") != "refs/heads/main" ||
-                environment("SYSTEM_TEAMPROJECT") != "internal" ||
-                environment("SYSTEM_COLLECTIONURI") != "https://dev.azure.com/azure-sdk/")
+            if (environment("BUILD_REPOSITORY_NAME") != PostMergeConstants.ToolsRepository ||
+                environment("BUILD_SOURCEBRANCH") != PostMergeConstants.ToolsBranch ||
+                environment("SYSTEM_TEAMPROJECT") != PostMergeConstants.Project ||
+                environment("SYSTEM_COLLECTIONURI") != PostMergeConstants.CollectionUri)
             {
                 throw new InvalidOperationException("Preparation must run from the tools default branch in azure-sdk/internal.");
             }

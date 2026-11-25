@@ -170,7 +170,7 @@ Describe 'Trusted post-merge SDK checkout' {
             & $global:SdkCheckoutNativeGit @gitArguments
             $global:LASTEXITCODE = $LASTEXITCODE
             if ($remoteIndex -ge 0 -and $gitArguments -contains 'clone' -and $LASTEXITCODE -eq 0) {
-                $hook = Join-Path $gitArguments[-1] '.git\hooks\post-checkout'
+                $hook = Join-Path $gitArguments[-1] '.git' 'hooks' 'post-checkout'
                 [System.IO.File]::WriteAllText($hook, "#!/bin/sh`nexit 99`n")
                 if (-not $IsWindows) {
                     [System.IO.File]::SetUnixFileMode($hook, [System.IO.UnixFileMode] 'UserRead, UserWrite, UserExecute')

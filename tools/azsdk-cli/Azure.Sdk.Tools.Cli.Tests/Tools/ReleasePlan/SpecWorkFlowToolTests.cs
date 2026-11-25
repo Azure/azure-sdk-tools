@@ -94,7 +94,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 }]);
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
-                @"TypeSpecTestData\specification\testcontoso\Contoso.Management", "stable", language,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "stable", language,
                 workItemId: 456, isProvisioning: true);
 
             Assert.That(result.ResponseError, Is.Null);
@@ -116,7 +116,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             });
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
-                @"TypeSpecTestData\specification\testcontoso\Contoso.Management", "stable", language,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "stable", language,
                 workItemId: 456, isProvisioning: true);
 
             Assert.That(result.ResponseError, Is.Not.Null);
@@ -192,7 +192,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             });
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
-                @"TypeSpecTestData\specification\testcontoso\Contoso.Management", "stable", ".NET",
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "stable", ".NET",
                 workItemId: 456, isProvisioning: isProvisioning);
 
             Assert.That(result.Status, Is.EqualTo("Failed"));

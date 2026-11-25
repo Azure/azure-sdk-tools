@@ -202,7 +202,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(project);
 
             var response = await releasePlanTool.CreateReleasePlan(null,
-                @"TypeSpecTestData\specification\testcontoso\Contoso.Management", "July 2025", "Public Preview",
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "Public Preview",
                 specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
                 isTestReleasePlan: true);
 
@@ -213,7 +213,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task UpdateSdkDetails_ProvisioningDoesNotSatisfyMissingNormalEmitter()
         {
-            var path = @"TypeSpecTestData\specification\testcontoso\Contoso.Management";
+            var path = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var project = TypeSpecProject.ParseTypeSpecConfig(path);
             project.Packages =
             [

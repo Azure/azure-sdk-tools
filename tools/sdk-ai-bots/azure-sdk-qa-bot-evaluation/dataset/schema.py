@@ -334,7 +334,7 @@ def select_cases(records: list[dict[str, Any]], scope: str, *, scenario: str) ->
 def validate_file(path: str | Path, *, require_reviewed: bool = False) -> int:
     """Validate JSONL; canonical case libraries also require IDs and tags."""
     p = Path(path)
-    benchmark = p.parent.name in ("evaluation_datasets", "perf")
+    benchmark = p.parent.name == "evaluation_datasets"
     return _validate_rows(
         iter_jsonl(p),
         source=str(p),

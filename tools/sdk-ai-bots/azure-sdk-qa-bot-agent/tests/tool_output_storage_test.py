@@ -220,3 +220,40 @@ async def test_offloaded_minified_json_is_searchable_via_file_access_provider():
     )
     assert "publicKeyDirectoryUri" in lines
     assert "readOnly" in lines
+
+
+@pytest.mark.asyncio
+async def test_file_access_grep_output_is_bounded_keeping_tail_errors():
+    middleware = ToolOutputStorageMiddleware(InMemoryAgentFileStore())
+    matches = [
+        {"line_number": i, "line": f"setup error noise {i} " + "x" * 120}
+        for i in range(1, 2500)
+    ]
+    matches.append(
+        {
+            "line_number": 2500,
+            "line": "fatal error: @azure-tools/typespec-azure-resource-manager/version-progression",
+        }
+    )
+    context = _make_context(
+        "file_access_grep",
+        [{"file_name": "tool-result-get_job_logs-1.txt", "snippet": "setup", "matching_lines": matches}],
+    )
+
+    await middleware.process(context, _noop_next)
+
+    assert len(json.dumps(context.result)) <= 22_000
+    assert context.result[0]["omitted_matches"] > 0
+    returned_lines = [m["line"] for m in context.result[0]["matching_lines"]]
+    assert any("version-progression" in line for line in returned_lines)
+
+
+@pytest.mark.asyncio
+async def test_file_access_read_output_is_bounded():
+    middleware = ToolOutputStorageMiddleware(InMemoryAgentFileStore())
+    context = _make_context("file_access_read", "x" * 50_000)
+
+    await middleware.process(context, _noop_next)
+
+    assert len(context.result) < 21_000
+    assert "[Output truncated at 20,000 characters." in context.result

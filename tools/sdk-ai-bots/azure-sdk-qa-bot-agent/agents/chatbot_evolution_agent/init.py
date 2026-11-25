@@ -28,6 +28,7 @@ if _project_root not in sys.path:
 load_dotenv(override=False)
 os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
+from agent_framework import create_harness_agent
 from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
@@ -40,7 +41,7 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
 from services.chat_service import ChatService
-from utils.agent_harness import create_file_store, create_hosted_agent
+from utils.agent_harness import create_file_store, get_harness_defaults
 from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
     create_project_client,
@@ -157,14 +158,13 @@ async def main() -> None:
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
     file_store = create_file_store()
-    agent = create_hosted_agent(
+    agent = create_harness_agent(  # pyright: ignore[reportCallIssue]
         agent_client,
         name=agent_name,
-        agent_id=agent_id,
+        id=agent_id,
         harness_instructions=harness_instructions,
-        instructions=instructions,
+        agent_instructions=instructions,
         tools=tools,
-        file_access_store=file_store,
         middleware=[
             ToolOutputSecurityMiddleware(),
             ToolOutputStorageMiddleware(file_store),
@@ -173,6 +173,7 @@ async def main() -> None:
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
         },
+        **get_harness_defaults(file_store),
     )
 
     server = ResponsesHostServer(agent, history_source="agent")

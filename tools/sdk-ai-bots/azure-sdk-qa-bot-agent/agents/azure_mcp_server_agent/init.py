@@ -20,6 +20,7 @@ from agent_framework import AggregatingSkillsSource
 from agent_framework import FileSkillsSource
 from agent_framework import InMemorySkillsSource
 from agent_framework import SkillsProvider
+from agent_framework import create_harness_agent
 from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
@@ -30,7 +31,7 @@ from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.mslearn_mcp_tools import create_mslearn_mcp_tool
 from tools.web_tools import WebTools
-from utils.agent_harness import create_file_store, create_hosted_agent
+from utils.agent_harness import create_file_store, get_harness_defaults
 from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import ensure_user_memory_store
 from utils.memory_context_provider import MemoryContextProvider
@@ -127,15 +128,14 @@ async def main() -> None:
 
     memory_provider = MemoryContextProvider(project_client)
     file_store = create_file_store()
-    agent = create_hosted_agent(
+    agent = create_harness_agent(  # pyright: ignore[reportCallIssue]
         agent_client,
         name=agent_name,
-        agent_id=agent_id,
+        id=agent_id,
         harness_instructions=harness_instructions,
-        instructions=instructions,
+        agent_instructions=instructions,
         tools=tools,
         skills_provider=skills_provider,
-        file_access_store=file_store,
         context_providers=[memory_provider],
         middleware=[
             ToolOutputSecurityMiddleware(),
@@ -148,6 +148,7 @@ async def main() -> None:
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
             "include": ["web_search_call.action.sources"],
         },
+        **get_harness_defaults(file_store),
     )
 
     server = ResponsesHostServer(agent, history_source="agent")

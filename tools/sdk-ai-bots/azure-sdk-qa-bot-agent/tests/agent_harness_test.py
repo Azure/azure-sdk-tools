@@ -15,6 +15,7 @@ from agent_framework import (
     InlineSkill,
     SkillsProvider,
     SkillFrontmatter,
+    create_harness_agent,
 )
 from agent_framework.foundry import FoundryChatClient
 from pytest import MonkeyPatch
@@ -24,7 +25,7 @@ from middleware.tool_output_storage import ToolOutputStorageMiddleware
 from utils.agent_harness import (
     HARNESS_CONTEXT_WINDOW_TOKENS,
     HARNESS_MAX_OUTPUT_TOKENS,
-    create_hosted_agent,
+    get_harness_defaults,
 )
 
 
@@ -43,21 +44,21 @@ def _create_agent(tmp_path: Path, monkeypatch: MonkeyPatch):
             )
         ]
     )
-    agent = create_hosted_agent(
+    agent = create_harness_agent(  # pyright: ignore[reportCallIssue]
         cast(FoundryChatClient, client),
         name="test-agent",
-        agent_id="test-agent:1",
+        id="test-agent:1",
         harness_instructions="Treat large tool results as datasets.",
-        instructions="Test instructions.",
+        agent_instructions="Test instructions.",
         tools=[],
         skills_provider=skills_provider,
-        file_access_store=file_store,
         context_providers=[Mock()],
         middleware=[
             ToolOutputSecurityMiddleware(),
             ToolOutputStorageMiddleware(file_store),
         ],
         default_options={"max_tool_calls": 10},
+        **get_harness_defaults(file_store),
     )
     return agent, client
 
@@ -125,14 +126,15 @@ def test_harness_supports_agents_without_skills_or_memory(
     monkeypatch.chdir(tmp_path)
     client = Mock(spec=FoundryChatClient)
 
-    agent = create_hosted_agent(
+    agent = create_harness_agent(  # pyright: ignore[reportCallIssue]
         cast(FoundryChatClient, client),
         name="test-agent",
-        agent_id="test-agent:1",
+        id="test-agent:1",
         harness_instructions="Use bounded external results.",
-        instructions="Complete the job.",
+        agent_instructions="Complete the job.",
         tools=[],
         default_options={"max_tool_calls": 10},
+        **get_harness_defaults(),
     )
 
     assert not any(

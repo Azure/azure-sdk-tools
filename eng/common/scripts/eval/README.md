@@ -50,7 +50,7 @@ explicit bootstrap, without changing dependency checks or the frozen lock.
 
 | Control | Current use |
 | --- | --- |
-| `publishDashboardResults` | Defaults to `true` in the three tools entrypoints. Set `false` to disable both upload and Azure Storage egress |
+| `publishDashboardResults` | The only checkbox; defaults to `true` in the three tools entrypoints. Set `false` to disable both upload and Azure Storage egress |
 | `EvalStorageAccountName` | Pipeline-owner configuration. Upload is skipped when absent; set it to `evaltestsummary` for this dashboard |
 | `EvalDashboardRefreshUrl` | Pipeline-owner configuration: `https://azsdk-eval-bue6a7dwanatgpb3.westus3-01.azurewebsites.net/api/refresh` |
 | `EvalDashboardResource` | Pipeline-owner configuration: `api://258998df-81ec-460c-bdd7-56a9bdde1e48` (resource URI, not a `/.default` scope) |
@@ -66,28 +66,17 @@ access. The dashboard reads that account's existing `vally-results` container;
 publishing to another account does not redirect the reader. Service-connection
 authorization, approved branch checks and existing RBAC remain required.
 
-Publishing policy stays in YAML: organization `https://dev.azure.com/azure-sdk/`,
-project `internal`, and an Azure-owned repository whose name does not end in `-pr`.
-Trusted manual DevOps runs do not require a main branch or an additional branch
-opt-in. CI and scheduled publication still require exact `refs/heads/main`.
-There is no per-repo or definition-ID allowlist in shared code. New Azure SDK repos do not need another
-shared-template edit. Personal forks, private `-pr` repos, PRs,
-pull refs and public-project runs do not get the credential-bearing task. At runtime
-it also requires a complete summary and a configured storage account.
+Publishing policy remains in YAML:
+organization `https://dev.azure.com/azure-sdk/`, project `internal`, an Azure-owned
+repository other than a private `-pr` repository, and no pull-request source ref.
+Trusted manual runs can publish from feature branches or tags using the existing
+`publishDashboardResults` setting. CI and scheduled runs retain their main-branch
+restriction. At runtime upload still requires successful preceding steps, a complete
+latest-attempt summary and the pipeline-owned storage account. Service-connection
+approvals, branch checks, permissions and immutable-archive rules are unchanged.
 
-For a manual feature-branch test, use the existing `publishDashboardResults`
-setting. No separate feature-branch flag is needed. Saved metadata retains the
-actual branch, commit and build identity; a test is never relabeled as main.
-The existing service connection, branch checks, approvals, storage configuration
-and completeness checks still apply. Test builds can appear in the dashboard's
-pipeline history under their actual source ref.
-
-Each consuming pipeline must opt in through its repo-local entrypoint. A repo-local
-1ES redirect must expose the existing `AllowAzureStorage` hook. The pipeline owner
-must authorize the publisher service connection and configure storage before uploads
-can run. This support does not enable the separate TypeSpec authoring benchmarks.
-
-There is no separate automatic-publication or network-access flag. Publication requests the documented
+There is no separate automatic-publication, feature-branch override or network-access
+flag. Publication requests the documented
 [AzureStorage policy](https://aka.ms/1es/netiso/pipelinetemplates), which
 keeps `DefaultDeny, CFSClean, CFSClean2, CFSClean3` and allows Azure Storage egress
 for **all processes in that pipeline**, not just one container. It grants no RBAC
@@ -103,6 +92,58 @@ These entrypoints run real evaluations and consume model quota; there is no synt
 pipeline mode. Completed failed evaluations publish before their existing test gate;
 missing or incomplete results fail Summary and cannot publish.
 
+### Final Delivery Summary
+
+The Summary job always renders a final `eval-delivery.md`, including after publication
+or the evaluation gate fails. It separates the scenario verdict, result completeness,
+archive storage and dashboard import confirmation. Known skips name the reason; a task
+that did not report an outcome is not shown as a successful upload. The evaluation
+summary keeps its scenario overview, full shard metrics table, totals and incomplete-result
+warnings. Selected-attempt provenance remains in the retained summary JSON and shard
+index instead of a separate customer-facing attempt table.
+The visible ADO attachments are named **Evaluation results** and **Result delivery**;
+their retained filenames remain unchanged. The native attachment title is not repeated
+in the delivery body. Failed scenarios use the
+**Scenario / Failed check / Trials passed** table, not a collapsed bullet list or a
+duplicate Evidence action. Scenario names and failed-check labels link to the same verified
+check-specific task and line. Every recorded failed check is included; JUnit still owns
+which scenarios failed their configured threshold.
+Tables are emitted directly as escaped, bordered and padded HTML in the Markdown
+attachments, with recorded token and Copilot AIU columns. Missing usage is not zero;
+partial totals show recorded/selected trial coverage. Copilot `nano-aiu` costs are divided
+by one billion to report AIU, not USD. Azure DevOps controls final sanitization and rendering.
+Failing scenarios have a blank line before their table. Duplicate delivery headings,
+the pending headline and unnecessary rerun instructions are omitted.
+Missing publisher output also leaves dashboard import **not confirmed**, not **not attempted**.
+Only a known publication skip or an explicit upload failure establishes that no import was attempted.
+
+With `-AzurePipelines`, the publisher emits fixed outcome variables for this final report.
+It does not read pipeline policy or write a local receipt. The report reuses the saved
+summary JSON, needs no token or network, and is retained with the existing Summary artifact.
+
+- Non-publishing runs show **Artifacts only**, result completeness and the retained ADO
+  artifacts, without skipped upload/import rows or a dashboard link.
+- Successful uploads show **Available in dashboard** only after confirmed import;
+  otherwise they retain the concise upload/import sentence and reported refresh outcome.
+  Both keep the **Retained artifacts** download link.
+- **View this build in dashboard** is the main publishing action. Redundant ADO tests
+  and generic log shortcuts are omitted; the build's native navigation remains available.
+
+Configure the optional pipeline-owned `EvalDashboardBaseUrl` as the dashboard's HTTPS
+App Service origin, without credentials, a nondefault port, an extra path, query or fragment.
+If it is unset, the report uses the existing protected `EvalDashboardRefreshUrl` origin.
+An invalid explicit base URL is not replaced with another destination. This configuration
+controls only the link; notification configuration and authentication remain separate.
+The link contract is `/build?organization=<org>&project=<project>&definition=<definition-id>&build=<build-id>&attempt=<summary-attempt>`.
+Values are encoded from the current pipeline identity, using the build ID rather than the
+display build number. The same link is shown immediately after confirmed upload whether
+or not import is confirmed. A temporary dashboard 404 before import completes is accepted;
+no waiting page, retry UI or import-on-click mechanism is introduced.
+
+Dashboard and ADO access are unchanged. An unconfirmed refresh after storage is not a
+reason to rerun evaluations. The saved ZIP and its checksum are never rewritten to add
+delivery status.
+
 ### Archive and retry contract
 
 For this dashboard, configure account `evaltestsummary`; the container remains `vally-results`.
@@ -110,6 +151,31 @@ An archive uses `v1/<org>/<encoded-project>/<definition>/<build>/<Summary-attemp
 It contains a schema-v1 manifest, executed plain-eval JSONL trials, Markdown and JUnit,
 never debug files, MCP binaries or unrelated workspace contents. Non-executed skips
 remain in raw artifacts and JUnit/Markdown; an entirely skipped shard is incomplete.
+
+The existing current-build timeline read also records the selected shard job ID and its
+completed `vally eval` task ID when there is one unambiguous match for that attempt.
+Bundling attaches optional `sourceLog: { jobId, taskId }` provenance to each executed trial,
+overriding trial-supplied values. The IDs are validated GUID strings; missing or ambiguous
+task evidence omits the optional field without changing completeness or publishing policy.
+That same token-bearing step also queries the current build's log-view metadata and completed
+task logs. It derives display-line positions from each task's condition, trace and dependencies,
+including omitted empty dependency entries, rather than adding a fixed raw-log offset.
+The shared mapper matches eval, scenario, model, grader name, result and evidence, supports
+grouped trial counts, and saves only derived item/grader locations beside the downloaded results.
+Capture has a 30-second total deadline, a 32 MiB response budget and an 8 MiB per-response limit.
+Rendering and bundling still need no token or network.
+The report and archive use the same selected-task provenance resolver. Trial-supplied
+log destinations cannot override the selected job/task identity, and line evidence must
+match that task and item. Missing or ambiguous line evidence keeps a task-level link;
+missing task identity is shown as unavailable rather than an invented exact destination.
+
+Bundling adds optional `line` and exact-name `graderLines` fields to each trial's `sourceLog`
+only from that selected task's saved evidence. Ambiguous repeated names keep task-level links
+unless their failing occurrence has one verified line. Unavailable, oversized or invalid log
+evidence never changes grading or completeness. Raw task logs, provider variables and task
+inputs are not included in the archive. The schema-v1 archive layout is unchanged: the reader
+uses `j`, `t` and optional `l` without making ADO requests. Older archives retain their recorded
+links and are never rewritten to add metadata.
 
 Reader limits are **32 MiB ZIP, 128 MiB expanded, 10,000 entries and 100,000 trials**.
 Canonical identities, UTC calendar dates, safe entries and counts are validated

@@ -6,11 +6,13 @@ import { dirname, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { strToU8, unzipSync, zipSync } from "fflate";
+import { selectedLogLines, sourceLogForTrial, validateSourceLog as checkedSourceLog } from "../lib/source-log.ts";
 
 export const MAX_ZIP_BYTES = 32 * 1024 * 1024;
 export const MAX_EXPANDED_BYTES = 128 * 1024 * 1024;
 const MAX_ENTRIES = 10_000;
 const MAX_TRIALS = 100_000;
+const SOURCE_LOG_LINES_FILE = "source-log-lines.json";
 
 export class PublicationError extends Error {
     constructor(code, message) { super(message); this.code = code; }
@@ -26,6 +28,11 @@ function parseJson(text) {
 }
 
 export const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+
+function validateSourceLog(value) {
+    try { return checkedSourceLog(value); }
+    catch (error) { throw new PublicationError("invalid_bundle", error.message); }
+}
 
 export function isUtcTimestamp(value) {
     if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T.*Z$/.test(value)) return false;
@@ -84,11 +91,13 @@ export function validateSelectedAttempts(index) {
     for (const item of index.attempts) {
         requireValue(item && expected.delete(item.shard) && Number.isSafeInteger(item.attempt) && item.attempt > 0 &&
             item.directory === `eval-result-${item.shard}-${item.attempt}`, "Invalid shard directory or attempt.");
+        if (item.sourceLog !== undefined) validateSourceLog(item.sourceLog);
+        requireValue(item.logLines === undefined || item.logLines === SOURCE_LOG_LINES_FILE, "Invalid task line evidence path.");
     }
     return [...index.attempts].sort((a, b) => a.shard.localeCompare(b.shard));
 }
 
-function trialsFrom(bytes, { onSkipped } = {}) {
+function trialsFrom(bytes, { onSkipped, sourceLog, trialLogLines, attachSourceLog = false } = {}) {
     const trials = [];
     for (const [line] of Buffer.from(bytes).toString("utf8").matchAll(/[^\n]+/g)) {
         if (!line.trim()) continue;
@@ -101,6 +110,11 @@ function trialsFrom(bytes, { onSkipped } = {}) {
         }
         requireValue((item.type === undefined || item.type === "trial-result") && !item.experiment &&
             ["success", "error"].includes(item.status), "Only plain-eval trial records are supported.");
+        if (attachSourceLog) {
+            delete item.sourceLog;
+            if (sourceLog) item.sourceLog = sourceLogForTrial(item, sourceLog, trialLogLines);
+        }
+        if (item.sourceLog !== undefined) validateSourceLog(item.sourceLog);
         const serialized = JSON.stringify(item);
         requireValue(Buffer.byteLength(serialized) <= 8 * 1024 * 1024, "A serialized JSONL record exceeds the size limit.");
         trials.push(serialized + "\n");
@@ -155,7 +169,10 @@ export async function prepareBundle({ indexPath, summaryPath, outputPath, manife
         // The current dashboard imports executed trials (success/error). Vally's
         // executor-incompatible skips remain in raw shard artifacts and JUnit/
         // Markdown, not fabricated as failed executions or silently lost counts.
-        const shardTrials = trialsFrom(await boundedFile(join(directory, "results.jsonl")), { onSkipped: () => { skipped++; } });
+        const shardTrials = trialsFrom(await boundedFile(join(directory, "results.jsonl")), {
+            onSkipped: () => { skipped++; }, sourceLog: item.sourceLog,
+            trialLogLines: await selectedLogLines(directory, item), attachSourceLog: true,
+        });
         requireValue(shardTrials.length === metadata.trials, "Shard trial count differs from its completion marker.");
         for (const text of shardTrials) {
             trialBytes += Buffer.byteLength(text); trials.push(text);

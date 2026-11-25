@@ -7,12 +7,14 @@ import { setTimeout as delay } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 import { globFiles } from "./glob.ts";
+import { mapGraderLogLines, SOURCE_LOG_LINES_FILE, taskLogDisplayLines, taskLogPrefixLineCount } from "./grader-log-lines.ts";
 
 // No individual result can exceed the bundle's expanded-size ceiling. Check before
 // copying/reading whole files; completion metadata should never approach this size.
 const MAX_RESULT_BYTES = 128 * 1024 * 1024;
 const MAX_METADATA_BYTES = 64 * 1024;
 const MISSING_RESULTS = "The invocation is missing trials, JUnit, or its final run-summary.";
+const TIMELINE_ID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 
 function validShard(name) {
     return typeof name === "string" && /^[A-Za-z0-9_][A-Za-z0-9_-]{0,199}$/.test(name);
@@ -42,6 +44,14 @@ export function latestShardAttempts(timeline, matrix) {
             if (!Number.isSafeInteger(record.attempt) || record.attempt < 1) throw new Error("Invalid timeline attempt.");
             const current = { attempt: record.attempt, complete: record.state === "completed" &&
                 ["succeeded", "succeededWithIssues", "failed"].includes(record.result) };
+            if (current.complete && TIMELINE_ID.test(record.id ?? "")) {
+                const tasks = timeline.records.filter(task => task?.type === "Task" && task.parentId === record.id &&
+                    task.attempt === record.attempt && task.state === "completed" &&
+                    [`vally eval ${entry.shardName}`, `vally eval ${entry.shardName} (authenticated)`].includes(task.name));
+                if (tasks.length === 1 && TIMELINE_ID.test(tasks[0].id ?? "")) {
+                    current.sourceLog = { jobId: record.id, taskId: tasks[0].id };
+                }
+            }
             const previous = attempts[entry.shardName];
             if (previous?.attempt === current.attempt && previous.complete !== current.complete) throw new Error("Ambiguous timeline attempt.");
             if (!previous || previous.attempt < current.attempt) attempts[entry.shardName] = current;
@@ -51,7 +61,7 @@ export function latestShardAttempts(timeline, matrix) {
     return { schemaVersion: 1, valid: true, attempts };
 }
 
-export async function readShardAttempts(env, { fetchImpl = fetch, wait = delay } = {}) {
+export async function readShardAttempts(env, { fetchImpl = fetch, wait = delay, resultsRoot } = {}) {
     const base = new URL(env.SYSTEM_COLLECTIONURI), matrix = JSON.parse(env.EVAL_EXPECTED_MATRIX);
     expectedShardsFromMatrix(matrix);
     if (base.protocol !== "https:" || base.hostname !== "dev.azure.com" || base.port || base.username || base.password || base.search || base.hash ||
@@ -66,13 +76,71 @@ export async function readShardAttempts(env, { fetchImpl = fetch, wait = delay }
             response = await fetchImpl(url, { headers: { authorization: `Bearer ${env.SYSTEM_ACCESSTOKEN}` },
                 redirect: "error", signal: AbortSignal.timeout(30_000) });
             if (!response.ok) throw new Error("Timeline could not be read.");
-            return latestShardAttempts(await response.json(), matrix);
+            const timeline = await response.json(), result = latestShardAttempts(timeline, matrix);
+            if (resultsRoot) await captureGraderLogLines({ env, base, timeline, result, resultsRoot, fetchImpl });
+            return result;
         } catch (error) {
             if ((response && ![408, 429, 500, 502, 503, 504].includes(response.status)) || attempt === 2) throw error;
         } finally { await response?.body?.cancel().catch(() => {}); }
         const header = response?.headers?.get("retry-after"), seconds = Number(header);
         const milliseconds = header && Number.isFinite(seconds) ? seconds * 1000 : header ? Date.parse(header) - Date.now() : NaN;
         await wait(Math.min(30_000, Math.max(0, Number.isFinite(milliseconds) ? milliseconds : 1000 * 2 ** attempt)));
+    }
+}
+
+async function captureGraderLogLines({ env, base, timeline, result, resultsRoot, fetchImpl }) {
+    const signal = AbortSignal.timeout(30_000), headers = { authorization: `Bearer ${env.SYSTEM_ACCESSTOKEN}` };
+    let remaining = 32 * 1024 * 1024;
+    const read = async (url, options = {}) => {
+        const response = await fetchImpl(url, { ...options, headers: { ...headers, ...options.headers }, redirect: "error", signal });
+        try {
+            if (!response.ok) throw new Error("Optional task log evidence is unavailable.");
+            const chunks = []; let size = 0;
+            for await (const chunk of response.body) {
+                size += chunk.length; remaining -= chunk.length;
+                if (size > 8 * 1024 * 1024 || remaining < 0) throw new Error("Task log evidence exceeds its budget.");
+                chunks.push(chunk);
+            }
+            return Buffer.concat(chunks).toString("utf8");
+        } finally { await response.body?.cancel().catch(() => {}); }
+    };
+    let provider;
+    try {
+        const url = new URL(`_apis/Contribution/HierarchyQuery/project/${env.SYSTEM_TEAMPROJECTID}?api-version=7.1-preview.1`, base);
+        const data = JSON.parse(await read(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+            contributionIds: ["ms.vss-build-web.run-logs-data-provider"], dataProviderContext: { properties: {
+                buildId: Number(env.BUILD_BUILDID), sourcePage: {
+                    url: new URL(`${env.SYSTEM_TEAMPROJECTID}/_build/results?buildId=${env.BUILD_BUILDID}&view=logs`, base).href,
+                    routeId: "ms.vss-build-web.ci-results-hub-route", routeValues: {
+                        project: env.SYSTEM_TEAMPROJECTID, viewname: "build-results", controller: "ContributedPage", action: "Execute",
+                    },
+                },
+            } },
+        }) }));
+        provider = data.dataProviders?.["ms.vss-build-web.run-logs-data-provider"];
+        if (String(provider?.buildId) !== env.BUILD_BUILDID || provider?.projectId !== env.SYSTEM_TEAMPROJECTID) return;
+    } catch { return; }
+    for (const [shard, selected] of Object.entries(result.attempts)) {
+        if (!selected.complete || !selected.sourceLog || signal.aborted || remaining <= 0) continue;
+        try {
+            const directory = path.join(resultsRoot, `eval-result-${shard}-${selected.attempt}`);
+            if (!fs.lstatSync(directory).isDirectory()) continue;
+            const tasks = timeline.records.filter(task => task.id === selected.sourceLog.taskId && task.parentId === selected.sourceLog.jobId);
+            const logId = tasks.length === 1 ? tasks[0].log?.id : null;
+            if (!Number.isSafeInteger(logId) || logId < 1) continue;
+            const prefix = taskLogPrefixLineCount(provider, selected.sourceLog, logId);
+            if (prefix === undefined) continue;
+            const records = readResultFile(path.join(directory, "results.jsonl")).split(/\r?\n/).filter(line => line.trim())
+                .map(line => JSON.parse(line)).filter(record => [undefined, "trial-result"].includes(record?.type) && ["success", "error"].includes(record?.status));
+            const text = await read(new URL(`${env.SYSTEM_TEAMPROJECTID}/_apis/build/builds/${env.BUILD_BUILDID}/logs/${logId}?api-version=7.1`, base),
+                { headers: { accept: "text/plain" } });
+            const trials = mapGraderLogLines(records, taskLogDisplayLines(text, prefix));
+            if (!Object.keys(trials).length) continue;
+            const evidence = JSON.stringify({ schemaVersion: 1, ...selected.sourceLog, trials }) + "\n";
+            if (Buffer.byteLength(evidence) > 8 * 1024 * 1024) continue;
+            fs.writeFileSync(path.join(directory, SOURCE_LOG_LINES_FILE), evidence, { flag: "wx" });
+            selected.logLines = SOURCE_LOG_LINES_FILE;
+        } catch {}
     }
 }
 
@@ -198,7 +266,11 @@ export function selectSummaryResults({ resultsRoot, selectedRoot, expectedShards
         seen.add(identity);
         // Artifact availability cannot override the authoritative timeline attempt.
         if (timeline?.[match[1]]?.attempt === attempt) {
-            selected.set(match[1], { shard: match[1], attempt, directory: entry.name });
+            const sourceLog = timeline[match[1]].sourceLog;
+            selected.set(match[1], { shard: match[1], attempt, directory: entry.name,
+                ...(TIMELINE_ID.test(sourceLog?.jobId ?? "") && TIMELINE_ID.test(sourceLog?.taskId ?? "") ? {
+                    sourceLog, ...(timeline[match[1]].logLines === SOURCE_LOG_LINES_FILE ? { logLines: SOURCE_LOG_LINES_FILE } : {}),
+                } : {}) });
         }
     }
     const status = [];
@@ -259,7 +331,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
             "shard-name": { type: "string" }, attempt: { type: "string" }, "attempts-output": { type: "string" } } });
         if (values["attempts-output"]) {
             let result = { schemaVersion: 1, valid: false, attempts: {} };
-            try { result = await readShardAttempts(process.env); }
+            try { result = await readShardAttempts(process.env, { resultsRoot: values["results-root"] }); }
             catch { console.log("##vso[task.logissue type=warning]Current build attempts could not be verified; no complete bundle will be published."); }
             fs.mkdirSync(path.dirname(path.resolve(values["attempts-output"])), { recursive: true });
             fs.writeFileSync(values["attempts-output"], JSON.stringify(result, null, 2) + "\n");

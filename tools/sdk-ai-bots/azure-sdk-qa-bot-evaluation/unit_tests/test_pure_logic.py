@@ -441,6 +441,62 @@ def test_validate_file_allows_staging_titles_and_uses_dedup_identity():
             raise AssertionError("expected duplicate staging query to fail")
 
 
+def test_validate_file_resolves_relative_library_and_reviewed_single_case(tmp_path, monkeypatch):
+    lib = tmp_path / "evaluation_datasets"
+    lib.mkdir()
+    lib_file = lib / "typespec.jsonl"
+    lib_file.write_text(
+        json.dumps({
+            "testcase": "001001-cat-sit",
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "typespec",
+            "reviewed": REVIEW_STATUS_PASS,
+        }) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(lib)
+    try:
+        validate_file("typespec.jsonl", require_reviewed=True)
+    except ValidationError as exc:
+        assert "tags" in str(exc)
+    else:
+        raise AssertionError("expected relative path inside evaluation_datasets to enforce tags")
+
+    single_dir = tmp_path / "single-case"
+    single_dir.mkdir()
+    single_file = single_dir / "custom.jsonl"
+    single_file.write_text(
+        json.dumps({
+            "testcase": "001001-cat-sit",
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "typespec",
+            "reviewed": REVIEW_STATUS_PASS,
+        }) + "\n",
+        encoding="utf-8",
+    )
+    try:
+        validate_file(single_file, require_reviewed=True)
+    except ValidationError as exc:
+        assert "tags" in str(exc)
+    else:
+        raise AssertionError("expected require_reviewed=True outside evaluation_datasets to enforce tags")
+
+    single_file.write_text(
+        json.dumps({
+            "testcase": "001001-cat-sit",
+            "tags": ["core"],
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "typespec",
+            "reviewed": REVIEW_STATUS_PASS,
+        }) + "\n",
+        encoding="utf-8",
+    )
+    assert validate_file(single_file, require_reviewed=True) == 1
+
+
 def test_validate_case_bad_reviewed_type():
     try:
         validate_case({"testcase": "001001-test-status", "query": "q", "ground_truth": "a", "scenario": "s", "reviewed": "yes"})
@@ -525,6 +581,7 @@ def test_validate_file_uses_id_not_query():
     def _row(case_id: str, query: str) -> dict:
         return {
             "testcase": case_id,
+            "tags": ["core"],
             "query": query,
             "ground_truth": "gt",
             "scenario": "typespec",
@@ -577,6 +634,7 @@ def test_validate_file_preserves_distinct_ids_with_shared_dedup_key():
     def _row(case_id: str, query: str, dedup_key: str) -> dict:
         return {
             "testcase": case_id,
+            "tags": ["core"],
             "query": query,
             "ground_truth": "gt",
             "scenario": "typespec",
@@ -847,7 +905,7 @@ def test_apistewardshipboard_dataset():
     dataset = root / "evaluation_datasets" / "apistewardshipboard.jsonl"
     count = validate_file(dataset, require_reviewed=True)
     records, scenario = resolve_records(
-        "qa-bot-perf-apistewardshipboard:latest", script_dir=root
+        "qa-bot-apistewardshipboard:latest", script_dir=root
     )
     assert resolve_records(str(dataset), script_dir=root) == (records, scenario)
     assert count == len(records) == 35
@@ -1150,7 +1208,7 @@ def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
         if step.get("displayName") == "Run Evals (${{ scenario }}, ${{ parameters.scope }})"
     )
     script = inputs["inlineScript"]
-    assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in script
+    assert '--dataset "qa-bot-${{ scenario }}:latest"' in script
     assert '--scope "${{ parameters.scope }}"' in script
     assert "--warn_only True" in script
     assert "evaluation_datasets/" not in script
@@ -1185,7 +1243,7 @@ def test_javascript_datasets_are_documentation_only_and_resolve_locally():
     path = root / "evaluation_datasets" / "javascript.jsonl"
     assert validate_file(path, require_reviewed=True) == 20
     records, scenario = resolve_records(
-        "qa-bot-perf-javascript:latest", script_dir=root
+        "qa-bot-javascript:latest", script_dir=root
     )
     assert scenario == "javascript"
     assert len(records) == 20
@@ -1374,12 +1432,21 @@ def test_main_passes_project_for_response_selected_agents():
         ):
             project_type.return_value.__enter__.return_value = project
             assert evals_run.main([
-                "--dataset", "qa-bot-perf-mcpserver:latest",
+                "--dataset", "qa-bot-mcpserver:latest",
                 "--baseline_check", "False", "--is_ci", "False",
             ]) == 0
         assert project.get_openai_client.call_args_list == [call()]
         assert runner.evaluate_run_completion.call_args.kwargs["tenant_id"] == tenant_id
         assert runner.evaluate_run_completion.call_args.kwargs["project_client"] is project
+
+
+def test_asset_name_and_dataset_label_are_consistent():
+    from dataset.upload import asset_name
+    import evals_run
+
+    assert asset_name("typespec") == "qa-bot-typespec"
+    assert evals_run._dataset_label("evaluation_datasets/typespec.jsonl", "typespec") == "qa-bot-typespec"
+    assert evals_run._dataset_label("qa-bot-typespec:latest", "typespec") == "qa-bot-typespec"
 
 
 def test_retrieval_uses_each_response_agent_and_closes_clients():

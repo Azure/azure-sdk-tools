@@ -848,8 +848,7 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
 
     Accepts:
       * ``<path>.jsonl``              -> read that file; scenario = file stem.
-      * ``qa-bot-perf-<scenario>[:version]`` or ``qa-bot-<scenario>[:version]``
-        -> read ``evaluation_datasets/<scenario>.jsonl``.
+      * ``qa-bot-<scenario>[:version]`` -> read ``evaluation_datasets/<scenario>.jsonl``.
     """
     candidate = Path(dataset_spec)
     if dataset_spec.endswith(".jsonl") or candidate.exists():
@@ -862,7 +861,7 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
             raise ValueError(
                 f"--dataset {dataset_spec!r} not a local path and not a qa-bot-<scenario> name"
             )
-        scenario = "-".join(parts[3:] if len(parts) >= 4 and parts[2] == "perf" else parts[2:])
+        scenario = "-".join(parts[2:])
         path = script_dir / "evaluation_datasets" / f"{scenario}.jsonl"
 
     if not path.exists():

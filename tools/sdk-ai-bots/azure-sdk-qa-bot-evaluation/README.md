@@ -75,7 +75,7 @@ python -m dataset.curate --source_md_path online-qa-tests   # or use local md
 python -m dataset.review
 
 # 4) Upload one versioned Foundry Dataset asset per scenario; writes registry.json.
-python -m dataset.upload                     # qa-bot-perf-<scenario>:<scenario>-YYYY-MM-DD
+python -m dataset.upload                     # qa-bot-<scenario>:<scenario>-YYYY-MM-DD
 ```
 
 `evaluation_datasets/_staging/`, `evaluation_datasets/<scenario>.jsonl`, and
@@ -88,7 +88,7 @@ We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, de
 ```bash
 # Concurrent /completion collection + inline grading:
 python evals_run.py \
-  --dataset "qa-bot-perf-typespec:latest" \
+  --dataset "qa-bot-typespec:latest" \
   --evaluators "bot_evals,groundedness" \
   --max_concurrency 8 \
   --baseline_check False --is_ci False

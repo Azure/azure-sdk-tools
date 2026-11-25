@@ -5,7 +5,7 @@ pr: none
 #
 # Evaluates via completion mode (concurrent /completion collection + inline grading)
 # against a local backend started with development configuration for the
-# qa-bot-perf-<scenario> datasets.
+# qa-bot-<scenario> datasets.
 parameters:
   - name: scope
     type: string
@@ -97,7 +97,7 @@ extends:
                       workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                       inlineScript: |
                         python evals_run.py \
-                          --dataset "qa-bot-perf-${{ scenario }}:latest" \
+                          --dataset "qa-bot-${{ scenario }}:latest" \
                           --scope "${{ parameters.scope }}" \
                           --run_context "evaluation" \
                           --max_concurrency ${{ parameters.maxConcurrency }} \

@@ -48,7 +48,7 @@ namespace PipelineGenerator.Tests
         public async Task PreparesBeforeSubmittingUpdatedDefinitionsAndWritesTheExactContract()
         {
             await RunAsync();
-            Assert.Equal(new[] { "lock", "prepare", "read:123", "find:123", "pending:123", "queue:123", "submitted:123" },
+            Assert.Equal(new[] { "lock", "prepare", "find:123", "queue:123" },
                 _operations.Events);
             using var manifest = Results();
             Assert.Equal(new[] { "schemaVersion", "repository", "sourceVersion", "releaseRuns" },
@@ -66,7 +66,7 @@ namespace PipelineGenerator.Tests
         [Theory]
         [InlineData("lock")]
         [InlineData("prepare")]
-        [InlineData("pending")]
+        [InlineData("find")]
         public async Task BlocksQueueingWhenAPrerequisiteFails(string failure)
         {
             _operations.FailAt = failure;
@@ -102,7 +102,7 @@ namespace PipelineGenerator.Tests
                 Environment.SetEnvironmentVariable("PATH", "");
                 Assert.False(Directory.Exists(Path.Combine(_options.SdkDirectory, ".git")));
                 await RunAsync();
-                Assert.Contains("submitted:123", _operations.Events);
+                Assert.Contains("queue:123", _operations.Events);
             }
             finally
             {
@@ -123,7 +123,7 @@ namespace PipelineGenerator.Tests
                 _ => new[] { Definition() with { Convention = "tests", Category = "tests" } }
             };
             await Assert.ThrowsAsync<InvalidOperationException>(RunAsync);
-            Assert.DoesNotContain(_operations.Events, e => e.StartsWith("read:", StringComparison.Ordinal));
+            Assert.DoesNotContain(_operations.Events, e => e.StartsWith("find:", StringComparison.Ordinal));
         }
 
         [Fact]
@@ -132,39 +132,26 @@ namespace PipelineGenerator.Tests
             _operations.Existing[123] = BuildFor(123);
             await RunAsync();
             Assert.DoesNotContain("queue:123", _operations.Events);
-            Assert.Equal(456, _operations.Journals[123].RunId);
+            using var manifest = Results();
+            Assert.Equal(456, Assert.Single(manifest.RootElement.GetProperty("releaseRuns").EnumerateArray())
+                .GetProperty("runId").GetInt32());
         }
 
-        [Fact]
-        public async Task UsesRecordedRunIdEvenIfNormalBuildHistoryHasMovedOn()
-        {
-            _operations.Journals[123] = new PostMergeJournal("submitted", 456);
-            await RunAsync();
-            Assert.Contains("get:456", _operations.Events);
-            Assert.DoesNotContain("find:123", _operations.Events);
-            Assert.DoesNotContain("queue:123", _operations.Events);
-        }
-
-        [Fact]
-        public async Task LostResponseLeavesPendingIntentAndPreventsBlindReplay()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task ReplayAfterLostQueueResponseUsesBuildHistory(bool runWasCreated)
         {
             _operations.FailAt = "queue";
+            _operations.QueueCreatesRunBeforeFailing = runWasCreated;
             await Assert.ThrowsAsync<InvalidOperationException>(RunAsync);
-            Assert.Equal("pending", _operations.Journals[123].Status);
             _operations.FailAt = null;
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(RunAsync);
-            Assert.Contains("uncertain", exception.Message);
-            Assert.Single(_operations.Events, e => e == "queue:123");
-        }
-
-        [Fact]
-        public async Task PendingIntentCanRecoverOnceItsActualRunIsVisible()
-        {
-            _operations.Journals[123] = new PostMergeJournal("pending");
-            _operations.Existing[123] = BuildFor(123);
             await RunAsync();
-            Assert.Equal(new PostMergeJournal("submitted", 456), _operations.Journals[123]);
-            Assert.DoesNotContain("queue:123", _operations.Events);
+            // A created run is recognized from history; only a run that was never created is queued again.
+            Assert.Equal(runWasCreated ? 1 : 2, _operations.Events.Count(e => e == "queue:123"));
+            using var manifest = Results();
+            Assert.Equal(456, Assert.Single(manifest.RootElement.GetProperty("releaseRuns").EnumerateArray())
+                .GetProperty("runId").GetInt32());
         }
 
         [Fact]
@@ -173,17 +160,6 @@ namespace PipelineGenerator.Tests
             AddSecondTarget();
             _operations.FailDefinition = 124;
             _operations.FailAt = "queue";
-            await Assert.ThrowsAsync<InvalidOperationException>(RunAsync);
-            using var manifest = Results();
-            Assert.Single(manifest.RootElement.GetProperty("releaseRuns").EnumerateArray());
-            Assert.Equal("pending", _operations.Journals[124].Status);
-            Assert.Equal("submitted", _operations.Journals[123].Status);
-        }
-
-        [Fact]
-        public async Task CapturesRunBeforeSubmittedJournalUpdateCanFail()
-        {
-            _operations.FailAt = "submitted";
             await Assert.ThrowsAsync<InvalidOperationException>(RunAsync);
             using var manifest = Results();
             Assert.Equal(456, Assert.Single(manifest.RootElement.GetProperty("releaseRuns").EnumerateArray())
@@ -283,12 +259,12 @@ namespace PipelineGenerator.Tests
         private sealed class FakeOperations : IPostMergeOperations
         {
             public List<string> Events { get; } = new List<string>();
-            public Dictionary<int, PostMergeJournal> Journals { get; } = new Dictionary<int, PostMergeJournal>();
             public Dictionary<int, Build> Existing { get; } = new Dictionary<int, Build>();
             public IReadOnlyList<PipelineGenerationResult> Definitions { get; set; } = new[] { Definition() };
             public string FailAt { get; set; }
             public int? FailDefinition { get; set; }
             public bool OmitQueueWebLink { get; set; }
+            public bool QueueCreatesRunBeforeFailing { get; set; }
 
             private void Record(string action, int? id = null)
             {
@@ -312,19 +288,6 @@ namespace PipelineGenerator.Tests
                 return Task.FromResult(Definitions);
             }
 
-            public Task<PostMergeJournal> ReadJournalAsync(int definitionId, string sha, CancellationToken cancellationToken)
-            {
-                Record("read", definitionId);
-                return Task.FromResult(Journals.GetValueOrDefault(definitionId));
-            }
-
-            public Task WriteJournalAsync(int definitionId, string sha, PostMergeJournal journal, CancellationToken cancellationToken)
-            {
-                Record(journal.Status, definitionId);
-                Journals[definitionId] = journal;
-                return Task.CompletedTask;
-            }
-
             public Task<Build> FindBuildAsync(int definitionId, string repository, string sha, string branch, CancellationToken cancellationToken)
             {
                 Record("find", definitionId);
@@ -339,6 +302,11 @@ namespace PipelineGenerator.Tests
 
             public Task<Build> QueueBuildAsync(int definitionId, string repository, string sha, string branch, CancellationToken cancellationToken)
             {
+                if (QueueCreatesRunBeforeFailing && FailAt == "queue")
+                {
+                    // Simulates a lost response: the server created the run but the caller never saw it.
+                    Existing[definitionId] = BuildFor(definitionId);
+                }
                 Record("queue", definitionId);
                 var build = BuildFor(definitionId, includeWebLink: !OmitQueueWebLink);
                 if (OmitQueueWebLink)

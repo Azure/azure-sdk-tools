@@ -163,25 +163,25 @@ The artifact is updated after each successful submission/recognition, and public
 responses and definition results are also included for diagnosis. An agent loss before upload
 cannot guarantee artifact availability.
 
-The preparation deployment job holds a sequential Azure DevOps environment lock. Before each POST, a durable
-definition property `postMergePreparation.<sha>` records pending intent; the queued build
-also receives a stable `postMergePreparation` correlation property. Recorded run IDs are
-reused on replay. A lost POST response is **uncertain**, never permission to retry blindly.
-If a pending intent has a matching visible build, replay can recover it; otherwise it stops.
-The lock serializes cooperating preparation runs, **not** Azure DevOps' independent CI trigger:
-a preflight lookup cannot guarantee exactly-once submission against concurrent normal CI.
+The preparation deployment job holds a sequential Azure DevOps environment lock. Build history
+is the only source of truth for submissions: before each POST, preparation looks for an existing
+`IndividualCI` run for the exact definition/repository/branch/SHA and records it instead of
+queueing again. Each queued build also receives a stable `postMergePreparation` correlation
+property. The POST is sent once per attempt and never retried automatically. If its response is
+lost, the attempt fails; a replay finds the run in history if Azure DevOps created it, and queues
+only if no run exists. A duplicate is possible only if a replay starts while a lost POST is still
+being committed. The lock serializes cooperating preparation runs, **not** Azure DevOps'
+independent CI trigger: a preflight lookup cannot guarantee exactly-once submission against
+concurrent normal CI.
 
 To recover a missed event or a failed prerequisite, an authorized operator can requeue the
 trusted preparation definition with the **same three inputs**, while the source and build
 records are retained. The whole prerequisite phase runs again before submission. This is a
 bounded operational replay, not an automatic nightly release backfill. Retain preparation
-artifacts, build history, and definition journals through the operational replay window; do
-not delete/recreate definitions during it. For uncertain intent with no visible run, inspect
-the original preparation logs/queue response, definition/SHA build history, and correlation
-properties. Only after establishing whether a submission happened should an operator repair
-the journal with the actual run ID or clear a proven unsubmitted intent. If history has
-expired, do not replay without a manual release audit. Do not clear journals merely to retry
-a failed or canceled release; use the existing release recovery process.
+artifacts and build history through the operational replay window; do not delete/recreate
+definitions during it. If build history has expired, do not replay without a manual release
+audit. Do not replay merely to retry a failed or canceled release; use the existing release
+recovery process.
 
 ### Rollout prerequisites
 
@@ -200,7 +200,7 @@ No production deployment or release submission is performed by development/tests
    or other manual checks: the lock is granted and released automatically, so runs never need
    someone to unblock them.
 4. Give the `opensource-api-connection` identity the existing definition/resource permission
-   management rights plus Build queue/read and definition-property write rights. It must also
+   management rights plus Build queue/read rights. It must also
    read the environment/check configuration. Do not grant the app those resource-management rights.
 5. Validate the compiled Azure DevOps YAML, service-connection authorization, queue reason,
    returned web link, and artifact download in an isolated non-production setup before enabling

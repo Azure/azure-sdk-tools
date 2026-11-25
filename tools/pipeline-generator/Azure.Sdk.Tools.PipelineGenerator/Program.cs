@@ -51,7 +51,7 @@ namespace PipelineGenerator
                     }
                     catch (Exception ex)
                     {
-                        log.LogCritical(ex, "Post-merge preparation failed. Inspect partial results and reconcile uncertain submissions before replay.");
+                        log.LogCritical(ex, "Post-merge preparation failed. Inspect partial results before replay.");
                         code = ExitCondition.Exception;
                     }
                     break;

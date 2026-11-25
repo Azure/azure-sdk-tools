@@ -48,18 +48,12 @@ namespace PipelineGenerator
             {
                 var id = definition.DefinitionId;
                 var sha = options.MergeCommitSha;
-                var journal = await _operations.ReadJournalAsync(id, sha, cancellationToken);
-                var build = journal?.RunId is int runId
-                    ? await _operations.GetBuildAsync(runId, cancellationToken)
-                    : await _operations.FindBuildAsync(id, repository, sha, branch, cancellationToken);
+                // Build history is the source of truth: a run created by normal CI or an earlier attempt
+                // (even one whose queue response was lost) is recognized here instead of queued again.
+                var build = await _operations.FindBuildAsync(id, repository, sha, branch, cancellationToken);
                 if (build == null)
                 {
-                    if (journal != null)
-                    {
-                        throw new InvalidOperationException($"Submission outcome for definition {id} at {sha} is uncertain. Reconcile the durable journal before replay; do not blindly retry.");
-                    }
-                    // Intent must survive a lost submission response. Never automatically retry this POST.
-                    await _operations.WriteJournalAsync(id, sha, new PostMergeJournal("pending"), cancellationToken);
+                    // Never automatically retry this POST within an attempt.
                     build = await _operations.QueueBuildAsync(id, repository, sha, branch, cancellationToken);
                     File.WriteAllText(Path.Combine(options.ResultsDirectory, $"queue-response-{id}.json"),
                         JsonConvert.SerializeObject(build, Formatting.Indented));
@@ -75,7 +69,6 @@ namespace PipelineGenerator
                 var result = GetRunResult(build, definition, repository, sha, branch);
                 runs.Add(result);
                 WriteResults(options, repository, runs);
-                await _operations.WriteJournalAsync(id, sha, new PostMergeJournal("submitted", result.RunId), cancellationToken);
             }
         }
 

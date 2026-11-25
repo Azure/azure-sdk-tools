@@ -22,9 +22,7 @@ namespace PipelineGenerator
         // Azure DevOps check type ID for "Exclusive lock".
         public const string ExclusiveLockCheckTypeId = "2ef31ad6-baa0-403a-8b45-2cbc9b4e5563";
 
-        // Definition property (journal) and build property (correlation) key.
+        // Build property key that correlates a queued release run with its preparation request.
         public const string PropertyName = "postMergePreparation";
-
-        public static string JournalProperty(string sha) => $"{PropertyName}.{sha}";
     }
 }

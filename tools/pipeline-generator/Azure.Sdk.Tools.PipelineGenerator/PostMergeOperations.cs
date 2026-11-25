@@ -11,8 +11,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
-using Microsoft.VisualStudio.Services.WebApi.Patch;
-using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 using Newtonsoft.Json;
 using PipelineGenerator.CommandParserOptions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -109,40 +107,6 @@ namespace PipelineGenerator
                 }
             }
             return definitions;
-        }
-
-        public async Task<PostMergeJournal> ReadJournalAsync(int definitionId, string sha, CancellationToken cancellationToken)
-        {
-            var client = await _context.GetBuildHttpClientAsync(cancellationToken);
-            var properties = await client.GetDefinitionPropertiesAsync(PostMergeConstants.Project, definitionId,
-                filter: new[] { PostMergeConstants.JournalProperty(sha) }, cancellationToken: cancellationToken);
-            if (!properties.TryGetValue(PostMergeConstants.JournalProperty(sha), out var value))
-            {
-                return null;
-            }
-            var journal = JsonSerializer.Deserialize<PostMergeJournal>((string)value);
-            if (journal == null || journal.Status is not ("pending" or "submitted") ||
-                (journal.RunId.HasValue && journal.RunId <= 0))
-            {
-                throw new InvalidOperationException($"Invalid durable journal for definition {definitionId}; reconcile before replay.");
-            }
-            return journal;
-        }
-
-        public async Task WriteJournalAsync(int definitionId, string sha, PostMergeJournal journal, CancellationToken cancellationToken)
-        {
-            var client = await _context.GetBuildHttpClientAsync(cancellationToken);
-            var project = await _context.GetProjectReferenceAsync(cancellationToken);
-            var patch = new JsonPatchDocument
-            {
-                new JsonPatchOperation
-                {
-                    Operation = Operation.Add,
-                    Path = "/" + PostMergeConstants.JournalProperty(sha),
-                    Value = JsonSerializer.Serialize(journal)
-                }
-            };
-            await client.UpdateDefinitionPropertiesAsync(patch, project.Id, definitionId, cancellationToken: cancellationToken);
         }
 
         public async Task<Build> FindBuildAsync(int definitionId, string repository, string sha, string branch, CancellationToken cancellationToken)

@@ -221,6 +221,12 @@ def test_strip_image_tags_unclosed_markdown_is_linear_time():
     assert _strip_image_tags(unclosed) == unclosed
     assert time.monotonic() - start < 0.5
     assert _strip_image_tags("![alt](https://example.test/img(1).png)") == "[Image: alt]"
+    truncated_badge = (
+        "![Install](https://img.shields.io/badge/Eclipse-Install_Azure_MCP_Server-b6ae1d"
+        "?style=flat-square&logo=eclipse&logoColor=wh\\n... [truncated]"
+    )
+    assert _strip_image_tags(truncated_badge) == "[Image: Install]\\n... [truncated]"
+    assert _strip_image_tags('<img alt="badge" src="https://img.shields.io/badge/a') == "[Image: badge]"
 
 
 def test_upload_processing_failure_deletes_its_input():

@@ -83,7 +83,9 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
 
 
 _MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)")
+_UNCLOSED_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:https?://|data:)[^)\s\"'\\]*", re.IGNORECASE)
 _HTML_IMAGE_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+_UNCLOSED_HTML_IMAGE_RE = re.compile(r"<img\b[^>]*(?:https?://|data:)[^>]*", re.IGNORECASE)
 _HTML_IMAGE_ALT_RE = re.compile(
     r"""alt\s*=\s*(?:\\"([^\\"]*)\\"|\"([^\"]*)\"|'([^']*)')""",
     re.IGNORECASE,
@@ -107,7 +109,9 @@ def _strip_image_tags(text: str) -> str:
         return f"[Image: {alt}]" if alt else "[Image]"
 
     text = _MARKDOWN_IMAGE_RE.sub(_replace_markdown, text)
-    return _HTML_IMAGE_RE.sub(_replace_html, text)
+    text = _UNCLOSED_MARKDOWN_IMAGE_RE.sub(_replace_markdown, text)
+    text = _HTML_IMAGE_RE.sub(_replace_html, text)
+    return _UNCLOSED_HTML_IMAGE_RE.sub(_replace_html, text)
 
 
 def _completion_item(it: dict[str, Any]) -> dict[str, Any]:

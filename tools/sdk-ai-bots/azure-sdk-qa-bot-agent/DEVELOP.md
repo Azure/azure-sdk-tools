@@ -37,7 +37,7 @@ branch before running evaluations.
 ## Run an evaluation pipeline
 
 Open [Azure SDK Pipelines](https://dev.azure.com/azure-sdk/internal/_build) and
-find **tools - azure-sdk-ai-bot-perf-ci**.
+find **tools - azure-sdk-ai-bot-evaluation**.
 
 Select **Run pipeline**, choose the **same branch you deployed**, and select the
 evaluation `scope` and `scenarios`. The pipeline starts a backend using dev

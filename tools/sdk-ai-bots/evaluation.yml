@@ -1,7 +1,7 @@
 trigger: none
 pr: none
 
-# Perf evaluation: manually select core/full scope and one or more scenarios.
+# Evaluation pipeline: manually select core/full scope and one or more scenarios.
 #
 # Evaluates via completion mode (concurrent /completion collection + inline grading)
 # against a local backend started with development configuration for the
@@ -38,7 +38,7 @@ extends:
   parameters:
     Use1ESOfficial: true
     stages:
-      - stage: 'perf_evaluation'
+      - stage: 'evaluation'
         variables:
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
@@ -48,8 +48,8 @@ extends:
               os: linux
         jobs:
           - ${{ each scenario in parameters.scenarios }}:
-              - job: 'perf_${{ scenario }}'
-                displayName: 'perf evaluation (${{ scenario }}, ${{ parameters.scope }})'
+              - job: 'eval_${{ scenario }}'
+                displayName: 'evaluation (${{ scenario }}, ${{ parameters.scope }})'
                 steps:
                   - task: UsePythonVersion@0
                     displayName: "Use Python 3.12"
@@ -89,7 +89,7 @@ extends:
                     displayName: 'install requirements'
                     workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   - task: AzureCLI@2
-                    displayName: 'Run Perf Evals (${{ scenario }}, ${{ parameters.scope }})'
+                    displayName: 'Run Evals (${{ scenario }}, ${{ parameters.scope }})'
                     inputs:
                       azureSubscription: 'azuresdkqabot-dev'
                       scriptType: bash
@@ -99,7 +99,7 @@ extends:
                         python evals_run.py \
                           --dataset "qa-bot-perf-${{ scenario }}:latest" \
                           --scope "${{ parameters.scope }}" \
-                          --run_context "perf-evaluation" \
+                          --run_context "evaluation" \
                           --max_concurrency ${{ parameters.maxConcurrency }} \
                           --baseline_check False \
                           --cache_result full
@@ -116,6 +116,6 @@ extends:
                   outputs:
                     - output: pipelineArtifact
                       path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
-                      artifact: perf-evaluation-results-${{ scenario }}-${{ parameters.scope }}
-                      displayName: Publish Perf Results (${{ scenario }}, ${{ parameters.scope }})
+                      artifact: evaluation-results-${{ scenario }}-${{ parameters.scope }}
+                      displayName: Publish Evaluation Results (${{ scenario }}, ${{ parameters.scope }})
                       condition: always()

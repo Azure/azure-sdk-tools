@@ -80,7 +80,7 @@ Same as adding to a not-yet-existing file.
 3. `python -m dataset.upload --scenario <new-scenario>` — creates asset
    `qa-bot-perf-<new-scenario>` versioned `<new-scenario>-YYYY-MM-DD` and records it in
    `registry.json`.
-4. Add the scenario to `perf-evaluation.yml` if it should be selectable by default.
+4. Add the scenario to `evaluation.yml` if it should be selectable by default.
 
 Commit the per-scenario file, `registry.json`, and the updated `_staging/` files
 (staging is tracked so concurrent contributors don't re-curate the same cases).

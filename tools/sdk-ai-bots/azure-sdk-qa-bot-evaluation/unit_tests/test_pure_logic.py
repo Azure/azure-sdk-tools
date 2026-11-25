@@ -1074,7 +1074,7 @@ def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
 
     import yaml
 
-    path = Path(__file__).resolve().parents[2] / "perf-evaluation.yml"
+    path = Path(__file__).resolve().parents[2] / "evaluation.yml"
     pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
     parameters = {parameter["name"]: parameter for parameter in pipeline["parameters"]}
     scenarios = parameters["scenarios"]["default"]
@@ -1084,7 +1084,7 @@ def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
     inputs = next(
         step["inputs"]
         for step in steps
-        if step.get("displayName") == "Run Perf Evals (${{ scenario }}, ${{ parameters.scope }})"
+        if step.get("displayName") == "Run Evals (${{ scenario }}, ${{ parameters.scope }})"
     )
     script = inputs["inlineScript"]
     assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in script
@@ -1149,7 +1149,7 @@ def test_javascript_datasets_are_documentation_only_and_resolve_locally():
 
 def test_perf_pipeline_is_manual_and_covers_all_scenarios():
     root = Path(__file__).resolve().parents[2]
-    pipeline = yaml.safe_load((root / "perf-evaluation.yml").read_text(encoding="utf-8"))
+    pipeline = yaml.safe_load((root / "evaluation.yml").read_text(encoding="utf-8"))
     assert pipeline["trigger"] == "none"
     assert pipeline["pr"] == "none"
     assert "schedules" not in pipeline
@@ -1158,7 +1158,7 @@ def test_perf_pipeline_is_manual_and_covers_all_scenarios():
     assert parameters["scope"]["values"] == ["core", "full"]
     expected = {path.stem for path in (root / "azure-sdk-qa-bot-evaluation" / "evaluation_datasets" / "perf").glob("*.jsonl")}
     assert set(parameters["scenarios"]["default"]) == expected
-    for name in ("benchmark-evaluation.yml", "offline-evaluation.yml", "online-evaluation.yml"):
+    for name in ("benchmark-evaluation.yml", "offline-evaluation.yml", "online-evaluation.yml", "perf-evaluation.yml"):
         assert not (root / name).exists()
 
 

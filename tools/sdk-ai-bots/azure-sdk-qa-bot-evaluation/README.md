@@ -128,9 +128,9 @@ but are not scored by an evaluator.
 
 | Pipeline | Purpose |
 |---|---|
-| `perf-evaluation.yml` | Manual core/full evaluation for selected scenarios. |
+| `evaluation.yml` | Manual core/full evaluation for selected scenarios. |
 
-The perf pipeline uses the running pipeline's branch name via `EVAL_AGENT_BRANCH`.
+The evaluation pipeline uses the running pipeline's branch name via `EVAL_AGENT_BRANCH`.
 Branch deployments must already exist: targeting a branch does not build/deploy it.
 Each request prepends `[branch:<running-branch>]` to the message, using the same
 routing as channel messages. The backend resolves the tenant's agent from configuration,

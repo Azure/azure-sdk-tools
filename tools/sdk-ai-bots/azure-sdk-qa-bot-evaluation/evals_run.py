@@ -8,7 +8,7 @@ answer-generation step is the main lever for evaluation speed.
 
 Examples:
     # Run core TypeSpec cases:
-    python evals_run.py --dataset qa-bot-perf-typespec:latest --scope core \
+    python evals_run.py --dataset qa-bot-typespec:latest --scope core \
         --evaluators bot_evals,groundedness --max_concurrency 8
 
     # Or point at a local curated file directly:
@@ -80,17 +80,7 @@ def _load_suppression(script_dir: Path) -> dict[str, list[str]]:
 
 
 def _dataset_label(dataset_spec: str, scenario: str) -> str:
-    """Stable dataset identity for the evaluation name.
-
-    ``qa-bot-<scenario>[:version]`` -> ``qa-bot-<scenario>``;
-    a ``<path>/<scenario>.jsonl`` path -> ``qa-bot-<scenario>``;
-    anything else falls back to ``qa-bot-<scenario>``.
-    """
-    base = dataset_spec.split(":", 1)[0]
-    if base.endswith(".jsonl"):
-        return f"qa-bot-{Path(base).stem}"
-    if base.startswith("qa-bot-"):
-        return base
+    """Stable dataset identity for the evaluation name."""
     return f"qa-bot-{scenario}"
 
 

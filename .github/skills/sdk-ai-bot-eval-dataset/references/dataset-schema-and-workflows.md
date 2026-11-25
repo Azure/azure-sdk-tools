@@ -78,7 +78,7 @@ Same as adding to a not-yet-existing file.
    when blob filenames carry the new scenario prefix, then review + promote.
 2. Validate with `--require-reviewed`.
 3. `python -m dataset.upload --scenario <new-scenario>` — creates asset
-   `qa-bot-perf-<new-scenario>` versioned `<new-scenario>-YYYY-MM-DD` and records it in
+   `qa-bot-<new-scenario>` versioned `<new-scenario>-YYYY-MM-DD` and records it in
    `registry.json`.
 4. Add the scenario to `evaluation.yml` if it should be selectable by default.
 

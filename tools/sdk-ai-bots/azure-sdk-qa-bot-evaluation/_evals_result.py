@@ -251,9 +251,10 @@ class EvalsResult:
             for metric in metrics:
                 pass_rate = test_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in test_results[-1] else 0
                 fail_rate = test_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in test_results[-1] else 0
-                # workaround: for groundedness, only caculate the `fail`
+                # groundedness can be omitted on empty context, and route_channel is
+                # skipped when expected_route_channel is omitted; fail only on actual fails.
                 metric_ret = EvalReturnCode.SUCCESS
-                if metric == "groundedness":
+                if metric in ("groundedness", "route_channel"):
                     if fail_rate > 0:
                         metric_ret = EvalReturnCode.FAIL
                 else:

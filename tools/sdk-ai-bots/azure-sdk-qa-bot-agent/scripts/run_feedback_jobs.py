@@ -136,8 +136,30 @@ async def _run(args: argparse.Namespace) -> None:
         "skipped": 0,
     }
 
-    # 2. Validate fixes first. Newly created issues from this run wait until
-    # the next daily scan before their closure is checked.
+    # 2. Reset validation-failed records whose linked issue has been reopened,
+    # then validate fixes. Newly created issues from this run wait until the
+    # next daily scan before their closure is checked.
+    issue_states: dict[str, str] = {}
+    for record in await qa_service.list_validation_failed(tenant_id=args.tenant):
+        if QARecordService.channel_key_of(record) in excluded_channels:
+            continue
+        issue_url = record.feedback.issue_url if record.feedback else None
+        if not issue_url:
+            continue
+        if issue_url not in issue_states:
+            try:
+                issue_states[issue_url] = await get_issue_state(issue_url)
+            except Exception:
+                logger.exception("Failed to read issue state for %s", record.id)
+                continue
+        if issue_states[issue_url] == "open":
+            await qa_service.reset_to_pending_validation(record)
+            logger.info(
+                "Reset validation_failed record %s (%s) to pending_validation after issue reopen",
+                record.id,
+                issue_url,
+            )
+
     pending = await qa_service.list_pending_validation(tenant_id=args.tenant)
     for record in pending:
         if QARecordService.channel_key_of(record) in excluded_channels:

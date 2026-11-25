@@ -403,6 +403,35 @@ class QARecordService:
             in (FeedbackStatus.pending_validation, FeedbackStatus.failed)
         ]
 
+    async def list_validation_failed(
+        self,
+        *,
+        tenant_id: str | None = None,
+    ) -> list[QARecord]:
+        """Return validation-failed records that have an associated issue URL."""
+        docs = await query_qa_records_by_feedback_status(
+            feedback_status=FeedbackStatus.validation_failed.value,
+            tenant_id=tenant_id,
+        )
+        return [
+            record
+            for record in (QARecord.from_cosmos(doc) for doc in docs)
+            if record.feedback
+            and record.feedback.issue_url
+            and record.feedback.status == FeedbackStatus.validation_failed
+        ]
+
+    async def reset_to_pending_validation(self, record: QARecord) -> QARecord:
+        """Reset a validation-failed record back to ``pending_validation``."""
+        if not record.feedback:
+            raise ValueError("Cannot reset validation status without feedback state")
+        now = _now()
+        record.feedback.status = FeedbackStatus.pending_validation
+        record.feedback.updated_at = now
+        record.updated_at = now
+        await upsert_qa_record(record.to_cosmos())
+        return record
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)

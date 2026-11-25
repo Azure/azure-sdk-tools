@@ -1401,3 +1401,33 @@ async def test_run_job_rejects_outcome_for_wrong_mode(
     if mode == ChatbotEvolutionAgentMode.analysis:
         assert persisted.qa_status == QAStatus.failed
         assert persisted.verdict == BotAnswerVerdict.Unknown
+
+
+@pytest.mark.asyncio
+async def test_list_validation_failed_and_reset_to_pending_validation() -> None:
+    record = _record(
+        qa_status=QAStatus.finished,
+        feedback_status=FeedbackStatus.validation_failed,
+    )
+    record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
+    no_issue = _record(
+        qa_status=QAStatus.finished,
+        feedback_status=FeedbackStatus.validation_failed,
+    )
+    no_issue.feedback.issue_url = None
+    upsert = AsyncMock()
+    with (
+        patch(
+            "services.qa_record_service.query_qa_records_by_feedback_status",
+            new=AsyncMock(return_value=[record.to_cosmos(), no_issue.to_cosmos()]),
+        ),
+        patch("services.qa_record_service.upsert_qa_record", new=upsert),
+    ):
+        service = QARecordService()
+        failed = await service.list_validation_failed(tenant_id=record.tenant_id)
+        assert [r.id for r in failed] == [record.id]
+        updated = await service.reset_to_pending_validation(failed[0])
+
+    assert updated.feedback is not None
+    assert updated.feedback.status == FeedbackStatus.pending_validation
+    upsert.assert_awaited_once()

@@ -5,7 +5,7 @@ description: "Diagnose GitHub PR status, checks, reviews, approval blockers, and
 
 # PR Review
 
-For **design or code review requests** (asking for review, comments, or feedback on PR changes), inspect the changed files (`get_files`) and retrieve the matching domain guidance first, then lead with concrete design/code feedback. If the user also asks about approval or merge readiness, address that separately afterward—passing checks or sign-off labels do not replace a requested review. If the diff cannot be fetched or is incomplete, state that gap explicitly rather than substituting merge-readiness advice.
+For **design or code review requests** (asking for review, comments, or feedback on PR changes), inspect the changed files (`get_files`) and retrieve the matching domain guidance first, then lead with concrete design/code feedback. Existing unresolved review threads, merge conflicts, passing checks, or sign-off labels do **not** replace a requested review—do not substitute PR triage or re-pinging reviewers for your own design/code feedback; address approval or merge readiness separately afterward only if relevant. If the diff cannot be fetched or is incomplete, state that gap explicitly rather than substituting merge-readiness advice.
 
 For **status, check-failure, or merge-readiness requests**, help move the PR forward from its current state rather than producing a standard review report. Follow relevant steps by priority, not as a checklist; continue only for unresolved needs and stop once answered. Lead with the user's next steps and a brief status summary. Keep the status summary to one sentence. Do not enumerate check results unless the user explicitly requests them; mention a specific check only to explain the next action.
 

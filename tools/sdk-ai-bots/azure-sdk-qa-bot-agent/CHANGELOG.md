@@ -1,5 +1,16 @@
 # Release History
 
+## 0.2.3 (2026-11-25)
+
+### Features Added
+
+- Automatically reset `validation_failed` QA records back to `pending_validation` in `run_feedback_jobs.py` when their linked issue is reopened, so closing the issue again triggers re-validation without manual Cosmos DB edits.
+
+### Bugs Fixed
+
+- Enforce the `api-spec-review` exclusion for TypeSpec authoring, API/resource modeling, and spec folder-layout questions by routing them to `typespec` and `TypeSpec Discussion` (`{{channel:typespec_discussion}}`).
+- Prevent unresolved human review threads or merge conflicts from replacing TypeSpec PR design reviews with PR triage or reviewer re-pings.
+
 ## 0.2.2 (2026-11-18)
 
 ### Features Added

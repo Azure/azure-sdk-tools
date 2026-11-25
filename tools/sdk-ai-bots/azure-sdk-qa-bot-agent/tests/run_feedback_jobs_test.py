@@ -333,12 +333,24 @@ async def test_run_validates_only_after_issue_closes(
             new=AsyncMock(return_value="closed"),
         ),
         patch.object(
+            run_feedback_jobs,
+            "reopen_issue",
+            new=AsyncMock(),
+        ) as reopen_mock,
+        patch.object(
             run_feedback_jobs.app_config,
             "get",
             return_value="true",
         ),
     ):
         await run_feedback_jobs._run(_args())
+
+    if outcome == ChatbotEvolutionAgentOutcome.validation_failed:
+        reopen_mock.assert_awaited_once_with(
+            "https://github.com/Azure/azure-sdk-pr/issues/123"
+        )
+    else:
+        reopen_mock.assert_not_awaited()
 
     assert (
         evolution.run_job.await_args.kwargs["mode"]

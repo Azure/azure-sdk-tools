@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Automatically reset `validation_failed` QA records back to `pending_validation` in `run_feedback_jobs.py` when their linked issue is reopened, so closing the issue again triggers re-validation without manual Cosmos DB edits.
+- Automatically reopen the linked GitHub/ADO issue when fix validation fails (`validation_failed`), and reset `validation_failed` QA records back to `pending_validation` in `run_feedback_jobs.py` when their linked issue is `open`, so closing the issue again triggers re-validation without manual Cosmos DB edits.
 
 ### Bugs Fixed
 

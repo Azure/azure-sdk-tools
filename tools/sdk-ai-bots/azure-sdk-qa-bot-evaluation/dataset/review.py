@@ -6,7 +6,7 @@ Second step of *dataset preparation*. A human edits the staged files
 ``review.py`` then **appends** only the ``reviewed=="pass"`` rows into the
 committed, curated locations:
 
-    evaluation_datasets/perf/<scenario>.jsonl
+    evaluation_datasets/<scenario>.jsonl
 
 Cases are sorted by ID after promotion. Cases already
 present in the target (by stable ``dedup_key``, falling back to scenario+query hash)
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
 
     script_dir = Path(__file__).resolve().parent.parent
     staging_dir = script_dir / "evaluation_datasets" / "_staging"
-    target_dir = script_dir / "evaluation_datasets" / "perf"
+    target_dir = script_dir / "evaluation_datasets"
 
     if not staging_dir.exists():
         logging.error("No staging folder at %s", staging_dir)

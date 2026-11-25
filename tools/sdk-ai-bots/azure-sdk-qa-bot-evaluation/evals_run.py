@@ -12,7 +12,7 @@ Examples:
         --evaluators bot_evals,groundedness --max_concurrency 8
 
     # Or point at a local curated file directly:
-    python evals_run.py --dataset evaluation_datasets/perf/typespec.jsonl --scope full
+    python evals_run.py --dataset evaluation_datasets/typespec.jsonl --scope full
 """
 
 from __future__ import annotations
@@ -89,7 +89,7 @@ def _dataset_label(dataset_spec: str, scenario: str) -> str:
     base = dataset_spec.split(":", 1)[0]
     if base.endswith(".jsonl"):
         p = Path(base)
-        target = p.parent.name
+        target = "perf" if p.parent.name == "evaluation_datasets" else p.parent.name
         return f"qa-bot-{target}-{p.stem}" if target else f"qa-bot-{p.stem}"
     if base.startswith("qa-bot-"):
         return base

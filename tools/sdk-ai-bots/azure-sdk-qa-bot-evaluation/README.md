@@ -57,7 +57,7 @@ and dropped, or a leftover `todo` finalized at promote time).
 Validate any file/folder:
 
 ```bash
-python -m dataset.validate evaluation_datasets/perf --require-reviewed
+python -m dataset.validate evaluation_datasets --require-reviewed
 ```
 
 ## Part 1 — Dataset preparation
@@ -78,13 +78,12 @@ python -m dataset.review
 python -m dataset.upload                     # qa-bot-perf-<scenario>:<scenario>-YYYY-MM-DD
 ```
 
-`evaluation_datasets/_staging/` is committed (shared review state, so concurrent
-contributors don't re-curate the same cases); `evaluation_datasets/perf/` and
+`evaluation_datasets/_staging/`, `evaluation_datasets/<scenario>.jsonl`, and
 `evaluation_datasets/registry.json` are committed.
 
 ## Part 2 — Running evaluations
 
-We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached results after grading. Reads cases from the local `evaluation_datasets/perf/<scenario>.jsonl`. `--scope core` is the default.
+We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached results after grading. Reads cases from the local `evaluation_datasets/<scenario>.jsonl`. `--scope core` is the default.
 
 ```bash
 # Concurrent /completion collection + inline grading:
@@ -95,7 +94,7 @@ python evals_run.py \
   --baseline_check False --is_ci False
 
 # Or point at a local curated file directly:
-python evals_run.py --dataset evaluation_datasets/perf/typespec.jsonl --scope full --is_ci False
+python evals_run.py --dataset evaluation_datasets/typespec.jsonl --scope full --is_ci False
 ```
 
 Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE` or `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py` locally (defaults to `http://localhost:8089`). `AI_FOUNDRY_AGENT_NAME` selects the Hosted Agent whose stored responses are retrieved and defaults to `azure-sdk-chat-agent`. Tenant routing is resolved from `BOT_CONFIG_CONTAINER` / `BOT_CONFIG_CHANNEL_BLOB`.

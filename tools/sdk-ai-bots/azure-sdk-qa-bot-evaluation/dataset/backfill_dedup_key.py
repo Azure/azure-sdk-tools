@@ -8,14 +8,14 @@ untouched source Q&A to be re-curated as a "new" candidate.
 
 This script persists ``dedup_key = case_hash(scenario, query)`` on each row **while the
 query still matches its source**, so the identity is frozen. After running it, questions
-in ``evaluation_datasets/{perf,_staging}/*.jsonl`` can be edited freely without
+in ``evaluation_datasets/{,_staging/}*.jsonl`` can be edited freely without
 breaking incremental dedup (``curate``/``review`` prefer the stored ``dedup_key``).
 
 Idempotent: rows that already carry a non-empty ``dedup_key`` are left untouched.
 
 Usage:
-    python -m dataset.backfill_dedup_key            # both sets
-    python -m dataset.backfill_dedup_key --set perf # one set only
+    python -m dataset.backfill_dedup_key               # both sets
+    python -m dataset.backfill_dedup_key --set curated # curated set only
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from pathlib import Path
 from .curate import scenario_from_filename
 from .schema import case_hash, iter_jsonl
 
-SETS = ("perf", "_staging")
+SETS = ("curated", "_staging")
 
 
 def backfill_file(path: Path) -> tuple[int, int]:
@@ -54,7 +54,7 @@ def backfill(datasets_dir: Path, only_set: str | None) -> dict[str, int]:
     for name in SETS:
         if only_set and name != only_set:
             continue
-        folder = datasets_dir / name
+        folder = datasets_dir if name == "curated" else datasets_dir / name
         if not folder.exists():
             continue
         for f in sorted(folder.glob("*.jsonl")):

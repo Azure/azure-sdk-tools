@@ -848,7 +848,8 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
 
     Accepts:
       * ``<path>.jsonl``              -> read that file; scenario = file stem.
-      * ``qa-bot-<target>-<scenario>[:version]`` -> read ``evaluation_datasets/<target>/<scenario>.jsonl``.
+      * ``qa-bot-<target>-<scenario>[:version]`` -> read ``evaluation_datasets/<scenario>.jsonl``
+        (or ``evaluation_datasets/<target>/<scenario>.jsonl`` when a target subfolder exists).
     """
     candidate = Path(dataset_spec)
     if dataset_spec.endswith(".jsonl") or candidate.exists():
@@ -856,15 +857,21 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
         scenario = path.stem
     else:
         name = dataset_spec.split(":", 1)[0]
-        # name form: qa-bot-<target>-<scenario>
+        # name form: qa-bot-<target>-<scenario> or qa-bot-<scenario>
         parts = name.split("-")
-        if len(parts) < 4 or parts[0] != "qa" or parts[1] != "bot":
+        if len(parts) < 3 or parts[0] != "qa" or parts[1] != "bot":
             raise ValueError(
                 f"--dataset {dataset_spec!r} not a local path and not a qa-bot-<target>-<scenario> name"
             )
-        target = parts[2]
-        scenario = "-".join(parts[3:])
-        path = script_dir / "evaluation_datasets" / target / f"{scenario}.jsonl"
+        if len(parts) >= 4 and parts[2] in ("perf", "basic"):
+            target = parts[2]
+            scenario = "-".join(parts[3:])
+            target_path = script_dir / "evaluation_datasets" / target / f"{scenario}.jsonl"
+            flat_path = script_dir / "evaluation_datasets" / f"{scenario}.jsonl"
+            path = target_path if target_path.exists() else flat_path
+        else:
+            scenario = "-".join(parts[2:])
+            path = script_dir / "evaluation_datasets" / f"{scenario}.jsonl"
 
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found for completion mode: {path}")

@@ -831,7 +831,7 @@ def test_apistewardshipboard_dataset():
     from dataset.schema import normalize_query
 
     root = Path(__file__).resolve().parents[1]
-    dataset = root / "evaluation_datasets" / "perf" / "apistewardshipboard.jsonl"
+    dataset = root / "evaluation_datasets" / "apistewardshipboard.jsonl"
     count = validate_file(dataset, require_reviewed=True)
     records, scenario = resolve_records(
         "qa-bot-perf-apistewardshipboard:latest", script_dir=root
@@ -855,7 +855,7 @@ def test_apistewardshipboard_cases_are_customer_questions_and_expert_answers():
 
     root = Path(__file__).resolve().parents[1]
     records, _ = resolve_records(
-        str(root / "evaluation_datasets" / "perf" / "apistewardshipboard.jsonl"),
+        str(root / "evaluation_datasets" / "apistewardshipboard.jsonl"),
         script_dir=root,
     )
     for row in records:
@@ -877,7 +877,7 @@ def test_apistewardshipboard_cases_are_customer_questions_and_expert_answers():
 def test_apistewardshipboard_preserves_expert_conclusions_and_case_context():
     root = Path(__file__).resolve().parents[1]
     records, _ = resolve_records(
-        str(root / "evaluation_datasets" / "perf" / "apistewardshipboard.jsonl"),
+        str(root / "evaluation_datasets" / "apistewardshipboard.jsonl"),
         script_dir=root,
     )
     cases = {"-".join(row["testcase"].split("-")[2:]): row for row in records}
@@ -1006,7 +1006,7 @@ def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, stat
             "tags": ["core"],
         },
     ]
-    argv = ["--dataset", "evaluation_datasets/perf/apistewardshipboard.jsonl", "--baseline_check", "False"]
+    argv = ["--dataset", "evaluation_datasets/apistewardshipboard.jsonl", "--baseline_check", "False"]
 
     with ExitStack() as stack:
         stack.enter_context(patch.dict(os.environ, {
@@ -1118,33 +1118,32 @@ def test_javascript_datasets_are_documentation_only_and_resolve_locally():
         r"|\b(?:yesterday|last week|last month)\b",
         re.IGNORECASE,
     )
-    for target, count in (("perf", 20),):
-        path = root / "evaluation_datasets" / target / "javascript.jsonl"
-        assert validate_file(path, require_reviewed=True) == count
-        records, scenario = resolve_records(
-            f"qa-bot-{target}-javascript:latest", script_dir=root
-        )
-        assert scenario == "javascript"
-        assert len(records) == count
-        for case in records:
-            assert case["scenario"] == scenario
-            assert case["tenant"] is None
-            assert case["source"] == "manual:javascript-documentation"
-            assert case["expected_references"]
-            for field in ("query", "ground_truth"):
-                assert "dev-tool customization" not in case[field]
-            assert "http" not in case["query"]
-            for reference in case["expected_references"]:
-                assert "modular-customization.md" not in reference["link"]
-                assert reference["link"].startswith((
-                    "https://github.com/Azure/azure-sdk-for-js/blob/main/",
-                    "https://azure.github.io/typespec-azure/docs/emitters/clients/typespec-ts/",
-                ))
-            for field in ("testcase", "query", "ground_truth"):
-                assert not historical_context.search(case[field]), (path, field)
-            query = " ".join(case["query"].lower().split())
-            assert query not in queries
-            queries.add(query)
+    path = root / "evaluation_datasets" / "javascript.jsonl"
+    assert validate_file(path, require_reviewed=True) == 20
+    records, scenario = resolve_records(
+        "qa-bot-perf-javascript:latest", script_dir=root
+    )
+    assert scenario == "javascript"
+    assert len(records) == 20
+    for case in records:
+        assert case["scenario"] == scenario
+        assert case["tenant"] is None
+        assert case["source"] == "manual:javascript-documentation"
+        assert case["expected_references"]
+        for field in ("query", "ground_truth"):
+            assert "dev-tool customization" not in case[field]
+        assert "http" not in case["query"]
+        for reference in case["expected_references"]:
+            assert "modular-customization.md" not in reference["link"]
+            assert reference["link"].startswith((
+                "https://github.com/Azure/azure-sdk-for-js/blob/main/",
+                "https://azure.github.io/typespec-azure/docs/emitters/clients/typespec-ts/",
+            ))
+        for field in ("testcase", "query", "ground_truth"):
+            assert not historical_context.search(case[field]), (path, field)
+        query = " ".join(case["query"].lower().split())
+        assert query not in queries
+        queries.add(query)
 
 
 def test_perf_pipeline_is_manual_and_covers_all_scenarios():
@@ -1156,7 +1155,7 @@ def test_perf_pipeline_is_manual_and_covers_all_scenarios():
     parameters = {parameter["name"]: parameter for parameter in pipeline["parameters"]}
     assert parameters["scope"]["default"] == "core"
     assert parameters["scope"]["values"] == ["core", "full"]
-    expected = {path.stem for path in (root / "azure-sdk-qa-bot-evaluation" / "evaluation_datasets" / "perf").glob("*.jsonl")}
+    expected = {path.stem for path in (root / "azure-sdk-qa-bot-evaluation" / "evaluation_datasets").glob("*.jsonl")}
     assert set(parameters["scenarios"]["default"]) == expected
     for name in ("benchmark-evaluation.yml", "offline-evaluation.yml", "online-evaluation.yml", "perf-evaluation.yml"):
         assert not (root / name).exists()
@@ -1261,7 +1260,7 @@ def test_record_run_result_empty_rows_no_crash():
 
 def test_monitor_onboarding_case_has_no_live_issue_or_pr_dependencies():
     records, _ = resolve_records(
-        "evaluation_datasets/perf/mcpserver.jsonl",
+        "evaluation_datasets/mcpserver.jsonl",
         script_dir=Path(__file__).resolve().parents[1],
     )
     case = next(

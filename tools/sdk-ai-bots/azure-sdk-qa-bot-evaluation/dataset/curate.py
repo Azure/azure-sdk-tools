@@ -42,7 +42,7 @@ _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 def _repo_paths(script_dir: Path) -> dict[str, Path]:
     return {
         "staging": script_dir / "evaluation_datasets" / "_staging",
-        "perf": script_dir / "evaluation_datasets" / "perf",
+        "perf": script_dir / "evaluation_datasets",
         "md_download": script_dir / "online-qa-tests",
     }
 

@@ -25,7 +25,7 @@ DO NOT USE FOR: preparing or uploading datasets, pipeline troubleshooting, knowl
 
 ## Rules
 
-- `--dataset` accepts `evaluation_datasets/perf/<scenario>.jsonl` or `qa-bot-perf-<scenario>[:version]`; the alias resolves locally.
+- `--dataset` accepts `evaluation_datasets/<scenario>.jsonl` or `qa-bot-perf-<scenario>[:version]`; the alias resolves locally.
 - `--scope` selects `core` (default) or `full`.
 - There is no single-case flag. Make a one-row JSONL file and pass it as `--dataset`.
 - Use `--is_ci False` locally (uses `az login`); CI uses pipeline identity.
@@ -49,7 +49,7 @@ Confirm and remind the user to set these before running (loads `.env`; copy and 
 
 ```bash
 # One scenario (all evaluators), against the local server, no baseline gate:
-python evals_run.py --dataset evaluation_datasets/perf/typespec.jsonl \
+python evals_run.py --dataset evaluation_datasets/typespec.jsonl \
   --scope core --is_ci False --baseline_check False --cache_result full
 
 # Same via the asset name:

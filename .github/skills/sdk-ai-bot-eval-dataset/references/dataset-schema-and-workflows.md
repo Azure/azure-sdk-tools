@@ -42,7 +42,7 @@ Official files require valid unique `testcase` values, tags, matching scenario, 
 `reviewed: "pass"`. Historical rows may share a query or dedup key when their
 `testcase` values differ.
 
-A new scenario is a new `evaluation_datasets/perf/<scenario>.jsonl` file.
+A new scenario is a new `evaluation_datasets/<scenario>.jsonl` file.
 
 **Env:** `dataset.curate` needs `az login` + `STORAGE_BLOB_ACCOUNT` +
 `AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER`; `dataset.upload` needs `az login` +
@@ -53,9 +53,9 @@ A new scenario is a new `evaluation_datasets/perf/<scenario>.jsonl` file.
 
 Add specific cases you already have to an existing dataset.
 
-1. Append canonical rows to `evaluation_datasets/perf/<scenario>.jsonl` with a unique
+1. Append canonical rows to `evaluation_datasets/<scenario>.jsonl` with a unique
    `testcase` ID, tags, `"reviewed": "pass"`, and matching scenario.
-2. `python -m dataset.validate evaluation_datasets/perf/<scenario>.jsonl --require-reviewed`
+2. `python -m dataset.validate evaluation_datasets/<scenario>.jsonl --require-reviewed`
 3. `python -m dataset.upload --scenario <scenario>`
 
 ## Curate from blob
@@ -73,7 +73,7 @@ Harvest new cases from Q&A markdown collected in storage.
 
 Same as adding to a not-yet-existing file.
 
-1. Create `evaluation_datasets/perf/<new-scenario>.jsonl` with canonical rows
+1. Create `evaluation_datasets/<new-scenario>.jsonl` with canonical rows
    (`"scenario": "<new-scenario>"`, `"reviewed": "pass"`) — or stage via `dataset.curate`
    when blob filenames carry the new scenario prefix, then review + promote.
 2. Validate with `--require-reviewed`.

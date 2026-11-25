@@ -42,7 +42,7 @@ There is no single-case flag — build a one-row JSONL file and pass it as `--da
 ```bash
 # Extract one case by its structured testcase value:
 mkdir -p single-case
-grep -F '"testcase": "001003-version-required-to-optional"' evaluation_datasets/perf/typespec.jsonl > single-case/typespec.jsonl
+grep -F '"testcase": "001003-version-required-to-optional"' evaluation_datasets/typespec.jsonl > single-case/typespec.jsonl
 python evals_run.py --dataset single-case/typespec.jsonl --scope full --is_ci False --baseline_check False --cache_result full
 
 # Or hand-write one canonical row with testcase, tags, query, ground_truth, scenario, and reviewed.
@@ -55,7 +55,7 @@ The JSONL filename must match the row's `scenario`; its parent folder can be tem
 `--dataset` takes one file, so loop over scenarios:
 
 ```bash
-for f in evaluation_datasets/perf/*.jsonl; do
+for f in evaluation_datasets/*.jsonl; do
   python evals_run.py --dataset "$f" --scope core \
     --is_ci False --baseline_check False --cache_result full
 done

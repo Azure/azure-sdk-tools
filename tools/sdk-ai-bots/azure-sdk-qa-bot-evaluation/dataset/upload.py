@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
 
     load_dotenv()
     script_dir = Path(__file__).resolve().parent.parent
-    target_dir = script_dir / "evaluation_datasets" / "perf"
+    target_dir = script_dir / "evaluation_datasets"
     registry_path = script_dir / "evaluation_datasets" / REGISTRY_NAME
 
     if not target_dir.exists():

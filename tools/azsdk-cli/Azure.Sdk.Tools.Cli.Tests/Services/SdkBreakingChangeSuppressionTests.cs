@@ -169,6 +169,10 @@ public class SdkBreakingChangeSuppressionTests
 
     [TestCase("suppressions: [")]
     [TestCase("suppressions: {}\nsuppressions: {}")]
+    [TestCase("suppressions: { azure-sdk-for-go: [{ package: test-package }] }")]
+    [TestCase("suppressions: { azure-sdk-for-go: [{ breaking-changes: [] }] }")]
+    [TestCase("suppressions: { azure-sdk-for-go: [{ package: null, breaking-changes: [] }] }")]
+    [TestCase("suppressions: { azure-sdk-for-go: [{ package: test-package, breaking-changes: null }] }")]
     public async Task Classify_YamlParseFailureIsLoggedAndPreservesClassification(string yaml)
     {
         using var directory = TempDirectory.Create("sdk-suppressions");

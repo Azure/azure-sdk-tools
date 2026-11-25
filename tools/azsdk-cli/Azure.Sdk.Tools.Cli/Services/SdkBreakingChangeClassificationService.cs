@@ -126,6 +126,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 document = new DeserializerBuilder()
                     .WithDuplicateKeyChecking()
+                    .WithEnforceRequiredMembers()
+                    .WithEnforceNullability()
                     .Build()
                     .Deserialize<SdkSuppressionsDocument>(content);
             }
@@ -146,7 +148,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private sealed class SdkSuppressionsDocument
         {
             [YamlMember(Alias = "suppressions")]
-            public Dictionary<string, List<SdkPackageSuppressions>?>? Suppressions { get; set; }
+            public Dictionary<string, List<SdkPackageSuppressions>>? Suppressions { get; set; }
 
             public IReadOnlyList<string> GetSuppressions(SdkLanguage language, string packageName)
             {
@@ -164,10 +166,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         private sealed class SdkPackageSuppressions
         {
             [YamlMember(Alias = "package")]
-            public string? Package { get; set; }
+            public required string Package { get; set; }
 
             [YamlMember(Alias = "breaking-changes")]
-            public List<string>? BreakingChanges { get; set; }
+            public required List<string> BreakingChanges { get; set; }
         }
     }
 }

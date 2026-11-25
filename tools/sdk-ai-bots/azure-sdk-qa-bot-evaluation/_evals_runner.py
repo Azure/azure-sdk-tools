@@ -19,6 +19,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 from contextlib import ExitStack
@@ -81,14 +82,42 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
 }
 
 
+_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)")
+_HTML_IMAGE_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+_HTML_IMAGE_ALT_RE = re.compile(
+    r"""alt\s*=\s*(?:\\"([^\\"]*)\\"|\"([^\"]*)\"|'([^']*)')""",
+    re.IGNORECASE,
+)
+
+
+def _strip_image_tags(text: str) -> str:
+    """Replace markdown and HTML image tags with plain-text placeholders."""
+    if not text:
+        return text
+
+    def _replace_markdown(match: re.Match[str]) -> str:
+        alt = match.group(1).strip()
+        return f"[Image: {alt}]" if alt else "[Image]"
+
+    def _replace_html(match: re.Match[str]) -> str:
+        alt_match = _HTML_IMAGE_ALT_RE.search(match.group(0))
+        alt = ""
+        if alt_match:
+            alt = next((g for g in alt_match.groups() if g is not None), "").strip()
+        return f"[Image: {alt}]" if alt else "[Image]"
+
+    text = _MARKDOWN_IMAGE_RE.sub(_replace_markdown, text)
+    return _HTML_IMAGE_RE.sub(_replace_html, text)
+
+
 def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
     """Project a collected record into the eval ``item`` payload (JSON-safe)."""
     return {
         "testcase": it.get("testcase", "unknown"),
-        "query": it.get("query", ""),
+        "query": _strip_image_tags(it.get("query", "") or ""),
         "ground_truth": it.get("ground_truth", ""),
-        "response": it.get("response", ""),
-        "context": it.get("context", "") or "",
+        "response": _strip_image_tags(it.get("response", "") or ""),
+        "context": _strip_image_tags(it.get("context", "") or ""),
         "response_id": it.get("response_id", "") or "",
         "expected_references": it.get("expected_references", []),
         "expected_knowledges": it.get("expected_knowledges", []),
@@ -819,7 +848,8 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
 
     Accepts:
       * ``<path>.jsonl``              -> read that file; scenario = file stem.
-      * ``qa-bot-<target>-<scenario>[:version]`` -> read ``evaluation_datasets/<target>/<scenario>.jsonl``.
+      * ``qa-bot-perf-<scenario>[:version]`` or ``qa-bot-<scenario>[:version]``
+        -> read ``evaluation_datasets/<scenario>.jsonl``.
     """
     candidate = Path(dataset_spec)
     if dataset_spec.endswith(".jsonl") or candidate.exists():
@@ -827,15 +857,13 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
         scenario = path.stem
     else:
         name = dataset_spec.split(":", 1)[0]
-        # name form: qa-bot-<target>-<scenario>
         parts = name.split("-")
-        if len(parts) < 4 or parts[0] != "qa" or parts[1] != "bot":
+        if len(parts) < 3 or parts[0] != "qa" or parts[1] != "bot":
             raise ValueError(
-                f"--dataset {dataset_spec!r} not a local path and not a qa-bot-<target>-<scenario> name"
+                f"--dataset {dataset_spec!r} not a local path and not a qa-bot-<scenario> name"
             )
-        target = parts[2]
-        scenario = "-".join(parts[3:])
-        path = script_dir / "evaluation_datasets" / target / f"{scenario}.jsonl"
+        scenario = "-".join(parts[3:] if len(parts) >= 4 and parts[2] == "perf" else parts[2:])
+        path = script_dir / "evaluation_datasets" / f"{scenario}.jsonl"
 
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found for completion mode: {path}")

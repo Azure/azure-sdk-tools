@@ -147,3 +147,10 @@ All `*.eval.yaml` files in this directory and its subdirectories run in the
 `azsdk-mcp-live`. They are also included in the `scenarios-live` suite in
 [the Vally configuration](../../.vally.yaml), not the hermetic mock pipeline.
 The live pipeline runs daily at 09:00 UTC on `main` and can be queued manually.
+
+For local setup, run `npm ci` in `evals/fixtures/typespec-dependencies` and
+set `AZSDK_EVAL_NODE_MODULES` to its `node_modules` full path before running Vally.
+
+```powershell
+$env:AZSDK_EVAL_NODE_MODULES="<repo-root>\evals\fixtures\typespec-dependencies\node_modules"
+```

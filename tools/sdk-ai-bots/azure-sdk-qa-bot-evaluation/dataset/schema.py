@@ -82,7 +82,7 @@ JSON_SCHEMA: dict[str, Any] = {
     "required": ["testcase", "query", "ground_truth", "scenario", "reviewed"],
     "properties": {
         "testcase": {"type": "string", "minLength": 1},
-        "tags": {"type": "array", "items": {"enum": ["core"]}, "uniqueItems": True},
+        "tags": {"type": "array", "items": {"enum": ["core", "full"]}, "uniqueItems": True},
         "query": {"type": "string", "minLength": 1},
         "ground_truth": {"type": "string", "minLength": 1},
         "expected_references": {
@@ -214,8 +214,14 @@ def validate_case(obj: Any, where: str = "case", *, require_benchmark: bool = Fa
         raise ValidationError(f"{where}: 'testcase' must use CCCSSS-category-situation format")
     if "tags" in obj:
         tags = obj["tags"]
-        if not isinstance(tags, list) or any(tag != "core" for tag in tags) or len(tags) > 1:
-            raise ValidationError(f"{where}: 'tags' must be [] or ['core']")
+        if (
+            not isinstance(tags, list)
+            or any(not isinstance(tag, str) or tag not in ("core", "full") for tag in tags)
+            or len(tags) != len(set(tags))
+        ):
+            raise ValidationError(f"{where}: 'tags' must be ['core'], ['full'], or ['core', 'full']")
+        if require_benchmark and not tags:
+            raise ValidationError(f"{where}: benchmark 'tags' must not be empty")
 
     for f in REQUIRED_STR_FIELDS:
         if f not in obj:
@@ -325,7 +331,7 @@ def select_cases(records: list[dict[str, Any]], scope: str, *, scenario: str) ->
     if scope not in ("core", "full"):
         raise ValidationError(f"Unknown evaluation scope: {scope!r}")
     validate_records(records, scenario=scenario)
-    selected = [record for record in records if scope == "full" or "core" in record["tags"]]
+    selected = [record for record in records if scope in record["tags"]]
     if not selected:
         raise ValidationError(f"No {scope} cases selected for scenario {scenario!r}")
     return selected

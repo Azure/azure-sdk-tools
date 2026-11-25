@@ -27,7 +27,7 @@ DO NOT USE FOR: running evaluations, pipeline troubleshooting, knowledge-graph i
 ## Rules
 
 - A dataset is one file: `evaluation_datasets/<scenario>.jsonl`.
-- `testcase` is the case identity and must contain `CCCSSS-category-situation`. `tags: ["core"]` includes a case in core and full; `tags: []` makes it full-only.
+- `testcase` is the case identity and must contain `CCCSSS-category-situation`. `tags` supports `["core"]` (core only), `["full"]` (full only), or `["core", "full"]` (core + full).
 - New curation deduplicates on persisted `dedup_key`, or normalized scenario/query when absent. Existing benchmark rows are identified by `testcase`.
 - Only `reviewed: "pass"` rows are curated/committed; see the [review status lifecycle](references/dataset-schema-and-workflows.md) for the three states and how leftovers are finalized.
 - `evaluation_datasets/_staging/`, `evaluation_datasets/<scenario>.jsonl`, and `registry.json` are committed.

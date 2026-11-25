@@ -38,7 +38,7 @@ by the evaluators.
 ```json
 {
   "testcase": "001003-version-required-to-optional",
-  "tags": ["core"],
+  "tags": ["core", "full"],
   "query": "question to ask the bot",
   "ground_truth": "expected answer",
   "expected_references": [{"title": "t", "link": "https://..."}],

@@ -11,7 +11,7 @@ and references are produced at run time by the bot and read by the evaluators.
 ```json
 {
   "testcase": "001003-version-required-to-optional",
-  "tags": ["core"],
+  "tags": ["core", "full"],
   "query": "title: ...\n\nquestion: the full question to ask the bot",
   "ground_truth": "expected answer",
   "expected_references": [{ "title": "t", "link": "https://..." }],
@@ -28,7 +28,7 @@ and references are produced at run time by the bot and read by the evaluators.
 | Field                 | Required | Notes                                                             |
 | --------------------- | -------- | ----------------------------------------------------------------- |
 | `testcase`            | yes      | Stable `CCCSSS-category-situation` identifier.                   |
-| `tags`                | yes      | `["core"]` for core cases; `["full"]` for all cases.              |
+| `tags`                | yes      | `["core"]` for core only, `["full"]` for full only, `["core", "full"]` for core + full. |
 | `query`               | yes      | The question; the **normalized query is the dedup key**.          |
 | `ground_truth`        | yes      | Expected answer the evaluators compare against.                   |
 | `scenario`            | yes      | Scenario id; should match the `<scenario>` file stem.             |

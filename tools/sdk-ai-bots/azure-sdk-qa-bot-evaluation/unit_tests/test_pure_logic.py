@@ -63,7 +63,7 @@ def test_validate_case_ok():
 
 
 def test_canonical_case_round_trips_testcase_id_and_tags():
-    for tags in (["core"], []):
+    for tags in (["core"], ["full"], ["core", "full"]):
         case = CanonicalCase(
             testcase="001003-version-required-to-optional",
             tags=tags,
@@ -81,8 +81,8 @@ def test_canonical_case_round_trips_testcase_id_and_tags():
 def test_select_cases_supports_core_and_full():
     rows = [
         {
-            "testcase": "001001-version-core",
-            "tags": ["core"],
+            "testcase": "001001-version-core-and-full",
+            "tags": ["core", "full"],
             "query": "q1",
             "ground_truth": "a1",
             "scenario": "typespec",
@@ -90,17 +90,29 @@ def test_select_cases_supports_core_and_full():
         },
         {
             "testcase": "001002-version-specialized",
-            "tags": [],
+            "tags": ["full"],
             "query": "q2",
             "ground_truth": "a2",
             "scenario": "typespec",
             "reviewed": "pass",
         },
+        {
+            "testcase": "001003-version-core-only",
+            "tags": ["core"],
+            "query": "q3",
+            "ground_truth": "a3",
+            "scenario": "typespec",
+            "reviewed": "pass",
+        },
     ]
     assert [row["testcase"] for row in select_cases(rows, "core", scenario="typespec")] == [
-        "001001-version-core"
+        "001001-version-core-and-full",
+        "001003-version-core-only",
     ]
-    assert select_cases(rows, "full", scenario="typespec") == rows
+    assert [row["testcase"] for row in select_cases(rows, "full", scenario="typespec")] == [
+        "001001-version-core-and-full",
+        "001002-version-specialized",
+    ]
 
 
 def test_select_cases_rejects_missing_tags_and_mixed_scenarios():
@@ -113,7 +125,8 @@ def test_select_cases_rejects_missing_tags_and_mixed_scenarios():
     }
     for records, message in (
         ([row], "tags"),
-        ([dict(row, tags=["core"], scenario="go")], "expected scenario"),
+        ([dict(row, tags=[])], "must not be empty"),
+        ([dict(row, tags=["core", "full"], scenario="go")], "expected scenario"),
     ):
         try:
             select_cases(records, "core", scenario="typespec")
@@ -462,7 +475,7 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
     def _row(testcase: str, status: str) -> dict:
         return {
             "testcase": f"001{dict(keep=1, leftover=2, already=3)[testcase]:03d}-test-{testcase}",
-            "tags": ["core"],
+            "tags": ["core", "full"],
             "query": f"q-{testcase}",
             "ground_truth": "gt",
             "expected_references": [],
@@ -493,7 +506,7 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
         assert promoted == {"typespec": 1}
         target_rows = [json.loads(l) for l in (target / "typespec.jsonl").read_text(encoding="utf-8").splitlines()]
         assert [r["testcase"] for r in target_rows] == ["001001-test-keep"]
-        assert target_rows[0]["tags"] == ["core"]
+        assert target_rows[0]["tags"] == ["core", "full"]
         assert target_rows[0]["reviewed"] == REVIEW_STATUS_PASS
 
         # Staging keeps the leftover (now abandoned) and the already-abandoned row; pass row is gone.
@@ -994,7 +1007,7 @@ def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, stat
             "scenario": scenario,
             "tenant": "ignored-row-tenant",
             "reviewed": "pass",
-            "tags": ["core"],
+            "tags": ["core", "full"],
         },
         {
             "testcase": "001002-routing-second-case",
@@ -1003,7 +1016,7 @@ def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, stat
             "scenario": scenario,
             "tenant": "another-ignored-tenant",
             "reviewed": "pass",
-            "tags": ["core"],
+            "tags": ["core", "full"],
         },
     ]
     argv = ["--dataset", "evaluation_datasets/apistewardshipboard.jsonl", "--baseline_check", "False"]
@@ -1082,7 +1095,7 @@ def test_cli_warn_only_turns_eval_fail_into_warning_exit_zero(capsys):
         "ground_truth": "a",
         "scenario": "typespec",
         "reviewed": "pass",
-        "tags": ["core"],
+        "tags": ["core", "full"],
     }]
     project = MagicMock()
     project.__enter__.return_value = project
@@ -1350,7 +1363,7 @@ def test_main_passes_project_for_response_selected_agents():
             patch.object(evals_run, "load_dotenv"),
             patch.object(evals_run, "credential_for"),
             patch.object(evals_run, "resolve_records", return_value=([{
-                "testcase": "001001-test-routing", "tags": ["core"], "query": "question",
+                "testcase": "001001-test-routing", "tags": ["core", "full"], "query": "question",
                 "ground_truth": "answer", "scenario": "mcpserver", "reviewed": "pass",
             }], "mcpserver")),
             patch.object(evals_run, "retrieve_channel_tenant_map", return_value={}),

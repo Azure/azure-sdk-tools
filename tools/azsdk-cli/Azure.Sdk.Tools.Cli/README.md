@@ -122,10 +122,11 @@ through the existing notification service, enabled only when `AZSDKTOOLS_NOTIFIC
 is set. The shared `mark-release-completion.yml` step passes `$(AzureSDKEmailerSasURL)` as that
 environment variable. Private Preview and unrecognized plan types do not receive completion emails.
 The email uses the completion template from #17658 and includes recorded release details and released
-SDK versions, with the feedback survey only for management-plane plans. The service name and Java group
-ID come from each released SDK's Azure DevOps package work item (`Custom.ServiceName`, `Custom.GroupId`),
-and package links point to the language's public registry (NuGet, PyPI, npm, Maven Central, pkg.go.dev,
-crates.io). Details that cannot be found are shown as "Not recorded". The completion time is UTC.
+SDK versions, with the feedback survey only for management-plane plans. The service name comes from the
+plan's product onboarding record, falling back to the released SDKs' Azure DevOps package work items
+(`Custom.ServiceName`). The Java group ID comes from the package work item (`Custom.GroupId`),
+and package links point to the language's public registry (NuGet, PyPI, npm, Maven Central, pkg.go.dev
+with the `/vN` module suffix for major versions 2 and later, crates.io). Details that cannot be found are shown as "Not recorded". The completion time is UTC.
 Notification failures are reported as warnings
 without undoing the Finished state; retries on an already finished plan do not send another email.
 

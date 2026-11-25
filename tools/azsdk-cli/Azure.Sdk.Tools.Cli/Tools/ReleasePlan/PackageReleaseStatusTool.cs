@@ -383,9 +383,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             try
             {
+                var serviceName = await GetOnboardedServiceNameAsync(releasePlan, ct);
                 var packageMetadata = await GetReleasedPackageMetadataAsync(releasePlan, ct);
                 var result = await notificationService.SendEmailNotificationAsync(
-                    new FinishedReleasePlanEmail(releasePlan, DateTimeOffset.UtcNow, packageMetadata), ct);
+                    new FinishedReleasePlanEmail(releasePlan, DateTimeOffset.UtcNow, packageMetadata, serviceName), ct);
                 if (result.IsFailure || result.Status == NotificationStatus.SkippedNoRecipients)
                 {
                     var error = result.ErrorMessage ?? "No valid release plan owner email address was recorded.";
@@ -402,6 +403,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogWarning(ex, "Failed to send the completion email for release plan {releasePlanId}.", releasePlan.ReleasePlanId);
                 (response.Warnings ??= []).Add($"Release plan is Finished, but its completion email failed: {ex.Message}");
+            }
+        }
+
+        private async Task<string> GetOnboardedServiceNameAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
+        {
+            if (!Guid.TryParse(releasePlan.ProductTreeId, out var productId) || !Guid.TryParse(releasePlan.ServiceTreeId, out var serviceId))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                var onboarding = await devOpsService.GetProductOnboardingAsync(productId, serviceId, ct, releasePlan.IsTestReleasePlan);
+                return onboarding?.ServiceName ?? string.Empty;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to get the product onboarding record for release plan {releasePlanId}; the completion email will use the package service name.",
+                    releasePlan.ReleasePlanId);
+                return string.Empty;
             }
         }
 

@@ -18,16 +18,20 @@ public class FinishedReleasePlanEmail : EmailPayload
     private readonly ReleasePlanWorkItem _plan;
     private readonly DateTimeOffset _completedOn;
     private readonly IReadOnlyDictionary<string, ReleasedPackageMetadata> _packageMetadata;
+    private readonly string _onboardedServiceName;
 
     /// <param name="packageMetadata">Package work item details keyed by the SDK language recorded in the release plan.</param>
+    /// <param name="onboardedServiceName">Service name from the product onboarding record; preferred over package work item service names.</param>
     public FinishedReleasePlanEmail(
         ReleasePlanWorkItem plan,
         DateTimeOffset completedOn,
-        IReadOnlyDictionary<string, ReleasedPackageMetadata>? packageMetadata = null)
+        IReadOnlyDictionary<string, ReleasedPackageMetadata>? packageMetadata = null,
+        string? onboardedServiceName = null)
     {
         _plan = plan ?? throw new ArgumentNullException(nameof(plan));
         _completedOn = completedOn;
         _packageMetadata = packageMetadata ?? new Dictionary<string, ReleasedPackageMetadata>();
+        _onboardedServiceName = onboardedServiceName ?? string.Empty;
         EmailTo = string.IsNullOrWhiteSpace(plan.ReleasePlanSubmittedByEmail)
             ? []
             : [plan.ReleasePlanSubmittedByEmail];
@@ -67,9 +71,11 @@ public class FinishedReleasePlanEmail : EmailPayload
     private IEnumerable<SDKInfo> ReleasedSdks => _plan.SDKInfo
         .Where(sdk => string.Equals(sdk.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase));
 
-    private string ServiceName => ReleasedSdks
-        .Select(sdk => GetMetadata(sdk)?.ServiceName)
-        .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? string.Empty;
+    private string ServiceName => !string.IsNullOrWhiteSpace(_onboardedServiceName)
+        ? _onboardedServiceName
+        : ReleasedSdks
+            .Select(sdk => GetMetadata(sdk)?.ServiceName)
+            .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? string.Empty;
 
     private string ReleasedSdkRows => string.Join(Environment.NewLine, ReleasedSdks.Select(sdk =>
     {
@@ -113,14 +119,32 @@ public class FinishedReleasePlanEmail : EmailPayload
                     ? string.Empty
                     : $"https://central.sonatype.com/artifact/{Uri.EscapeDataString(groupId.Trim())}/{Uri.EscapeDataString(packageName)}/{escapedVersion}";
             case "go":
-                return packageName.StartsWith("sdk/", StringComparison.Ordinal)
-                    ? $"https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/{EscapePath(packageName)}@{Uri.EscapeDataString(version.StartsWith('v') ? version : $"v{version}")}"
-                    : string.Empty;
+                if (!packageName.StartsWith("sdk/", StringComparison.Ordinal))
+                {
+                    return string.Empty;
+                }
+                var goVersion = version.StartsWith('v') ? version : $"v{version}";
+                var modulePath = GetGoModulePath(packageName.TrimEnd('/'), goVersion);
+                return $"https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/{EscapePath(modulePath)}@{Uri.EscapeDataString(goVersion)}";
             case "rust":
                 return $"https://crates.io/crates/{Uri.EscapeDataString(packageName)}/{escapedVersion}";
             default:
                 return string.Empty;
         }
+    }
+
+    // Go modules at major version 2 or higher must end with a /vN suffix (semantic import versioning).
+    private static string GetGoModulePath(string packageName, string goVersion)
+    {
+        var majorText = new string(goVersion[1..].TakeWhile(char.IsAsciiDigit).ToArray());
+        if (!int.TryParse(majorText, NumberStyles.None, CultureInfo.InvariantCulture, out var major) || major < 2)
+        {
+            return packageName;
+        }
+
+        var lastSegment = packageName[(packageName.LastIndexOf('/') + 1)..];
+        var hasMajorSuffix = lastSegment.Length > 1 && lastSegment[0] == 'v' && lastSegment[1..].All(char.IsAsciiDigit);
+        return hasMajorSuffix ? packageName : $"{packageName}/v{major}";
     }
 
     private static string EscapePath(string path) => string.Join('/', path.Split('/').Select(Uri.EscapeDataString));

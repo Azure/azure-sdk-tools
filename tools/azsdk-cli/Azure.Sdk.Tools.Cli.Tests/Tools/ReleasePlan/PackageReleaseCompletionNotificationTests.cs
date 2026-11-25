@@ -214,6 +214,32 @@ public class PackageReleaseCompletionNotificationTests
     }
 
     [Test]
+    public async Task OnboardedServiceName_IsPreferredOverPackageServiceName([Values(false, true)] bool onboardingFound)
+    {
+        var productId = Guid.NewGuid();
+        var serviceId = Guid.NewGuid();
+        _plan.ProductTreeId = productId.ToString();
+        _plan.ServiceTreeId = serviceId.ToString();
+        var onboarding = _devOps.Setup(s => s.GetProductOnboardingAsync(productId, serviceId, It.IsAny<CancellationToken>(), _plan.IsTestReleasePlan));
+        if (onboardingFound)
+        {
+            onboarding.ReturnsAsync(new ProductOnboardingWorkItem { ServiceName = "Onboarded Service" });
+        }
+        else
+        {
+            onboarding.ThrowsAsync(new InvalidOperationException("lookup failed"));
+        }
+
+        var result = await UpdateAsync(legacy: false);
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(_emails, Has.Count.EqualTo(1));
+        using var email = JsonDocument.Parse(_emails[0]);
+        var body = email.RootElement.GetProperty("Body").GetString()!;
+        Assert.That(body, Does.Contain(onboardingFound ? "<td>Onboarded Service / Not recorded</td>" : "<td>Contoso Service / Not recorded</td>"));
+    }
+
+    [Test]
     public async Task DeliveryFailure_IsWarningWithoutUndoingCompletion([Values(false, true)] bool legacy)
     {
         _handler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync",

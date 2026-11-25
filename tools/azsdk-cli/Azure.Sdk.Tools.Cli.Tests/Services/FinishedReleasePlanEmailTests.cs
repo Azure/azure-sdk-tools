@@ -86,6 +86,8 @@ public class FinishedReleasePlanEmailTests
     [TestCase("Java", "com.azure:azure-contoso", "1.0.0", null, "https://central.sonatype.com/artifact/com.azure/azure-contoso/1.0.0")]
     [TestCase("Java", "azure-contoso", "1.0.0", "", "")]
     [TestCase("Go", "sdk/resourcemanager/contoso/armcontoso", "1.0.0", null, "https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/contoso/armcontoso@v1.0.0")]
+    [TestCase("Go", "sdk/resourcemanager/compute/armcompute", "9.0.0", null, "https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v9@v9.0.0")]
+    [TestCase("Go", "sdk/resourcemanager/compute/armcompute/v9", "v9.1.0-beta.1", null, "https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v9@v9.1.0-beta.1")]
     [TestCase("Go", "armcontoso", "v1.0.0", null, "")]
     [TestCase("Python", "azure-contoso", "", null, "")]
     [TestCase("Unknown", "contoso", "1.0.0", null, "")]

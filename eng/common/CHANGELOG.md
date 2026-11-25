@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Added the on-demand service API-version readiness pipeline with a required service-connection input and a bounded PR comment.
+
 ### Bugs Fixed
 
 - Pass manual release-plan IDs to PowerShell through the task environment so input is validated as data rather than interpreted as script text.

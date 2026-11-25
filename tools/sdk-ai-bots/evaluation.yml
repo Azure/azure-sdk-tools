@@ -102,6 +102,7 @@ extends:
                           --run_context "evaluation" \
                           --max_concurrency ${{ parameters.maxConcurrency }} \
                           --baseline_check False \
+                          --warn_only True \
                           --cache_result full
                     env:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)

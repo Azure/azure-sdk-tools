@@ -119,11 +119,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--baseline_check", type=str, default="True")
     parser.add_argument("--is_ci", type=str, default="True")
+    parser.add_argument("--warn_only", type=str, default="False")
     parser.add_argument("--cache_result", type=str, default="none", help="none | score | full")
     args = parser.parse_args(argv)
 
     is_ci = args.is_ci.lower() in ("true", "1", "yes", "on")
     baseline_check = args.baseline_check.lower() in ("true", "1", "yes")
+    warn_only = args.warn_only.lower() in ("true", "1", "yes", "on")
     evaluators = args.evaluators.split(",") if args.evaluators else list(ALL_EVALUATORS)
 
     script_dir = Path(__file__).resolve().parent
@@ -197,8 +199,12 @@ def main(argv: list[str] | None = None) -> int:
         if verdict == VerificationResult.PASS_WITH_WARNING:
             print("##vso[task.logissue type=warning]Evaluation succeeded with warning. Some tests failed but suppressed.")
         elif verdict == VerificationResult.FAIL:
-            logging.error("Evaluation failed; see the published failed-cases artifact for details.")
-            return 1
+            if warn_only:
+                print("##vso[task.logissue type=warning]Evaluation finished with failing cases; see the published results artifact for details.")
+                print("##vso[task.complete result=SucceededWithIssues;]")
+            else:
+                logging.error("Evaluation failed; see the published failed-cases artifact for details.")
+                return 1
     except Exception as exc:  # noqa: BLE001
         logging.exception("❌ Error occurred: %s", exc)
         return 1

@@ -1069,6 +1069,56 @@ def test_cli_rejected_tenant_does_not_fall_back():
     assert all(payload["tenant_id"] == "unregistered_tenant" for _, payload in posts)
 
 
+def test_cli_warn_only_turns_eval_fail_into_warning_exit_zero(capsys):
+    from contextlib import ExitStack
+    from unittest.mock import MagicMock, patch
+
+    import evals_run
+    from _evals_result import VerificationResult
+
+    records = [{
+        "testcase": "001001-routing-warn-case",
+        "query": "q1",
+        "ground_truth": "a",
+        "scenario": "typespec",
+        "reviewed": "pass",
+        "tags": ["core"],
+    }]
+    project = MagicMock()
+    project.__enter__.return_value = project
+    project.get_openai_client.return_value.__enter__.return_value = MagicMock()
+
+    def _run(warn_only: str) -> int:
+        with ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ, {
+                "AZURE_AI_PROJECT_ENDPOINT": "https://unused.invalid",
+                "AZURE_EVALUATION_MODEL_NAME": "unused-model",
+                "EVALUATE_THRESHOLD": "3",
+            }))
+            stack.enter_context(patch("azure.ai.projects.AIProjectClient", return_value=project))
+            stack.enter_context(patch.object(evals_run, "load_dotenv"))
+            stack.enter_context(patch.object(evals_run, "credential_for", return_value=object()))
+            stack.enter_context(patch.object(evals_run, "resolve_bot_token", return_value=None))
+            stack.enter_context(patch.object(evals_run, "resolve_completion_url", return_value="http://unused.invalid/completion"))
+            stack.enter_context(patch.object(evals_run, "resolve_records", return_value=(records, "typespec")))
+            stack.enter_context(patch.object(evals_run, "retrieve_channel_tenant_map", return_value=None))
+            stack.enter_context(patch.object(evals_run, "_load_suppression", return_value={"evaluators": [], "testcases": []}))
+            stack.enter_context(patch.object(evals_run.FoundryEvalsRunner, "evaluate_run_completion", return_value={}))
+            stack.enter_context(patch.object(evals_run.EvalsResult, "show_results"))
+            stack.enter_context(patch.object(evals_run.EvalsResult, "verify_results", return_value=VerificationResult.FAIL))
+            return evals_run.main([
+                "--dataset", "evaluation_datasets/typespec.jsonl",
+                "--baseline_check", "False",
+                "--warn_only", warn_only,
+            ])
+
+    assert _run("False") == 1
+    assert _run("True") == 0
+    captured = capsys.readouterr().out
+    assert "##vso[task.logissue type=warning]" in captured
+    assert "##vso[task.complete result=SucceededWithIssues;]" in captured
+
+
 def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
     from pathlib import Path
 
@@ -1089,6 +1139,7 @@ def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
     script = inputs["inlineScript"]
     assert '--dataset "qa-bot-perf-${{ scenario }}:latest"' in script
     assert '--scope "${{ parameters.scope }}"' in script
+    assert "--warn_only True" in script
     assert "evaluation_datasets/" not in script
     assert "--tenant-id" not in script
 

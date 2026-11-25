@@ -421,16 +421,23 @@ class QARecordService:
             and record.feedback.status == FeedbackStatus.validation_failed
         ]
 
-    async def reset_to_pending_validation(self, record: QARecord) -> QARecord:
-        """Reset a validation-failed record back to ``pending_validation``."""
-        if not record.feedback:
+    async def reset_to_pending_validation(
+        self,
+        record: QARecord,
+        *,
+        status: FeedbackStatus = FeedbackStatus.pending_validation,
+    ) -> QARecord:
+        """Update a validation record's feedback status, preserving fresh Cosmos fields."""
+        existing_doc = await read_qa_record(record.id, record.tenant_id)
+        target = QARecord.from_cosmos(existing_doc) if existing_doc else record
+        if not target.feedback:
             raise ValueError("Cannot reset validation status without feedback state")
         now = _now()
-        record.feedback.status = FeedbackStatus.pending_validation
-        record.feedback.updated_at = now
-        record.updated_at = now
-        await upsert_qa_record(record.to_cosmos())
-        return record
+        target.feedback.status = status
+        target.feedback.updated_at = now
+        target.updated_at = now
+        await upsert_qa_record(target.to_cosmos())
+        return target
 
 
 def _now() -> datetime:

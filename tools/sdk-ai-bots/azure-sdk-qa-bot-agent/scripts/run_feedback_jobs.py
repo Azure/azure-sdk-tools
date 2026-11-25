@@ -38,6 +38,7 @@ from models.feedback import (
     ChatbotEvolutionAgentMode,
     ChatbotEvolutionAgentOutcome,
 )
+from models.qa_record import FeedbackStatus
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
 from tools.issue_tracker import get_issue_state, reopen_issue
@@ -153,12 +154,19 @@ async def _run(args: argparse.Namespace) -> None:
                 logger.exception("Failed to read issue state for %s", record.id)
                 continue
         if issue_states[issue_url] == "open":
-            await qa_service.reset_to_pending_validation(record)
-            logger.info(
-                "Reset validation_failed record %s (%s) to pending_validation after issue reopen",
-                record.id,
-                issue_url,
-            )
+            try:
+                await qa_service.reset_to_pending_validation(record)
+                logger.info(
+                    "Reset validation_failed record %s (%s) to pending_validation after issue reopen",
+                    record.id,
+                    issue_url,
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to reset validation_failed record %s", record.id
+                )
+                counts["validation_failed"] += 1
+                continue
 
     reopened_issues: set[str] = set()
     pending = await qa_service.list_pending_validation(tenant_id=args.tenant)
@@ -200,16 +208,33 @@ async def _run(args: argparse.Namespace) -> None:
             logger.info("Validation skipped for %s (%s)", record.id, issue_url)
         else:
             counts["validation_failed"] += 1
-            if (
-                result.outcome == ChatbotEvolutionAgentOutcome.validation_failed
-                and issue_url not in reopened_issues
-            ):
-                reopened_issues.add(issue_url)
+            if result.outcome == ChatbotEvolutionAgentOutcome.validation_failed:
+                reopened = issue_url in reopened_issues
+                if not reopened:
+                    try:
+                        await reopen_issue(issue_url)
+                        reopened_issues.add(issue_url)
+                        reopened = True
+                        logger.info(
+                            "Reopened issue after validation failure: %s", issue_url
+                        )
+                    except Exception:
+                        logger.exception("Failed to reopen issue %s", issue_url)
+                next_status = (
+                    FeedbackStatus.pending_validation
+                    if reopened
+                    else FeedbackStatus.failed
+                )
                 try:
-                    await reopen_issue(issue_url)
-                    logger.info("Reopened issue after validation failure: %s", issue_url)
+                    await qa_service.reset_to_pending_validation(
+                        record, status=next_status
+                    )
                 except Exception:
-                    logger.exception("Failed to reopen issue %s", issue_url)
+                    logger.exception(
+                        "Failed to update feedback status to %s for %s",
+                        next_status.value,
+                        record.id,
+                    )
 
     # 3. Ask the Evolution Agent to evaluate and, when necessary, diagnose
     # each conversation. The pipeline does not make either decision itself.

@@ -1410,6 +1410,12 @@ async def test_list_validation_failed_and_reset_to_pending_validation() -> None:
         feedback_status=FeedbackStatus.validation_failed,
     )
     record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
+    fresh = _record(
+        qa_status=QAStatus.finished,
+        feedback_status=FeedbackStatus.validation_failed,
+    )
+    fresh.feedback.issue_url = record.feedback.issue_url
+    fresh.reasoning = "Latest validation evidence."
     no_issue = _record(
         qa_status=QAStatus.finished,
         feedback_status=FeedbackStatus.validation_failed,
@@ -1421,6 +1427,10 @@ async def test_list_validation_failed_and_reset_to_pending_validation() -> None:
             "services.qa_record_service.query_qa_records_by_feedback_status",
             new=AsyncMock(return_value=[record.to_cosmos(), no_issue.to_cosmos()]),
         ),
+        patch(
+            "services.qa_record_service.read_qa_record",
+            new=AsyncMock(return_value=fresh.to_cosmos()),
+        ),
         patch("services.qa_record_service.upsert_qa_record", new=upsert),
     ):
         service = QARecordService()
@@ -1430,4 +1440,5 @@ async def test_list_validation_failed_and_reset_to_pending_validation() -> None:
 
     assert updated.feedback is not None
     assert updated.feedback.status == FeedbackStatus.pending_validation
+    assert updated.reasoning == "Latest validation evidence."
     upsert.assert_awaited_once()

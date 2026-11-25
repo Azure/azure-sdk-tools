@@ -145,7 +145,7 @@ def format_go(lines: List[str]) -> List[str]:
     return new_lines
 
 
-def process_go_example(filepath: str) -> List[GoExample]:
+def process_go_example(filepath: str, namespace_cache=None) -> List[GoExample]:
     # process aggregated Go sample to examples
 
     filename = path.basename(filepath)
@@ -165,18 +165,16 @@ def process_go_example(filepath: str) -> List[GoExample]:
                 example_lines = aggregated_go_example.class_opening + go_example_method.content
 
                 example_filepath = go_example_method.example_relative_path
-                example_dir, example_filename = path.split(example_filepath)
-
                 try:
-                    example_dir = examples_dir.try_find_resource_manager_example(
-                        specs_path, sdk_package_path, example_dir, example_filename
+                    example_dir, example_filename = examples_dir.resolve_example_path(
+                        specs_path, sdk_package_path, example_filepath, namespace_cache
                     )
                 except NameError:
-                    pass
+                    example_dir, example_filename = path.split(example_filepath)
 
                 example_lines = format_go(example_lines)
 
-                filename = example_filename.split(".")[0]
+                filename = path.splitext(example_filename)[0]
                 # use the examples-go folder for Go example
                 md_dir = (
                     (example_dir + "-go")
@@ -264,8 +262,9 @@ def create_go_examples(
 
     logging.info(f"Processing SDK examples: {release.package}")
     go_examples = []
+    namespace_cache = {}
     for filepath in go_paths:
-        go_examples += process_go_example(filepath)
+        go_examples += process_go_example(filepath, namespace_cache)
 
     files = []
     if go_examples:

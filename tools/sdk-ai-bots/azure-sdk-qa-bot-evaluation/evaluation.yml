@@ -1,7 +1,18 @@
 trigger: none
 pr: none
 
+# Evaluation pipeline: manually select core/full scope and one or more scenarios.
+#
+# Evaluates via completion mode (concurrent /completion collection + inline grading)
+# against a local backend started with development configuration for the
+# qa-bot-perf-<scenario> datasets.
 parameters:
+  - name: scope
+    type: string
+    default: core
+    values:
+      - core
+      - full
   - name: scenarios
     type: object
     default:
@@ -12,19 +23,20 @@ parameters:
       - javascript
       - go
       - apispec
+      - general
+      - releasesupport
       - authoring
       - mcpserver
       - sdkagent
       - apistewardshipboard
+  - name: maxConcurrency
+    type: number
+    default: 2
 
-#
-# Starts the agent server.py locally, then evaluates via completion mode:
-# evals_run.py calls the local /completion endpoint concurrently, collects answers,
-# and grades them inline with the Foundry builtin LLM evaluators.
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    Use1ESOfficial: false
+    Use1ESOfficial: true
     stages:
       - stage: 'evaluation'
         variables:
@@ -36,8 +48,8 @@ extends:
               os: linux
         jobs:
           - ${{ each scenario in parameters.scenarios }}:
-              - job: 'evaluation_${{ scenario }}'
-                displayName: 'evaluation (${{ scenario }})'
+              - job: 'eval_${{ scenario }}'
+                displayName: 'evaluation (${{ scenario }}, ${{ parameters.scope }})'
                 steps:
                   - task: UsePythonVersion@0
                     displayName: "Use Python 3.12"
@@ -77,7 +89,7 @@ extends:
                     displayName: 'install requirements'
                     workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   - task: AzureCLI@2
-                    displayName: 'Run Evals (${{ scenario }})'
+                    displayName: 'Run Evals (${{ scenario }}, ${{ parameters.scope }})'
                     inputs:
                       azureSubscription: 'azuresdkqabot-dev'
                       scriptType: bash
@@ -85,10 +97,12 @@ extends:
                       workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                       inlineScript: |
                         python evals_run.py \
-                          --dataset "qa-bot-basic-${{ scenario }}:latest" \
-                          --run_context "offline-evaluation" \
-                          --max_concurrency 2 \
-                          --baseline_check True \
+                          --dataset "qa-bot-perf-${{ scenario }}:latest" \
+                          --scope "${{ parameters.scope }}" \
+                          --run_context "evaluation" \
+                          --max_concurrency ${{ parameters.maxConcurrency }} \
+                          --baseline_check False \
+                          --warn_only True \
                           --cache_result full
                     env:
                       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
@@ -103,6 +117,6 @@ extends:
                   outputs:
                     - output: pipelineArtifact
                       path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
-                      artifact: evaluation-results-${{ scenario }}
-                      displayName: Publish Evaluation Results Artifact (${{ scenario }})
+                      artifact: evaluation-results-${{ scenario }}-${{ parameters.scope }}
+                      displayName: Publish Evaluation Results (${{ scenario }}, ${{ parameters.scope }})
                       condition: always()

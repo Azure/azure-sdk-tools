@@ -11,6 +11,7 @@ import {
 } from "@typespec/compiler/module-resolver";
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
+import { join } from "node:path";
 import { pathToFileURL } from "url";
 
 export interface TspLocation {
@@ -55,27 +56,70 @@ export async function discoverEntrypointFile(
   specifiedEntrypointFile?: string,
 ): Promise<string> {
   Logger.debug(`Discovering entry file in ${srcDir}`);
-  let entryTsp: string | undefined = undefined;
-  const files = (await readdir(srcDir, { recursive: true })).map(normalizePath);
-
-  function findEntrypoint(name: string): string | undefined {
-    return files.find((file) => file === normalizePath(name)) ?? undefined;
+  const entrypoints = specifiedEntrypointFile
+    ? [specifiedEntrypointFile]
+    : ["main.tsp", "client.tsp"];
+  let entryTsp = await findCanonicalEntrypoint(srcDir, entrypoints).catch(() => undefined);
+  if (!entryTsp) {
+    // Preserve the old lookup for noncanonical names, intermediate symlinks,
+    // ambiguous defaults and errors in the requested directory chain.
+    const files = await readdir(srcDir, { recursive: true });
+    // Directory entries cannot contain a native separator or literal dot segments.
+    // Only backslashes (Windows separators or POSIX literal characters) can make
+    // a returned name differ after normalization.
+    if (files.length > 0) {
+      entryTsp = entrypoints
+        .map(normalizePath)
+        .find(
+          (entry) =>
+            files.includes(entry) ||
+            files.some((file) => file.includes("\\") && normalizePath(file) === entry),
+        );
+    }
   }
-  if (specifiedEntrypointFile) {
-    entryTsp = findEntrypoint(specifiedEntrypointFile);
-    if (!entryTsp) {
+  if (!entryTsp) {
+    if (specifiedEntrypointFile) {
       throw new Error(
         `Couldn't find the entrypoint file specified in tsp-location.yaml: "${specifiedEntrypointFile}". Please verify that the entrypoint file name is correct.`,
       );
     }
-  } else {
-    entryTsp = findEntrypoint("main.tsp") ?? findEntrypoint("client.tsp");
-    if (!entryTsp) {
-      throw new Error(`No main.tsp or client.tsp found`);
-    }
+    throw new Error("No main.tsp or client.tsp found");
   }
   Logger.debug(`Found entry file: ${entryTsp}`);
   return entryTsp;
+}
+
+async function findCanonicalEntrypoint(
+  srcDir: string,
+  entrypoints: string[],
+): Promise<string | undefined> {
+  const first = normalizePath(entrypoints[0]!);
+  if (entrypoints.length > 1) {
+    const entries = await readdir(srcDir, { withFileTypes: true });
+    const primary = entries.find((entry) => entry.name === first);
+    if (primary) return primary.isFile() ? first : undefined;
+    // On POSIX a literal backslash in an on-disk name can normalize to a main.tsp
+    // alias even if the root contains only client.tsp. Preserve that precedence.
+    if (process.platform !== "win32") return undefined;
+    return entrypoints
+      .slice(1)
+      .find((name) => entries.some((entry) => entry.name === name && entry.isFile()));
+  }
+  const parts = first.split("/");
+  if (parts.some((part) => !part || part === "." || part === ".." || part.includes(":")))
+    return undefined;
+  let dir = srcDir;
+  for (const [index, part] of parts.entries()) {
+    const entries = await readdir(dir, { withFileTypes: true });
+    const match = entries.find((entry) => entry.name === part);
+    if (index === parts.length - 1) {
+      // Directory entrypoints and links retain the recursive scan's behavior on errors.
+      return match?.isFile() ? first : undefined;
+    }
+    if (!match?.isDirectory()) return undefined;
+    dir = join(dir, part);
+  }
+  return undefined;
 }
 
 export function tryParseEmitterOptionAsObject(value: string): object | string {

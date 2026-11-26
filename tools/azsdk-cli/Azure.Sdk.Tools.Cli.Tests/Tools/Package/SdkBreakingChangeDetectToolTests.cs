@@ -117,7 +117,7 @@ public class SdkBreakingChangeDetectToolTests
         var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, "tspconfig.yaml");
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(
                 BreakingChanges, "Verified .NET compatibility patterns", "DotNet",
-                _tempDirectory.DirectoryPath, It.IsAny<CancellationToken>()))
+                _tempDirectory.DirectoryPath, "Azure.Test", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SdkBreakingChangeDetectionResult
             {
                 HasBreakingChange = true,
@@ -206,7 +206,7 @@ public class SdkBreakingChangeDetectToolTests
     {
         ConfigureDetectorReport(true);
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(classification == "null" ? null : new SdkBreakingChangeDetectionResult
             {
                 HasBreakingChange = classification != "noBreaks",
@@ -569,7 +569,7 @@ public class SdkBreakingChangeDetectToolTests
     {
         ConfigureDetectorReport(true);
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Classifier unavailable."));
 
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
@@ -702,7 +702,7 @@ public class SdkBreakingChangeDetectToolTests
         Assert.That(GetResult(response).SdkChangeMD, Is.EqualTo(BreakingChanges));
         Assert.That(JsonSerializer.Serialize(GetResult(response).Details), Is.EqualTo(JsonSerializer.Serialize(_details)));
         _classifier.Verify(c => c.ClassifySdkBreakingChangesAsync(BreakingChanges, catalog, language.ToString(),
-            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [TestCase(true)]
@@ -715,7 +715,7 @@ public class SdkBreakingChangeDetectToolTests
         _languageService.Setup(s => s.GetSdkBreakingPattern(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("");
         ConfigureDetectorReport(true);
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), "", It.IsAny<string>(),
-                It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(nullResult ? null : new SdkBreakingChangeDetectionResult { HasBreakingChange = false });
 
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
@@ -724,7 +724,7 @@ public class SdkBreakingChangeDetectToolTests
         Assert.That(GetResult(response).HasBreakingChange, Is.True);
         Assert.That(GetResult(response).SdkChangeMD, Is.EqualTo(BreakingChanges));
         _classifier.Verify(c => c.ClassifySdkBreakingChangesAsync(BreakingChanges, "", "Go",
-            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [TestCase(SdkLanguage.Go, "azure-sdk-for-go")]
@@ -760,7 +760,7 @@ public class SdkBreakingChangeDetectToolTests
             Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Classified));
             Assert.That(response.Message, Does.Contain("without a pattern catalog"));
             _classifier.Verify(c => c.ClassifySdkBreakingChangesAsync(BreakingChanges, "", language.ToString(),
-                It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
         }
         Assert.That(loaderLogger.Logs.Any(log => log.ToString()!.Contains("Unable to load SDK breaking change patterns")), Is.True);
         Assert.That(GetResult(response).HasBreakingChange, Is.True);
@@ -842,7 +842,7 @@ public class SdkBreakingChangeDetectToolTests
         ConfigureDetectorReport(true);
         using var cts = new CancellationTokenSource();
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string?>(), cts.Token))
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), cts.Token))
             .ReturnsAsync(() =>
             {
                 cts.Cancel();
@@ -882,7 +882,7 @@ public class SdkBreakingChangeDetectToolTests
             _ => new List<string> { "Fabricated native entry" },
         };
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SdkBreakingChangeDetectionResult
             {
                 HasBreakingChange = true,
@@ -912,7 +912,7 @@ public class SdkBreakingChangeDetectToolTests
     private void ConfigureClassification(SdkBreakingChangeMitigationStrategy? mitigation)
     {
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SdkBreakingChangeDetectionResult
             {
                 HasBreakingChange = true,

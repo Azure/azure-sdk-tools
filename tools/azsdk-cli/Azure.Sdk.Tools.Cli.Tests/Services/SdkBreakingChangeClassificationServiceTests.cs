@@ -163,7 +163,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var ct = CancellationToken.None;
             var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
             var tspProjectFile = Path.Combine(_typeSpecProjectPath, "tspconfig.yaml");
-            var classifyResult = await service.ClassifySdkBreakingChangesAsync(sdkchanges, sdkBreakingPattern, languageService.Language.ToString(), _typeSpecProjectPath, ct);
+            var classifyResult = await service.ClassifySdkBreakingChangesAsync(sdkchanges, sdkBreakingPattern, languageService.Language.ToString(), _typeSpecProjectPath, null, ct);
             Assert.IsNotNull(classifyResult);
             Assert.IsInstanceOf<SdkBreakingChangeDetectionResult>(classifyResult);
             Assert.That(classifyResult.BreakingChanges, Has.Count.EqualTo(1));

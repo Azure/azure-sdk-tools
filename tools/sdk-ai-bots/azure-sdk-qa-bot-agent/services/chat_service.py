@@ -26,6 +26,7 @@ from models.chat import (
     AdditionalInfoType,
     AgentReferenceType,
     ChatAgentOutput,
+    ChatAgentReference,
     ChatRequest,
     ChatResponse,
     ConversationItem,
@@ -686,12 +687,9 @@ class ChatService:
             answer, route_channel_name, route_channel_link = (
                 self._extract_support_channel_from_text(output_text)
             )
-            raw_pairs = [
-                (item.title.strip(), item.link.strip())
-                for item in structured_output.references
-                if item.title.strip() and item.link.strip()
-            ]
-            references = self._enrich_references(raw_pairs, retrieved_references)
+            references = self._enrich_references(
+                structured_output.references, retrieved_references
+            )
         else:
             output_text = _CITATION_RE.sub("", raw_output_text)
             output_text, route_channel_name, route_channel_link = (
@@ -786,10 +784,10 @@ class ChatService:
 
     @staticmethod
     def _enrich_references(
-        raw_references: Sequence[tuple[str, str]],
+        raw_references: Sequence[ChatAgentReference],
         retrieved_references: list[Reference] | None = None,
     ) -> list[Reference]:
-        """Enrich ``(title, link)`` pairs with metadata from retrieved KB/wiki results."""
+        """Enrich agent references with metadata from retrieved KB/wiki results."""
         link_title_lookup: dict[tuple[str, str], Reference] = {}
         link_lookup: dict[str, Reference] = {}
         path_lookup: dict[str, Reference] = {}
@@ -821,8 +819,11 @@ class ChatService:
             return None
 
         extracted: list[Reference] = []
-        for raw_title, link in raw_references:
-            title = raw_title.strip()
+        for item in raw_references:
+            title = item.title.strip()
+            link = item.link.strip()
+            if not title or not link:
+                continue
             matched = _match_reference(link, title)
             source = matched.source if matched else ""
             content = matched.content if matched else ""
@@ -857,11 +858,13 @@ class ChatService:
 
         answer = text[: header_match.start()].rstrip()
         refs_block = text[header_match.end() :]
-        raw_pairs = [
-            (m.group(1).strip(), m.group(2))
+        raw_references = [
+            ChatAgentReference(title=m.group(1), link=m.group(2))
             for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block)
         ]
-        return answer, ChatService._enrich_references(raw_pairs, retrieved_references)
+        return answer, ChatService._enrich_references(
+            raw_references, retrieved_references
+        )
 
     @staticmethod
     def _unwrap_json(raw_output) -> str | None:

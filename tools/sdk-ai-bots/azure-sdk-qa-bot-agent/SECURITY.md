@@ -69,7 +69,7 @@ Related PRs:
 
 The evolution agent reads stored conversations, execution traces, knowledge, and external evidence to diagnose poor answers. It can **update the dev (candidate) KB and refresh its search index**, compare candidate and production answers, and **create/update GitHub issues and add comments**. These write capabilities are enabled today.
 
-The team's operating model is an **ADO scheduled feedback job processing internal-channel conversations**, not a public interactive agent. The [feedback pipeline](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/feedback-job.yml) runs daily with CI and PR triggers disabled. Pipeline run permissions and hosted-agent access are deployment-managed; the schedule itself is not an authorization check and does not prevent authorized manual runs.
+The team's operating model is a **scheduled App Service WebJob processing internal-channel conversations**, not a public interactive agent. The `feedback-jobs` WebJob (`webjob/run.sh`, `webjob/settings.job`) runs daily (`0 0 0 * * *`). App Service permissions and hosted-agent access are deployment-managed; the schedule itself is not an authorization check and does not prevent authorized manual runs.
 
 **KB edits affect only the dev environment in this deployment, not the production KB.** The team maintains the dev/production configuration separation. Production-agent calls are used to compare answers, not to apply KB changes; this does not mean the workflow makes no production requests.
 

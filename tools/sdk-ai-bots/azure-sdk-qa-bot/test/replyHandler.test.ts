@@ -1,0 +1,554 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ReplyHandler } from '../src/turn/ReplyHandler.js';
+import { ConversationHandler, ConversationMessage, Prompt } from '../src/input/ConversationHandler.js';
+import { CompletionResponsePayload, RagApiError, ErrorCode, ErrorCategory } from '../src/backend/rag.js';
+import { TurnContext } from 'botbuilder';
+import { TenantConfigManager } from '../src/config/tenant.js';
+
+// Mock dependencies
+vi.mock('../src/logging/utils.js', () => ({
+  getTurnContextLogMeta: vi.fn().mockReturnValue({ meta: 'test' }),
+}));
+
+vi.mock('../src/logging/logger.js', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock('../src/cards/components/contact.js', () => ({
+  createContactCard: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock('../src/config/config.js', () => ({
+  contactCardVersion: '1.0',
+}));
+
+describe('ReplyHandler', () => {
+  let replyHandler: ReplyHandler;
+  let mockContext: Partial<TurnContext>;
+  let mockConversationHandler: Partial<ConversationHandler>;
+  let mockTenantConfigManager: Partial<TenantConfigManager>;
+  const existingConversationMessages: ConversationMessage[] = [{
+    conversationId: 'test-conversation',
+    activityId: 'existing-contact-card',
+    contactCard: { version: '1.0' },
+    timestamp: new Date(),
+  }];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Mock TurnContext
+    mockContext = {
+      activity: {
+        conversation: { id: 'test-conversation' },
+        id: 'test-activity',
+      },
+      sendActivity: vi.fn().mockResolvedValue({ id: 'test-resource' }),
+      updateActivity: vi.fn().mockResolvedValue({ id: 'test-response' }),
+    } as any;
+
+    // Mock ConversationHandler
+    mockConversationHandler = {
+      saveMessage: vi.fn().mockResolvedValue({}),
+    };
+
+    // Mock TenantConfigManager
+    mockTenantConfigManager = {};
+
+    replyHandler = new ReplyHandler(
+      mockContext as TurnContext,
+      mockConversationHandler as ConversationHandler,
+      mockTenantConfigManager as TenantConfigManager
+    );
+  });
+
+  describe('contact card delivery', () => {
+    it('sends the contact card only when delivering the first reply', async () => {
+      expect(mockContext.sendActivity).not.toHaveBeenCalled();
+      const prompt: Prompt = {
+        textWithoutMention: 'Test prompt',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+      await replyHandler.sendReply(new Date(), {
+        id: 'reply',
+        answer: 'Answer',
+        has_result: true,
+      }, prompt, []);
+
+      expect(mockContext.sendActivity).toHaveBeenCalledTimes(2);
+      expect(mockContext.sendActivity).toHaveBeenNthCalledWith(
+        1, expect.objectContaining({ attachments: expect.any(Array) })
+      );
+      expect(mockContext.sendActivity).toHaveBeenNthCalledWith(
+        2, expect.objectContaining({ text: 'Answer' })
+      );
+      expect(mockContext.updateActivity).not.toHaveBeenCalled();
+      expect(mockConversationHandler.saveMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          activityId: 'test-resource',
+          contactCard: { version: '1.0' },
+        }),
+        expect.anything()
+      );
+    });
+  });
+
+  describe('generateAnswer', () => {
+    it('should return error message for validation error', () => {
+      const ragError: RagApiError = {
+        code: 'INVALID_REQUEST',
+        message: 'Request validation failed',
+        category: 'validation',
+      };
+
+      // Access private method using type assertion
+      const result = (replyHandler as any).generateAnswer(ragError);
+
+      expect(result.answer).toBe(
+        "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Request validation failed."
+      );
+      expect(result.isError).toBe(true);
+    });
+
+    it('should return error message for authentication error', () => {
+      const ragError: RagApiError = {
+        code: 'UNAUTHORIZED',
+        message: 'Authentication failed',
+        category: 'authentication',
+      };
+
+      const result = (replyHandler as any).generateAnswer(ragError);
+
+      expect(result.answer).toBe(
+        "🚫Sorry, I'm having some authentication issues right now and can't answer your question. Error: Authentication failed."
+      );
+      expect(result.isError).toBe(true);
+    });
+
+    it('should return error message for service error', () => {
+      const ragError: RagApiError = {
+        code: 'LLM_SERVICE_FAILURE' as ErrorCode,
+        message: 'LLM service is temporarily unavailable',
+        category: 'service' as ErrorCategory,
+      };
+
+      const result = (replyHandler as any).generateAnswer(ragError);
+
+      expect(result.answer).toBe(
+        "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM service is temporarily unavailable."
+      );
+      expect(result.isError).toBe(true);
+    });
+
+    it('should return error message for internal error', () => {
+      const ragError: RagApiError = {
+        code: 'INTERNAL_ERROR' as ErrorCode,
+        message: 'An unexpected error occurred',
+        category: 'internal' as ErrorCategory,
+      };
+
+      const result = (replyHandler as any).generateAnswer(ragError);
+
+      expect(result.answer).toBe(
+        "🚫Sorry, I'm having some internal issues right now and can't answer your question. Error: An unexpected error occurred."
+      );
+      expect(result.isError).toBe(true);
+    });
+
+    it('should return formatted answer with references for successful response', () => {
+      const successResponse: CompletionResponsePayload = {
+        id: 'test-id',
+        answer: 'This is a test answer',
+        has_result: true,
+        references: [
+          {
+            title: 'Test Reference',
+            source: 'test_source',
+            link: 'https://example.com/test',
+            content: 'Test content',
+          },
+        ],
+      };
+
+      const result = (replyHandler as any).generateAnswer(successResponse);
+
+      expect(result.answer).toContain('This is a test answer');
+      expect(result.answer).toContain('**References**');
+      expect(result.answer).toContain('[Test Reference | Test Source](https://example.com/test)');
+      expect(result.isError).toBe(false);
+    });
+
+    it('should return answer without references when no references provided', () => {
+      const successResponse: CompletionResponsePayload = {
+        id: 'test-id',
+        answer: 'This is a test answer without references',
+        has_result: true,
+        references: [],
+      };
+
+      const result = (replyHandler as any).generateAnswer(successResponse);
+
+      expect(result.answer).toBe('This is a test answer without references');
+      expect(result.answer).not.toContain('**References**');
+      expect(result.isError).toBe(false);
+    });
+  });
+
+  describe('convertPayloadToReply', () => {
+    it('should convert validation error to RAGReply with error message', () => {
+      const ragError: RagApiError = {
+        code: 'MISSING_MESSAGE' as ErrorCode,
+        message: 'Message content is required',
+        category: 'validation' as ErrorCategory,
+      };
+
+      const result = (replyHandler as any).convertPayloadToReply(ragError);
+
+      expect(result).toEqual({
+        answer:
+          "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Message content is required.",
+        has_result: false,
+        references: [],
+      });
+    });
+
+    it('should convert authorization error to RAGReply with error message', () => {
+      const ragError: RagApiError = {
+        code: 'INVALID_TENANT_ID' as ErrorCode,
+        message: 'Tenant ID is invalid',
+        category: 'authorization' as ErrorCategory,
+      };
+
+      const result = (replyHandler as any).convertPayloadToReply(ragError);
+
+      expect(result).toEqual({
+        answer:
+          "🚫Sorry, I'm having some authorization issues right now and can't answer your question. Error: Tenant ID is invalid.",
+        has_result: false,
+        references: [],
+      });
+    });
+
+    it('should convert dependency error to RAGReply with error message', () => {
+      const ragError: RagApiError = {
+        code: 'SEARCH_FAILURE' as ErrorCode,
+        message: 'Search service is not responding',
+        category: 'dependency' as ErrorCategory,
+      };
+
+      const result = (replyHandler as any).convertPayloadToReply(ragError);
+
+      expect(result).toEqual({
+        answer:
+          "🚫Sorry, I'm having some dependency issues right now and can't answer your question. Please try again later. Error: Search service is not responding.",
+        has_result: false,
+        references: [],
+      });
+    });
+
+    it('should convert rate limit error to RAGReply with error message', () => {
+      const ragError: RagApiError = {
+        code: 'SERVICE_INIT_FAILURE' as ErrorCode,
+        message: 'Service initialization failed',
+        category: 'rate_limit' as ErrorCategory,
+      };
+
+      const result = (replyHandler as any).convertPayloadToReply(ragError);
+
+      expect(result).toEqual({
+        answer:
+          "🚫Sorry, I'm having some rate_limit issues right now and can't answer your question. Error: Service initialization failed.",
+        has_result: false,
+        references: [],
+      });
+    });
+
+    it('should convert successful response to RAGReply', () => {
+      const successResponse: CompletionResponsePayload = {
+        id: 'test-id',
+        answer: 'This is a successful response',
+        has_result: true,
+        references: [
+          {
+            title: 'Reference 1',
+            source: 'source_1',
+            link: 'https://example.com/ref1',
+            content: 'Reference content 1',
+          },
+          {
+            title: 'Reference 2',
+            source: 'source_2',
+            link: 'https://example.com/ref2',
+            content: 'Reference content 2',
+          },
+        ],
+      };
+
+      const result = (replyHandler as any).convertPayloadToReply(successResponse);
+
+      expect(result).toEqual({
+        answer: 'This is a successful response',
+        has_result: true,
+        references: [
+          {
+            title: 'Reference 1',
+            source: 'source_1',
+            link: 'https://example.com/ref1',
+            content: 'Reference content 1',
+          },
+          {
+            title: 'Reference 2',
+            source: 'source_2',
+            link: 'https://example.com/ref2',
+            content: 'Reference content 2',
+          },
+        ],
+      });
+    });
+
+    it('should handle successful response with no references', () => {
+      const successResponse: CompletionResponsePayload = {
+        id: 'test-id',
+        answer: 'This is a response without references',
+        has_result: true,
+        references: [],
+      };
+
+      const result = (replyHandler as any).convertPayloadToReply(successResponse);
+
+      expect(result).toEqual({
+        answer: 'This is a response without references',
+        has_result: true,
+        references: [],
+      });
+    });
+
+    it('should handle successful response with undefined references', () => {
+      const successResponse: CompletionResponsePayload = {
+        id: 'test-id',
+        answer: 'This is a response with undefined references',
+        has_result: true,
+      };
+
+      const result = (replyHandler as any).convertPayloadToReply(successResponse);
+
+      expect(result).toEqual({
+        answer: 'This is a response with undefined references',
+        has_result: true,
+        references: [],
+      });
+    });
+  });
+
+  describe('sendReply', () => {
+    it('delivers verified mentions alongside the existing AI and trace entities', async () => {
+      const reply: CompletionResponsePayload = {
+        id: 'reply',
+        answer: 'Please ping <at>linked.person@microsoft.com</at> and @unlinked.',
+        has_result: true,
+        trace_id: 'trace-123',
+        mentions: [{
+          text: '<at>linked.person@microsoft.com</at>',
+          mentioned: {
+            id: '11111111-2222-3333-4444-555555555555',
+            name: 'Linked Person',
+          },
+        }],
+      };
+      const prompt: Prompt = {
+        textWithoutMention: 'Who can review?',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      await replyHandler.sendReply(new Date(), reply, prompt, existingConversationMessages);
+
+      expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
+      expect(mockContext.updateActivity).not.toHaveBeenCalled();
+      expect(vi.mocked(mockContext.sendActivity).mock.calls[0][0]).not.toHaveProperty('id');
+      expect(mockContext.sendActivity).toHaveBeenCalledWith(expect.objectContaining({
+        text: reply.answer,
+        entities: [
+          expect.objectContaining({ additionalType: ['AIGeneratedContent'], usageInfo: expect.objectContaining({ description: 'Trace ID: trace-123' }) }),
+          {
+            type: 'mention',
+            text: '<at>linked.person@microsoft.com</at>',
+            mentioned: reply.mentions[0].mentioned,
+          },
+        ],
+      }));
+      // Stored history preserves the agent-authored answer.
+      expect(mockConversationHandler.saveMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          activityId: 'test-resource',
+          reply: expect.objectContaining({ answer: reply.answer }),
+        }),
+        expect.anything()
+      );
+    });
+
+    it('should handle complete flow with validation error', async () => {
+      const ragError: RagApiError = {
+        code: 'EMPTY_CONTENT' as ErrorCode,
+        message: 'Message content cannot be empty',
+        category: 'validation' as ErrorCategory,
+      };
+
+      const mockPrompt: Prompt = {
+        textWithoutMention: 'Test prompt',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      await replyHandler.sendReply(new Date(), ragError, mockPrompt, existingConversationMessages);
+
+      expect(mockContext.sendActivity).toHaveBeenCalledWith({
+        type: 'message',
+        text: "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Message content cannot be empty.",
+        entities: [
+          {
+            type: 'https://schema.org/Message',
+            '@type': 'Message',
+            '@context': 'https://schema.org',
+            '@id': '',
+            additionalType: ['AIGeneratedContent'],
+          },
+        ],
+        conversation: mockContext.activity?.conversation,
+      });
+    });
+
+    it('should handle complete flow with service error', async () => {
+      const ragError: RagApiError = {
+        code: 'LLM_SERVICE_FAILURE' as ErrorCode,
+        message: 'LLM model is currently overloaded',
+        category: 'service' as ErrorCategory,
+      };
+
+      const mockPrompt: Prompt = {
+        textWithoutMention: 'Another test prompt',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      await replyHandler.sendReply(new Date(), ragError, mockPrompt, existingConversationMessages);
+
+      expect(mockContext.sendActivity).toHaveBeenCalledWith({
+        type: 'message',
+        text: "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM model is currently overloaded.",
+        entities: [
+          {
+            type: 'https://schema.org/Message',
+            '@type': 'Message',
+            '@context': 'https://schema.org',
+            '@id': '',
+            additionalType: ['AIGeneratedContent'],
+          },
+        ],
+        conversation: mockContext.activity?.conversation,
+      });
+    });
+
+    it('keeps AT text unchanged without mention entities when the backend omits mention metadata', async () => {
+      const successResponse: CompletionResponsePayload = {
+        id: 'test-id',
+        answer: 'Please help <at>linked.person@microsoft.com</at>.',
+        has_result: true,
+        references: [],
+        trace_id: 'test-trace-id',
+      };
+      const mockPrompt: Prompt = {
+        textWithoutMention: 'Test prompt',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      await replyHandler.sendReply(new Date(), successResponse, mockPrompt, existingConversationMessages);
+
+      expect(mockContext.sendActivity).toHaveBeenCalledTimes(1);
+      expect(mockContext.updateActivity).not.toHaveBeenCalled();
+      expect(mockContext.sendActivity).toHaveBeenCalledWith({
+        type: 'message',
+        text: 'Please help <at>linked.person@microsoft.com</at>.',
+        entities: [
+          {
+            type: 'https://schema.org/Message',
+            '@type': 'Message',
+            '@context': 'https://schema.org',
+            '@id': '',
+            additionalType: ['AIGeneratedContent'],
+            usageInfo: {
+              type: 'https://schema.org/Message',
+              '@type': 'CreativeWork',
+              name: 'Internal Tracking',
+              description: 'Trace ID: test-trace-id',
+            },
+          },
+        ],
+        conversation: mockContext.activity?.conversation,
+      });
+    });
+
+    it('propagates send failures without saving an undelivered reply', async () => {
+      const error = new Error('Send failed');
+      vi.mocked(mockContext.sendActivity).mockRejectedValueOnce(error);
+      const prompt: Prompt = {
+        textWithoutMention: 'Test prompt',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+
+      await expect(replyHandler.sendReply(new Date(), {
+        id: 'reply',
+        answer: 'Answer',
+        has_result: true,
+      }, prompt, existingConversationMessages)).rejects.toBe(error);
+
+      expect(mockContext.updateActivity).not.toHaveBeenCalled();
+      expect(mockConversationHandler.saveMessage).not.toHaveBeenCalled();
+    });
+
+    it('renders standardized footer from route_channel_name and route_channel_link', async () => {
+      const prompt: Prompt = {
+        textWithoutMention: 'Release help',
+        userName: 'TestUser',
+        userID: 'user-123',
+        timestamp: new Date(),
+        conversationID: 'test-conversation',
+      };
+      const routedReply: CompletionResponsePayload = {
+        id: 'reply-route',
+        answer: 'Please check with release support.',
+        has_result: true,
+        route_channel_name: 'SDK release support',
+        route_channel_link:
+          'https://teams.microsoft.com/l/channel/19%3A084875bb626242ed95f3ac8dddfaa12a%40thread.skype/SDK%20release%20support?groupId=g1&tenantId=t1',
+      };
+
+      await replyHandler.sendReply(new Date(), routedReply, prompt, existingConversationMessages, 'azure_sdk_onboarding');
+      expect(mockContext.sendActivity).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining(
+            '💬 Not resolved? Please re-post in the 👉 [SDK release support](https://teams.microsoft.com/l/channel/19%3A084875bb626242ed95f3ac8dddfaa12a%40thread.skype/SDK%20release%20support?groupId=g1&tenantId=t1) channel where our domain experts can provide a deeper dive.'
+          ),
+        })
+      );
+    });
+  });
+});

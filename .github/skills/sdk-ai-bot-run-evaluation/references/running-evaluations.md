@@ -7,10 +7,11 @@ Flags, recipes, and result handling for `evals_run.py`. Run from
 
 | Flag                | Default  | Notes                                                                                                                                                                     |
 | ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dataset`         | required | Local `<...>.jsonl` path or `qa-bot-<target>-<scenario>[:version]`.                                                                                                       |
+| `--dataset`         | required | Local `<...>.jsonl` path or `qa-bot-<scenario>[:version]`.                                                                                                               |
+| `--scope`           | `core`   | `core` selects `"core"`-tagged cases; `full` selects `"full"`-tagged cases.                                                                                               |
 | `--evaluators`      | all      | Comma-separated subset of the evaluators below.                                                                                                                           |
 | `--max_concurrency` | 8        | Parallel `/completion` calls.                                                                                                                                             |
-| `--run_context`     | `local`  | Context tag appended to the dataset name (e.g. `local` or the pipeline name). The eval name is `<dataset>-<run_context>`, kept stable to avoid flooding the Foundry list. |
+| `--run_context`     | `local`  | Context tag appended to the dataset and scope (e.g. `local` or the pipeline name). The eval name is `<dataset>-<scope>-<run_context>`, kept stable to avoid flooding the Foundry list. |
 | `--baseline_check`  | `True`   | `True` gates against the stored baseline; `False` just reports.                                                                                                           |
 | `--is_ci`           | `True`   | Use `False` locally (uses `az login` credential).                                                                                                                         |
 | `--cache_result`    | `none`   | `none` \| `score` \| `full` (full writes per-case + failed-case JSON to `cache/`).                                                                                        |
@@ -36,31 +37,31 @@ The collector posts each question to the bot `/completion` endpoint.
 
 ## Single test case
 
-There is no `--testcase` flag — build a one-row JSONL file and pass it as `--dataset`.
+There is no single-case flag — build a one-row JSONL file and pass it as `--dataset`.
 
 ```bash
-# Extract one case by its testcase title from a scenario file:
-grep -F '"testcase": "Async headers"' evaluation_datasets/perf/typespec.jsonl > one.jsonl
-python evals_run.py --dataset one.jsonl --is_ci False --baseline_check False --cache_result full
+# Extract one case by its structured testcase value:
+mkdir -p single-case
+grep -F '"testcase": "001003-version-required-to-optional"' evaluation_datasets/typespec.jsonl > single-case/typespec.jsonl
+python evals_run.py --dataset single-case/typespec.jsonl --scope full --is_ci False --baseline_check False --cache_result full
 
-# Or hand-write a single canonical row (testcase/query/ground_truth/scenario/reviewed) into one.jsonl.
+# Or hand-write one canonical row with testcase, tags, query, ground_truth, scenario, and reviewed.
 ```
 
-The `scenario` is taken from the dataset file stem (`one` here) unless an asset name is
-used; tenant routing falls back to default, which is fine for a quick local check.
+The JSONL filename must match the row's `scenario`; its parent folder can be temporary.
 
 ## All scenarios
 
 `--dataset` takes one file, so loop over scenarios:
 
 ```bash
-for f in evaluation_datasets/perf/*.jsonl; do
-  python evals_run.py --dataset "$f" \
+for f in evaluation_datasets/*.jsonl; do
+  python evals_run.py --dataset "$f" --scope core \
     --is_ci False --baseline_check False --cache_result full
 done
 ```
 
-Swap `perf` for `basic` to run the PR-gate datasets.
+Use `--scope full` for complete scenario validation.
 
 ## Results and the gate
 

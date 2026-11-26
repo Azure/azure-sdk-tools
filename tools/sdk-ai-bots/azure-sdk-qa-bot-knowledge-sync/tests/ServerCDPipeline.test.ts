@@ -67,14 +67,20 @@ describe('server CD job separation', () => {
             const condition = job.condition
                 .replace("${{ eq(parameters.deploymentTarget, 'all') }}", String(target === 'all'))
                 .replace(`\${{ eq(parameters.deploymentTarget, '${jobTarget}') }}`, String(target === jobTarget));
-            for (const result of ['Succeeded', 'SucceededWithIssues', 'Skipped', 'Failed', 'Canceled']) {
-                for (const canceled of [false, true]) {
-                    const actual = runInNewContext(condition, {
-                        and: (...values: boolean[]) => values.every(Boolean), or: (...values: boolean[]) => values.some(Boolean),
-                        not: (value: boolean) => !value, eq: (left: string, right: string) => left === right,
-                        canceled: () => canceled, dependencies: { DeployServer: { result } }
-                    });
-                    expect(actual).toBe(!canceled && ((target === 'all' && result === 'Succeeded') || (target === jobTarget && result === 'Skipped')));
+            const results = ['Succeeded', 'SucceededWithIssues', 'Skipped', 'Failed', 'Canceled'];
+            for (const serverResult of results) {
+                for (const knowledgeResult of jobTarget === 'wiki-index' ? results : [undefined]) {
+                    for (const canceled of [false, true]) {
+                        const actual = runInNewContext(condition, {
+                            and: (...values: boolean[]) => values.every(Boolean), or: (...values: boolean[]) => values.some(Boolean),
+                            not: (value: boolean) => !value, eq: (left: string, right: string) => left === right,
+                            canceled: () => canceled,
+                            dependencies: { DeployServer: { result: serverResult }, DeployKnowledgeSync: { result: knowledgeResult } }
+                        });
+                        const allReady = target === 'all' && serverResult === 'Succeeded' && (knowledgeResult === undefined || knowledgeResult === 'Succeeded');
+                        const standaloneReady = target === jobTarget && serverResult === 'Skipped' && (knowledgeResult === undefined || knowledgeResult === 'Skipped');
+                        expect(actual).toBe(!canceled && (allReady || standaloneReady));
+                    }
                 }
             }
         }
@@ -91,7 +97,7 @@ describe('server CD job separation', () => {
 
     it('deploys the Wiki Index with its own schedule only in dev and prod', () => {
         expect(webjobGroup.map((job: any) => job.job)).toEqual(['DeployKnowledgeSync', 'DeployWikiIndex']);
-        expect(wiki.dependsOn).toBe('DeployServer');
+        expect(wiki.dependsOn).toEqual(['DeployServer', 'DeployKnowledgeSync']);
         expect(wiki.steps.at(-1)).toMatchObject({
             inputs: { inlineScript: 'node "$(syncWorkingDirectory)/scripts/deploy-webjob.mjs"' },
             env: {

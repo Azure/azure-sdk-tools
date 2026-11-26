@@ -340,8 +340,11 @@ extends:
 
             - job: DeployWikiIndex
               displayName: 'Deploy Scheduled Wiki Index'
-              dependsOn: DeployServer
-              condition: and(not(canceled()), or(and(${{ eq(parameters.deploymentTarget, 'all') }}, eq(dependencies.DeployServer.result, 'Succeeded')), and(${{ eq(parameters.deploymentTarget, 'wiki-index') }}, eq(dependencies.DeployServer.result, 'Skipped'))))
+              # Both WebJob deployers write shared App Service settings.
+              dependsOn:
+                - DeployServer
+                - DeployKnowledgeSync
+              condition: and(not(canceled()), or(and(${{ eq(parameters.deploymentTarget, 'all') }}, eq(dependencies.DeployServer.result, 'Succeeded'), eq(dependencies.DeployKnowledgeSync.result, 'Succeeded')), and(${{ eq(parameters.deploymentTarget, 'wiki-index') }}, eq(dependencies.DeployServer.result, 'Skipped'), eq(dependencies.DeployKnowledgeSync.result, 'Skipped'))))
               pool:
                 name: $(LINUXPOOL)
                 image: $(LINUXVMIMAGE)

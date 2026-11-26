@@ -682,19 +682,28 @@ class ChatService:
 
         raw_output_text = response.output_text or ""
         structured_output = self._parse_structured_output(raw_output_text)
+        output_text = (
+            structured_output.answer
+            if structured_output is not None
+            else raw_output_text
+        )
+
+        # Strip model citation artifacts (e.g. "citeturn0search0").
+        output_text = _CITATION_RE.sub("", output_text)
+
+        # Extract any explicit {{channel:<key>}} handoff before **References**.
+        output_text, route_channel_name, route_channel_link = (
+            self._extract_support_channel_from_text(output_text)
+        )
+
         if structured_output is not None:
-            output_text = _CITATION_RE.sub("", structured_output.answer)
-            answer, route_channel_name, route_channel_link = (
-                self._extract_support_channel_from_text(output_text)
-            )
+            answer = output_text
             references = self._enrich_references(
                 structured_output.references, retrieved_references
             )
         else:
-            output_text = _CITATION_RE.sub("", raw_output_text)
-            output_text, route_channel_name, route_channel_link = (
-                self._extract_support_channel_from_text(output_text)
-            )
+            # Extract structured references from the agent's markdown output
+            # and strip the references section from the answer text.
             answer, references = self._extract_references_from_text(
                 output_text, retrieved_references
             )

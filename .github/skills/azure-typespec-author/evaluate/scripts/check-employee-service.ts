@@ -6,10 +6,12 @@ import { getArmResources } from "@azure-tools/typespec-azure-resource-manager";
 const program = await compile(NodeHost, path.resolve("main.tsp"), { noEmit: true });
 assert.equal(program.hasError(), false, "The service must compile.");
 const employee = getArmResources(program).find(
-  (resource) => resource.name === "Employee" && resource.armProviderNamespace === "Microsoft.Widget",
+  (resource) =>
+    resource.name === "Employee" && resource.armProviderNamespace === "Microsoft.Widget",
 );
 assert.ok(employee, "Employee must be reachable from main.tsp as an ARM resource.");
 assert.equal(employee.kind, "Tracked", "Employee must be a tracked ARM resource.");
+assert.ok(employee.typespecType.namespace, "Employee must have a namespace.");
 const namespace = getNamespaceFullName(employee.typespecType.namespace);
 assert.ok(
   listServices(program).some(({ type }) => {
@@ -18,7 +20,8 @@ assert.ok(
   }),
   "Employee must belong to the compiled service.",
 );
-for (const operation of ["createOrUpdate", "read", "update", "delete"]) {
+const lifecycleOperations = ["createOrUpdate", "read", "update", "delete"] as const;
+for (const operation of lifecycleOperations) {
   assert.ok(employee.operations.lifecycle[operation], `Employee must expose ${operation}.`);
 }
 const lists = Object.values(employee.operations.lists);

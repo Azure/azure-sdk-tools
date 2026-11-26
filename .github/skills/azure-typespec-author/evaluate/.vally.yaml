@@ -36,7 +36,7 @@ environments:
         cwd: ../../../..
         args:
           [
-            ".github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.cjs",
+            ".github/skills/azure-typespec-author/evaluate/scripts/run-prebuilt-mcp.ts",
           ]
         timeout: 5m
         env:
@@ -58,13 +58,13 @@ environments:
     files:
       - src: ../fixtures/instructions-test/copilot-instructions.md
         dest: .github/copilot-instructions.md
-      - src: ../scripts/run-prebuilt-mcp.cjs
-        dest: tools/run-prebuilt-mcp.cjs
+      - src: ../scripts/run-prebuilt-mcp.ts
+        dest: tools/run-prebuilt-mcp.ts
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: node
-        args: ["tools/run-prebuilt-mcp.cjs"]
+        args: ["tools/run-prebuilt-mcp.ts"]
         timeout: 5m
         env:
           AZSDK_EVAL_MCP_KIND: "live"
@@ -78,13 +78,13 @@ environments:
     skills: *sdkSkills
     commands: *cleanSkillInputs
     files:
-      - src: ../scripts/run-prebuilt-mcp.cjs
-        dest: tools/run-prebuilt-mcp.cjs
+      - src: ../scripts/run-prebuilt-mcp.ts
+        dest: tools/run-prebuilt-mcp.ts
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: node
-        args: ["tools/run-prebuilt-mcp.cjs"]
+        args: ["tools/run-prebuilt-mcp.ts"]
         timeout: "60s"
         env:
           AZSDK_EVAL_MCP_KIND: "mock"

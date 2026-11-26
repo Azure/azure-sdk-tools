@@ -25,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
         /// </summary>
         /// Indicates whether any breaking changes were detected in the SDK that are not suppressed by the package's SDK suppressions.
         /// </summary>
+        [JsonPropertyName("hasUnsuppressedBreakingChange")]
         public bool? HasUnsuppressedBreakingChange => !HasBreakingChange ? false : BreakingChanges.Count == 0 ? null : BreakingChanges.Any(bc => bc.SuppressionStatus != SdkBreakingChangeSuppressionStatus.Suppressed);
 
         /// <summary>

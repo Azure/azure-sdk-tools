@@ -783,11 +783,38 @@ class ChatService:
         return cleaned, resolved_name, resolved_link
 
     @staticmethod
+    def _extract_references_from_text(
+        text: str, retrieved_references: list[Reference] | None = None
+    ) -> tuple[str, list[Reference]]:
+        """Parse the **References** section from agent output text.
+
+        Returns ``(answer_without_references, extracted_references)``.
+        The extracted references are enriched with ``source`` and ``content``
+        from *retrieved_references* when a matching link or title is found,
+        preserving compatibility with the old backend response shape.
+        """
+        # Locate the **References** header
+        header_match = re.search(r"\n*\*\*References\*\*\s*\n", text)
+        if not header_match:
+            return text, []
+
+        answer = text[: header_match.start()].rstrip()
+        refs_block = text[header_match.end() :]
+        raw_references = [
+            ChatAgentReference(title=m.group(1), link=m.group(2))
+            for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block)
+        ]
+        return answer, ChatService._enrich_references(
+            raw_references, retrieved_references
+        )
+
+    @staticmethod
     def _enrich_references(
         raw_references: Sequence[ChatAgentReference],
         retrieved_references: list[Reference] | None = None,
     ) -> list[Reference]:
         """Enrich agent references with metadata from retrieved KB/wiki results."""
+        # Build lookups from the tool results for enrichment
         link_title_lookup: dict[tuple[str, str], Reference] = {}
         link_lookup: dict[str, Reference] = {}
         path_lookup: dict[str, Reference] = {}
@@ -839,32 +866,8 @@ class ChatService:
                     content=content,
                 )
             )
+
         return extracted
-
-    @staticmethod
-    def _extract_references_from_text(
-        text: str, retrieved_references: list[Reference] | None = None
-    ) -> tuple[str, list[Reference]]:
-        """Parse the **References** section from agent output text.
-
-        Returns ``(answer_without_references, extracted_references)``.
-        The extracted references are enriched with ``source`` and ``content``
-        from *retrieved_references* when a matching link or title is found,
-        preserving compatibility with plain-text agent responses.
-        """
-        header_match = re.search(r"\n*\*\*References\*\*\s*\n", text)
-        if not header_match:
-            return text, []
-
-        answer = text[: header_match.start()].rstrip()
-        refs_block = text[header_match.end() :]
-        raw_references = [
-            ChatAgentReference(title=m.group(1), link=m.group(2))
-            for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block)
-        ]
-        return answer, ChatService._enrich_references(
-            raw_references, retrieved_references
-        )
 
     @staticmethod
     def _unwrap_json(raw_output) -> str | None:

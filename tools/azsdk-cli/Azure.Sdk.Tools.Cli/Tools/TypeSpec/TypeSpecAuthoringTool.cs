@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -7,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
@@ -26,6 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private readonly ITypeSpecHelper _typeSpecHelper;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
+        private const int MaxTelemetryReferenceContentLength = 200;
 
         // commands
         private const string TypeSpecAuthoringToolCommandName = "generate-authoring-plan";
@@ -260,11 +263,11 @@ Returns an answer with supporting references and documentation links
                 // Validate inputs
                 if (string.IsNullOrWhiteSpace(request))
                 {
-                    return new TypeSpecKnowledgeRetrieveResponse
+                    return CreateKnowledgeRetrieveResponse(new TypeSpecKnowledgeRetrieveResponse
                     {
                         TypeSpecProject = typespecProject,
                         ResponseError = "Request cannot be empty"
-                    };
+                    });
                 }
 
                 _logger.LogInformation("Authoring with request: {Request}", request);
@@ -287,36 +290,58 @@ Returns an answer with supporting references and documentation links
 
                 if (!response.HasResult)
                 {
-                    return new TypeSpecKnowledgeRetrieveResponse
+                    return CreateKnowledgeRetrieveResponse(new TypeSpecKnowledgeRetrieveResponse
                     {
                         TypeSpecProject = typespecProject,
                         ResponseError = "Did not receive a result from knowledge base service."
-                    };
+                    });
                 }
-                return new TypeSpecKnowledgeRetrieveResponse
+                return CreateKnowledgeRetrieveResponse(new TypeSpecKnowledgeRetrieveResponse
                 {
                     TypeSpecProject = typespecProject,
                     Context = response.Knowledges != null ? JsonSerializer.Serialize(response.Knowledges, new JsonSerializerOptions { WriteIndented = true }) : string.Empty
-                };
+                }, response.Knowledges);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 _logger.LogWarning("AI query was cancelled");
-                return new TypeSpecKnowledgeRetrieveResponse
+                return CreateKnowledgeRetrieveResponse(new TypeSpecKnowledgeRetrieveResponse
                 {
                     TypeSpecProject = typespecProject,
                     ResponseError = "Query was cancelled"
-                };
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error querying AI agent");
-                return new TypeSpecKnowledgeRetrieveResponse
+                return CreateKnowledgeRetrieveResponse(new TypeSpecKnowledgeRetrieveResponse
                 {
                     TypeSpecProject = typespecProject,
                     ResponseError = $"Failed to query AI agent: {ex.Message}"
-                };
+                });
             }
+        }
+
+        private static TypeSpecKnowledgeRetrieveResponse CreateKnowledgeRetrieveResponse(
+            TypeSpecKnowledgeRetrieveResponse response, List<Knowledge>? knowledges = null)
+        {
+            // Override only the telemetry payload, not the response sent to the MCP client.
+            Activity.Current?.SetCustomProperty(TelemetryConstants.TagName.ToolResponse, new
+            {
+                operation_status = response.OperationStatus,
+                response_error = response.ResponseError,
+                response_errors = response.ResponseErrors,
+                references = (knowledges ?? []).Select(knowledge => new
+                {
+                    source = knowledge.Source,
+                    title = knowledge.Title,
+                    link = knowledge.Link,
+                    content = knowledge.Content.Length > MaxTelemetryReferenceContentLength
+                        ? knowledge.Content.Substring(0, MaxTelemetryReferenceContentLength - 3) + "..."
+                        : knowledge.Content
+                }).ToList()
+            });
+            return response;
         }
 
         private List<DocumentReference> MapReferences(List<Reference>? references)

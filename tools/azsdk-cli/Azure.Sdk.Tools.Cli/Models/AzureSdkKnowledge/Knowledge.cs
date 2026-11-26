@@ -4,16 +4,13 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledge
 {
     public class Knowledge
     {
-        [JsonPropertyName("document_source")]
+        [JsonPropertyName("source")]
         public string Source { get; set; } = string.Empty;
 
-        [JsonPropertyName("document_filename")]
-        public string FileName { get; set; } = string.Empty;
-
-        [JsonPropertyName("document_title")]
+        [JsonPropertyName("title")]
         public string Title { get; set; } = string.Empty;
 
-        [JsonPropertyName("document_link")]
+        [JsonPropertyName("link")]
         public string Link { get; set; } = string.Empty;
 
         [JsonPropertyName("content")]

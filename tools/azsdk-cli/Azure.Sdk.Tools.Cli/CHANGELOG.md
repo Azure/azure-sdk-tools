@@ -13,6 +13,7 @@
 
 - Overdue release-plan logs now show plan IDs, cleanup and email outcomes, skip reasons, and summary counts. Successfully sent generic reminders no longer fail the command because of an assessment warning; cleanup and actual reminder-send failures remain errors.
 - `api-review create`, `package get-approval-status`, and `package mark-released` now accept the same language aliases and normalize them for API Review Hub and APIView. Both `js` and `javascript` are sent to API Review Hub as `javascript`, to APIView as `JavaScript`, and default to `azure-sdk-for-js` when creating a review.
+- Customize the `azsdk_typespec_retrieve_knowledge` response content specifically for telemetry to ensure it stays within the Application Insights custom-property size limit.
 
 ### Other Changes
 

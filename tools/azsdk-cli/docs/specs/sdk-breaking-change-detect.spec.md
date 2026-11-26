@@ -158,11 +158,40 @@ breaks: `generator`, `client customization`, or `manual`. Other languages can
 continue returning entries without `mitigationStrategy`. `category` always
 describes the root cause, not whether or how the change can be mitigated.
 
+Each classified entry also includes `suppressionStatus`, computed from
+`sdk-suppressions.yaml` in the TypeSpec project directory rather than from the
+agent response. YAML is deserialized into a typed model: the top-level
+`suppressions` mapping associates SDK repository names with lists of package
+entries, each containing a required, non-null `package` string and a required,
+non-null `breaking-changes` string list. Missing or null required fields cause a
+YAML deserialization error, which is logged and leaves changes unsuppressed.
+Matching uses the SDK repository language key, exact package
+name, and exact `originBreaks` text. The status is `suppressed` when all original
+entries match, `partiallySuppressed` when only some match, and `none` when no
+entries match or the original entries are missing or empty. Suppression status does not remove
+breaking changes or change `hasBreakingChange`.
+
+The aggregate `hasUnsuppressedBreakingChange` field is a nullable boolean derived
+from `hasBreakingChange` and the classified entries' `suppressionStatus`:
+
+| `hasUnsuppressedBreakingChange` | Meaning |
+| --- | --- |
+| `true` | At least one classified breaking change remains actionable: its `suppressionStatus` is `none` or `partiallySuppressed`. |
+| `false` | No breaking changes were detected, or every classified breaking change is `suppressed`. |
+| `null` or an omitted MCP property | Breaking changes are known (`hasBreakingChange: true`), but no classified entries are available, for example because classification was skipped or failed. Suppression is unknown. |
+
+Consumers must treat `null` and an omitted MCP property as unknown, not as
+`false` or evidence that all changes are suppressed. This aggregate does not
+replace the raw `hasBreakingChange` verdict or `breaking_change_status`; callers
+must still inspect the detection outcome to establish whether the comparison
+was conclusive.
+
 **Classified .NET result:**
 
 ```json
 {
     "hasBreakingChange": true,
+    "hasUnsuppressedBreakingChange": true,
     "changes": "### Breaking Changes\n- CP0002: Member Azure.Example.Widget.Get(string) removed",
     "details": {
         "baselineVersion": "1.2.3"
@@ -173,6 +202,7 @@ describes the root cause, not whether or how the change can be mitigated.
             "category": "unknown",
             "resolution": "Review the removed member against the released API and TypeSpec source before selecting a fix; no safe mapping has been verified.",
             "mitigationStrategy": "manual",
+            "suppressionStatus": "none",
             "originBreaks": [
                 "CP0002: Member Azure.Example.Widget.Get(string) removed"
             ]
@@ -186,6 +216,7 @@ describes the root cause, not whether or how the change can be mitigated.
 ```json
 {
     "hasBreakingChange": false,
+    "hasUnsuppressedBreakingChange": false,
     "changes": "### Breaking Changes\nNone.\n\n### Features Added\nNone."
 }
 ```
@@ -195,12 +226,14 @@ describes the root cause, not whether or how the change can be mitigated.
 ```json
 {
     "hasBreakingChange": true,
+    "hasUnsuppressedBreakingChange": true,
     "changes": "### Breaking Changes\n- Field Prop of struct ContainerRegistry changed from string to int32",
     "breakingChanges": [
         {
             "breakingChange": "ContainerRegistry.Prop changed from string to int32",
             "category": "spec change",
             "resolution": "Review the service contract change with the owner before choosing a compatible representation.",
+            "suppressionStatus": "none",
             "originBreaks": [
                 "Field Prop of struct ContainerRegistry changed from string to int32"
             ]

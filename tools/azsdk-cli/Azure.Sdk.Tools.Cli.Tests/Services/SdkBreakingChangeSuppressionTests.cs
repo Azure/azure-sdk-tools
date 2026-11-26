@@ -34,7 +34,7 @@ public class SdkBreakingChangeSuppressionTests
                 - package: other-package
                   breaking-changes:
                     - 'Removed Other'
-              azure-sdk-for-rust:
+              {{(repoName == "azure-sdk-for-go" ? "azure-sdk-for-java" : "azure-sdk-for-go")}}:
                 - package: test-package
                   breaking-changes:
                     - 'Removed Foreign'
@@ -165,6 +165,95 @@ public class SdkBreakingChangeSuppressionTests
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.BreakingChanges.Single());
         Assert.IsTrue(result.BreakingChanges.Single().SuppressionStatus == SdkBreakingChangeSuppressionStatus.None);
+        Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("Failed to parse SDK suppression file")), Is.True);
+    }
+
+    [TestCase("azure-sdk-for-java: null")]
+    [TestCase("azure-sdk-for-java: {}")]
+    [TestCase("azure-sdk-for-java: [null]")]
+    [TestCase("azure-sdk-for-java: [123]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package, breaking-changes: [null] }]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package, breaking-changes: [123] }]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package, breaking-changes: [true] }]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package, breaking-changes: [[message]] }]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package, breaking-changes: [{}] }]")]
+    [TestCase("azure-sdk-for-java: [{ package: 123, breaking-changes: [] }]")]
+    [TestCase("azure-sdk-for-java: [{ package: null, breaking-changes: [] }]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package, breaking-changes: null }]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package, breaking-changes: 123 }]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package }]")]
+    [TestCase("azure-sdk-for-java: [{ breaking-changes: [] }]")]
+    [TestCase("azure-sdk-for-java: [{ package: other-package, breaking-changes: [], extra: true }]")]
+    [TestCase("azure-sdk-for-rust: []")]
+    [TestCase("azure-sdk-for-cpp: []")]
+    [TestCase("azure-sdk-for-unknown: []")]
+    [TestCase("Azure-Sdk-For-Java: []")]
+    public async Task Classify_InvalidForeignSectionRejectsEntireFile(string foreignSection)
+    {
+        using var directory = TempDirectory.Create("sdk-suppressions");
+        await File.WriteAllTextAsync(Path.Combine(directory.DirectoryPath, "sdk-suppressions.yaml"), $$"""
+            suppressions:
+              azure-sdk-for-go:
+                - package: test-package
+                  breaking-changes: ['Removed Widget']
+              {{foreignSection}}
+            """);
+        var logger = new TestLogger<SdkBreakingChangeClassificationService>();
+
+        var result = await ClassifyAsync(directory.DirectoryPath, "Go", "test-package", logger, ["Removed Widget"]);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.HasBreakingChange, Is.True);
+        Assert.That(result.HasUnsuppressedBreakingChange, Is.True);
+        Assert.That(result.BreakingChanges.Single().OriginBreaks, Is.EqualTo(new[] { "Removed Widget" }));
+        Assert.That(result.BreakingChanges.Single().SuppressionStatus, Is.EqualTo(SdkBreakingChangeSuppressionStatus.None));
+        Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("Failed to parse SDK suppression file")), Is.True);
+    }
+
+    [TestCase("null")]
+    [TestCase("123")]
+    [TestCase("true")]
+    [TestCase("[]")]
+    [TestCase("{}")]
+    public async Task Classify_InvalidItemRejectsOtherwiseMatchingPackage(string item)
+    {
+        using var directory = TempDirectory.Create("sdk-suppressions");
+        await File.WriteAllTextAsync(Path.Combine(directory.DirectoryPath, "sdk-suppressions.yaml"), $$"""
+            suppressions:
+              azure-sdk-for-go:
+                - package: test-package
+                  breaking-changes: ['Removed Widget', {{item}}]
+            """);
+        var logger = new TestLogger<SdkBreakingChangeClassificationService>();
+
+        var result = await ClassifyAsync(directory.DirectoryPath, "Go", "test-package", logger, ["Removed Widget"]);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.HasUnsuppressedBreakingChange, Is.True);
+        Assert.That(result.BreakingChanges.Single().SuppressionStatus, Is.EqualTo(SdkBreakingChangeSuppressionStatus.None));
+        Assert.That(logger.Logs.Any(log => log.ToString()!.Contains("Failed to parse SDK suppression file")), Is.True);
+    }
+
+    [TestCase("'123'")]
+    [TestCase("\"123\"")]
+    [TestCase("'null'")]
+    [TestCase("'true'")]
+    public async Task Classify_QuotedScalarStringsRemainValid(string item)
+    {
+        using var directory = TempDirectory.Create("sdk-suppressions");
+        await File.WriteAllTextAsync(Path.Combine(directory.DirectoryPath, "sdk-suppressions.yaml"), $$"""
+            suppressions:
+              azure-sdk-for-go:
+                - package: '123'
+                  breaking-changes: [{{item}}]
+            """);
+        var origin = item.Trim('\'', '"');
+
+        var result = await ClassifyAsync(directory.DirectoryPath, "Go", "123", [origin]);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.BreakingChanges.Single().SuppressionStatus, Is.EqualTo(SdkBreakingChangeSuppressionStatus.Suppressed));
+        Assert.That(result.HasUnsuppressedBreakingChange, Is.False);
     }
 
     [TestCase("suppressions: [")]

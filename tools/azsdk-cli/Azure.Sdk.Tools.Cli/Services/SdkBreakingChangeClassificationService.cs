@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Microsoft.Extensions.AI;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NodeDeserializers;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {   
@@ -128,38 +129,60 @@ namespace Azure.Sdk.Tools.Cli.Services
                     .WithDuplicateKeyChecking()
                     .WithEnforceRequiredMembers()
                     .WithEnforceNullability()
+                    .WithNodeDeserializer(new SuppressionStringNodeDeserializer(), location => location.OnTop())
+                    .WithNodeDeserializer(inner => new SuppressionCollectionNodeDeserializer(inner),
+                        location => location.InsteadOf<CollectionNodeDeserializer>())
                     .Build()
                     .Deserialize<SdkSuppressionsDocument>(content);
+                if (document == null)
+                {
+                    throw new YamlException("Expected a document containing a 'suppressions' mapping.");
+                }
             }
             catch (YamlException ex)
             {
                 _logger.LogError(ex, "Failed to parse SDK suppression file '{Path}'. No SDK breaking changes will be suppressed.", path);
                 return new HashSet<string>(StringComparer.Ordinal);
             }
-            if (document?.Suppressions == null)
-            {
-                _logger.LogInformation("SDK suppression file '{Path}' does not contain a 'suppressions' mapping.", path);
-                return new HashSet<string>(StringComparer.Ordinal);
-            }
-
-            return new HashSet<string>(document.GetSuppressions(SdkLanguageHelpers.GetSdkLanguage(language), packageName), StringComparer.Ordinal);
+            var packages = document.Suppressions.GetPackages(SdkLanguageHelpers.GetSdkLanguage(language));
+            var breakingChanges = packages.FirstOrDefault(p => string.Equals(p.Package, packageName, StringComparison.Ordinal))?.BreakingChanges ?? [];
+            return new HashSet<string>(breakingChanges, StringComparer.Ordinal);
         }
 
         private sealed class SdkSuppressionsDocument
         {
             [YamlMember(Alias = "suppressions")]
-            public Dictionary<string, List<SdkPackageSuppressions>>? Suppressions { get; set; }
+            public required SdkSuppressionLanguages Suppressions { get; set; }
+        }
 
-            public IReadOnlyList<string> GetSuppressions(SdkLanguage language, string packageName)
+        private sealed class SdkSuppressionLanguages
+        {
+            [YamlMember(Alias = "azure-sdk-for-go")]
+            public List<SdkPackageSuppressions> Go { get; set; } = [];
+
+            [YamlMember(Alias = "azure-sdk-for-java")]
+            public List<SdkPackageSuppressions> Java { get; set; } = [];
+
+            [YamlMember(Alias = "azure-sdk-for-js")]
+            public List<SdkPackageSuppressions> JavaScript { get; set; } = [];
+
+            [YamlMember(Alias = "azure-sdk-for-net")]
+            public List<SdkPackageSuppressions> DotNet { get; set; } = [];
+
+            [YamlMember(Alias = "azure-sdk-for-python")]
+            public List<SdkPackageSuppressions> Python { get; set; } = [];
+
+            public IReadOnlyList<SdkPackageSuppressions> GetPackages(SdkLanguage language)
             {
-
-                var repoName = SdkLanguageHelpers.GetRepoName(language);
-                if (repoName == null || Suppressions == null || !Suppressions.TryGetValue(repoName, out var packages))
+                return language switch
                 {
-                    return [];
-                }
-
-                return packages?.FirstOrDefault(p => string.Equals(p.Package, packageName, StringComparison.Ordinal))?.BreakingChanges ?? [];
+                    SdkLanguage.Go => Go,
+                    SdkLanguage.Java => Java,
+                    SdkLanguage.JavaScript => JavaScript,
+                    SdkLanguage.DotNet => DotNet,
+                    SdkLanguage.Python => Python,
+                    _ => []
+                };
             }
         }
 
@@ -170,6 +193,51 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             [YamlMember(Alias = "breaking-changes")]
             public required List<string> BreakingChanges { get; set; }
+        }
+
+        private sealed class SuppressionStringNodeDeserializer : INodeDeserializer
+        {
+            private readonly IDeserializer _scalarDeserializer = new DeserializerBuilder()
+                .WithAttemptingUnquotedStringTypeDeserialization()
+                .Build();
+
+            public bool Deserialize(IParser parser, Type expectedType, Func<IParser, Type, object?> nestedObjectDeserializer,
+                out object? value, ObjectDeserializer rootDeserializer)
+            {
+                value = null;
+                if (expectedType != typeof(string))
+                {
+                    return false;
+                }
+
+                value = _scalarDeserializer.Deserialize<object>(parser);
+                if (value is not string)
+                {
+                    throw new YamlException("Expected a non-null string in SDK suppressions.");
+                }
+                return true;
+            }
+        }
+
+        private sealed class SuppressionCollectionNodeDeserializer : INodeDeserializer
+        {
+            private readonly INodeDeserializer _inner;
+
+            public SuppressionCollectionNodeDeserializer(INodeDeserializer inner)
+            {
+                _inner = inner;
+            }
+
+            public bool Deserialize(IParser parser, Type expectedType, Func<IParser, Type, object?> nestedObjectDeserializer,
+                out object? value, ObjectDeserializer rootDeserializer)
+            {
+                var deserialized = _inner.Deserialize(parser, expectedType, nestedObjectDeserializer, out value, rootDeserializer);
+                if (deserialized && value is System.Collections.IList items && items.Cast<object?>().Any(item => item == null))
+                {
+                    throw new YamlException("SDK suppression arrays must not contain null items.");
+                }
+                return deserialized;
+            }
         }
     }
 }

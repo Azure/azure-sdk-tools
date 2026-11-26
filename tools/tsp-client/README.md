@@ -12,7 +12,7 @@
 npm install -g @azure-tools/typespec-client-generator-cli
 ```
 
-> NOTE: Repo owners should follow the steps in the [tsp-client repo setup](./repo_setup.md) doc.
+> NOTE: Repo owners should follow the steps in the [tsp-client repo setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/repo_setup.md) doc.
 
 ## Usage
 
@@ -266,6 +266,29 @@ additionalDirectories:
 ```
 
 ## Advanced scenarios
+
+### Parallel checkout for large remote specs
+
+`tsp-client sync` uses Git to check out remote TypeSpec inputs. For large specs, especially on Windows, try Git's `checkout.workers` setting to parallelize writing files during checkout. This does not reduce the files fetched or copied into `TempTypeSpecFiles`. It has no effect on `--local-spec-repo`.
+
+These examples require a Git version that supports parallel checkout. Use a shell without an existing `GIT_CONFIG_COUNT` override: both examples replace that setting rather than appending to it.
+
+To try four workers, open a dedicated PowerShell session and run this from your SDK directory:
+
+```powershell
+$env:GIT_CONFIG_COUNT = '1'
+$env:GIT_CONFIG_KEY_0 = 'checkout.workers'
+$env:GIT_CONFIG_VALUE_0 = '4'
+tsp-client sync
+```
+
+Close the dedicated session afterward. The example changes only that session's environment, not any Git config file. For Bash, you can scope the setting to one command:
+
+```bash
+GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=checkout.workers GIT_CONFIG_VALUE_0=4 tsp-client sync
+```
+
+The setting also applies to the Git checkout steps in remote `init` and `update` when set for those commands. Git still decides whether enough files need to be written to start parallel workers. Measure on your own workload: four workers reduced checkout time on the tested large Network spec but showed no meaningful local checkout improvement on the smaller File Shares spec.
 
 ### Batch library generation
 

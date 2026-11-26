@@ -124,6 +124,7 @@ Once `<eventId>.ready.json` is written, the shared `PostToolUse` hook and `azsdk
 
 ## Open Questions
 
+- [ ] **How to make sure telemetry is secure**: Since `.ready.json` files are written while an agent processes untrusted repo content, how do we prevent leaking secrets or personal data through string attributes (via prompt injection), tampering with the local queue folder, or spamming the Application Insights ingestion endpoint with forged events?
 - [ ] **Does telemetry have to go through MCP (`azsdk`)**: Should telemetry always be sent through the `azsdk` MCP CLI (`azsdk ingest-telemetry`), or can the shared hook script export the OpenTelemetry `.ready.json` Span directly to Application Insights / OTLP when `azsdk` is not installed?
 - [ ] **How to detect `copilot-app`**: Today `azsdk_tool_telemetry.ps1` only checks whether `tool_use_id` contains `_vscode-` and labels everything else `copilot-cli`. What hook field or environment variable identifies `copilot-app`?
 - [ ] **Where to store schemas across repos**: `azsdk` CLI lives in `azure-sdk-tools`, while some skills (like `azure-typespec-author`) live in `azure-rest-api-specs`. Should `azsdk` keep approved schemas in `azure-sdk-tools`, or read `telemetry/result.schema.json` from the skill folder?

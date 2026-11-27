@@ -1,18 +1,55 @@
-<!-- cspell:words allowlist allowlists azsdk AZSDKTOOLS contoso deduplicate deduplication opentelemetry OTLP reentrancy revalidate typespec untracked worktree worktrees -->
+<!-- cspell:words allowlist allowlists AppInsights azsdk AZSDKTOOLS AzSdkToolsMcpAppInsights contoso datax deduplicate deduplication opentelemetry OTLP reentrancy revalidate typespec untracked worktree worktrees -->
 
 # Spec: 8-Operations - Common Skill Telemetry
 
 ## Table of Contents
 
-- [Existing Skill Telemetry and Gaps](#existing-skill-telemetry-and-gaps)
+- [Existing Telemetry Architecture and Gaps](#existing-telemetry-architecture-and-gaps)
 - [Design Proposal](#design-proposal)
 - [What Skill Owners Do to Add Customized Telemetry](#what-skill-owners-do-to-add-customized-telemetry)
 - [Alternatives Considered](#alternatives-considered)
 - [Open Questions](#open-questions)
 
-## Existing Skill Telemetry and Gaps
+## Existing Telemetry Architecture and Gaps
 
-Today, [`azsdk_tool_telemetry.ps1`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/azsdk_tool_telemetry.ps1) runs on `PostToolUse` and calls [`azsdk ingest-telemetry`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Core/TelemetryIngestionTool.cs), which uses OpenTelemetry (`System.Diagnostics.Activity` + `Azure.Monitor.OpenTelemetry.Exporter`) whenever the agent invokes the `skill` tool or reads `/skills/<name>/SKILL.md`:
+### Current End-to-End Architecture
+
+Today, all Azure SDK agent and CLI telemetry flows through a single OpenTelemetry pipeline inside `azsdk` (`Azure.Sdk.Tools.Cli`):
+
+```mermaid
+flowchart LR
+    subgraph Sources["Existing Telemetry Entry Points"]
+        MCP["MCP Server Tool Calls<br/>(InstrumentedTool → ToolExecuted)"]
+        CLI["Direct CLI Commands<br/>(MCPToolBase → CommandExecuted)"]
+        Hooks["Copilot Hooks<br/>UserPromptSubmit: azsdk_prompt_telemetry.ps1 → user_prompt<br/>PostToolUse: azsdk_tool_telemetry.ps1 → skill_invocation"]
+    end
+
+    Ingest["azsdk ingest-telemetry<br/>(TelemetryIngestionTool)"]
+    Hooks --> Ingest
+
+    subgraph Pipeline["Shared azsdk OpenTelemetry Pipeline"]
+        Service["TelemetryService<br/>(Activity + device/version tags)"]
+        Processor["TelemetryProcessor &<br/>TelemetryPathSanitizer"]
+        Exporter["Azure.Monitor.OpenTelemetry.Exporter<br/>(Flush on CLI exit)"]
+        Service --> Processor --> Exporter
+    end
+
+    MCP --> Service
+    CLI --> Service
+    Ingest --> Service
+
+    AppInsights["DataX Application Insights<br/>(dependencies table)"]
+    Downstream["Downstream Data Pipeline →<br/>Telemetry Dashboards"]
+    Exporter --> AppInsights --> Downstream
+```
+
+- **Entry points**: MCP tool executions ([`InstrumentedTool.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Core/InstrumentedTool.cs)), CLI commands ([`MCPToolBase.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Core/MCPToolBase.cs)), and Copilot hook scripts ([`azsdk_prompt_telemetry.ps1`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/azsdk_prompt_telemetry.ps1) and [`azsdk_tool_telemetry.ps1`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/azsdk_tool_telemetry.ps1) calling [`azsdk ingest-telemetry`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Core/TelemetryIngestionTool.cs)) all record telemetry through `ITelemetryService`.
+- **Enrichment & sanitization**: [`TelemetryService.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Telemetry/TelemetryService.cs) checks `AZSDKTOOLS_COLLECT_TELEMETRY=false` opt-out and starts a `System.Diagnostics.Activity` (`ActivityKind.Internal`) with shared `PascalCase` tags (`AzSdkToolVersion`, `DevDeviceId`, `MacAddressHash`, `EventId`, `ClientName`, `SessionId`). [`TelemetryProcessor.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Telemetry/TelemetryProcessor.cs) and [`TelemetryPathSanitizer.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Telemetry/TelemetryPathSanitizer.cs) redact user-home segments and non-allowlisted local file paths on scalar string tags.
+- **Export & reporting**: [`TelemetryRegistration.cs`](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Telemetry/TelemetryRegistration.cs) exports Spans via `Azure.Monitor.OpenTelemetry.Exporter` to the DataX-owned Application Insights `dependencies` table in release builds (or `AzSdkToolsMcpAppInsights` in debug builds), where the downstream data pipeline reads `dependencies` records for telemetry dashboards.
+
+### Current Skill Telemetry Capabilities and Gaps
+
+For skills specifically, `azsdk_tool_telemetry.ps1` runs on `PostToolUse` and triggers `azsdk ingest-telemetry --event-type skill_invocation` whenever the agent invokes the `skill` tool or reads `/skills/<name>/SKILL.md`:
 
 | Category | Already recorded automatically (zero skill-owner work) | Not supported today (gap) |
 | --- | --- | --- |

@@ -55,6 +55,40 @@ union ConversationType {
   TeamsChannel: "teams_channel",
 }
 
+/** Confidence in addressing the whole current request, not a correctness grade. */
+union ConfidenceLevel {
+  /** Confident the guidance addresses the request. */
+  High: "high",
+  /** Useful guidance with unresolved needs. */
+  Medium: "medium",
+  /** Unsure how to address the main request. */
+  Low: "low",
+}
+
+/** Individual channel feature opt-ins; absent settings preserve existing behavior. */
+model BotSettings {
+  /** Opt in to displaying confidence labels. */
+  show_confidence_label?: boolean = false;
+
+  /** Opt in to answering independent questions after humans join. */
+  allow_replies_after_humans?: boolean = false;
+}
+
+/** Channel routing and participation settings resolved by the backend. */
+model ChannelConfigResponse {
+  /** Teams channel identifier. */
+  channel_id: string;
+
+  /** Tenant to which the channel is routed, when configured. */
+  tenant_id?: string | null;
+
+  /** Defaults keep confidence and post-human replies disabled for existing channels. */
+  bot_settings?: BotSettings = #{
+    show_confidence_label: false,
+    allow_replies_after_humans: false,
+  };
+}
+
 // ── Chat Models ──────────────────────────────────────────────
 
 @doc("A message in the conversation")
@@ -155,8 +189,24 @@ model ChatResponse {
   @doc("The Teams channel link the question is routed to")
   route_channel_link?: string;
 
+  /** Assessment produced with the answer, never by a separate evaluator. */
+  confidence?: ConfidenceAssessment | null;
+
   @doc("Verified Teams mention metadata for AT markup already present in the answer")
   mentions?: TeamsMention[];
+}
+
+/** The answering model's confidence in its guidance. */
+model ConfidenceAssessment {
+  /** Self-assessed confidence in the provided guidance, not verified correctness or complete resolution. */
+  level: ConfidenceLevel;
+
+  /** Brief explanation of the assessment and its limits. */
+  @minLength(1)
+  summary: string;
+
+  /** Needs the answer cannot resolve. */
+  unresolved_needs: string[];
 }
 
 @doc("Verified Teams mention metadata")

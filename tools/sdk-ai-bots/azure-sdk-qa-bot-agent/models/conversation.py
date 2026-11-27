@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool
 
 
 class Role(str, Enum):
@@ -59,6 +59,7 @@ class ConversationMappingItem(BaseModel):
     customer_conversation_id: str
     mapping_key: str
     agent_conversation_id: str
+    confidence_enabled: StrictBool = False
     conversation_type: ConversationType | None = None
     document_type: ConversationDocumentType = Field(
         default=ConversationDocumentType.mapping

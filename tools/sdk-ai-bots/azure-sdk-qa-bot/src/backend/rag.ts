@@ -84,7 +84,14 @@ export interface CompletionResponsePayload {
   route_channel_name?: string;
   route_channel_link?: string;
   trace_id?: string;
+  confidence?: Confidence | null;
   mentions?: TeamsMention[] | null;
+}
+
+export interface Confidence {
+  level: 'high' | 'medium' | 'low';
+  summary: string;
+  unresolved_needs: string[];
 }
 
 export function isCompletionResponsePayload(
@@ -92,8 +99,8 @@ export function isCompletionResponsePayload(
 ): response is CompletionResponsePayload {
   const completionResponse = response as CompletionResponsePayload;
   return (
-    completionResponse.id !== undefined &&
-    completionResponse.answer !== undefined
+    typeof completionResponse?.id === 'string' &&
+    typeof completionResponse?.answer === 'string'
   );
 }
 

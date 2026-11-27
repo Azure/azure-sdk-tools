@@ -81,6 +81,25 @@ Type question in Microsoft 365 Agents Playground
 
 ## Deploy to Azure
 
+## Confidence-aware channel replies
+
+Features default off. The existing `ChannelConfigManager` reads optional `bot_settings` from `channel.yaml` alongside routing configuration and checks for changes every five seconds; no extra configuration request is made per reply. See [channel configuration](../azure-sdk-qa-bot-agent/README.md#confidence-aware-teams-replies) for settings and an example.
+
+Intention decides whether to answer automatic requests before generation. Replies include references, confidence details, and an optional label such as **Confidence: Low**. Low confidence does not suppress an answer.
+
+Each conversation keeps its original answer format, so enabling confidence does not change older plain conversations. Label visibility comes from the channel settings loaded for the request. Invalid confidence metadata is logged and the answer is displayed without confidence.
+
+Failed configuration refreshes are logged and retain the last loaded configuration, including bot settings and tenant/endpoint routing. Missing bot settings default off; supplied settings are trusted like the existing routing fields, without runtime schema validation. Successful Teams deliveries are saved to TableStorage; history-write failures are logged without sending another reply.
+
+See the [design document](../docs/confidence-aware-participation-design.md) for implementation details.
+
+Run focused frontend coverage and typechecking from this directory:
+
+```powershell
+npx vitest run test\confidenceDelivery.test.ts test\ragParticipation.test.ts test\ragDeliveryApi.test.ts test\replyHandler.test.ts
+npx tsc --noEmit
+```
+
 ## Environments
 
 `<env>` mentioned below sections can be found in `env/.env.*` as the last part, which indicate the environments for the bot.

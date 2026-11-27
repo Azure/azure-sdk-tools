@@ -104,6 +104,36 @@ Ensure your Azure identity has:
 
 ## Running and Debugging Locally
 
+### Confidence-aware Teams replies
+
+Configure features per channel in Blob Storage's `bot-configs/channel.yaml` (overridable with `STORAGE_CONFIG_CONTAINER` and `CHANNEL_CONFIG_BLOB`):
+
+```yaml
+channels:
+  - id: "<Teams channel ID>"
+    tenant: typespec_channel_qa_bot
+    bot_settings:
+      show_confidence_label: true
+      allow_replies_after_humans: true
+```
+
+Features are independently opt-in:
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `show_confidence_label` | `false` | Display the model's confidence label. |
+| `allow_replies_after_humans` | `false` | Let intention classification approve new questions after humans join. |
+
+The answering model supplies confidence; no separate evaluator runs. Confidence describes the provided guidance, not verified correctness. Intention decides whether to answer automatic requests before generation; low confidence does not suppress an answer.
+
+Enabling labels selects assessed answers for **new posts only**. Each post keeps its answer format across replies, while label visibility follows current channel settings. Older conversations remain plain.
+
+Missing settings use the defaults above. Retrieval failures are logged and disable optional features without caching the fallback; invalid settings are rejected. Configuration is normally cached for 300 seconds.
+
+Completion returns the answer and optional `confidence`. Invalid assessment output is logged and returned as available answer text without confidence. Message-storage failures are logged without failing the request; a successful `/conversation/save` response does not guarantee persistence.
+
+Deploy the backend and frontend before enabling features. See the [design document](../docs/confidence-aware-participation-design.md) for persistence and delivery details.
+
 ### Debugging the Chat Agent
 
 Use this to develop and test the AI agent itself (prompt tuning, tool integration, etc.).

@@ -62,6 +62,7 @@ export class RAGModel implements PromptCompletionModel {
       meta,
     });
 
+    const botSettings = this.channelConfigManager.getBotSettings(channelId);
     const replyHandler = new ReplyHandler(context, this.conversationHandler, this.tenantConfigManager);
 
     const conversationId = context.activity.conversation.id;
@@ -90,7 +91,14 @@ export class RAGModel implements PromptCompletionModel {
         references: undefined,
       };
     }
-    await replyHandler.sendReply(replyStartTimestamp, ragReply, currentPrompt, conversationMessages, ragTenantId);
+    await replyHandler.sendReply(
+      replyStartTimestamp,
+      ragReply,
+      currentPrompt,
+      conversationMessages,
+      ragTenantId,
+      botSettings
+    );
 
     return { status: 'success' };
   }

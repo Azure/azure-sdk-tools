@@ -5,6 +5,7 @@ import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
 import { TenantConfigManager, KnownTenants } from '../config/tenant.js';
 import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
+import type { ChannelBotSettings } from '../config/channel.js';
 import { logger } from '../logging/logger.js';
 import { sendActivityWithRetry } from '../activityUtils.js';
 import type { AIEntity } from '@microsoft/teams-ai/lib/types/AIEntity.js';
@@ -34,9 +35,16 @@ export class ReplyHandler {
     this.tenantConfigManager = tenantConfigManager;
   }
 
-  public async sendReply(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, conversationMessages: ConversationMessage[], currentChannelTenant?: string) {
+  public async sendReply(
+    replyStartTime: Date,
+    reply: CompletionResponsePayload | RagApiError,
+    currentPrompt: Prompt,
+    conversationMessages: ConversationMessage[],
+    currentChannelTenant?: string,
+    botSettings?: ChannelBotSettings
+  ) {
     await this.trySendContactCard(conversationMessages);
-    const { answer, isError } = this.generateAnswer(reply);
+    const { answer, isError } = this.generateAnswer(reply, botSettings);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
     const routeChannelName = isCompletionResponsePayload(reply) ? reply.route_channel_name : undefined;
     const routeChannelLink = isCompletionResponsePayload(reply) ? reply.route_channel_link : undefined;
@@ -85,7 +93,10 @@ export class ReplyHandler {
     }
   }
 
-  private generateAnswer(reply: CompletionResponsePayload | RagApiError): { answer: string; isError: boolean } {
+  private generateAnswer(
+    reply: CompletionResponsePayload | RagApiError,
+    botSettings?: ChannelBotSettings
+  ): { answer: string; isError: boolean } {
     if (!isCompletionResponsePayload(reply)) {
       const shouldRetryLater = reply.code === 'LLM_SERVICE_FAILURE' || reply.code === 'SEARCH_FAILURE';
       const retryMessage = shouldRetryLater ? ' Please try again later.' : '';
@@ -93,9 +104,30 @@ export class ReplyHandler {
       return { answer: errorReply, isError: true };
     }
 
-    // received reply successfully
-    const answerWithReferences = this.addReferencesToReply(reply);
-    return { answer: answerWithReferences, isError: false };
+    let confidence = reply.confidence;
+    if (
+      confidence != null &&
+      (
+        !['high', 'medium', 'low'].includes(confidence.level) ||
+        typeof confidence.summary !== 'string' ||
+        !Array.isArray(confidence.unresolved_needs) ||
+        !confidence.unresolved_needs.every((need) => typeof need === 'string')
+      )
+    ) {
+      logger.warn('Invalid confidence response; displaying the answer without confidence', { meta: this.meta });
+      confidence = undefined;
+    }
+
+    let answer = this.addReferencesToReply(reply);
+    if (botSettings?.show_confidence_label && confidence) {
+      const level = confidence.level[0].toUpperCase() + confidence.level.slice(1);
+      answer = `**Confidence: ${level}**\n\n${answer}`;
+    }
+    if (confidence?.summary) answer += `\n\n${confidence.summary}`;
+    if (confidence?.unresolved_needs.length) {
+      answer += `\n\n**Unresolved needs**\n${confidence.unresolved_needs.map((need) => `- ${need}`).join('\n')}`;
+    }
+    return { answer, isError: false };
   }
 
   /**

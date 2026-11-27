@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
+from azure.core import MatchConditions
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
@@ -42,27 +44,28 @@ def _make_message_item(should_reply: bool | None = None) -> ConversationMessageI
 class _ContainerStub:
     def __init__(self, item: dict | None) -> None:
         self._item = item
-        self.upserted: dict | None = None
+        if self._item:
+            self._item["_etag"] = "v1"
+        self.replaced: dict | None = None
 
     async def read_item(self, item: str, partition_key: str):
         if self._item is None:
-            raise _NotFound()
+            raise CosmosResourceNotFoundError(status_code=404, message="Missing message")
         return self._item
 
-    async def upsert_item(self, body: dict):
-        self.upserted = body
+    async def replace_item(self, *, item, body, etag, match_condition):
+        assert item == self._item["id"]
+        assert etag == "v1"
+        assert match_condition == MatchConditions.IfNotModified
+        self.replaced = body
         return body
-
-
-class _NotFound(Exception):
-    status_code = 404
 
 
 @pytest.mark.asyncio
 async def test_record_should_reply_updates_existing_message(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The flag is written onto the existing saved message and upserted."""
+    """The flag is written onto the existing saved message using its ETag."""
     container = _ContainerStub(_make_message_item().model_dump(mode="json"))
 
     async def fake_container():
@@ -81,16 +84,16 @@ async def test_record_should_reply_updates_existing_message(
         True,
     )
 
-    assert container.upserted is not None
-    assert container.upserted["should_reply"] is True
-    assert container.upserted["id"] == "msg-1"
+    assert container.replaced is not None
+    assert container.replaced["should_reply"] is True
+    assert container.replaced["id"] == "msg-1"
 
 
 @pytest.mark.asyncio
 async def test_record_should_reply_missing_message_is_noop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A 404 (message not found) does not raise and performs no upsert."""
+    """A 404 (message not found) does not raise and performs no write."""
     container = _ContainerStub(None)
 
     async def fake_container():
@@ -109,4 +112,4 @@ async def test_record_should_reply_missing_message_is_noop(
         False,
     )
 
-    assert container.upserted is None
+    assert container.replaced is None

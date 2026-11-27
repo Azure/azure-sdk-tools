@@ -50,4 +50,4 @@ The file should be checked into this location: `<root of repo>/eng/emitter-packa
 
 ### emitter-package-pnpm-lock.yaml (Optional)
 
-To use pnpm, generate and commit `eng/emitter-package-pnpm-lock.yaml` with `tsp-client generate-lock-file --package-manager pnpm`. When present, it takes precedence over the npm lock and is installed frozen. See the [pnpm emitter setup](README.md#using-pnpm-for-emitter-dependencies) for workspace policies, registry configuration, and migration limitations.
+To use pnpm, generate and commit `eng/emitter-package-pnpm-lock.yaml` with `tsp-client generate-lock-file --package-manager pnpm`. When present, it takes precedence over the npm lock and is installed frozen. See “Using pnpm for emitter dependencies” in the [tsp-client README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for workspace policies, registry configuration, and migration limitations.

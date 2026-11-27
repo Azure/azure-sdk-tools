@@ -315,7 +315,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 failure.Result = CreateUnclassifiedResult(sdkChange);
                 return failure;
             }
-            var sdkBreakingChangeResult = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.SdkChangeMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
+            var sdkBreakingChangeResult = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.SdkChangeMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, packageInfo?.PackageName, ct);
             ct.ThrowIfCancellationRequested();
             if (sdkBreakingChangeResult == null)
             {

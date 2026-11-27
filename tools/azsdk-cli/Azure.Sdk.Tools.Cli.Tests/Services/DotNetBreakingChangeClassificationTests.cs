@@ -46,7 +46,7 @@ public class DotNetBreakingChangeClassificationTests
             """);
 
         var result = await _service.ClassifySdkBreakingChangesAsync(
-            "### Breaking Changes\n- CP0002: Widget.Name was removed", "Verified patterns", "DotNet", null, CancellationToken.None);
+            "### Breaking Changes\n- CP0002: Widget.Name was removed", "Verified patterns", "DotNet", null, null, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.BreakingChanges.Single().MitigationStrategy, Is.EqualTo(expected));
@@ -70,7 +70,7 @@ public class DotNetBreakingChangeClassificationTests
             """);
 
         var result = await _service.ClassifySdkBreakingChangesAsync(
-            "### Breaking Changes\n- Widget removed", "Patterns", "DotNet", null, CancellationToken.None);
+            "### Breaking Changes\n- Widget removed", "Patterns", "DotNet", null, null,CancellationToken.None);
 
         Assert.That(result, Is.Null, "Invalid routing must not authorize an automatic mitigation.");
     }
@@ -86,7 +86,7 @@ public class DotNetBreakingChangeClassificationTests
             ]}
             """);
 
-        var result = await _service.ClassifySdkBreakingChangesAsync("Changes", "Patterns", "DotNet", null, CancellationToken.None);
+        var result = await _service.ClassifySdkBreakingChangesAsync("Changes", "Patterns", "DotNet", null, null, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
         var language = Languages.DotNetLanguageServiceBreakingChangeTests.CreateService(
@@ -112,7 +112,7 @@ public class DotNetBreakingChangeClassificationTests
             """);
 
         var result = await _service.ClassifySdkBreakingChangesAsync(
-            "### Breaking Changes\n- Widget removed", "Patterns", language, null, CancellationToken.None);
+            "### Breaking Changes\n- Widget removed", "Patterns", language, null, null, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.BreakingChanges.Single().MitigationStrategy, Is.Null);
@@ -188,7 +188,7 @@ public class DotNetBreakingChangeClassificationTests
         }));
 
         var result = await _service.ClassifySdkBreakingChangesAsync(
-            "### Breaking Changes\n- LegacyWidget removed", patterns, "Go", null, CancellationToken.None);
+            "### Breaking Changes\n- LegacyWidget removed", patterns, "Go", null, null, CancellationToken.None);
 
         Assert.That(result!.BreakingChanges.Single().Resolution, Is.EqualTo(resolution));
         Assert.That(_logger.Logs.Any(log => log.ToString()!.Contains("may reduce classification accuracy")), Is.True);
@@ -208,7 +208,7 @@ public class DotNetBreakingChangeClassificationTests
             }]}
             """);
 
-        var result = await _service.ClassifySdkBreakingChangesAsync("Changes", "Patterns", "DotNet", null, CancellationToken.None);
+        var result = await _service.ClassifySdkBreakingChangesAsync("Changes", "Patterns", "DotNet", null, null, CancellationToken.None);
 
         Assert.That(result!.BreakingChanges.Single().Category, Is.EqualTo(expected));
         Assert.That(result.BreakingChanges.Single().Resolution, Is.EqualTo("Catalog guidance"));
@@ -249,7 +249,7 @@ public class DotNetBreakingChangeClassificationTests
         ConfigureResponse("{\"hasBreakingChange\":false,\"breakingChanges\":[]}");
 
         await _service.ClassifySdkBreakingChangesAsync(
-            "Original compatibility output", "Original pattern catalog", "DotNet", null, CancellationToken.None);
+            "Original compatibility output", "Original pattern catalog", "DotNet", null, null, CancellationToken.None);
 
         _agentRunner.Verify(r => r.RunAsync(It.Is<CopilotAgent<string>>(agent =>
             agent.Instructions.Contains("Original compatibility output") &&
@@ -266,7 +266,7 @@ public class DotNetBreakingChangeClassificationTests
             .ThrowsAsync(new OperationCanceledException(cts.Token));
 
         Assert.ThrowsAsync<OperationCanceledException>(() => _service.ClassifySdkBreakingChangesAsync(
-            "Changes", "Patterns", "DotNet", null, cts.Token));
+            "Changes", "Patterns", "DotNet", null, null, cts.Token));
     }
 
     private void ConfigureResponse(string response)

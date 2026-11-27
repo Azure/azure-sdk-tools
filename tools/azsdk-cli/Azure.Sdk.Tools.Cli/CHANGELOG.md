@@ -4,6 +4,7 @@
 
 ### Features Added
 
+- `release-plan link-sdk-pr` and `azsdk_link_sdk_pull_request_to_release_plan` now add `auto-release` to eligible open, non-draft public Azure SDK PRs targeting `main` for management-only release plans, including manually generated PRs. Data-plane, test, Private Preview, and inactive plans are excluded. Existing labels are preserved, repeated linking is safe, and labeling failures report that linking succeeded but labeling needs a retry. CI and review requirements still apply before merge.
 - After the emailer accepts an overdue release-plan reminder, the CLI records the UTC send time in the release plan's `Custom.OverdueLastNotifiedDate` field. If the email is accepted but the date cannot be saved, the error is reported separately and the email is not resent. Each recorded reminder counts as plan activity for abandonment cleanup.
 
 ### Breaking Changes
@@ -19,6 +20,7 @@
 
 ### Features Added
 
+- SDK breaking-change classification now reports `suppressionStatus` as `none`, `partiallySuppressed`, or `suppressed` by matching each entry's original breaking changes against the language and package entries in the TypeSpec project's `sdk-suppressions.yaml`.
 - Automatic overdue release-plan cleanup now skips recently updated plans and SDK PRs with recent commits, submitted reviews, or human comments. The inactivity window defaults to 30 days and can be set with `--inactivity-days`. Routine bot comments and CI checks do not reset it. Missing or unreadable activity prevents abandonment and reports an error. Overdue reminders describe abandonment as conditional on those activity checks.
 
 ## 0.6.57 (2026-11-06)
@@ -44,6 +46,10 @@
 - Manual release-plan abandonment now protects finished and partially completed releases using recorded SDK releases and live linked SDK PR merge states, rejects unverifiable or concurrently changed plans, and guards the state update with the existing work-item revision check. Already abandoned plans keep their ADO state; teams must request language-exclusion exceptions for unreleased languages and contact SDK Release Support channel on Teams instead of abandoning a partially completed release.
 - Simplified release-plan lookup and linked SDK PR validation for manual abandonment: only the expected public Azure SDK repository is accepted, and partial-release guidance identifies the SDK Release Support channel on Teams.
 - Corrected development-guide links and Coding Agent settings instructions to use valid absolute, locale-neutral URLs instead of relative or placeholder links.
+
+### Other Changes
+
+- Added release-plan lifecycle evals covering API review, SDK generation, pending SDK releases, and completed releases with consistent mock fixtures. Plan-status guidance keeps next-step questions read-only, and evals use the current serialized plan fields.
 
 ## 0.6.55 (2026-10-22)
 

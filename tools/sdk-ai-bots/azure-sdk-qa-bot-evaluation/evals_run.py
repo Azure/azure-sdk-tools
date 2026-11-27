@@ -7,12 +7,12 @@ read ``{{item.response}}`` / ``{{item.context}}``. Parallelizing the slow
 answer-generation step is the main lever for evaluation speed.
 
 Examples:
-    # Run all configured evaluators against the typespec basic dataset:
-    python evals_run.py --dataset qa-bot-basic-typespec:latest \
+    # Run core TypeSpec cases:
+    python evals_run.py --dataset qa-bot-typespec:latest --scope core \
         --evaluators bot_evals,groundedness --max_concurrency 8
 
     # Or point at a local curated file directly:
-    python evals_run.py --dataset evaluation_datasets/basic/typespec.jsonl
+    python evals_run.py --dataset evaluation_datasets/typespec.jsonl --scope full
 """
 
 from __future__ import annotations
@@ -38,6 +38,7 @@ from _evals_runner import (
     retrieve_channel_tenant_map,
 )
 from dataset._storage import credential_for
+from dataset.schema import ValidationError, select_cases
 
 ALL_EVALUATORS = [
     "similarity",
@@ -79,19 +80,7 @@ def _load_suppression(script_dir: Path) -> dict[str, list[str]]:
 
 
 def _dataset_label(dataset_spec: str, scenario: str) -> str:
-    """Stable dataset identity for the evaluation name.
-
-    ``qa-bot-<target>-<scenario>[:version]`` -> ``qa-bot-<target>-<scenario>``;
-    a ``.../<target>/<scenario>.jsonl`` path -> ``qa-bot-<target>-<scenario>``;
-    anything else falls back to ``qa-bot-<scenario>``.
-    """
-    base = dataset_spec.split(":", 1)[0]
-    if base.endswith(".jsonl"):
-        p = Path(base)
-        target = p.parent.name
-        return f"qa-bot-{target}-{p.stem}" if target else f"qa-bot-{p.stem}"
-    if base.startswith("qa-bot-"):
-        return base
+    """Stable dataset identity for the evaluation name."""
     return f"qa-bot-{scenario}"
 
 
@@ -106,7 +95,8 @@ def main(argv: list[str] | None = None) -> int:
     logging.info("🚀 Starting evaluation ...")
 
     parser = argparse.ArgumentParser(description="Run QA bot evaluation on the Foundry evals surface.")
-    parser.add_argument("--dataset", required=True, help="<path.jsonl> | qa-bot-<target>-<scenario>[:version]")
+    parser.add_argument("--dataset", required=True, help="<path.jsonl> | qa-bot-<scenario>[:version]")
+    parser.add_argument("--scope", choices=("core", "full"), default="core", help="case selection; default core")
     parser.add_argument("--max_concurrency", type=int, default=8, help="parallel /completion calls")
     parser.add_argument("--evaluators", type=str, default=None, help="comma-separated subset; default all")
     parser.add_argument(
@@ -117,16 +107,26 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--baseline_check", type=str, default="True")
     parser.add_argument("--is_ci", type=str, default="True")
+    parser.add_argument("--warn_only", type=str, default="False")
     parser.add_argument("--cache_result", type=str, default="none", help="none | score | full")
     args = parser.parse_args(argv)
 
     is_ci = args.is_ci.lower() in ("true", "1", "yes", "on")
     baseline_check = args.baseline_check.lower() in ("true", "1", "yes")
+    warn_only = args.warn_only.lower() in ("true", "1", "yes", "on")
     evaluators = args.evaluators.split(",") if args.evaluators else list(ALL_EVALUATORS)
 
-    load_dotenv()
     script_dir = Path(__file__).resolve().parent
+    try:
+        records, scenario = resolve_records(args.dataset, script_dir=script_dir)
+        total_cases = len(records)
+        records = select_cases(records, args.scope, scenario=scenario)
+    except (OSError, ValueError, ValidationError) as exc:
+        logging.error("Invalid benchmark selection: %s", exc)
+        return 1
+    logging.info("Selected %d/%d %s cases for scenario=%s", len(records), total_cases, args.scope, scenario)
 
+    load_dotenv()
     try:
         endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
         model = os.environ["AZURE_EVALUATION_MODEL_NAME"]
@@ -155,8 +155,6 @@ def main(argv: list[str] | None = None) -> int:
     all_results: dict[str, Any] = {}
 
     try:
-        records, scenario = resolve_records(args.dataset, script_dir=script_dir)
-        logging.info("Resolved %d records for scenario=%s", len(records), scenario)
         tenant_map = None
         try:
             tenant_map = retrieve_channel_tenant_map(credential)
@@ -170,7 +168,7 @@ def main(argv: list[str] | None = None) -> int:
             # Stable evaluation name = dataset identity + run context (local / pipeline),
             # so the Foundry list is not flooded with date/build/random-suffixed entries.
             dataset_label = _dataset_label(args.dataset, scenario)
-            name = f"{dataset_label}-{args.run_context}"
+            name = f"{dataset_label}-{args.scope}-{args.run_context}"
             all_results = runner.evaluate_run_completion(
                 evals_client,
                 records,
@@ -189,8 +187,12 @@ def main(argv: list[str] | None = None) -> int:
         if verdict == VerificationResult.PASS_WITH_WARNING:
             print("##vso[task.logissue type=warning]Evaluation succeeded with warning. Some tests failed but suppressed.")
         elif verdict == VerificationResult.FAIL:
-            logging.error("Evaluation failed; see the published failed-cases artifact for details.")
-            return 1
+            if warn_only:
+                print("##vso[task.logissue type=warning]Evaluation finished with failing cases; see the published results artifact for details.")
+                print("##vso[task.complete result=SucceededWithIssues;]")
+            else:
+                logging.error("Evaluation failed; see the published failed-cases artifact for details.")
+                return 1
     except Exception as exc:  # noqa: BLE001
         logging.exception("❌ Error occurred: %s", exc)
         return 1

@@ -1,90 +1,93 @@
 {
-  "qa-bot-basic-apispec": {
-    "cases": 8,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-apispec/versions/apispec-2026-06-22",
+  "qa-bot-apispec": {
+    "cases": 37,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-apispec/versions/apispec-2026-11-25",
     "scenario": "apispec",
-    "target": "basic",
-    "uploaded_at": "2026-06-22T09:06:00.743582+00:00",
-    "version": "apispec-2026-06-22"
+    "uploaded_at": "2026-11-25T06:22:55.141407+00:00",
+    "version": "apispec-2026-11-25"
   },
-  "qa-bot-basic-mcpserver": {
-    "cases": 18,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-mcpserver/versions/mcpserver-2026-10-23",
-    "scenario": "mcpserver",
-    "target": "basic",
-    "uploaded_at": "2026-10-23T02:32:22.800462+00:00",
-    "version": "mcpserver-2026-10-23"
+  "qa-bot-apistewardshipboard": {
+    "cases": 35,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-apistewardshipboard/versions/apistewardshipboard-2026-11-25",
+    "scenario": "apistewardshipboard",
+    "uploaded_at": "2026-11-25T06:22:58.731128+00:00",
+    "version": "apistewardshipboard-2026-11-25"
   },
-  "qa-bot-basic-onboarding": {
-    "cases": 4,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-onboarding/versions/onboarding-2026-06-22",
-    "scenario": "onboarding",
-    "target": "basic",
-    "uploaded_at": "2026-06-22T09:06:06.052359+00:00",
-    "version": "onboarding-2026-06-22"
+  "qa-bot-authoring": {
+    "cases": 26,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-authoring/versions/authoring-2026-11-25",
+    "scenario": "authoring",
+    "uploaded_at": "2026-11-25T06:23:02.661859+00:00",
+    "version": "authoring-2026-11-25"
   },
-  "qa-bot-basic-python": {
-    "cases": 6,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-python/versions/python-2026-06-22",
-    "scenario": "python",
-    "target": "basic",
-    "uploaded_at": "2026-06-22T09:06:10.838708+00:00",
-    "version": "python-2026-06-22"
+  "qa-bot-dotnet": {
+    "cases": 10,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-dotnet/versions/dotnet-2026-11-25",
+    "scenario": "dotnet",
+    "uploaded_at": "2026-11-25T06:23:06.248481+00:00",
+    "version": "dotnet-2026-11-25"
   },
-  "qa-bot-basic-sdkagent": {
-    "cases": 2,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-sdkagent/versions/sdkagent-2026-09-02",
-    "scenario": "sdkagent",
-    "target": "basic",
-    "uploaded_at": "2026-09-02T05:57:04.483984+00:00",
-    "version": "sdkagent-2026-09-02"
-  },
-  "qa-bot-basic-typespec": {
-    "cases": 25,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-basic-typespec/versions/typespec-2026-06-22",
-    "scenario": "typespec",
-    "target": "basic",
-    "uploaded_at": "2026-06-22T09:06:16.298721+00:00",
-    "version": "typespec-2026-06-22"
-  },
-  "qa-bot-perf-apispec": {
-    "cases": 25,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-apispec/versions/apispec-2026-10-28",
-    "scenario": "apispec",
-    "target": "perf",
-    "uploaded_at": "2026-10-28T08:34:02.276987+00:00",
-    "version": "apispec-2026-10-28"
-  },
-  "qa-bot-perf-general": {
-    "cases": 19,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-general/versions/general-2026-10-28",
+  "qa-bot-general": {
+    "cases": 20,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-general/versions/general-2026-11-25",
     "scenario": "general",
-    "target": "perf",
-    "uploaded_at": "2026-10-28T08:34:12.334456+00:00",
-    "version": "general-2026-10-28"
+    "uploaded_at": "2026-11-25T06:23:09.654306+00:00",
+    "version": "general-2026-11-25"
   },
-  "qa-bot-perf-onboarding": {
-    "cases": 3,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-onboarding/versions/onboarding-2026-10-28",
+  "qa-bot-go": {
+    "cases": 34,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-go/versions/go-2026-11-25",
+    "scenario": "go",
+    "uploaded_at": "2026-11-25T06:23:13.029659+00:00",
+    "version": "go-2026-11-25"
+  },
+  "qa-bot-javascript": {
+    "cases": 20,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-javascript/versions/javascript-2026-11-25",
+    "scenario": "javascript",
+    "uploaded_at": "2026-11-25T06:23:16.376450+00:00",
+    "version": "javascript-2026-11-25"
+  },
+  "qa-bot-mcpserver": {
+    "cases": 38,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-mcpserver/versions/mcpserver-2026-11-25",
+    "scenario": "mcpserver",
+    "uploaded_at": "2026-11-25T06:23:20.680056+00:00",
+    "version": "mcpserver-2026-11-25"
+  },
+  "qa-bot-onboarding": {
+    "cases": 7,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-onboarding/versions/onboarding-2026-11-25",
     "scenario": "onboarding",
-    "target": "perf",
-    "uploaded_at": "2026-10-28T08:34:22.765779+00:00",
-    "version": "onboarding-2026-10-28"
+    "uploaded_at": "2026-11-25T06:23:24.135226+00:00",
+    "version": "onboarding-2026-11-25"
   },
-  "qa-bot-perf-python": {
-    "cases": 23,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-python/versions/python-2026-10-28",
+  "qa-bot-python": {
+    "cases": 26,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-python/versions/python-2026-11-25",
     "scenario": "python",
-    "target": "perf",
-    "uploaded_at": "2026-10-28T08:55:52.690464+00:00",
-    "version": "python-2026-10-28"
+    "uploaded_at": "2026-11-25T06:23:27.611649+00:00",
+    "version": "python-2026-11-25"
   },
-  "qa-bot-perf-typespec": {
-    "cases": 123,
-    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-perf-typespec/versions/typespec-2026-10-28",
+  "qa-bot-releasesupport": {
+    "cases": 3,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-releasesupport/versions/releasesupport-2026-11-25",
+    "scenario": "releasesupport",
+    "uploaded_at": "2026-11-25T06:23:30.857688+00:00",
+    "version": "releasesupport-2026-11-25"
+  },
+  "qa-bot-sdkagent": {
+    "cases": 2,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-sdkagent/versions/sdkagent-2026-11-25",
+    "scenario": "sdkagent",
+    "uploaded_at": "2026-11-25T06:23:34.187823+00:00",
+    "version": "sdkagent-2026-11-25"
+  },
+  "qa-bot-typespec": {
+    "cases": 143,
+    "id": "azureai://accounts/azuresdkqabot-dev-ai-resource/projects/azuresdkqabot-ai/data/qa-bot-typespec/versions/typespec-2026-11-25",
     "scenario": "typespec",
-    "target": "perf",
-    "uploaded_at": "2026-10-28T08:34:33.751275+00:00",
-    "version": "typespec-2026-10-28"
+    "uploaded_at": "2026-11-25T06:23:38.214606+00:00",
+    "version": "typespec-2026-11-25"
   }
 }

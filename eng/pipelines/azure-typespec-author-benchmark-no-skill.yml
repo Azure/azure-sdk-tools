@@ -19,23 +19,26 @@ parameters:
 
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
-  - name: TypeSpecAuthorEvalExtraArgs
-    value: '--tag mode=no-skill --skill-dir /tmp/no-skills'
+  - name: TypeSpecAuthorEvalMode
+    value: no-skill
   - name: AZSDK_EVAL_MCP_KIND
     value: ${{ parameters.McpKind }}
-  - name: TypeSpecAuthorEvalRuns
-    value: ${{ parameters.Runs }}
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-eval.yml
   parameters:
     vallyRoot: .github/skills/azure-typespec-author/evaluate
     evalGlobs:
-      - 'evals/*.eval.yaml'
+      - "evals/*.eval.yaml"
     mcpSetupTemplate: /eng/common/pipelines/templates/steps/eval-mcp-setup.yml
     TestType: ${{ parameters.McpKind }}
-    evalInvokeTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-noskill-eval-invoke.yml
+    vallyArguments:
+      - --tag
+      - mode=no-skill
+      - --runs
+      - ${{ format('{0}', parameters.Runs) }}
     UseAzSdkAuthentication: ${{ eq(parameters.McpKind, 'live') }}
+    azureSubscription: azuresdkqabot-dev
     preEvalTemplate: /.github/skills/azure-typespec-author/evaluate/pipeline/typespec-author-preeval.yml
     failOnFailedTests: false
     # Keep each shard below the installation token's one-hour lifetime.

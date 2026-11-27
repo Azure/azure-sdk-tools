@@ -19,6 +19,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 from contextlib import ExitStack
@@ -81,23 +82,57 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
 }
 
 
+_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:[^()\r\n]|\([^()\r\n]*\))*\)")
+_UNCLOSED_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:https?://|data:)[^)\s\"'\\]*", re.IGNORECASE)
+_HTML_IMAGE_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+_UNCLOSED_HTML_IMAGE_RE = re.compile(r"<img\b[^>]*(?:https?://|data:)[^>]*", re.IGNORECASE)
+_HTML_IMAGE_ALT_RE = re.compile(
+    r"""alt\s*=\s*(?:\\"([^\\"]*)\\"|\"([^\"]*)\"|'([^']*)')""",
+    re.IGNORECASE,
+)
+
+
+def _strip_image_tags(text: str) -> str:
+    """Replace markdown and HTML image tags with plain-text placeholders."""
+    if not text:
+        return text
+
+    def _replace_markdown(match: re.Match[str]) -> str:
+        alt = match.group(1).strip()
+        return f"[Image: {alt}]" if alt else "[Image]"
+
+    def _replace_html(match: re.Match[str]) -> str:
+        alt_match = _HTML_IMAGE_ALT_RE.search(match.group(0))
+        alt = ""
+        if alt_match:
+            alt = next((g for g in alt_match.groups() if g is not None), "").strip()
+        return f"[Image: {alt}]" if alt else "[Image]"
+
+    text = _MARKDOWN_IMAGE_RE.sub(_replace_markdown, text)
+    text = _UNCLOSED_MARKDOWN_IMAGE_RE.sub(_replace_markdown, text)
+    text = _HTML_IMAGE_RE.sub(_replace_html, text)
+    return _UNCLOSED_HTML_IMAGE_RE.sub(_replace_html, text)
+
+
 def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
     """Project a collected record into the eval ``item`` payload (JSON-safe)."""
-    return {
+    item = {
         "testcase": it.get("testcase", "unknown"),
-        "query": it.get("query", ""),
-        "ground_truth": it.get("ground_truth", ""),
-        "response": it.get("response", ""),
-        "context": it.get("context", "") or "",
+        "query": _strip_image_tags(it.get("query", "") or ""),
+        "ground_truth": _strip_image_tags(it.get("ground_truth", "") or ""),
+        "response": _strip_image_tags(it.get("response", "") or ""),
+        "context": _strip_image_tags(it.get("context", "") or ""),
         "response_id": it.get("response_id", "") or "",
         "expected_references": it.get("expected_references", []),
         "expected_knowledges": it.get("expected_knowledges", []),
         "references": it.get("references", []),
         "knowledges": it.get("knowledges", []),
-        "expected_route_channel": it.get("expected_route_channel"),
         "route_channel_name": it.get("route_channel_name"),
         "route_channel_link": it.get("route_channel_link"),
     }
+    if "expected_route_channel" in it:
+        item["expected_route_channel"] = it["expected_route_channel"]
+    return item
 
 
 def _retry_foundry_call(
@@ -280,7 +315,7 @@ class CompletionCollector:
                 answer = api_response.get("answer", "")
                 full_context = api_response.get("full_context", "") or ""
                 references = api_response.get("references", []) or []
-                results[index] = {
+                item_result = {
                     "testcase": record.get("testcase", "unknown"),
                     "query": record["query"],
                     "ground_truth": record.get("ground_truth", ""),
@@ -294,10 +329,12 @@ class CompletionCollector:
                     "references": extract_title_and_link_from_references(references),
                     "expected_knowledges": record.get("expected_knowledges", []),
                     "knowledges": extract_title_and_link_from_context(full_context),
-                    "expected_route_channel": record.get("expected_route_channel"),
                     "route_channel_name": api_response.get("route_channel_name"),
                     "route_channel_link": api_response.get("route_channel_link"),
                 }
+                if "expected_route_channel" in record:
+                    item_result["expected_route_channel"] = record["expected_route_channel"]
+                results[index] = item_result
 
         timeout = aiohttp.ClientTimeout(total=self._timeout_seconds)
         async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -548,7 +585,7 @@ def output_items_to_rows(
             )
             row["outputs.bot_evals.bot_evals_result"] = "pass" if composite >= threshold else "fail"
 
-        if want_route_channel:
+        if want_route_channel and "expected_route_channel" in item:
             expected_channel = (item.get("expected_route_channel") or "").strip() or None
             actual_channel = (item.get("route_channel_name") or "").strip() or None
             if expected_channel is None:
@@ -819,7 +856,7 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
 
     Accepts:
       * ``<path>.jsonl``              -> read that file; scenario = file stem.
-      * ``qa-bot-<target>-<scenario>[:version]`` -> read ``evaluation_datasets/<target>/<scenario>.jsonl``.
+      * ``qa-bot-<scenario>[:version]`` -> read ``evaluation_datasets/<scenario>.jsonl``.
     """
     candidate = Path(dataset_spec)
     if dataset_spec.endswith(".jsonl") or candidate.exists():
@@ -827,15 +864,13 @@ def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[s
         scenario = path.stem
     else:
         name = dataset_spec.split(":", 1)[0]
-        # name form: qa-bot-<target>-<scenario>
         parts = name.split("-")
-        if len(parts) < 4 or parts[0] != "qa" or parts[1] != "bot":
+        if len(parts) < 3 or parts[0] != "qa" or parts[1] != "bot":
             raise ValueError(
-                f"--dataset {dataset_spec!r} not a local path and not a qa-bot-<target>-<scenario> name"
+                f"--dataset {dataset_spec!r} not a local path and not a qa-bot-<scenario> name"
             )
-        target = parts[2]
-        scenario = "-".join(parts[3:])
-        path = script_dir / "evaluation_datasets" / target / f"{scenario}.jsonl"
+        scenario = "-".join(parts[2:])
+        path = script_dir / "evaluation_datasets" / f"{scenario}.jsonl"
 
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found for completion mode: {path}")

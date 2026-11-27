@@ -97,6 +97,43 @@ azsdk eng package-info --package-path <package-root> --output json
 
 The language is inferred from the SDK repository. Single-package mode calls the language service's `GetPackageInfo` and returns the package in `result`, including `Name`, `Version`, and `ApiVersions`. Plain output also displays the package as JSON. It does not scan other packages or populate bulk CI enrichment fields.
 
+To also identify resource types from the package's pinned specification, use:
+
+```sh
+azsdk eng package-info --package-path <package-root> --include-resource-types --output json
+```
+
+This returns the same `PackageInfo`, with `ApiVersions` and `ResourceTypes`.
+The same package also carries the validated `TypeSpecLocation` (directory,
+repository, and commit), `MetadataFiles`, and `MetadataIssues`; its
+existing `SdkType` identifies management (`mgmt`), data plane (`client`), or
+unknown. Per-package generation and enrichment operations return `PackageInfo`
+directly, not a second result model containing a package.
+Each resource-type entry has `Namespace`, `ApiVersion`, and `ResourceType`, so
+one package can represent several RPs and different versions without mixing
+their resource types. For example:
+
+```json
+{
+  "ApiVersions": [
+    {"Namespace": "Microsoft.Compute", "Version": "2025-01-01"},
+    {"Namespace": "Microsoft.Network", "Version": "2026-01-01"}
+  ],
+  "ResourceTypes": [
+    {"Namespace": "Microsoft.Compute", "ApiVersion": "2025-01-01", "ResourceType": "virtualMachines"},
+    {"Namespace": "Microsoft.Network", "ApiVersion": "2026-01-01", "ResourceType": "virtualNetworks"}
+  ]
+}
+```
+
+Resource-type enrichment requires GitHub access to the recorded spec revision,
+but makes no ARM requests and does not require Azure authentication. Without
+`--include-resource-types`, inspection remains local metadata-only and
+`ResourceTypes` is empty because it was not resolved. The option requires one
+`--package-path`; it cannot start an implicit bulk network scan. Missing or
+unresolved generation/resource evidence makes an enrichment request fail rather
+than returning partial evidence as complete.
+
 Add `--out-dir <directory>` to write the selected package's CI-format JSON file instead of returning the package directly. Without `--package-path`, the existing bulk-export mode still requires `--out-dir` and supports `--repo-root`, `--service-directory`, `--artifact`, and `--ci`. Those bulk-selection options cannot be combined with `--package-path`. `--add-dev-version` is supported in both modes.
 
 API versions are populated during SDK package discovery for these languages:
@@ -114,6 +151,334 @@ Discovery reads only these metadata locations, not nested packages or SDK source
 For example, map metadata produces `"ApiVersions": [{"Version": "2026-04-01", "Namespace": "Compute"}]`; singular metadata produces `"ApiVersions": [{"Version": "2023-01-01"}]`.
 
 Missing metadata or metadata without API versions leaves `ApiVersions` empty. Malformed JSON, invalid field types, blank version strings, or unreadable files leave it empty and log a warning with the file path and failure reason. No partial versions are returned if a matching file is invalid. Metadata errors are logged only; they are not stored in `PackageInfo` and do not fail package discovery or hide the package from bulk export. Invalid command options, nonexistent package directories, or failed package lookups return exit code `1`.
+
+### Service API readiness validation
+
+```sh
+azsdk pkg validate-service-api-readiness --pull-request-url https://github.com/Azure/azure-sdk-for-java/pull/123 --output json
+azsdk pkg validate-service-api-readiness --package-path <package-root> --output json
+```
+
+For a current-head metadata inspection without ARM requests, use
+`azsdk pkg validate-service-api-readiness --pull-request-url <sdk-pr-url> --metadata-only --output json`.
+This CLI-only option resolves package provenance and provider/API-version requirements
+without Azure credentials. It returns metadata with an Inconclusive readiness
+status, not a passing service observation. Automation can compare that evidence
+with release-plan state before deciding whether a full ARM check is needed.
+Metadata-only mode requires PR input and retains the captured-head contract.
+
+#### Execution Paths
+
+| Input | Entry and next call | External work | ADO writes |
+| --- | --- | --- | --- |
+| PR URL, ordinary CLI/MCP | `ValidateServiceApiReadiness` -> `ReleasePlanReadinessService.CheckAsync` | When configured for an Azure-owned SDK PR, look up its plan first; then read current SDK metadata and reuse matching evidence or check ARM. | None. |
+| PR URL, `--metadata-only` | `HandleCommand` -> `GetPackageMetadataAsync` | GitHub metadata and pinned provider scope only. | None; no ADO lookup or ARM credential. |
+| PR URL, `--record-release-plan` | `HandleCommand` -> `ReleasePlanReadinessService.CheckAsync` | Same PR validation/reuse flow; record only after a fresh check with a valid association. | Three fields under a revision guard. |
+| Local package, ordinary CLI/MCP | `ValidateServiceApiReadiness` -> existing language `GetPackageInfo` -> `CheckPackageAsync` | Local SDK files, pinned spec reads, then ARM for management-plane packages. | None; no ADO lookup or PR-head claim. |
+| Local inspection | `PackageInfoTool.ExecuteSinglePackage` -> existing language `GetPackageInfo` | Local package metadata. `--include-resource-types` additionally calls `PackageApiMetadataService.GetPackageInfoAsync` for pinned spec enrichment. | None; never an ARM readiness check. |
+
+A reuse hit returns before validation/recording and keeps the saved check time.
+A reuse miss validates the already-read PackageInfo objects. With no associated
+plan, the direct validator discovers metadata and checks ARM once. Confirmed
+data-plane metadata returns Inconclusive with `plane: "data-plane"` because ARM
+is not applicable; display consumers may label that Not applicable.
+
+Package discovery ignores shared files directly in a service directory, such as
+`sdk/apimanagement/ci.mgmt.yml` or `sdk/apimanagement/pom.xml`. Go service directories
+are under `sdk/resourcemanager/<service>/`. Changes inside package directories still
+require generation metadata; an unresolved package makes the check Inconclusive.
+Only actual management-plane and data-plane packages produce a mixed-plane diagnostic.
+
+Exit code `0` means the check completed, not that the service is ready. Read the
+JSON `status` to distinguish Passed, Not detected, and Inconclusive; execution
+errors return a nonzero exit code. Only Passed should produce a readiness label.
+
+#### Release-Plan Evidence
+
+Set `AZSDK_SERVICE_READINESS_ENVIRONMENT` to identify the trusted ARM validation
+environment and enable optional reuse through the existing `DevOpsService`.
+The explicit `--record-release-plan` option requires this environment variable;
+without it, the command returns `Error` instead of reporting a successful check
+that did not record evidence.
+It returns the associated plan, API-spec child, evidence, and scope histories in
+one owner lookup, not one HTTP request. The plan owns SDK PR association and
+project/commit scope; its API-spec child supplies `Custom.APISpecversion`.
+Missing associations or incomplete histories prevent reuse. Other API versions
+are checked directly and are not recorded under that plan.
+
+An empty API-version field on the linked API-spec item also prevents reuse and
+recording, but does not prevent a direct check from passing when the generated SDK
+metadata supplies the version and ARM advertises it. Missing API-version evidence
+in the SDK metadata instead makes a management-plane check Inconclusive.
+
+The lookup maps ADO items through the existing `ReleasePlanWorkItem` and
+`ApiSpecWorkItem` models before returning them to the coordinator. Readiness
+status/time/details are mapped in the existing release-plan mapper; API version
+remains mapped from the linked API-spec item. Generic model patches exclude the
+readiness fields. Only the explicit revision-checked three-field update writes them.
+
+| Fixed ADO field | Type | Meaning |
+| --- | --- | --- |
+| `Custom.ServiceApiVersionReadinessStatus` | `string` | Recorded readiness summary. |
+| `Custom.ServiceApiVersionReadinessCheckedAt` | `dateTime` | Original check time. |
+| `Custom.ServiceReadinessDetails` | `html` | HTML-encoded schema-4 provider evidence. |
+
+Schema 4 stores `resourceProvider`, raw `status`, `checkedAt`,
+`validationEnvironment`, and `matchedResourceTypes` entries with `resourceType`
+and `regions`. Scope is not duplicated in JSON. The CLI HTML-encodes compact JSON
+and decodes exactly once on read. ADO enforces its payload limits; a rejected
+optional update preserves the completed readiness result and reports a warning.
+There is no client-side payload-size preflight or observation-count cap. No data
+is truncated, and the old short-string details field is unused.
+
+ADO uses Ready for Passed and Unknown for Inconclusive or Error. Not detected
+uses the provisioned dropdown spelling Note Ready; reads also accept Not Ready
+and Not ready. The CLI v1 result and JSON keep their original raw outcomes.
+An operational check failure does not establish service unavailability.
+
+Matching Passed evidence has no age expiry. Non-Passed evidence is reusable for
+less than 24 rolling hours and refreshed at or after 24 hours. Every invocation
+reads current SDK metadata; a miss validates those same PackageInfo objects
+without repeated discovery. Project, commit, API-version, or environment changes
+prevent reuse. Reuse never resets the original check time; summary/evidence
+comparison tolerates at most 3 ms of native ADO rounding. Missing, malformed,
+future, or inconsistent evidence is not reusable; unsupported future schemas
+are not overwritten.
+
+Add CLI-only `--record-release-plan` with PR input to permit one revision-checked
+update of all three fields. It is incompatible with local input and
+`--metadata-only`; normal CLI/MCP validation stays read-only. Optional ADO
+failures preserve the primary check result with a safe warning. Existing
+`AZSDKTOOLS_AGENT_TESTING=true` selects only plans tagged `Release Planner App Test`;
+normal mode excludes them. No action registration, permissions, or deployment
+is enabled by these settings.
+
+Supply exactly one of `--pull-request-url` or `--package-path`. The MCP tool
+`azsdk_validate_service_api_readiness` accepts the same alternatives:
+
+```json
+{"pullRequestUrl": "https://github.com/Azure/azure-sdk-for-java/pull/123"}
+```
+
+```json
+{"packagePath": "/path/to/azure-sdk-for-java/sdk/storage/azure-resourcemanager-storage"}
+```
+
+The CLI and MCP entry points share one read-only check. It resolves exact generation metadata from the SDK
+files at the current PR head or the selected local package and compares exact
+provider/API-version entries with ARM provider metadata. It returns Passed if at
+least one provider resource type advertises the exact version; it does not require
+that type to match a spec resource list. It returns Passed, Not detected,
+Inconclusive, or Error with package, source, and resource-type evidence. It does not edit
+GitHub, grant permissions, merge a PR, or release a package.
+
+Package discovery is internal to this command; running `eng package-info` first
+is not required. Each package carries `ApiVersions`, `TypeSpecLocation`,
+`ResourceTypes`, `MetadataFiles`, and `MetadataIssues`, alongside the existing
+package path and SDK type. Explicit generated provider metadata does not need
+Swagger resource inspection. Scalar metadata still uses pinned project evidence
+to resolve provider scope. The separate `--include-resource-types` inspection
+option remains available; validation records actual provider matches and regions.
+
+In PR mode, the command captures the SDK PR head SHA. Callers must
+compare that SHA with the current head before publishing a result. It does not
+accept a caller-supplied SHA. The same captured-head rule applies to MCP results.
+
+Local mode reads the selected working-tree files, including uncommitted changes,
+and returns `inputKind: "package"` with no PR head SHA. It is not a PR-head
+attestation and must not be used by the automation worker to publish a PR result.
+The worker continues to invoke PR mode. No SDK files are modified in either mode.
+
+Local readiness and resource-type inspection reuse generation metadata content
+already read by the existing language `GetPackageInfo` call. The content handoff
+contains parsed JSON, is internal to `PackageInfo`, is excluded from output, and
+is cleared after consumption. The parsed pinned TypeSpec configuration is shared
+between plane classification and Swagger mapping, without fetching it again.
+Readiness still validates provenance and conflicting versions against that input;
+a later check reads current working-tree content rather than retaining a cache.
+Ordinary and bulk inspection discard the unused parsed-content handoff after
+package metadata is populated.
+
+GitHub authentication uses the existing token resolver: automation can supply
+its App installation token through `GITHUB_TOKEN`; local users can use
+`gh auth login`. ARM uses the existing Azure credential service, including
+developer credentials locally and managed identity on the hosted worker.
+Do not pass either token on the command line.
+
+The resolver tries `GITHUB_TOKEN`, legacy `GITHUB_PERSONAL_ACCESS_TOKEN`, then
+`gh auth token`. A rejected supplied token does not switch identities. Token
+discovery does not log process output, and failures exclude stdout and stderr.
+
+The command is a draft implementation until review and a CLI release are complete.
+Consumers need a release containing it or a validated trusted artifact; merged
+source alone is not an installed CLI.
+
+#### Generation evidence
+
+Every package needs `tsp-location.yaml` with an allowed spec repository, full
+commit SHA, and project directory. The command reads generation files from the
+captured SDK head or selected local package and reads the specification at that recorded commit. PR
+descriptions, comments, labels, package versions, and current `main` are not
+generation evidence. There is no API-version override or arbitrary endpoint.
+
+| SDK repository | Package root | API-version metadata relative to the package root |
+| --- | --- | --- |
+| `azure-sdk-for-net` | `sdk/<service>/<package>` | `metadata.json` |
+| `azure-sdk-for-java` | `sdk/<service>/<package>` | Every top-level `src/main/resources/META-INF/*_metadata.json` |
+| `azure-sdk-for-js` | `sdk/<service>/<package>` | `metadata.json` |
+| `azure-sdk-for-python` | `sdk/<service>/<package>` | `_metadata.json` |
+| `azure-sdk-for-go` | `sdk/resourcemanager/<service>/<module>` | `testdata/_metadata.json` |
+
+`apiVersions` maps providers to exact versions. Each RP is resolved and checked
+independently. Scalar `apiVersion` is associated with the literal providers found
+in the pinned project Swagger, not a language namespace; every discovered RP is
+checked. A valid provider declaration is still required in pinned `main.tsp`.
+Identical versions are
+deduplicated. Missing or malformed files and conflicting versions or provenance
+are Inconclusive. All matching Java metadata files must be valid.
+
+When matching files contain both scalar and explicit-provider metadata, both
+evidence scopes are retained until project providers are resolved. Only the
+resolved RP/version checks are deduplicated; metadata filename order cannot
+change which providers are checked.
+
+Deletion-only packages and rename source packages are checked unless their
+directory is absent at the captured head. No surviving affected package is
+Inconclusive. The recorded directory locates the pinned `tspconfig.yaml`, whose explicit
+configuration markers determine management or data plane. The shared
+`TypeSpecProject.ClassifySdkType` recognizes the resource-manager/data-plane
+linter rulesets and the AutoRest resource-provider folder. Directory names and
+PR labels are not plane evidence. Missing, malformed, conflicting, inherited-only,
+or unmarked configuration is unresolved; readiness remains Inconclusive without
+version or ARM reads. Confirmed data-plane configuration is not applicable.
+Directories with filename-like suffixes remain valid inside `specification`.
+
+#### Evidence flow
+
+The ordered path below applies to a configured Azure-owned SDK PR. Without a
+plan, the validator starts at Capture PR and skips reuse/recording. Metadata-only
+and local inputs follow the separate entry paths above; neither looks up ADO.
+
+| Stage | Methods and data produced | Why it remains in this flow |
+| --- | --- | --- |
+| Optional plan lookup | `ReleasePlanReadinessService.CheckAsync` -> `GetReleasePlanReadinessAsync` selects the associated plan, loads its API-spec child/histories, and reuses the existing model mappers. | This happens before SDK metadata is loaded. Association comes from existing ADO fields, not a PR-body link. |
+| Capture PR | `CheckPullRequestAsync` gets the current head repository/SHA and pinned base from GitHub. | Every subsequent SDK read must use that captured revision. |
+| Find affected packages | `DiscoverPackagesAsync` -> `GetChangedPackagesAsync` -> `FindChangedPackagesAsync`; `GetPackageDirectories`, `FindPackageRootAsync`, and `ReadGenerationLocationTextAsync` locate/cache `tsp-location.yaml`. | Changed files do not directly identify package roots; deleted/renamed source packages need the pinned base to identify their former root. |
+| Confirm surviving packages | `PackageExistsAtHeadAsync` excludes only packages whose head directory is absent. | Deleting one source file must not omit a surviving affected package. |
+| Populate package | `PopulateGenerationMetadataAsync` -> `PopulateTypeSpecLocationAsync` -> shared `ParseTypeSpecLocation` and `TypeSpecProject.ClassifySdkType`. | PackageInfo gains the exact spec pin and management/data-plane type before any ARM request. |
+| Resolve versions | `ReadMetadataPathsAsync`, `PopulatePackageApiVersionsAsync`, and `ReadPackageApiVersions` use shared `GetMetadataFileLocation`/`ReadApiVersionsByProvider`. | Generated metadata supplies each exact provider/version; Java combines all matching files. |
+| Prepare checks | `HasValidationEvidence` sets plane/issues; `PopulateValidationProjectsAsync` references the same packages and selected versions. | Incomplete or mixed-plane metadata is not a valid ARM check. Explicit providers avoid extra Swagger reads. |
+| Resolve scalar scope | `PopulateResourceTypesAsync` -> `ReadPinnedSwaggerResourceTypesAsync`; mapping/discovery/path methods read the pinned output and owning providers. | Scalar metadata lacks provider keys; this is also reused by explicit resource-type inspection. It is not an ARM resource-type filter. |
+| Apply reusable evidence | `ReadObservations`, `MatchesPlan`, `ReadScopeChangedAt`/`ReadFieldsChangedAt`, and `TryReuse`. | Check provider, spec scope, environment, saved status/time, and the approved non-Passed lifetime before skipping ARM. |
+| Check ARM | `ValidateAsync` -> `ValidatePackagesAsync` -> `ReadTenantProviderAsync` -> `CompareApiVersion`. | Read provider metadata once per provider; compare the SDK version exactly, retaining actual matches/regions. |
+| Form result | `GetOverallStatus`, `SetOverallResult`, and `GetEvidenceSummary` calculate status and original evidence time. | One shared status rule; no temporary package/response models just to summarize evidence. |
+| Record fresh evidence | `RecordAsync` re-reads associated state, merges the required provider observations, encodes JSON, and calls existing `UpdateWorkItemAsync`. | Only explicit recording writes; revision conflicts use one current-state re-read, and ADO rejection preserves the primary check result. |
+
+`PackageInfo` owns the generation pin, metadata paths/issues, original API-version
+entries, resolved provider/version pairs, and optional spec resource types. A
+`ServiceApiReadinessProject` references that package and one version; its JSON
+`source` is projected only for output. `ServiceApiReadinessMatch` contains actual
+ARM types/regions, distinct from expected spec types. `ServiceApiReadinessResponse`
+contains the captured head, plane, status, check time, packages, and projects.
+
+Transport stays with existing owners: GitHub reads use `ReadJsonEvidenceAsync`
+and `ReadFileEvidenceAsync`; local reads use `File.ReadAllTextAsync`; ADO uses
+the existing connection/lookup/selective updater; ARM uses the existing Azure
+credential service and standard HTTP responses. No second client, checkout,
+per-package evidence wrapper, or arbitrary size/discovery preflight is involved.
+
+| External operation | Purpose | When it occurs |
+| --- | --- | --- |
+| GitHub `GET /repos/{owner}/{repo}/pulls/{number}` | Capture head repository/SHA and base once. | PR metadata loading, including on a reuse hit. |
+| GitHub `GET /repos/{owner}/{repo}/pulls/{number}/files` | Identify affected packages, including removed/renamed source paths. | PR metadata loading; paginated by the existing discovery code. |
+| GitHub `GET /repos/{repository}/contents/{path}?ref={commit}` | Read SDK files at the captured head and specification files at their recorded commit. | Metadata preparation; a raw-content retry uses the same pinned API path. |
+| ADO query, work-item and update-history reads | Select the linked plan/API-spec item and establish their scope. | Configured Azure-owned PR flow; repeated before an explicit write, with one re-read on a revision conflict. |
+| ARM `GET /providers/{namespace}?api-version=2021-04-01` | Find the exact SDK version in provider metadata. | A management-plane check without reusable evidence, once per provider. |
+| ADO revision-checked work-item update | Write status, original check time, and HTML evidence only. | Explicit recording after validation; never a reuse hit, metadata-only check, local check, or ordinary MCP call. |
+
+| Value | First authoritative source | Not interchangeable with |
+| --- | --- | --- |
+| SDK head/base | GitHub PR response. | Spec commit or release-plan revision. |
+| Package path/language | Changed-file discovery or existing local language service. | TypeSpec project path. |
+| Spec repository/commit/project | The selected package's `tsp-location.yaml`. | Latest spec main or editable PR text. |
+| Provider/API version | Generated SDK metadata; scalar provider scope additionally uses pinned project evidence. | SDK package version or ARM metadata API version. |
+| Plane | Pinned `tspconfig.yaml` through the shared classifier. | A folder name or PR label. |
+| Plan ID/revision/spec child | Existing ADO lookup and linked work items. | User-visible Release Plan ID, SDK PR number, or another language's head. |
+| Check time | Fresh response time, or original retained observation time on reuse/recording. | Work-item modification or comment-publication time. |
+
+The command reads explicit checked-in Swagger mappings from pinned TypeSpec
+configuration. It does not compile TypeSpec or scan the repository. Swagger
+`info.version` must equal the SDK metadata version. Resource paths identify the
+provider's resource types; an unresolved child cannot pass using its parent.
+Provider discovery is tracked separately from successfully mapped resource
+types. An unresolved provider expression, or a required RP with no resolvable
+resource type, makes the check Inconclusive even when another RP matches. For
+extension-resource paths, the last `providers` segment owns the resource;
+earlier providers describe its parent scope, not extra SDK requirements.
+
+One ARM request per provider namespace uses
+`GET https://management.azure.com/providers/{namespace}?api-version=2021-04-01`.
+This is the documented
+[Providers - Get At Tenant Scope](https://learn.microsoft.com/rest/api/resources/providers/get-at-tenant-scope?view=rest-resources-2021-04-01)
+operation, which does not require a subscription ID. The separate
+[Providers - Get](https://learn.microsoft.com/rest/api/resources/providers/get?view=rest-resources-2021-04-01)
+operation requires `/subscriptions/{subscriptionId}` and is not used here.
+The credential's tenant supplies the metadata context; this check does not
+validate registration or deployment in a particular subscription.
+That metadata API version is not the service API version being checked. Every
+affected management project must have at least one resource type advertising its
+exact version for the overall result to be Passed. This is evidence, not release
+approval, service health, or proof of deployment in every region.
+
+The 40-second deadline includes token discovery. Reads honor cancellation,
+keep GitHub and ARM tokens on their fixed hosts, and use the standard HTTP
+response APIs. Large files use raw content on `api.github.com` at the same
+revision, never `download_url`. Discovery has no additional file/directory cap;
+an incomplete GitHub directory or 3,000-file PR listing cannot establish complete
+evidence. No resource operations, regional probes, samples, resource creation,
+or role assignments are performed.
+
+#### Result contract
+
+The root JSON contains `contractVersion: 1`, `status`, `inputKind`, `headSha`, `headRepository`,
+`plane`, `checkedAt`, `detail`, `packages`, and `projects`. `packages` contains
+enriched `PackageInfo` objects; API versions remain associated with their RP and
+resource types remain associated with both RP and API version. Generation
+provenance and metadata issues remain attached to that same package, including
+when generation evidence is incomplete and readiness returns Inconclusive.
+PR mode uses
+`inputKind: "pull-request"`; only that mode returns a captured PR head.
+Read `status`, not the CLI-wide
+`operation_status`; `response_error` may also appear.
+
+Each project contains `source`, `status`, `namespace`, `detail`, and `matches`.
+The source records the package, generation-file paths, pinned spec repository,
+commit, configuration, and API version. Matches contain `resourceType` and
+advertised `regions`, not regional health guarantees.
+
+| Status | Meaning |
+| --- | --- |
+| Passed | At least one applicable type advertises the exact version for every checked package/RP/version pair. |
+| Not detected | Applicable types exist, but none advertise the version. Ask the service owner to confirm deployment. |
+| Inconclusive | Evidence or mapping is missing, conflicting, or unavailable, or ARM is not applicable. |
+| Error | Authentication, transport, cancellation, or another application failure prevented the check. |
+
+Exit zero means Passed, Not detected, or Inconclusive; exit one means Error.
+Always read `status`. Treat an unusable or unknown contract as Error. Unit tests
+cover layouts, statuses, credentials, mapping, cancellation, and safe
+errors; live CLI checks separately establish installation and Azure access.
+
+`ServiceApiReadinessService` coordinates the check and ARM comparison.
+`GeneratedSdkMetadataHelper` exposes reusable local API-version population and
+language-specific metadata locations, using the shared `PackageInfoHelper`
+parser. `SdkPackageMetadataHelper` resolves local or pinned remote generation
+evidence. `PackageApiMetadataService.GetPackageInfoAsync` returns enriched
+`PackageInfo` independently of a readiness check or Azure credentials.
+Both callers depend on `IPackageApiMetadataService`. Local `TypeSpecProject`
+classification and pinned readiness classification share the pure configuration
+classifier instead of separate path/string heuristics.
+`ProjectResourceTypeHelper` resolves pinned Swagger mappings without a PR DTO.
+`GitHubService` supplies the JSON and file reads shared by these helpers.
 
 ### Package release approval
 

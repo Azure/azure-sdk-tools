@@ -151,6 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem?> ResolveReleasePlanByIdAsync(int id, CancellationToken ct);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<(ReleasePlanWorkItem Plan, ApiSpecWorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?> GetReleasePlanReadinessAsync(string sdkPullRequest, string language, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string releasePlanType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", string? specCommitSha = null, CancellationToken ct = default);
@@ -184,6 +185,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations, CancellationToken ct = default);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default);
+        Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task EnsureReleasePlanAutomationRelationAsync(int releasePlanWorkItemId, int completedReleasePlanWorkItemId, CancellationToken ct);
@@ -224,6 +226,22 @@ namespace Azure.Sdk.Tools.Cli.Services
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct)
         {
             return _cachedRelationTypes ??= await connection.GetWorkItemClient(ct).GetRelationTypesAsync(cancellationToken: ct);
+        }
+
+        public async Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default)
+        {
+            const int pageSize = 200;
+            var updates = new List<WorkItemUpdate>();
+            while (true)
+            {
+                var page = await connection.GetWorkItemClient(ct).GetUpdatesAsync(workItemId,
+                    top: pageSize, skip: updates.Count, cancellationToken: ct);
+                updates.AddRange(page);
+                if (page.Count < pageSize)
+                {
+                    return updates;
+                }
+            }
         }
 
         private bool IsAgentTesting => Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING") == "true";
@@ -419,19 +437,45 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan = false, CancellationToken ct = default)
         {
-            var normalizedUrl = NormalizeSdkPullRequestUrl(sdkPullRequest, language);
-            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-            query += " AND [System.WorkItemType] = 'Release Plan' AND [System.State] = 'In Progress'";
-            query += $" AND [Custom.SDKPullRequestFor{languageId}] = '{normalizedUrl}'";
-            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
-            var workItems = await FetchWorkItemsAsync(query, ct);
+            var workItems = await FindReleasePlansBySdkPullRequestAsync(sdkPullRequest, language, isTestReleasePlan, ct);
             var plans = new List<ReleasePlanWorkItem>();
             foreach (var workItem in workItems)
             {
                 plans.Add(await MapWorkItemToReleasePlanAsync(workItem, ct));
             }
             return plans;
+        }
+
+        public async Task<(ReleasePlanWorkItem Plan, ApiSpecWorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?> GetReleasePlanReadinessAsync(
+            string sdkPullRequest, string language, CancellationToken ct = default)
+        {
+            var plans = await FindReleasePlansBySdkPullRequestAsync(sdkPullRequest, language, IsAgentTesting, ct);
+            if (plans.Count != 1)
+            {
+                return null;
+            }
+            var plan = plans[0];
+            if (!plan.Fields.TryGetValue("System.WorkItemType", out var workItemType) || !Equals(workItemType, "Release Plan"))
+            {
+                return null;
+            }
+            var specification = await GetApiSpecWorkItemAsync(plan, ct);
+            var planUpdates = await GetWorkItemUpdatesAsync(plan.Id!.Value, ct);
+            var specificationUpdates = await GetWorkItemUpdatesAsync(specification.Id!.Value, ct);
+            var mappedSpecification = MapWorkItemToApiSpec(specification)!;
+            var mappedPlan = await MapWorkItemToReleasePlanAsync(plan, ct, specification: mappedSpecification);
+            return (mappedPlan, mappedSpecification, planUpdates, specificationUpdates);
+        }
+
+        private async Task<List<WorkItem>> FindReleasePlansBySdkPullRequestAsync(string sdkPullRequest, string language, bool isTestReleasePlan, CancellationToken ct)
+        {
+            var normalizedUrl = NormalizeSdkPullRequestUrl(sdkPullRequest, language);
+            var languageId = MapLanguageToId(SdkLanguageHelpers.GetSdkLanguage(language).ToWorkItemString());
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += " AND [System.WorkItemType] = 'Release Plan' AND [System.State] = 'In Progress'";
+            query += $" AND [Custom.SDKPullRequestFor{languageId}] = '{normalizedUrl}'";
+            query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            return await FetchWorkItemsAsync(query, ct);
         }
 
         internal static string NormalizeSdkPullRequestUrl(string sdkPullRequest, string language)
@@ -452,7 +496,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             throw new ArgumentException("SDK pull request must be a full HTTPS GitHub PR URL in the Azure SDK repository for the supplied language.", nameof(sdkPullRequest));
         }
 
-        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct, bool requireSpecDetails = false)
+        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct,
+            bool requireSpecDetails = false, ApiSpecWorkItem? specification = null)
         {
             var releasePlan = new ReleasePlanWorkItem()
             {
@@ -481,9 +526,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 IsSpecApproved = workItem.Fields.TryGetValue("Custom.APISpecApprovalStatus", out value) && "Approved".Equals(value?.ToString()),
                 LanguageExclusionRequesterNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionRequestNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 LanguageExclusionApproverNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionApprovalNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                APISpecProjectPath = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ApiSpecProjectPathField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 OverdueLastNotifiedDate = workItem.Fields.TryGetValue(ReleasePlanWorkItem.OverdueLastNotifiedDateField, out value) && value is DateTime overdueLastNotifiedDate ? overdueLastNotifiedDate : null,
-                APISpecProjectPath = workItem.Fields.TryGetValue("Custom.ApiSpecProjectPath", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SpecCommitSHA = workItem.Fields.TryGetValue(ReleasePlanWorkItem.SpecCommitSHAField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ServiceReadinessStatus = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessStatusField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ServiceReadinessCheckedAt = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessCheckedAtField, out value)
+                    ? ReadWorkItemTimestamp(value) : null,
+                ServiceReadinessDetails = workItem.Fields.TryGetValue(ReleasePlanWorkItem.ServiceReadinessDetailsField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ReleasePlanType = workItem.Fields.TryGetValue("Custom.ReleasePlanType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
@@ -527,12 +576,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Get details from API spec work item
             try
             {
-                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
-                if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
+                var apiSpecWorkItem = specification ?? MapWorkItemToApiSpec(await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct));
+                if (apiSpecWorkItem != null)
                 {
-                    releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
-                    releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
-                    releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
+                    releasePlan.ApiSpecWorkItemId = apiSpecWorkItem.WorkItemId;
+                    releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.ActiveSpecPullRequest;
+                    releasePlan.SpecAPIVersion = apiSpecWorkItem.SpecAPIVersion;
+                    releasePlan.SpecType = apiSpecWorkItem.SpecType;
                 }
                 else
                 {
@@ -553,6 +603,35 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             return releasePlan;
+        }
+
+        private static ApiSpecWorkItem? MapWorkItemToApiSpec(WorkItem? workItem)
+        {
+            if (workItem?.Fields is null)
+            {
+                return null;
+            }
+            return new ApiSpecWorkItem
+            {
+                WorkItemId = workItem.Id ?? 0,
+                Revision = workItem.Rev ?? 0,
+                WorkItemUrl = workItem.Url,
+                Status = workItem.Fields.TryGetValue("System.State", out var value) ? value?.ToString() ?? string.Empty : string.Empty,
+                SpecAPIVersion = workItem.Fields.TryGetValue(ApiSpecWorkItem.SpecAPIVersionField, out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                SpecType = workItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ActiveSpecPullRequest = workItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out value) ? value?.ToString() ?? string.Empty : string.Empty
+            };
+        }
+
+        internal static DateTimeOffset? ReadWorkItemTimestamp(object? value)
+        {
+            return value switch
+            {
+                DateTimeOffset time => time,
+                DateTime time => new DateTimeOffset(time.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(time, DateTimeKind.Utc) : time),
+                _ => DateTimeOffset.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal, out var time) ? time : null
+            };
         }
 
         public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, ApiReleaseType apiReleaseType = ApiReleaseType.Unknown, CancellationToken ct = default)
@@ -1497,7 +1576,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException($"Work item {releasePlanWorkItemId} not found.");
             }
+            return await GetApiSpecWorkItemAsync(releasePlanWorkItem, ct);
+        }
 
+        private async Task<WorkItem> GetApiSpecWorkItemAsync(WorkItem releasePlanWorkItem, CancellationToken ct)
+        {
+            var releasePlanWorkItemId = releasePlanWorkItem.Id!.Value;
             if (releasePlanWorkItem.Relations == null || !releasePlanWorkItem.Relations.Any(r => r.Rel.Equals("System.LinkTypes.Hierarchy-Forward")))
             {
                 throw new InvalidOperationException("Release plan work item does not have any child work item");
@@ -2429,7 +2513,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return null;
                 }
 
-                logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}", 
+                logger.LogInformation("Found {count} release plan(s) for TypeSpec project path: {typeSpecProjectPath}. Searching for API version match: {apiVersion}",
                     releasePlanWorkItems.Count, typeSpecProjectPath, apiVersion);
 
                 // Loop through all release plans to find one with matching API version
@@ -2538,7 +2622,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             serviceCondition.Append($"[{productIdPropertyName}] = '{productId.ToString()}' AND [{serviceIdPropertyName}] = '{serviceId.ToString()}'");
             serviceCondition.Append(
                 $" AND [{ProductOnboardingWorkItem.TestFieldName}] {(isTest ? "" : "NOT ")}CONTAINS '{ProductOnboardingWorkItem.TestFieldTestValue}'");
-            
+
             var query
                 = $"SELECT [System.Id] "
                 + $"FROM WorkItems "

@@ -26,6 +26,25 @@ public class GeneratedSdkMetadataHelperTests
     [TearDown]
     public void TearDown() => _directory.Dispose();
 
+    [TestCase("directory: specification/example/Example\n", "specification/example/Example", "", "")]
+    [TestCase("directory: specification/example/Example\ncommit: invalid-commit\nrepo: https://untrusted.example/specs\n", "specification/example/Example", "invalid-commit", "https://untrusted.example/specs")]
+    [TestCase("directory: true\ncommit: 42\nrepo: null\n", "", "", "")]
+    public void SharedLocationParserKeepsParsingSeparateFromReadinessPolicy(string yaml, string directory, string commit, string repository)
+    {
+        var location = GeneratedSdkMetadataHelper.ParseTypeSpecLocation(yaml);
+        Assert.That(location.Directory, Is.EqualTo(directory));
+        Assert.That(location.Commit, Is.EqualTo(commit));
+        Assert.That(location.Repository, Is.EqualTo(repository));
+    }
+
+    [TestCase("[]")]
+    [TestCase("- directory: specification/example/Example")]
+    [TestCase("directory: a\n---\ndirectory: b")]
+    public void SharedLocationParserRequiresOneYamlMapping(string yaml)
+    {
+        Assert.Throws<FormatException>(() => GeneratedSdkMetadataHelper.ParseTypeSpecLocation(yaml));
+    }
+
     [TestCase(SdkLanguage.Java, "src/main/resources/META-INF/example_metadata.json")]
     [TestCase(SdkLanguage.JavaScript, "metadata.json")]
     [TestCase(SdkLanguage.Python, "_metadata.json")]

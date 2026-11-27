@@ -113,6 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 {
                     var packageInfo = await GetPackageInfo(packageDirectory, ct);
                     PopulateCiMetadata(packageInfo);
+                    packageInfo.GeneratedMetadataContents = null;
                     packages.Add(packageInfo);
                 }
                 catch (Exception ex)
@@ -873,9 +874,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
             try
             {
-                using var reader = new StreamReader(tspLocationPath);
-                var tspLocation = TspLocationYamlDeserializer.Deserialize<TspLocation>(reader);
-                return tspLocation?.Directory;
+                var location = GeneratedSdkMetadataHelper.ParseTypeSpecLocation(File.ReadAllText(tspLocationPath));
+                return string.IsNullOrEmpty(location.Directory) ? null : location.Directory;
             }
             catch
             {
@@ -883,16 +883,5 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             }
         }
 
-        private static readonly YamlDotNet.Serialization.IDeserializer TspLocationYamlDeserializer =
-            new YamlDotNet.Serialization.DeserializerBuilder()
-                .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
-                .IgnoreUnmatchedProperties()
-                .Build();
-
-        private class TspLocation
-        {
-            [YamlDotNet.Serialization.YamlMember(Alias = "directory")]
-            public string? Directory { get; set; }
-        }
     }
 }

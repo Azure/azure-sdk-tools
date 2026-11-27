@@ -11,6 +11,8 @@
 
 ### Bugs Fixed
 
+- Service API readiness checks ignore shared service-level build and CI files during package discovery. Unresolved package metadata remains Inconclusive without being reported as mixed API planes.
+- Explicit release-plan recording now returns an error when the validation environment is not configured.
 - Overdue release-plan logs now show plan IDs, cleanup and email outcomes, skip reasons, and summary counts. Successfully sent generic reminders no longer fail the command because of an assessment warning; cleanup and actual reminder-send failures remain errors.
 - `api-review create`, `package get-approval-status`, and `package mark-released` now accept the same language aliases and normalize them for API Review Hub and APIView. Both `js` and `javascript` are sent to API Review Hub as `javascript`, to APIView as `JavaScript`, and default to `azure-sdk-for-js` when creating a review.
 
@@ -33,7 +35,19 @@
 
 ### Features Added
 
+- Added CLI `pkg validate-service-api-readiness` and read-only MCP tool
+  `azsdk_validate_service_api_readiness` for SDK PRs or local packages. Check every
+  required provider/API-version pair against ARM metadata; any provider resource
+  advertising the exact version can pass, independently of spec resource types.
+  Reuse the same PackageInfo objects through metadata discovery, cache evaluation,
+  and ARM fallback. Explicit provider metadata skips Swagger inspection; scalar
+  metadata resolves all pinned providers without hiding unresolved requirements.
+  Keep v1 outcomes Passed, Not detected, Inconclusive, and Error with source and
+  matched-type/region evidence. Optional release-plan reuse preserves original
+  timestamps; only CLI `--record-release-plan` permits revision-checked writes to
+  the status/time and HTML details fields. This is not deployment or release approval.
 - `eng package-info` supports `--package-path` to inspect one local SDK package and return its information directly, or export it with `--out-dir`. Existing bulk export remains supported.
+	Optional `--include-resource-types` enriches that same `PackageInfo` from pinned project specifications using GitHub access only, without an ARM readiness check. Default inspection and bulk export retain local metadata-only behavior.
 - Package discovery now populates `PackageInfo.ApiVersions` from generated metadata for Java, JavaScript, Python, Go, and .NET. Output entries preserve `Namespace` and `Version` from the `apiVersions` map, falling back to an unnamed `apiVersion` when the map is absent or empty. Namespace/version pairs are deduplicated and sorted, with version strings trimmed. Missing metadata leaves the array empty; malformed or unreadable metadata logs a warning without failing package discovery.
 - After manual abandonment is saved, linked open unmerged SDK PRs are closed regardless of author, then receive a plan-specific notice. Already abandoned plans can finish cleanup of open PRs without rewriting ADO state. Cleanup failures return success with warnings and manual follow-up guidance. A failed notice may leave the PR closed; rerunning does not repair missing notices on closed PRs. Closed and merged PRs are never changed.
 

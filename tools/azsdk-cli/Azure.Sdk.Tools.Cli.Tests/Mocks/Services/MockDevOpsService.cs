@@ -102,6 +102,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public Dictionary<string, string>? LastRunPipelineTemplateParams { get; private set; }
 
+        public Task<(ReleasePlanWorkItem Plan, ApiSpecWorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?> GetReleasePlanReadinessAsync(
+            string sdkPullRequest, string language, CancellationToken ct = default)
+        {
+            return Task.FromResult<(ReleasePlanWorkItem Plan, ApiSpecWorkItem Specification, List<WorkItemUpdate> PlanUpdates, List<WorkItemUpdate> SpecificationUpdates)?>(null);
+        }
+
         Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus, CancellationToken ct)
         {
             return Task.FromResult(true);
@@ -426,6 +432,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All, CancellationToken ct = default)
         {
             return Task.FromResult(new List<WorkItem>());
+        }
+
+        public Task<List<WorkItemUpdate>> GetWorkItemUpdatesAsync(int workItemId, CancellationToken ct = default)
+        {
+            return Task.FromResult(new List<WorkItemUpdate>());
         }
 
         public Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default)

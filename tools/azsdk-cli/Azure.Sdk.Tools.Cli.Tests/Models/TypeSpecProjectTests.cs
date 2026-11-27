@@ -1,10 +1,43 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.TypeSpecTests
 {
     internal class TypeSpecProjectTests
     {
+        [TestCase("options:\n  '@azure-tools/typespec-autorest':\n    azure-resource-provider-folder: ./resource-manager\n", SdkType.Management)]
+        [TestCase("options:\n  '@azure-tools/typespec-autorest':\n    azure-resource-provider-folder: resource-manager\n", SdkType.Management)]
+        [TestCase("linter:\n  extends: ['@azure-tools/typespec-azure-rulesets/resource-manager']\n", SdkType.Management)]
+        [TestCase("linter:\n  extends: '@azure-tools/typespec-azure-rulesets/resource-manager'\n", SdkType.Management)]
+        [TestCase("linter:\n  extends: ['@azure-tools/typespec-azure-rulesets/data-plane']\n", SdkType.Dataplane)]
+        [TestCase("extends: ../tspconfig.yaml\n", SdkType.Unknown)]
+        [TestCase("# @azure-tools/typespec-azure-rulesets/resource-manager\noptions: {}\n", SdkType.Unknown)]
+        [TestCase("description: '@azure-tools/typespec-azure-rulesets/resource-manager'\n", SdkType.Unknown)]
+        [TestCase("linter:\n  extends: ['@azure-tools/typespec-azure-rulesets/resource-manager', '@azure-tools/typespec-azure-rulesets/data-plane']\n", SdkType.Unknown)]
+        [TestCase("options: [", SdkType.Unknown)]
+        [TestCase("[]", SdkType.Unknown)]
+        [TestCase("", SdkType.Unknown)]
+        public void PlaneClassificationUsesExplicitConfiguration(string configuration, SdkType expected)
+        {
+            Assert.That(TypeSpecProject.ClassifySdkType(configuration), Is.EqualTo(expected));
+        }
+
+        [TestCase("linter:\n  extends: ['@azure-tools/typespec-azure-rulesets/resource-manager']\n")]
+        [TestCase("linter:\n  extends: ['@azure-tools/typespec-azure-rulesets/data-plane']\n")]
+        [TestCase("options: {}\n")]
+        public void LocalProjectModelUsesTheSameClassifier(string configuration)
+        {
+            using var directory = TempDirectory.Create("TypeSpecProjectPlane");
+            File.WriteAllText(Path.Combine(directory.DirectoryPath, "tspconfig.yaml"), configuration);
+
+            var project = TypeSpecProject.ParseTypeSpecConfig(directory.DirectoryPath);
+            var expected = TypeSpecProject.ClassifySdkType(configuration) == SdkType.Management;
+
+            Assert.That(project.IsManagementPlane, Is.EqualTo(expected));
+            Assert.That(project.SdkType, Is.EqualTo(expected ? SdkType.Management : SdkType.Dataplane));
+        }
+
         [Test]
         public void Test_ParsePackageNamesFromMetadata_parses_yaml()
         {

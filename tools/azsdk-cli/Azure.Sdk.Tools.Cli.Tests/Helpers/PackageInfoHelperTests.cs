@@ -25,6 +25,50 @@ public class PackageInfoHelperTests
     [TearDown]
     public void TearDown() => tempDirectory?.Dispose();
 
+    [TestCase("{\"apiVersion\":\" 2026-04-01 \"}", "")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\"}}", "Microsoft.Example")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\"2026-04-01\"]}}", "Microsoft.Example")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\" 2026-04-01 \"]}}", "Microsoft.Example")]
+    public void ReadApiVersionsByProviderReturnsUnambiguousValuesWithoutChangingMetadata(string json, string provider)
+    {
+        using var metadata = JsonDocument.Parse(json);
+        var versions = PackageInfoHelper.ReadApiVersionsByProvider(metadata.RootElement);
+        Assert.That(versions, Has.Count.EqualTo(1));
+        Assert.That(versions[provider], Is.EqualTo("2026-04-01"));
+    }
+
+    [TestCase("{\"apiVersions\":{\"\":\"2026-04-01\"}}")]
+    [TestCase("{\"apiVersions\":{\"   \":\"2026-04-01\"}}")]
+    [TestCase("{\"apiVersions\":{\"\":[\"2026-04-01\"]}}")]
+    [TestCase("{\"apiVersion\":\"2026-04-01\",\"apiVersions\":{\"\":\"2026-04-01\"}}")]
+    public void ReadApiVersionsByProviderRejectsBlankProviderNames(string json)
+    {
+        using var metadata = JsonDocument.Parse(json);
+        Assert.Throws<JsonException>(() => PackageInfoHelper.ReadApiVersionsByProvider(metadata.RootElement));
+    }
+
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[\"2026-04-01\",\"2026-03-01\"]}}")]
+    [TestCase("{\"apiVersion\":\"2026-03-01\",\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\"}}")]
+    [TestCase("{\"apiVersion\":[],\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\"}}")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":[]}}")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\",\"Microsoft.Example\":\"2026-03-01\"}}")]
+    [TestCase("{\"apiVersions\":{\"Microsoft.Example\":\"2026-04-01\"},\"commit\":\"first\",\"commit\":\"second\"}")]
+    public void ReadApiVersionsByProviderRejectsConflictingEvidence(string json)
+    {
+        using var metadata = JsonDocument.Parse(json);
+        Assert.Throws<InvalidOperationException>(() => PackageInfoHelper.ReadApiVersionsByProvider(metadata.RootElement));
+    }
+
+    [Test]
+    public void ReadApiVersionsByProviderKeepsDifferentProvidersSeparate()
+    {
+        using var metadata = JsonDocument.Parse("{\"apiVersions\":{\"Microsoft.First\":\"2026-04-01\",\"Microsoft.Second\":\"2026-03-01\"}}");
+        var versions = PackageInfoHelper.ReadApiVersionsByProvider(metadata.RootElement);
+        Assert.That(versions, Has.Count.EqualTo(2));
+        Assert.That(versions["Microsoft.First"], Is.EqualTo("2026-04-01"));
+        Assert.That(versions["Microsoft.Second"], Is.EqualTo("2026-03-01"));
+    }
+
     [Test]
     public void FilterByArtifacts_ReturnsFilteredMatches()
     {

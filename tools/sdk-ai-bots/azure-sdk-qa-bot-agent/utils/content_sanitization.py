@@ -80,12 +80,11 @@ def sanitize_issue_text(text: str, *, is_public_target: bool) -> str:
     return updated
 
 
-def sanitize_log_text(text: str | None, *, max_length: int = 200) -> str:
+def sanitize_log_text(text: str | None) -> str:
     """Redact secrets, PII, and Teams links before writing to logs."""
     if not text:
         return ""
-    sanitized = sanitize_issue_text(text, is_public_target=True)
-    return sanitized[:max_length] + "...[truncated]" if len(sanitized) > max_length else sanitized
+    return sanitize_issue_text(text, is_public_target=True)
 
 
 def is_public_github_repo(owner: str | None, repo: str | None) -> bool:
@@ -98,9 +97,8 @@ def is_public_github_repo(owner: str | None, repo: str | None) -> bool:
 class LogSanitizationFilter(logging.Filter):
     """Centralized logging filter that redacts secrets, PII, and Teams links."""
 
-    def __init__(self, max_length: int = 4000) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self._max_length = max_length
         self._local = threading.local()
 
     def filter(self, record: logging.LogRecord) -> bool:
@@ -114,22 +112,19 @@ class LogSanitizationFilter(logging.Filter):
                 message = record.getMessage()
             except Exception:
                 message = str(record.msg)
-            record.msg = sanitize_log_text(message, max_length=self._max_length)
+            record.msg = sanitize_log_text(message)
             record.args = ()
             if record.exc_text:
-                record.exc_text = sanitize_log_text(record.exc_text, max_length=self._max_length)
+                record.exc_text = sanitize_log_text(record.exc_text)
             return True
         finally:
             self._local.active = False
 
 
-def install_log_sanitization(
-    *logger_names: str,
-    max_length: int = 4000,
-) -> None:
+def install_log_sanitization(*logger_names: str) -> None:
     """Attach :class:`LogSanitizationFilter` idempotently to root and named loggers."""
     targets = [logging.getLogger(), *(logging.getLogger(name) for name in logger_names)]
     for target in targets:
         for handler in target.handlers:
             if not any(isinstance(f, LogSanitizationFilter) for f in handler.filters):
-                handler.addFilter(LogSanitizationFilter(max_length=max_length))
+                handler.addFilter(LogSanitizationFilter())

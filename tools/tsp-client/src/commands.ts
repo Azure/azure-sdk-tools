@@ -15,6 +15,7 @@ import {
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import { npmCommand, npxCommand, npmViewPackageDevDependencies } from "./npm.js";
+import { BatchEmitterDependencies } from "./emitter-dependency-reuse.js";
 import {
   compileTsp,
   discoverEntrypointFile,
@@ -419,6 +420,10 @@ export async function syncCommand(argv: any) {
 }
 
 export async function generateCommand(argv: any) {
+  return generateCommandCore(argv);
+}
+
+async function generateCommandCore(argv: any, dependencies?: BatchEmitterDependencies) {
   let outputDir = argv["output-dir"];
   const emitterOptions = argv["emitter-options"];
   const saveInputs = argv["save-inputs"];
@@ -484,7 +489,11 @@ export async function generateCommand(argv: any) {
     if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
       args.push("--force");
     }
-    await npmCommand(srcDir, args);
+    if (dependencies) {
+      await dependencies.install(tempRoot, srcDir, args);
+    } else {
+      await npmCommand(srcDir, args);
+    }
 
     // Log all package versions for diagnostics, ignoring errors
     try {
@@ -534,26 +543,41 @@ export async function generateCommand(argv: any) {
  * @returns Promise that resolves when all batch directories have been processed successfully.
  * @throws Error if processing any batch directory fails.
  */
-async function processBatchUpdate(tspLocation: TspLocation, outputDir: string, argv: any) {
-  // Process each directory in the batch
-  for (const batchDir of tspLocation.batch ?? []) {
-    const fullBatchPath = resolve(outputDir, batchDir);
-    Logger.info(`Processing batch directory: ${batchDir}`);
+async function processBatchUpdate(
+  tspLocation: TspLocation,
+  outputDir: string,
+  argv: any,
+  parentDependencies?: BatchEmitterDependencies,
+) {
+  const directories = tspLocation.batch ?? [];
+  const owned =
+    !parentDependencies && directories.length > 1 ? new BatchEmitterDependencies() : undefined;
+  try {
+    for (const batchDir of directories) {
+      const fullBatchPath = resolve(outputDir, batchDir);
+      Logger.info(`Processing batch directory: ${batchDir}`);
 
-    try {
-      argv["output-dir"] = fullBatchPath;
-      await updateCommand(argv);
-      Logger.info(`Successfully processed batch directory: ${batchDir}`);
-    } catch (error) {
-      Logger.error(`Failed to process batch directory ${batchDir}: ${error}`);
-      throw error; // Stop processing and propagate the error immediately
+      try {
+        argv["output-dir"] = fullBatchPath;
+        await updateCommandCore(argv, parentDependencies ?? owned);
+        Logger.info(`Successfully processed batch directory: ${batchDir}`);
+      } catch (error) {
+        Logger.error(`Failed to process batch directory ${batchDir}: ${error}`);
+        throw error; // Stop processing and propagate the error immediately
+      }
     }
-  }
 
-  Logger.info("All batch directories processed successfully");
+    Logger.info("All batch directories processed successfully");
+  } finally {
+    await owned?.dispose();
+  }
 }
 
 export async function updateCommand(argv: any) {
+  return updateCommandCore(argv);
+}
+
+async function updateCommandCore(argv: any, dependencies?: BatchEmitterDependencies) {
   const outputDir = argv["output-dir"];
   const repo = argv["repo"];
   const commit = argv["commit"];
@@ -572,7 +596,7 @@ export async function updateCommand(argv: any) {
       argv["local-spec-repo"] = specRepoRoot;
       argv["batch"] = true;
     }
-    await processBatchUpdate(tspLocation, outputDir, argv);
+    await processBatchUpdate(tspLocation, outputDir, argv, dependencies);
     return;
   }
 
@@ -594,7 +618,7 @@ export async function updateCommand(argv: any) {
   }
   // update argv in case anything changed and call into sync and generate
   await syncCommand(argv);
-  await generateCommand(argv);
+  await generateCommandCore(argv, dependencies);
 }
 
 export async function convertCommand(argv: any): Promise<void> {

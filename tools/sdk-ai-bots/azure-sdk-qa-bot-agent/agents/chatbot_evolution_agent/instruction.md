@@ -178,7 +178,7 @@ Use this content for either provider. Only in `Azure/azure-sdk-pr`, create the i
 <1–2 sentences: what the user needed and what the bot got wrong.>
 
 ### Conversation
-<`conversation_link` from `fetch_conversation`, or n/a>
+<For private targets (`Azure/azure-sdk-pr` or ADO), `conversation_link` from `fetch_conversation`, or `n/a`. For public GitHub targets, write `n/a (internal Teams thread)`.>
 
 ### Root cause
 <One sentence naming the defect and why, with a source/file citation.>

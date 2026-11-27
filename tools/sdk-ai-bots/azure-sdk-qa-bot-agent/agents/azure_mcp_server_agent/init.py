@@ -32,6 +32,7 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.mslearn_mcp_tools import create_mslearn_mcp_tool
 from tools.web_tools import WebTools
 from utils.azure_ai_foundry import get_agent_client, get_project_client
+from utils.content_sanitization import install_log_sanitization
 from utils.azure_memory_store import ensure_user_memory_store
 from utils.memory_context_provider import MemoryContextProvider
 from utils.tool_security import ToolOutputSecurityMiddleware
@@ -157,6 +158,7 @@ if __name__ == "__main__":
         ("microsoft.opentelemetry._distro", logging.ERROR),
     ]:
         logging.getLogger(noisy_logger).setLevel(level)
+    install_log_sanitization()
 
     logger.info("Azure MCP Server agent container starting...")
     asyncio.run(main())

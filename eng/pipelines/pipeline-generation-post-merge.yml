@@ -1,0 +1,92 @@
+pr: none
+trigger: none
+
+parameters:
+- name: RepositoryName
+  type: string
+  default: azure-sdk-for-net
+  values:
+  - azure-sdk-for-java
+  - azure-sdk-for-js
+  - azure-sdk-for-python
+  - azure-sdk-for-net
+  - azure-sdk-for-go
+- name: MergeCommitSha
+  type: string
+  default: ''
+- name: DescriptorPaths
+  type: object
+  default: []
+
+variables:
+- template: /eng/pipelines/templates/variables/image.yml
+- name: NugetSecurityAnalysisWarningLevel
+  value: none
+- name: skipComponentGovernanceDetection
+  value: true
+
+stages:
+- stage: PrepareAndQueue
+  # Trusted context must match PostMergeConstants.cs and Initialize-PostMergeSdk.ps1.
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.Repository.Name'], 'Azure/azure-sdk-tools'))
+  lockBehavior: sequential
+  jobs:
+  # Targeting this environment acquires its Exclusive lock before preparation starts.
+  # The environment must have that check and authorize only this trusted pipeline.
+  - deployment: PreparePostMerge
+    displayName: Prepare and queue merged SDK pipelines
+    environment: post-merge-pipeline-preparation
+    pool:
+      name: $(LINUXPOOL)
+      vmImage: $(LINUXVMIMAGE)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Deploy hooks otherwise auto-download artifacts; this job consumes none.
+          - download: none
+          # Deployment jobs do not check out source by default. Use only the trusted tools commit.
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+
+          - task: PowerShell@2
+            displayName: Sparse checkout and validate merged SDK content
+            inputs:
+              targetType: filePath
+              filePath: $(System.DefaultWorkingDirectory)/eng/scripts/Initialize-PostMergeSdk.ps1
+              arguments: -Directory "$(Pipeline.Workspace)/post-merge-sdk-$(Build.BuildId)-$(System.JobAttempt)"
+              pwsh: true
+            env:
+              PREPARATION_REPOSITORY: ${{ parameters.RepositoryName }}
+              PREPARATION_SHA: ${{ parameters.MergeCommitSha }}
+              PREPARATION_DESCRIPTORS: ${{ convertToJson(parameters.DescriptorPaths) }}
+
+          # Same pinned package as nightly preparation. Bump that shared pin once a package with prepare-post-merge is published.
+          - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
+
+          - task: AzureCLI@2
+            displayName: Prepare and queue merged SDK descriptors
+            inputs:
+              azureSubscription: opensource-api-connection
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                & "$(Pipeline.Workspace)/pipeline-generator/pipeline-generator" prepare-post-merge `
+                  --repository-name $env:PREPARATION_REPOSITORY `
+                  --merge-commit-sha $env:PREPARATION_SHA `
+                  --descriptor-paths $env:PREPARATION_DESCRIPTORS `
+                  --sdk-directory "$(Pipeline.Workspace)/post-merge-sdk-$(Build.BuildId)-$(System.JobAttempt)" `
+                  --results-directory "$(Build.ArtifactStagingDirectory)/release-run-results"
+                if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            env:
+              PREPARATION_REPOSITORY: ${{ parameters.RepositoryName }}
+              PREPARATION_SHA: ${{ parameters.MergeCommitSha }}
+              PREPARATION_DESCRIPTORS: ${{ convertToJson(parameters.DescriptorPaths) }}
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish release submission results (including partial failures)
+            condition: always()
+            inputs:
+              PathtoPublish: $(Build.ArtifactStagingDirectory)/release-run-results
+              ArtifactName: release-run-results

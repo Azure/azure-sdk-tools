@@ -68,6 +68,7 @@ namespace PipelineGenerator
         public bool NoSchedule { get; }
         public bool OverwriteTriggers { get; }
         public bool SetManagedVariables { get; set; }
+        public bool Strict { get; set; }
         public int[] VariableGroups => this.variableGroups;
         public string DevOpsPath => string.IsNullOrEmpty(this.devOpsPath) ? Prefix : this.devOpsPath;
 
@@ -109,7 +110,7 @@ namespace PipelineGenerator
 
         private TeamProjectReference cachedProjectReference;
 
-        public async Task<TeamProjectReference> GetProjectReferenceAsync(CancellationToken cancellationToken)
+        public virtual async Task<TeamProjectReference> GetProjectReferenceAsync(CancellationToken cancellationToken)
         {
             if (cachedProjectReference == null)
             {
@@ -169,7 +170,7 @@ namespace PipelineGenerator
             return cachedServiceEndpoint;
         }
 
-        public async Task<IEnumerable<ServiceEndpoint>> GetServiceConnectionsAsync(IEnumerable<string> serviceConnections, CancellationToken cancellationToken)
+        public virtual async Task<IEnumerable<ServiceEndpoint>> GetServiceConnectionsAsync(IEnumerable<string> serviceConnections, CancellationToken cancellationToken)
         {
             var serviceEndpointClient = await GetServiceEndpointClientAsync(cancellationToken);
             var projectReference = await GetProjectReferenceAsync(cancellationToken);
@@ -186,12 +187,25 @@ namespace PipelineGenerator
                     endpoints.Add(serviceConnection);
                 }
             }
+            if (Strict)
+            {
+                EnsureAllServiceConnectionsFound(serviceConnections, endpoints);
+            }
             return endpoints;
+        }
+
+        public static void EnsureAllServiceConnectionsFound(IEnumerable<string> requested, IEnumerable<ServiceEndpoint> found)
+        {
+            var missing = requested.Except(found.Select(e => e.Name)).ToArray();
+            if (missing.Length > 0)
+            {
+                throw new InvalidOperationException($"Configured service connections were not found: {string.Join(", ", missing)}");
+            }
         }
 
         private HttpClient cachedRawHttpClient = null;
 
-        private async Task<HttpClient> GetRawHttpClient(CancellationToken cancellationToken)
+        internal async Task<HttpClient> GetRawHttpClient(CancellationToken cancellationToken)
         {
             if (this.cachedRawHttpClient == null)
             {
@@ -206,16 +220,19 @@ namespace PipelineGenerator
             return this.cachedRawHttpClient;
         }
 
-        private string GetPipelinePermissionsUrlForServiceConnections(Guid serviceConnectionId)
+        private string GetPipelinePermissionsUrl(string resourceType, string resourceId)
         {
             var apiVersion = "7.1-preview.1";
             // https://learn.microsoft.com/en-us/rest/api/azure/devops/approvalsandchecks/pipeline-permissions/update-pipeline-permisions-for-resource?view=azure-devops-rest-7.1&tabs=HTTP
-            return $"{this.organization}/{this.project}/_apis/pipelines/pipelinepermissions/endpoint/{serviceConnectionId}?api-version={apiVersion}";
+            return $"{this.organization}/{this.project}/_apis/pipelines/pipelinepermissions/{resourceType}/{resourceId}?api-version={apiVersion}";
         }
         
         public async Task<JsonNode> GetPipelinePermissionsAsync(Guid serviceConnectionId, CancellationToken cancellationToken)
+            => await GetPipelinePermissionsAsync("endpoint", serviceConnectionId.ToString(), cancellationToken);
+
+        public async Task<JsonNode> GetPipelinePermissionsAsync(string resourceType, string resourceId, CancellationToken cancellationToken)
         {
-            var url = GetPipelinePermissionsUrlForServiceConnections(serviceConnectionId);
+            var url = GetPipelinePermissionsUrl(resourceType, resourceId);
             var client = await GetRawHttpClient(cancellationToken);
             var response = await client.GetAsync(url, cancellationToken);
 
@@ -231,8 +248,11 @@ namespace PipelineGenerator
         }
 
         public async Task UpdatePipelinePermissionsAsync(Guid serviceConnectionId, JsonNode serviceConnectionPermissions, CancellationToken cancellationToken)
+            => await UpdatePipelinePermissionsAsync("endpoint", serviceConnectionId.ToString(), serviceConnectionPermissions, cancellationToken);
+
+        public async Task UpdatePipelinePermissionsAsync(string resourceType, string resourceId, JsonNode serviceConnectionPermissions, CancellationToken cancellationToken)
         {
-            var url = GetPipelinePermissionsUrlForServiceConnections(serviceConnectionId);
+            var url = GetPipelinePermissionsUrl(resourceType, resourceId);
             var client = await GetRawHttpClient(cancellationToken);
             var request = new HttpRequestMessage(new HttpMethod("PATCH"), url)
             { 

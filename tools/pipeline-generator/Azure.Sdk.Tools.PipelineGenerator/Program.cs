@@ -26,7 +26,7 @@ namespace PipelineGenerator
             };
 
             await Parser.Default
-                .ParseArguments<DefaultOptions, GenerateOptions>(args)
+                .ParseArguments<DefaultOptions, GenerateOptions, PreparePostMergeOptions>(args)
                 .WithNotParsed(_ => { Environment.Exit((int)ExitCondition.InvalidArguments); })
                 .WithParsedAsync(async o => { await Run(o, cancellationTokenSource); });
         }
@@ -37,6 +37,24 @@ namespace PipelineGenerator
 
             switch (commandObj)
             {
+                case PreparePostMergeOptions postMerge:
+                {
+                    using var provider = GetServiceProvider(false);
+                    var generator = provider.GetRequiredService<Program>();
+                    var log = provider.GetRequiredService<ILogger<PostMergePreparation>>();
+                    try
+                    {
+                        var operations = new PostMergeOperations(generator, log, postMerge.RepositoryName);
+                        await new PostMergePreparation(operations).RunAsync(postMerge, cancellationTokenSource.Token);
+                        code = ExitCondition.Success;
+                    }
+                    catch (Exception ex)
+                    {
+                        log.LogCritical(ex, "Post-merge preparation failed. Inspect partial results before replay.");
+                        code = ExitCondition.Exception;
+                    }
+                    break;
+                }
                 case GenerateOptions g:
                     var serviceProvider = GetServiceProvider(g.Debug);
                     var program = serviceProvider.GetService<Program>();
@@ -71,7 +89,7 @@ namespace PipelineGenerator
             Environment.Exit((int)code);
         }
 
-        private static IServiceProvider GetServiceProvider(bool debug)
+        private static ServiceProvider GetServiceProvider(bool debug)
         {
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddLogging(config => config.AddConsole().SetMinimumLevel(debug ? LogLevel.Debug : LogLevel.Information))
@@ -116,7 +134,7 @@ namespace PipelineGenerator
             }
         }
 
-        public async Task<ExitCondition> RunAsync(
+        public virtual async Task<ExitCondition> RunAsync(
             string organization,
             string project,
             string prefix,
@@ -135,7 +153,10 @@ namespace PipelineGenerator
             bool noSchedule,
             bool setManagedVariables,
             bool overwriteTriggers,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            IReadOnlyList<DescriptorRequest> requests = null,
+            List<PipelineGenerationResult> results = null,
+            string repositoryRoot = null)
         {
             try
             {
@@ -144,7 +165,7 @@ namespace PipelineGenerator
                 // Fall back to a form of prefix if DevOps path is not specified
                 var devOpsPathValue = string.IsNullOrEmpty(devOpsPath) ? $"\\{prefix}" : devOpsPath;
 
-                var context = new PipelineGenerationContext(
+                var context = CreateContext(
                     this.logger,
                     organization,
                     project,
@@ -160,9 +181,32 @@ namespace PipelineGenerator
                     setManagedVariables,
                     overwriteTriggers
                     );
+                // Strict mode is used only by prepare-post-merge, which passes exact descriptor targets.
+                context.Strict = requests != null;
+                if (context.Strict && (whatIf || destroy || results == null))
+                {
+                    throw new ArgumentException("Exact descriptor requests require a results list and cannot be combined with --whatif or --destroy.");
+                }
+                if (context.Strict && (requests.Count == 0 ||
+                    requests.Any(r => r == null || string.IsNullOrEmpty(r.Path)) ||
+                    requests.Select(r => r.Path).Distinct(StringComparer.Ordinal).Count() != requests.Count))
+                {
+                    throw new ArgumentException("The descriptor request must contain distinct nonempty targets.");
+                }
 
                 var pipelineConvention = GetPipelineConvention(convention, context);
-                var components = ScanForComponents(path, pipelineConvention.SearchPattern);
+                var components = ScanForComponents(path, pipelineConvention.SearchPattern, repositoryRoot).ToArray();
+                if (requests != null)
+                {
+                    components = components.Where(c => requests.Any(r => r.Path == c.RelativeYamlPath.Replace('\\', '/'))).ToArray();
+                    var missing = requests.Select(r => r.Path)
+                        .Except(components.Select(c => c.RelativeYamlPath.Replace('\\', '/')), StringComparer.Ordinal).ToArray();
+                    if (missing.Length > 0)
+                    {
+                        // Fail before any definition or permission change rather than preparing a subset.
+                        throw new ArgumentException($"Requested descriptors were not found under '{path}': {string.Join(", ", missing)}");
+                    }
+                }
 
                 if (components.Count() == 0)
                 {
@@ -178,6 +222,11 @@ namespace PipelineGenerator
                 }
 
                 var definitions = new List<BuildDefinition>();
+                var generated = new List<PipelineGenerationResult>();
+                // Strict callers must not change any definition when a configured service connection is missing.
+                var serviceConnectionObjects = context.Strict
+                    ? await context.GetServiceConnectionsAsync(serviceConnections, cancellationToken)
+                    : null;
                 foreach (var component in components)
                 {
                     logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
@@ -187,6 +236,7 @@ namespace PipelineGenerator
                     }
                     else
                     {
+                        pipelineConvention.PreviousPath = requests?.Single(r => r.Path == component.RelativeYamlPath.Replace('\\', '/')).PreviousPath;
                         var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
 
                         if (open)
@@ -195,40 +245,22 @@ namespace PipelineGenerator
                         }
 
                         definitions.Add(definition);
+                        generated.Add(new PipelineGenerationResult(component.RelativeYamlPath.Replace('\\', '/'),
+                            definition.Id, convention, pipelineConvention.PipelineCategory, pipelineConvention.LastOperation));
                     }
                 }
 
-                var serviceConnectionObjects = await context.GetServiceConnectionsAsync(serviceConnections, cancellationToken);
+                serviceConnectionObjects ??= await context.GetServiceConnectionsAsync(serviceConnections, cancellationToken);
+                var definitionIds = definitions.Select(d => d.Id).ToArray();
 
                 foreach (var serviceConnection in serviceConnectionObjects)
                 {
                     // Get set of permissions for the service connection
                     JsonNode pipelinePermissions = await context.GetPipelinePermissionsAsync(serviceConnection.Id, cancellationToken);
+                    var existingCount = pipelinePermissions["pipelines"].AsArray().Count;
+                    var definitionsToAdd = AddPipelinePermissions(pipelinePermissions, definitionIds, context.Strict);
 
-                    var pipelines = pipelinePermissions["pipelines"].AsArray();
-                    var pipelineIdsWithPermissions = new HashSet<int>(pipelines.Select(p => p["id"].GetValue<int>()));
-
-                    int definitionsToAdd = 0;
-                    foreach (var definition in definitions)
-                    {
-                        // Check this pipeline has permissions
-                        if (!pipelineIdsWithPermissions.Contains(definition.Id))
-                        {
-                            pipelines.Add(
-                                new JsonObject
-                                {
-                                    ["id"] = definition.Id,
-                                    ["authorized"] = true,
-                                    ["authorizedBy"] = null,
-                                    ["authorizedOn"] = null
-                                }
-                            );
-
-                            definitionsToAdd++;
-                        }
-                    }
-
-                    logger.LogInformation("'{0}' pipelines already have permissions to service connection '{1}'. Need to grant permission to '{2}' more.", pipelineIdsWithPermissions.Count, serviceConnection.Id, definitionsToAdd);
+                    logger.LogInformation("'{0}' pipelines already have permissions to service connection '{1}'. Need to grant permission to '{2}' more.", existingCount, serviceConnection.Id, definitionsToAdd);
 
                     if (definitionsToAdd > 0)
                     {
@@ -238,6 +270,19 @@ namespace PipelineGenerator
                     }
                 }
 
+                if (context.Strict)
+                {
+                    foreach (var groupId in variableGroups.Distinct())
+                    {
+                        var permissions = await context.GetPipelinePermissionsAsync("variablegroup", groupId.ToString(), cancellationToken);
+                        if (AddPipelinePermissions(permissions, definitionIds, strict: true) > 0)
+                        {
+                            await context.UpdatePipelinePermissionsAsync("variablegroup", groupId.ToString(), permissions, cancellationToken);
+                        }
+                    }
+                }
+                // Report definitions only after every resource authorization has succeeded.
+                results?.AddRange(generated);
                 return ExitCondition.Success;
 
             }
@@ -246,6 +291,39 @@ namespace PipelineGenerator
                 logger.LogCritical(ex, "BOOM! Something went wrong, try running with --debug.");
                 return ExitCondition.Exception;
             }
+        }
+
+        protected virtual PipelineGenerationContext CreateContext(ILogger logger, string organization, string project,
+            string endpoint, string repository, string branch, string agentPool, int[] variableGroups,
+            string devOpsPath, string prefix, bool whatIf, bool noSchedule, bool setManagedVariables, bool overwriteTriggers)
+            => new PipelineGenerationContext(logger, organization, project, endpoint, repository, branch, agentPool,
+                variableGroups, devOpsPath, prefix, whatIf, noSchedule, setManagedVariables, overwriteTriggers);
+
+        public static int AddPipelinePermissions(JsonNode permissions, IEnumerable<int> definitionIds, bool strict)
+        {
+            var pipelines = permissions["pipelines"].AsArray();
+            var added = 0;
+            foreach (var id in definitionIds.Distinct())
+            {
+                var existing = pipelines.FirstOrDefault(p => p["id"].GetValue<int>() == id);
+                if (existing == null)
+                {
+                    pipelines.Add(new JsonObject
+                    {
+                        ["id"] = id,
+                        ["authorized"] = true,
+                        ["authorizedBy"] = null,
+                        ["authorizedOn"] = null
+                    });
+                    added++;
+                }
+                else if (strict && existing["authorized"]?.GetValue<bool>() != true)
+                {
+                    // Never override an administrator's explicit revocation; strict callers must stop before releasing.
+                    throw new InvalidOperationException($"Pipeline {id} has an explicitly unauthorized resource permission; an administrator must resolve it.");
+                }
+            }
+            return added;
         }
 
         private void OpenBrowser(string url)
@@ -268,12 +346,12 @@ namespace PipelineGenerator
             System.Diagnostics.Process.Start(processStartInfo);
         }
 
-        private IEnumerable<SdkComponent> ScanForComponents(string path, string searchPattern)
+        private IEnumerable<SdkComponent> ScanForComponents(string path, string searchPattern, string repositoryRoot)
         {
             var scanner = serviceProvider.GetService<SdkComponentScanner>();
 
             var scanDirectory = new DirectoryInfo(path);
-            var components = scanner.Scan(scanDirectory, searchPattern);
+            var components = scanner.Scan(scanDirectory, searchPattern, repositoryRoot);
             return components;
         }
 

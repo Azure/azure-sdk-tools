@@ -21,12 +21,16 @@ namespace PipelineGenerator.Conventions
         private const string ReportBuildStatusKey = "reportBuildStatus";
 
         private Dictionary<string, BuildDefinitionReference> pipelineReferences;
+        private readonly HashSet<string> ambiguousNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private List<BuildDefinition> strictDefinitions;
 
         protected ILogger Logger { get; }
         protected PipelineGenerationContext Context { get; }
         public abstract string SearchPattern { get; }
         public abstract string PipelineNameSuffix { get; }
         public abstract string PipelineCategory { get; }
+        public string LastOperation { get; private set; }
+        public string PreviousPath { get; set; }
 
         public string GetDefinitionName(SdkComponent component)
         {
@@ -77,16 +81,57 @@ namespace PipelineGenerator.Conventions
             var definitionName = GetDefinitionName(component);
 
             Logger.LogDebug("Checking to see if definition '{0}' exists prior to create/update.", definitionName);
-            var definition = await GetExistingDefinitionAsync(definitionName, cancellationToken);
+            BuildDefinition definition;
+            if (Context.Strict)
+            {
+                if (strictDefinitions == null)
+                {
+                    var project = await Context.GetProjectReferenceAsync(cancellationToken);
+                    var client = await Context.GetBuildHttpClientAsync(cancellationToken);
+                    strictDefinitions = new List<BuildDefinition>();
+                    string continuationToken = null;
+                    do
+                    {
+                        var page = await client.GetFullDefinitionsAsync2(project: project.Id,
+                            repositoryId: Context.Repository, repositoryType: "GitHub",
+                            continuationToken: continuationToken, cancellationToken: cancellationToken);
+                        strictDefinitions.AddRange(page);
+                        continuationToken = page.ContinuationToken;
+                    } while (!string.IsNullOrEmpty(continuationToken));
+                }
+                var previousName = PreviousPath == null ? null : GetDefinitionName(DescriptorRequest.ToComponent(PreviousPath));
+                foreach (var name in new[] { definitionName, previousName }.Where(n => n != null).Distinct())
+                {
+                    var named = await GetExistingDefinitionAsync(name, cancellationToken);
+                    if (named != null && !strictDefinitions.Any(d => d.Id == named.Id))
+                    {
+                        strictDefinitions.Add(named);
+                    }
+                }
+                definition = DescriptorRequest.ResolveDefinition(strictDefinitions, Context.Repository, definitionName,
+                    previousName, component.RelativeYamlPath.Replace('\\', '/'), PreviousPath);
+            }
+            else
+            {
+                definition = await GetExistingDefinitionAsync(definitionName, cancellationToken);
+            }
 
+            LastOperation = definition == null ? "created" : "unchanged";
             if (definition == null)
             {
                 Logger.LogDebug("Definition '{0}' was not found.", definitionName);
                 definition = await CreateDefinitionAsync(definitionName, component, cancellationToken);
+                strictDefinitions?.Add(definition);
             }
 
             Logger.LogDebug("Applying convention to '{0}' definition.", definitionName);
-            var hasChanges = await ApplyConventionAsync(definition, component);
+            var hasChanges = false;
+            if (Context.Strict)
+            {
+                hasChanges = DescriptorRequest.Relocate(definition, Context.Repository, definitionName,
+                    component.RelativeYamlPath.Replace('\\', '/'), PreviousPath);
+            }
+            hasChanges |= await ApplyConventionAsync(definition, component);
 
             if (hasChanges || Context.OverwriteTriggers)
             {
@@ -99,6 +144,10 @@ namespace PipelineGenerator.Conventions
                         definition: definition,
                         cancellationToken: cancellationToken
                         );
+                    if (LastOperation != "created")
+                    {
+                        LastOperation = "updated";
+                    }
                 }
                 else
                 {
@@ -121,16 +170,34 @@ namespace PipelineGenerator.Conventions
 
             if (pipelineReferences == default)
             {
-                var definitionReferences = await buildClient.GetDefinitionsAsync(
-                    project: projectReference.Id,
-                    path: Context.DevOpsPath
-                    );
+                var definitionReferences = new List<BuildDefinitionReference>();
+                if (Context.Strict)
+                {
+                    string continuationToken = null;
+                    do
+                    {
+                        var page = await buildClient.GetDefinitionsAsync2(project: projectReference.Id,
+                            path: Context.DevOpsPath, continuationToken: continuationToken,
+                            cancellationToken: cancellationToken);
+                        definitionReferences.AddRange(page);
+                        continuationToken = page.ContinuationToken;
+                    } while (!string.IsNullOrEmpty(continuationToken));
+                }
+                else
+                {
+                    definitionReferences = await buildClient.GetDefinitionsAsync(
+                        project: projectReference.Id,
+                        path: Context.DevOpsPath
+                        );
+                }
 
-                pipelineReferences = new Dictionary<string, BuildDefinitionReference>();
+                pipelineReferences = new Dictionary<string, BuildDefinitionReference>(
+                    Context.Strict ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
                 foreach (var definition in definitionReferences)
                 {
                     if (pipelineReferences.ContainsKey(definition.Name))
                     {
+                        ambiguousNames.Add(definition.Name);
                         Logger.LogDebug($"Found more then one definition with name {definition.Name}, picking the first one {pipelineReferences[definition.Name].Id} and not {definition.Id}");
                     }
                     else
@@ -141,6 +208,10 @@ namespace PipelineGenerator.Conventions
                 Logger.LogDebug($"Cached {definitionReferences.Count} pipelines.");
             }
 
+            if (Context.Strict && ambiguousNames.Contains(definitionName))
+            {
+                throw new InvalidOperationException($"Ambiguous duplicate pipeline name '{definitionName}' in '{Context.DevOpsPath}'.");
+            }
             BuildDefinitionReference definitionReference = null;
             pipelineReferences.TryGetValue(definitionName, out definitionReference);
 

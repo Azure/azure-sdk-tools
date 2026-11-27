@@ -36,7 +36,6 @@ from skills import tenant_skills
 from skills.support_channels import create_support_channels_skill
 from skills.tenant_skills import create_tenant_skills
 from tools.knowledge_tools import KnowledgeTools
-from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
@@ -98,7 +97,6 @@ async def main() -> None:
 
     # Init Tools (synchronous / instant)
     knowledge_tools = KnowledgeTools()
-    web_tools = WebTools()
     web_search_tool = agent_client.get_web_search_tool(
         search_context_size="medium",
     )
@@ -106,7 +104,6 @@ async def main() -> None:
     tools = [
         knowledge_tools.search_knowledge_base,
         knowledge_tools.wiki_search,
-        web_tools.web_fetch,
         web_search_tool,
     ]
 

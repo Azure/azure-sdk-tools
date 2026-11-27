@@ -41,7 +41,6 @@ from tools.ado_mcp_tools import create_ado_issue, create_evolution_ado_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
-from tools.web_tools import WebTools
 from services.chat_service import ChatService
 from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
@@ -116,7 +115,9 @@ async def main() -> None:
         search_client=SearchClient(candidate_config.get),
         blob_client=create_blob_service_client(candidate_config.get),
     )
-    web_tools = WebTools()
+    web_search_tool = agent_client.get_web_search_tool(
+        search_context_size="medium",
+    )
 
     tools = [
         monitor_tools.fetch_chat_trace,
@@ -128,7 +129,7 @@ async def main() -> None:
         knowledge_tools.read_knowledge,
         knowledge_tools.update_knowledge,
         chatagent_tools.chat,
-        web_tools.web_fetch,
+        web_search_tool,
         create_ado_issue,
     ]
 

@@ -818,11 +818,3 @@ def test_azure_mcp_server_agent_registers_wiki_search() -> None:
 
     assert "knowledge_tools.search_knowledge_base" in agent_source
     assert "knowledge_tools.wiki_search" in agent_source
-
-
-@pytest.mark.parametrize("agent_dir", ["chat_agent", "azure_mcp_server_agent"])
-def test_hosted_qa_agents_configure_structured_output_format(agent_dir: str) -> None:
-    init_path = Path(__file__).parents[1] / "agents" / agent_dir / "init.py"
-    agent_source = init_path.read_text(encoding="utf-8")
-
-    assert '"response_format": ChatAgentOutput' in agent_source

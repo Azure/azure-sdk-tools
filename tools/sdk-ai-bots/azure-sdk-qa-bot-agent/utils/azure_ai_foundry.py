@@ -4,11 +4,9 @@ Each client is created once on first access and reused for the lifetime of
 the process.
 """
 
-import asyncio
 import logging
 import re
 
-from agent_framework import TruncationStrategy
 from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
 from azure.core.exceptions import ResourceNotFoundError
@@ -18,10 +16,6 @@ from config.app_config import Settings, get as cfg
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
-
-# -- Compaction constants (token counts) -----------------------------------
-COMPACTION_TRIGGER_TOKENS = 100000
-COMPACTION_TARGET_TOKENS = 80000
 
 _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
@@ -55,17 +49,13 @@ def create_openai_client(
 
 
 def get_agent_client() -> FoundryChatClient:
-    """Return the shared FoundryChatClient (created once on first call)."""
+    """Return the shared harness-managed FoundryChatClient."""
     global _agent_client
     if _agent_client is None:
         _agent_client = FoundryChatClient(
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
             model=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
             credential=get_credential(),
-            compaction_strategy=TruncationStrategy(
-                max_n=COMPACTION_TRIGGER_TOKENS,
-                compact_to=COMPACTION_TARGET_TOKENS,
-            ),
         )
     return _agent_client
 
@@ -199,7 +189,7 @@ async def close_clients() -> None:
 # -- Stateless warm-session cache ------------------------------------------
 # Stateless requests (no customer conversation_id) share one warm sandbox per
 # agent version via an agent_session_id captured from a stateless response.
-# No `conversation` is threaded, so history is never shared across callers.
+# Logical harness state must remain isolated between requests.
 _stateless_session_ids: dict[tuple[str, str], str] = {}
 
 

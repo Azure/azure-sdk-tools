@@ -1,5 +1,17 @@
 # Release History
 
+## 0.3.0 (2026-11-18)
+
+### Features Added
+
+- Integrate the Microsoft Agent Framework harness for hosted agents (`create_harness_agent`) with `history_source="agent"`, token-aware context compaction, and OpenTelemetry instrumentation.
+- Offload large external tool results (>20,000 characters) to Foundry Files (with JSON pretty-printing) for inspection inside Foundry's per-conversation `container_auto` shell sandbox.
+
+### Breaking / Behavioral Changes
+
+- Remove custom `truncating_mcp_parser` callbacks in favor of raw MCP outputs protected by `ToolOutputSecurityMiddleware` and `ToolOutputStorageMiddleware`.
+- Update hosted agent deployment to Responses protocol `2.0.0`.
+
 ## 0.2.2 (2026-11-18)
 
 ### Features Added

@@ -28,9 +28,7 @@ if _project_root not in sys.path:
 load_dotenv(override=False)
 os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
-from agent_framework import Agent
-from agent_framework import CompactionProvider
-from agent_framework import ToolResultCompactionStrategy
+from agent_framework import create_harness_agent
 from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
@@ -43,6 +41,7 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.monitor_tools import MonitorTools
 from tools.web_tools import WebTools
 from services.chat_service import ChatService
+from utils.agent_harness import get_harness_defaults
 from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
     create_project_client,
@@ -50,7 +49,12 @@ from utils.azure_ai_foundry import (
     get_project_client,
 )
 from utils.azure_storage import create_blob_service_client
-from utils.tool_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_security import ToolOutputSecurityMiddleware
+from middleware.tool_output_storage import (
+    OffloadedFilesProvider,
+    ShellFilesMiddleware,
+    ToolOutputStorageMiddleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +91,11 @@ async def main() -> None:
     )
 
     agent_dir = Path(__file__).parent
+    harness_instructions = _load_instructions(
+        Path(app_config.__file__).resolve().parent.parent
+        / "prompts"
+        / "harness_instruction.md"
+    )
     instructions = _load_instructions(agent_dir / "instruction.md")
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
         agent_config = yaml.safe_load(f)
@@ -118,6 +127,7 @@ async def main() -> None:
     )
     web_tools = WebTools()
 
+    shell_tool = agent_client.get_shell_tool()
     tools = [
         monitor_tools.fetch_chat_trace,
         conversation_tools.resolve_conversation_by_trace_id,
@@ -130,6 +140,7 @@ async def main() -> None:
         chatagent_tools.chat,
         web_tools.web_fetch,
         create_ado_issue,
+        shell_tool,
     ]
 
     # GitHub MCP tool with write access for remediation issues and comments.
@@ -151,28 +162,28 @@ async def main() -> None:
             "create_evolution_ado_mcp_tool failed to initialize, skipped"
         )
 
-    # Compaction provider — compact history before and after each turn.
-    compaction_provider = CompactionProvider(
-        before_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=2),
-        after_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=1),
-    )
-
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
-    agent = Agent(
+    agent = create_harness_agent(  # pyright: ignore[reportCallIssue]
         agent_client,
         name=agent_name,
         id=agent_id,
-        instructions=instructions,
+        harness_instructions=harness_instructions,
+        agent_instructions=instructions,
         tools=tools,
-        context_providers=[compaction_provider],
-        middleware=[ToolOutputSecurityMiddleware()],
+        context_providers=[OffloadedFilesProvider()],
+        middleware=[
+            ToolOutputSecurityMiddleware(),
+            ToolOutputStorageMiddleware(prod_project_client.get_openai_client()),
+            ShellFilesMiddleware(),
+        ],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
         },
+        **get_harness_defaults(),
     )
 
-    server = ResponsesHostServer(agent)
+    server = ResponsesHostServer(agent, history_source="agent")
 
     await server.run_async()
 

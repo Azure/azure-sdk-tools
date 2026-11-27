@@ -12,7 +12,6 @@ import os
 from agent_framework import MCPStdioTool
 
 from config.app_config import get as cfg
-from tools import truncating_mcp_parser
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,6 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
         env=env,
         load_prompts=False,
         allowed_tools=allowed_tools,
-        parse_tool_results=truncating_mcp_parser,
         description=(
             "Read-only Azure SDK MCP server tools. Use to analyze Azure Pipelines "
             "failures, get pipeline status and LLM artifacts, and look up "

@@ -73,6 +73,8 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             SamplesDirectory = Path.Combine(fullPath, "samples-dev")
         };
 
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(model, logger, ct);
+
         logger.LogDebug("Resolved JavaScript package: {packageName} v{packageVersion} (type {sdkType}) at {relativePath}",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", sdkType, relativePath);
 

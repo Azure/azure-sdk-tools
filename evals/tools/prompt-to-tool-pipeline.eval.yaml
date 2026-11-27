@@ -16,7 +16,7 @@ defaults:
   runs: 3
   timeout: "120s"
   executor: copilot-sdk
-  model: gpt-5.4
+  model: gpt-6.1-sol
 
 scoring:
   threshold: 0.8

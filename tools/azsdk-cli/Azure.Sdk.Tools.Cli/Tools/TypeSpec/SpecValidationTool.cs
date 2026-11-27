@@ -131,11 +131,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             if (isWindows)
             {
-                _ = RunProcess("cmd.exe", "/C npm ci", repoRoot);
+                _ = RunProcess("cmd.exe", "/C pnpm ci", repoRoot);
             }
             else
             {
-                _ = RunProcess("npm", "ci", repoRoot);
+                _ = RunProcess("pnpm", "ci", repoRoot);
             }
         }
 

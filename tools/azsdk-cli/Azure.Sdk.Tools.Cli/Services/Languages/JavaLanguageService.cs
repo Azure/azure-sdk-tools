@@ -98,6 +98,8 @@ public sealed partial class JavaLanguageService : LanguageService
             SdkType = sdkType
         };
 
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(model, logger, ct);
+
         logger.LogDebug("Resolved Java package: {packageName} v{packageVersion} at {relativePath}",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
 

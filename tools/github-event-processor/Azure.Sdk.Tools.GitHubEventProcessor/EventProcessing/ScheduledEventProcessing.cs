@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
@@ -9,10 +10,23 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     public class ScheduledEventProcessing
     {
+        private const string AutoPrTitlePrefix = "[AutoPR ";
         private readonly ILogger<ScheduledEventProcessing> Logger;
         public ScheduledEventProcessing(ILogger<ScheduledEventProcessing> logger)
         {
             Logger = logger;
+        }
+
+        private static async Task<bool> IsProtectedAutoPr(GitHubEventClient gitHubEventClient, long repositoryId, Issue issue)
+        {
+            if (!issue.Title.StartsWith(AutoPrTitlePrefix, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            // Octokit's Issue model does not expose the draft status returned by issue search.
+            var pullRequest = await gitHubEventClient.GetPullRequest(repositoryId, issue.Number);
+            return !pullRequest.Draft;
         }
 
         /// <summary>
@@ -257,6 +271,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Pull request is open
         ///     Pull request has "no-recent-activity" label
         ///     Pull request was last modified more than 7 days ago
+        ///     Pull request is draft or its title does not start with "[AutoPR " (case-sensitive)
         /// Resulting Action:
         ///     Close the pull request
         ///     Create a comment "Hi @${issueAuthor}.  Thank you for your contribution.  Since there hasn't been recent engagement, we're going to close this out.  Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes.  Please be sure to use the command to reopen or remove the `no-recent-activity` label; otherwise, this is likely to be closed again with the next cleanup pass."
@@ -300,6 +315,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
+                        if (await IsProtectedAutoPr(gitHubEventClient, scheduledEventPayload.Repository.Id, issue))
+                        {
+                            continue;
+                        }
                         // This rule only sets the state
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
@@ -340,6 +359,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Pull request is open
         ///     Pull request does NOT have "no-recent-activity" label
         ///     Pull request was last updated more than 60 days ago
+        ///     Pull request is draft or its title does not start with "[AutoPR " (case-sensitive)
         /// Resulting Action: 
         ///     Add "no-recent-activity" label
         ///     Create a comment "Hi @${issueAuthor}.  Thank you for your interest in helping to improve the Azure SDK experience and for your contribution.  We've noticed that there hasn't been recent engagement on this pull request.  If this is still an active work stream, please let us know by pushing some changes or leaving a comment.  Otherwise, we'll close this out in 7 days."
@@ -385,6 +405,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
+                        if (await IsProtectedAutoPr(gitHubEventClient, scheduledEventPayload.Repository.Id, issue))
+                        {
+                            continue;
+                        }
                         // This rule needs to the full IssueUpdate as it's adding a label
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false, false);
                         issueUpdate.AddLabel(TriageLabelConstants.NoRecentActivity);

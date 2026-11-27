@@ -78,6 +78,8 @@ public sealed partial class PythonLanguageService : LanguageService
             SdkType = sdkType
         };
 
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(model, logger, ct);
+
         logger.LogDebug("Resolved Python package: {sdkType} {packageName} v{packageVersion} at {relativePath}",
             sdkType, packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
 

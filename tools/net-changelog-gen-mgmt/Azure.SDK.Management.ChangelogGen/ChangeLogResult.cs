@@ -10,7 +10,7 @@ namespace Azure.SDK.ChangelogGen
     public class ChangeLogResult
     {
         public ChangeSet? ApiChange { get; set; } = null;
-        public StringValueChange? SpecVersionChange { get; set; } = null;
+        public List<StringValueChange> SpecVersionChanges { get; set; } = new List<StringValueChange>();
         public StringValueChange? AzureCoreVersionChange { get; set; } = null;
         public StringValueChange? AzureResourceManagerVersionChange { get; set; } = null;
 
@@ -32,8 +32,8 @@ namespace Azure.SDK.ChangelogGen
             }
 
             ReleaseNoteGroup featureAddedGroup = new ReleaseNoteGroup("Features Added");
-            if (SpecVersionChange != null)
-                featureAddedGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
+            featureAddedGroup.Notes.AddRange(SpecVersionChanges
+                .Select(change => new ReleaseNote(change.Description, PREFIX)));
             if (featureAddedGroup.Notes.Count > 0)
                 report.Groups.Add(featureAddedGroup);
 

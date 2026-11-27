@@ -380,7 +380,7 @@ op ArmResourceListByParent<
                 
                 const generated = fs.readFileSync(generatedFile, 'utf-8');
                 const expected = fs.readFileSync(expectedFile, 'utf-8');
-                expect(generated).toBe(expected);
+                expect(generated.replace(/\r\n/g, '\n')).toBe(expected.replace(/\r\n/g, '\n'));
             }
         });
     });

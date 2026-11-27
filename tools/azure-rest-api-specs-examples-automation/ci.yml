@@ -63,6 +63,11 @@ jobs:
 
   - script: |
       python -m unittest discover .
+    displayName: 'Test example directory resolution'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation/directory
+
+  - script: |
+      python -m unittest discover .
     displayName: 'Test dotnet worker'
     workingDirectory: ./tools/azure-rest-api-specs-examples-automation/dotnet
 

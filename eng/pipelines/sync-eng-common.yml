@@ -16,8 +16,6 @@ parameters:
     - RepoOwner: Azure
       RepoName: azure-sdk-for-go
     - RepoOwner: Azure
-      RepoName: azure-sdk-for-ios
-    - RepoOwner: Azure
       RepoName: azure-sdk-for-java
     - RepoOwner: Azure
       RepoName: azure-sdk-for-js

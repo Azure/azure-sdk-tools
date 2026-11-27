@@ -11,12 +11,18 @@ Run:
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import sys
+from pathlib import Path
+
+import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dataset.schema import (  # noqa: E402
+    CanonicalCase,
     REVIEW_STATUS_ABANDONED,
     REVIEW_STATUS_PASS,
     REVIEW_STATUS_TODO,
@@ -24,16 +30,22 @@ from dataset.schema import (  # noqa: E402
     case_hash,
     normalize_review_status,
     resolve_dedup_key,
+    select_cases,
     validate_case,
     validate_file,
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
     FoundryEvalsRunner,
+    _delete_eval_input,
+    _retry_foundry_call,
+    _strip_image_tags,
+    _upload_eval_items,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
     resolve_tenant_for_scenario,
+    resolve_records,
 )
 from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E402
 
@@ -41,13 +53,341 @@ from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E4
 def test_validate_case_ok():
     validate_case(
         {
-            "testcase": "t",
+            "testcase": "001001-test-valid",
             "query": "q",
             "ground_truth": "a",
             "scenario": "typespec",
             "reviewed": "pass",
         }
     )
+
+
+def test_canonical_case_round_trips_testcase_id_and_tags():
+    for tags in (["core"], ["full"], ["core", "full"]):
+        case = CanonicalCase(
+            testcase="001003-version-required-to-optional",
+            tags=tags,
+            query="q",
+            ground_truth="a",
+            scenario="typespec",
+            reviewed="pass",
+        )
+        serialized = case.to_dict()
+        assert "id" not in serialized
+        assert serialized["tags"] == tags
+        assert CanonicalCase.from_dict(serialized).to_dict() == serialized
+
+
+def test_select_cases_supports_core_and_full():
+    rows = [
+        {
+            "testcase": "001001-version-core-and-full",
+            "tags": ["core", "full"],
+            "query": "q1",
+            "ground_truth": "a1",
+            "scenario": "typespec",
+            "reviewed": "pass",
+        },
+        {
+            "testcase": "001002-version-specialized",
+            "tags": ["full"],
+            "query": "q2",
+            "ground_truth": "a2",
+            "scenario": "typespec",
+            "reviewed": "pass",
+        },
+        {
+            "testcase": "001003-version-core-only",
+            "tags": ["core"],
+            "query": "q3",
+            "ground_truth": "a3",
+            "scenario": "typespec",
+            "reviewed": "pass",
+        },
+    ]
+    assert [row["testcase"] for row in select_cases(rows, "core", scenario="typespec")] == [
+        "001001-version-core-and-full",
+        "001003-version-core-only",
+    ]
+    assert [row["testcase"] for row in select_cases(rows, "full", scenario="typespec")] == [
+        "001001-version-core-and-full",
+        "001002-version-specialized",
+    ]
+
+
+def test_select_cases_rejects_missing_tags_and_mixed_scenarios():
+    row = {
+        "testcase": "001001-version-core",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "typespec",
+        "reviewed": "pass",
+    }
+    for records, message in (
+        ([row], "tags"),
+        ([dict(row, tags=[])], "must not be empty"),
+        ([dict(row, tags=["core", "full"], scenario="go")], "expected scenario"),
+    ):
+        try:
+            select_cases(records, "core", scenario="typespec")
+        except ValidationError as exc:
+            assert message in str(exc)
+        else:
+            raise AssertionError("expected invalid benchmark selection")
+
+
+def test_upload_eval_items_uses_file_backed_data_source():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    client.files.create.return_value = SimpleNamespace(id="file-uploaded")
+    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-processed", status="processed")
+
+    data_source = _upload_eval_items(
+        client,
+        [{"testcase": "case", "query": "question", "response": "answer"}],
+        "typespec",
+    )
+
+    upload = client.files.create.call_args.kwargs
+    filename, content, content_type = upload["file"]
+    assert filename == "typespec-eval-input.jsonl"
+    assert json.loads(content.decode("utf-8"))["response"] == "answer"
+    assert content_type == "application/jsonl"
+    assert upload["purpose"] == "evals"
+    assert "expires_after" not in upload
+    client.files.wait_for_processing.assert_called_once_with("file-uploaded")
+    assert data_source == {
+        "type": "jsonl",
+        "source": {"type": "file_id", "id": "file-processed"},
+    }
+    client.files.delete.assert_not_called()
+
+
+def test_upload_eval_items_strips_markdown_and_html_image_tags():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    client.files.create.return_value = SimpleNamespace(id="file-uploaded")
+    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-processed", status="processed")
+
+    raw_context = json.dumps([
+        {
+            "document_title": "TypeSpec Guide",
+            "document_link": "https://example.test/doc",
+            "content": (
+                "Step 1: ![diagram](https://github.com/user-attachments/assets/abc-123) "
+                "and ![](https://github.com/Azure/azure-rest-api-specs/assets/456) "
+                'and <img src="https://github.com/user-attachments/assets/def-789" alt="error shot" /> '
+                'and <img src="https://github.com/Azure/azure-rest-api-specs/assets/999">'
+            ),
+        }
+    ])
+    _upload_eval_items(
+        client,
+        [
+            {
+                "testcase": "001001-workflow-image-strip",
+                "query": "See ![my error](https://github.com/user-attachments/assets/q-1)",
+                "response": 'Check <img src="https://github.com/user-attachments/assets/r-1" alt="panel">',
+                "context": raw_context,
+                "knowledges": [{"title": "TypeSpec Guide", "link": "https://example.test/doc"}],
+            }
+        ],
+        "typespec",
+    )
+
+    _, content, _ = client.files.create.call_args.kwargs["file"]
+    uploaded_row = json.loads(content.decode("utf-8"))
+    assert uploaded_row["query"] == "See [Image: my error]"
+    assert uploaded_row["response"] == "Check [Image: panel]"
+    assert uploaded_row["knowledges"] == [{"title": "TypeSpec Guide", "link": "https://example.test/doc"}]
+
+    parsed_context = json.loads(uploaded_row["context"])
+    assert parsed_context[0]["content"] == (
+        "Step 1: [Image: diagram] and [Image] and [Image: error shot] and [Image]"
+    )
+    assert "user-attachments/assets" not in uploaded_row["context"]
+    assert "azure-rest-api-specs/assets" not in uploaded_row["context"]
+
+
+def test_strip_image_tags_unclosed_markdown_is_linear_time():
+    import time
+
+    unclosed = "![alt](" + "a" * 10000
+    start = time.monotonic()
+    assert _strip_image_tags(unclosed) == unclosed
+    assert time.monotonic() - start < 0.5
+    assert _strip_image_tags("![alt](https://example.test/img(1).png)") == "[Image: alt]"
+    truncated_badge = (
+        "![Install](https://img.shields.io/badge/Eclipse-Install_Azure_MCP_Server-b6ae1d"
+        "?style=flat-square&logo=eclipse&logoColor=wh\\n... [truncated]"
+    )
+    assert _strip_image_tags(truncated_badge) == "[Image: Install]\\n... [truncated]"
+    assert _strip_image_tags('<img alt="badge" src="https://img.shields.io/badge/a') == "[Image: badge]"
+    multiline_unclosed = "![alt](not-a-url\nnext line (with parens)"
+    assert _strip_image_tags(multiline_unclosed) == multiline_unclosed
+    from _evals_runner import _completion_item
+
+    assert _completion_item({"ground_truth": "See ![gt](https://example.test/gt.png)"})["ground_truth"] == "See [Image: gt]"
+
+
+def test_upload_processing_failure_deletes_its_input():
+    from types import SimpleNamespace
+    from unittest import TestCase
+    from unittest.mock import MagicMock
+
+    for failure in ("error", "timeout"):
+        client = MagicMock()
+        client.files.create.return_value = SimpleNamespace(id="file-input")
+        client.files.delete.return_value = SimpleNamespace(deleted=True)
+        client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="error")
+        if failure == "timeout":
+            client.files.wait_for_processing.side_effect = RuntimeError("Processing timed out")
+        with TestCase().assertRaises(RuntimeError):
+            _upload_eval_items(client, [{"query": "q", "response": "a"}], "typespec")
+        client.files.delete.assert_called_once_with("file-input")
+        client.evals.runs.create.assert_not_called()
+
+
+def test_eval_input_cleanup_retries_transient_errors():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    import httpx
+    from openai import APIStatusError
+
+    request = httpx.Request("DELETE", "https://example.test/files/file-input")
+    error = APIStatusError("unavailable", response=httpx.Response(503, request=request), body=None)
+    client = MagicMock()
+    client.files.delete.side_effect = [error, SimpleNamespace(deleted=True)]
+    with patch("_evals_runner.time.sleep"):
+        _delete_eval_input(client, "file-input")
+
+    assert client.files.delete.call_count == 2
+    assert all(call.args == ("file-input",) for call in client.files.delete.call_args_list)
+
+
+def test_eval_input_cleanup_requires_confirmed_deletion():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    client = MagicMock()
+    client.files.delete.return_value = SimpleNamespace(deleted=False)
+    with patch("_evals_runner.logger") as log:
+        _delete_eval_input(client, "file-input")
+    log.warning.assert_called_once()
+    assert "manual cleanup is required" in log.warning.call_args.args[0]
+
+
+def test_evaluation_input_cleanup_respects_remote_run_lifetime():
+    from contextlib import ExitStack
+    from types import SimpleNamespace
+    from unittest import TestCase
+    from unittest.mock import MagicMock, patch
+
+    import httpx
+    from openai import APIConnectionError, APIStatusError
+
+    request = httpx.Request("POST", "https://example.test/evals")
+    error = APIStatusError("rejected", response=httpx.Response(400, request=request), body=None)
+    for outcome in (
+        "completed", "failed", "canceled", "timeout", "status_error",
+        "output_error", "creation_unknown", "cleanup_error", "output_cleanup_error",
+    ):
+        client = MagicMock()
+        client.files.create.return_value = SimpleNamespace(id="file-input")
+        client.files.wait_for_processing.return_value = SimpleNamespace(id="file-input", status="processed")
+        client.files.delete.return_value = SimpleNamespace(deleted=True)
+        client.evals.create.return_value = SimpleNamespace(id="eval-id")
+        client.evals.runs.create.return_value = SimpleNamespace(id="run-id")
+        status = outcome if outcome in ("failed", "canceled") else "completed"
+        client.evals.runs.retrieve.return_value = SimpleNamespace(status=status, report_url=None)
+        client.evals.runs.output_items.list.return_value = []
+        results = MagicMock()
+        results.record_run_result.return_value = {"saved": True}
+        runner = FoundryEvalsRunner(["relevance"], results, model="test-model", poll_timeout=-1)
+        if outcome == "timeout":
+            client.evals.runs.retrieve.return_value = SimpleNamespace(status="in_progress")
+        elif outcome == "status_error":
+            client.evals.runs.retrieve.side_effect = error
+        elif outcome in ("output_error", "output_cleanup_error"):
+            client.evals.runs.output_items.list.side_effect = error
+        elif outcome == "creation_unknown":
+            client.evals.runs.create.side_effect = APIConnectionError(request=request)
+        if outcome in ("cleanup_error", "output_cleanup_error"):
+            client.files.delete.side_effect = error
+        expected = (
+            TimeoutError if outcome in ("timeout", "canceled")
+            else RuntimeError if outcome == "failed"
+            else APIConnectionError if outcome == "creation_unknown"
+            else APIStatusError
+        )
+        with ExitStack() as stack:
+            collector = stack.enter_context(patch("_evals_runner.CompletionCollector")).return_value
+            collector.collect.return_value = [{"testcase": "case", "query": "q", "response": "a"}]
+            stack.enter_context(patch("_evals_runner.build_testing_criteria", return_value=[{"name": "relevance"}]))
+            stack.enter_context(patch.object(runner, "_retrieve_tool_calls", return_value={}))
+            stack.enter_context(patch("_evals_runner.time.sleep"))
+            log = stack.enter_context(patch("_evals_runner.logger"))
+            if outcome not in ("completed", "cleanup_error"):
+                raised = stack.enter_context(TestCase().assertRaises(expected))
+            result = runner.evaluate_run_completion(
+                client, [{"testcase": "case", "query": "q"}], "typespec", project_client=MagicMock(),
+            )
+        if outcome in ("completed", "cleanup_error"):
+            assert result == {"typespec_run-id": {"saved": True}}, outcome
+        if outcome in ("output_error", "output_cleanup_error"):
+            assert raised.exception is error
+        if outcome in ("completed", "failed", "output_error", "cleanup_error", "output_cleanup_error"):
+            client.files.delete.assert_called_once_with("file-input")
+        else:
+            client.files.delete.assert_not_called()
+        if outcome in ("cleanup_error", "output_cleanup_error"):
+            log.warning.assert_called_once()
+
+
+def test_retry_foundry_call_retries_transient_status_errors():
+    import httpx
+    from openai import APIStatusError
+
+    calls = 0
+
+    def operation():
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            request = httpx.Request("POST", "https://example.test/evals")
+            response = httpx.Response(503, request=request)
+            raise APIStatusError("temporarily unavailable", response=response, body=None)
+        return "ok"
+
+    assert _retry_foundry_call(operation, "test operation", base_delay=0) == "ok"
+    assert calls == 3
+
+
+def test_retry_foundry_call_does_not_retry_validation_errors():
+    import httpx
+    from openai import APIStatusError
+
+    calls = 0
+
+    def operation():
+        nonlocal calls
+        calls += 1
+        request = httpx.Request("POST", "https://example.test/evals")
+        response = httpx.Response(400, request=request)
+        raise APIStatusError("invalid input", response=response, body=None)
+
+    try:
+        _retry_foundry_call(operation, "test operation", base_delay=0)
+    except APIStatusError:
+        pass
+    else:
+        raise AssertionError("Expected validation errors to remain non-retryable")
+    assert calls == 1
 
 
 def test_validate_case_missing_field():
@@ -59,9 +399,118 @@ def test_validate_case_missing_field():
         raise AssertionError("expected ValidationError")
 
 
+def test_validate_case_allows_title_until_staging_review():
+    row = {
+        "testcase": "Source question title",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "typespec",
+        "reviewed": "todo",
+    }
+    validate_case(row)
+    try:
+        validate_case(dict(row, reviewed="pass"))
+    except ValidationError as exc:
+        assert "CCCSSS-category-situation" in str(exc)
+    else:
+        raise AssertionError("expected passed cases to require a structured testcase")
+
+
+def test_validate_file_allows_staging_titles_and_uses_dedup_identity():
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        staging = Path(tmp) / "_staging"
+        staging.mkdir()
+        path = staging / "typespec.jsonl"
+        rows = [
+            {
+                "testcase": "Source question title",
+                "query": "q1",
+                "ground_truth": "a",
+                "scenario": "typespec",
+                "reviewed": REVIEW_STATUS_TODO,
+            },
+            {
+                "testcase": "Source question title",
+                "query": "q2",
+                "ground_truth": "a",
+                "scenario": "typespec",
+                "reviewed": REVIEW_STATUS_ABANDONED,
+            },
+        ]
+        path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+        assert validate_file(path) == 2
+
+        rows[1]["query"] = "q1"
+        path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+        try:
+            validate_file(path)
+        except ValidationError as exc:
+            assert "duplicate case identity" in str(exc)
+        else:
+            raise AssertionError("expected duplicate staging query to fail")
+
+
+def test_validate_file_resolves_relative_library_and_reviewed_single_case(tmp_path, monkeypatch):
+    lib = tmp_path / "evaluation_datasets"
+    lib.mkdir()
+    lib_file = lib / "typespec.jsonl"
+    lib_file.write_text(
+        json.dumps({
+            "testcase": "001001-cat-sit",
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "typespec",
+            "reviewed": REVIEW_STATUS_PASS,
+        }) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(lib)
+    try:
+        validate_file("typespec.jsonl", require_reviewed=True)
+    except ValidationError as exc:
+        assert "tags" in str(exc)
+    else:
+        raise AssertionError("expected relative path inside evaluation_datasets to enforce tags")
+
+    single_dir = tmp_path / "single-case"
+    single_dir.mkdir()
+    single_file = single_dir / "custom.jsonl"
+    single_file.write_text(
+        json.dumps({
+            "testcase": "001001-cat-sit",
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "typespec",
+            "reviewed": REVIEW_STATUS_PASS,
+        }) + "\n",
+        encoding="utf-8",
+    )
+    try:
+        validate_file(single_file, require_reviewed=True)
+    except ValidationError as exc:
+        assert "tags" in str(exc)
+    else:
+        raise AssertionError("expected require_reviewed=True outside evaluation_datasets to enforce tags")
+
+    single_file.write_text(
+        json.dumps({
+            "testcase": "001001-cat-sit",
+            "tags": ["core"],
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "typespec",
+            "reviewed": REVIEW_STATUS_PASS,
+        }) + "\n",
+        encoding="utf-8",
+    )
+    assert validate_file(single_file, require_reviewed=True) == 1
+
+
 def test_validate_case_bad_reviewed_type():
     try:
-        validate_case({"testcase": "t", "query": "q", "ground_truth": "a", "scenario": "s", "reviewed": "yes"})
+        validate_case({"testcase": "001001-test-status", "query": "q", "ground_truth": "a", "scenario": "s", "reviewed": "yes"})
     except ValidationError as exc:
         assert "reviewed" in str(exc)
     else:
@@ -92,7 +541,8 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
 
     def _row(testcase: str, status: str) -> dict:
         return {
-            "testcase": testcase,
+            "testcase": f"001{dict(keep=1, leftover=2, already=3)[testcase]:03d}-test-{testcase}",
+            "tags": ["core", "full"],
             "query": f"q-{testcase}",
             "ground_truth": "gt",
             "expected_references": [],
@@ -106,7 +556,7 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         staging = root / "_staging"
-        target = root / "basic"
+        target = root / "evaluation_datasets"
         staging.mkdir()
         sf = staging / "typespec.jsonl"
         with sf.open("w", encoding="utf-8") as fh:
@@ -122,25 +572,27 @@ def test_review_promotes_pass_and_abandons_leftover_todo():
         # The pass row is promoted to the official dataset.
         assert promoted == {"typespec": 1}
         target_rows = [json.loads(l) for l in (target / "typespec.jsonl").read_text(encoding="utf-8").splitlines()]
-        assert [r["testcase"] for r in target_rows] == ["keep"]
+        assert [r["testcase"] for r in target_rows] == ["001001-test-keep"]
+        assert target_rows[0]["tags"] == ["core", "full"]
         assert target_rows[0]["reviewed"] == REVIEW_STATUS_PASS
 
         # Staging keeps the leftover (now abandoned) and the already-abandoned row; pass row is gone.
         staging_rows = {
-            r["testcase"]: r["reviewed"]
+            r["query"][2:]: r["reviewed"]
             for r in (json.loads(l) for l in sf.read_text(encoding="utf-8").splitlines())
         }
         assert staging_rows == {"leftover": REVIEW_STATUS_ABANDONED, "already": REVIEW_STATUS_ABANDONED}
 
 
-def test_validate_file_dedups_on_query_not_testcase():
+def test_validate_file_uses_id_not_query():
     import json
     import tempfile
     from pathlib import Path
 
-    def _row(testcase: str, query: str) -> dict:
+    def _row(case_id: str, query: str) -> dict:
         return {
-            "testcase": testcase,
+            "testcase": case_id,
+            "tags": ["core"],
             "query": query,
             "ground_truth": "gt",
             "scenario": "typespec",
@@ -148,18 +600,18 @@ def test_validate_file_dedups_on_query_not_testcase():
         }
 
     with tempfile.TemporaryDirectory() as tmp:
-        # Two distinct cases sharing a placeholder title are valid (dedup key is query).
+        # Preserved source variants can share a question but have distinct IDs.
         ok = Path(tmp) / "ok.jsonl"
         ok.write_text(
-            json.dumps(_row("Untitled", "q1")) + "\n" + json.dumps(_row("Untitled", "q2")) + "\n",
+            json.dumps(_row("001001-test-first", "q")) + "\n" + json.dumps(_row("001002-test-second", "q")) + "\n",
             encoding="utf-8",
         )
         assert validate_file(ok, require_reviewed=True) == 2
 
-        # Two rows with the same (normalized) query are a real duplicate -> reject.
+        # Editing the question cannot make a duplicate ID valid.
         dup = Path(tmp) / "dup.jsonl"
         dup.write_text(
-            json.dumps(_row("A", "same query")) + "\n" + json.dumps(_row("B", "Same   Query")) + "\n",
+            json.dumps(_row("001001-test-first", "q1")) + "\n" + json.dumps(_row("001001-test-first", "q2")) + "\n",
             encoding="utf-8",
         )
         try:
@@ -167,7 +619,7 @@ def test_validate_file_dedups_on_query_not_testcase():
         except ValidationError as exc:
             assert "duplicate case" in str(exc)
         else:
-            raise AssertionError("expected ValidationError for duplicate query")
+            raise AssertionError("expected ValidationError for duplicate ID")
 
 
 def test_resolve_dedup_key_frozen_on_query_edit():
@@ -185,14 +637,15 @@ def test_resolve_dedup_key_frozen_on_query_edit():
     assert resolve_dedup_key({"query": "q"}, "python") == case_hash("python", "q")
 
 
-def test_validate_file_dedups_on_dedup_key():
+def test_validate_file_preserves_distinct_ids_with_shared_dedup_key():
     import json
     import tempfile
     from pathlib import Path
 
-    def _row(testcase: str, query: str, dedup_key: str) -> dict:
+    def _row(case_id: str, query: str, dedup_key: str) -> dict:
         return {
-            "testcase": testcase,
+            "testcase": case_id,
+            "tags": ["core"],
             "query": query,
             "ground_truth": "gt",
             "scenario": "typespec",
@@ -201,23 +654,18 @@ def test_validate_file_dedups_on_dedup_key():
         }
 
     with tempfile.TemporaryDirectory() as tmp:
-        # Same dedup_key on two rows (even with different query text) -> duplicate.
+        # Historical source copies remain independently addressable by ID.
         dup = Path(tmp) / "dup.jsonl"
         dup.write_text(
-            json.dumps(_row("A", "q1", "same-key")) + "\n" + json.dumps(_row("B", "q2 edited", "same-key")) + "\n",
+            json.dumps(_row("001001-test-first", "q1", "same-key")) + "\n" + json.dumps(_row("001002-test-second", "q2 edited", "same-key")) + "\n",
             encoding="utf-8",
         )
-        try:
-            validate_file(dup)
-        except ValidationError as exc:
-            assert "duplicate case" in str(exc)
-        else:
-            raise AssertionError("expected ValidationError for duplicate dedup_key")
+        assert validate_file(dup, require_reviewed=True) == 2
 
         # Distinct dedup_keys -> valid.
         ok = Path(tmp) / "ok.jsonl"
         ok.write_text(
-            json.dumps(_row("A", "q", "k1")) + "\n" + json.dumps(_row("B", "q", "k2")) + "\n",
+            json.dumps(_row("001001-test-first", "q", "k1")) + "\n" + json.dumps(_row("001002-test-second", "q", "k2")) + "\n",
             encoding="utf-8",
         )
         assert validate_file(ok, require_reviewed=True) == 2
@@ -255,6 +703,48 @@ def test_output_items_to_rows_groundedness_fail():
     assert rows[0]["outputs.groundedness.groundedness_result"] == "fail"
 
 
+def test_output_items_to_rows_unwraps_file_item_envelope():
+    output_items = [
+        {
+            "datasource_item": {
+                "item": {
+                    "testcase": "t3",
+                    "query": "q3",
+                    "response": "answer",
+                }
+            },
+            "results": [{"name": "fluency", "score": 5.0, "passed": True}],
+        }
+    ]
+
+    rows = output_items_to_rows(output_items, ["fluency"])["rows"]
+    assert rows[0]["inputs.testcase"] == "t3"
+    assert rows[0]["inputs.query"] == "q3"
+
+
+def test_output_items_to_rows_raises_for_grader_error():
+    output_items = [
+        {
+            "datasource_item": {"testcase": "t4"},
+            "results": [
+                {
+                    "name": "similarity",
+                    "status": "error",
+                    "sample": {"error": {"message": "Missing inputs: data.response"}},
+                }
+            ],
+        }
+    ]
+
+    try:
+        output_items_to_rows(output_items, ["similarity"])
+    except RuntimeError as exc:
+        assert "similarity" in str(exc)
+        assert "Missing inputs" in str(exc)
+    else:
+        raise AssertionError("Expected grader errors to fail the evaluation")
+
+
 def test_build_testing_criteria_all_builtins():
     crit = build_testing_criteria(list(BUILTIN_EVALUATORS), model="gpt-4o")
     by_name = {c["evaluator_name"]: c for c in crit}
@@ -278,6 +768,24 @@ def test_build_testing_criteria_bot_evals_expands():
     crit = build_testing_criteria(["bot_evals"], model="gpt-4o")
     names = {c["evaluator_name"] for c in crit}
     assert names == {"builtin.similarity", "builtin.response_completeness"}
+
+
+def test_builtin_completeness_preserves_mapping_and_threshold():
+    criteria = build_testing_criteria(
+        ["response_completeness", "bot_evals"], model="model", threshold=4
+    )
+    by_name = {c["name"]: c for c in criteria}
+    assert len(criteria) == 2
+    assert by_name["response_completeness"] == {
+        "type": "azure_ai_evaluator",
+        "name": "response_completeness",
+        "evaluator_name": "builtin.response_completeness",
+        "initialization_parameters": {"model": "model", "threshold": 4},
+        "data_mapping": {
+            "response": "{{item.response}}",
+            "ground_truth": "{{item.ground_truth}}",
+        },
+    }
 
 
 def test_criteria_read_from_item():
@@ -309,6 +817,9 @@ def test_extract_context_from_full_context_json():
 
 
 def test_retrieve_and_normalize_stored_response_tool_calls():
+    from contextlib import nullcontext
+    from unittest.mock import MagicMock
+
     response = {
         "output": [
             {"type": "reasoning", "id": "reasoning-1", "summary": []},
@@ -350,10 +861,13 @@ def test_retrieve_and_normalize_stored_response_tool_calls():
         responses = FakeResponses()
 
     items = [
-        {"testcase": "traceable", "response_id": "response-1", "context": "documents"},
+        {"testcase": "traceable", "response_id": "response-1", "agent_name": "returned-agent", "context": "documents"},
         {"testcase": "blocked", "response_id": "content-filter", "context": ""},
     ]
-    tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(FakeClient(), items)
+    project = MagicMock()
+    project.get_openai_client.return_value = nullcontext(FakeClient())
+    tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(project, items)
+    project.get_openai_client.assert_called_once_with(agent_name="returned-agent")
 
     assert tool_calls_by_response_id["content-filter"] == []
     assert tool_calls_by_response_id["response-1"] == [
@@ -380,12 +894,404 @@ def test_resolve_tenant_for_scenario():
         "TypeSpec Discussion": "tenant-ts",
         "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
+        "API Stewardship Board - General": "api_stewardship_board_qa_bot",
+        "Language - DotNet": "dotnet_channel_qa_bot",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"
     assert resolve_tenant_for_scenario("mcpserver", m) == "azure_mcp_server"
     assert resolve_tenant_for_scenario("sdkagent", m) == "tenant-sdkagent"
+    assert resolve_tenant_for_scenario("apistewardshipboard", m) == "api_stewardship_board_qa_bot"
+    assert resolve_tenant_for_scenario("apistewardshipboard", {"default": "tenant-default"}) == "tenant-default"
+    assert resolve_tenant_for_scenario("dotnet", m) == "dotnet_channel_qa_bot"
     assert resolve_tenant_for_scenario("unknown", m) == "tenant-default"
     assert resolve_tenant_for_scenario("typespec", None) is None
+
+
+def test_apistewardshipboard_dataset():
+    from pathlib import Path
+
+    from dataset.schema import normalize_query
+
+    root = Path(__file__).resolve().parents[1]
+    dataset = root / "evaluation_datasets" / "apistewardshipboard.jsonl"
+    count = validate_file(dataset, require_reviewed=True)
+    records, scenario = resolve_records(
+        "qa-bot-apistewardshipboard:latest", script_dir=root
+    )
+    assert resolve_records(str(dataset), script_dir=root) == (records, scenario)
+    assert count == len(records) == 35
+    assert scenario == "apistewardshipboard"
+    assert all(row["scenario"] == scenario for row in records)
+    assert all(row["tenant"] == "api_stewardship_board_qa_bot" for row in records)
+    assert all(row["reviewed"] == "pass" for row in records)
+    assert all(row["source"] and row["expected_references"] for row in records)
+    assert len({normalize_query(row["query"]) for row in records}) == count
+    core = [row for row in records if "core" in row["tags"]]
+    assert len(core) == 1
+    assert core[0]["testcase"] == "001001-review-async-data-plane-review-request"
+
+
+def test_apistewardshipboard_cases_are_customer_questions_and_expert_answers():
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    records, _ = resolve_records(
+        str(root / "evaluation_datasets" / "apistewardshipboard.jsonl"),
+        script_dir=root,
+    )
+    for row in records:
+        title, separator, question = row["query"].partition("\n\nquestion: ")
+        assert title.startswith("title: ") and separator, row["testcase"]
+        assert re.search(r"\b(?:I|my|we|our)\b", question, re.IGNORECASE), row["testcase"]
+        assert not re.search(
+            r"\b(?:give guidance only|do not approve|do not (?:change|apply) labels)\b",
+            question,
+            re.IGNORECASE,
+        ), row["testcase"]
+        assert not re.match(
+            r"(?:Explain|Establish|Inspect|Discuss|State that|Do not|"
+            r"Use (?:the )?(?:current|maintained))\b",
+            row["ground_truth"],
+        ), row["testcase"]
+
+
+def test_apistewardshipboard_preserves_expert_conclusions_and_case_context():
+    root = Path(__file__).resolve().parents[1]
+    records, _ = resolve_records(
+        str(root / "evaluation_datasets" / "apistewardshipboard.jsonl"),
+        script_dir=root,
+    )
+    cases = {"-".join(row["testcase"].split("-")[2:]): row for row in records}
+    expectations = {
+        "Previously approved break repeats in new preview": {
+            "query": ("latest GA",),
+            "ground_truth": ("every new preview", "re-approved", "next stable"),
+            "source": ("1787603383879",),
+        },
+        "TypeSpec migration without a new API version": {
+            "ground_truth": ("does not need API Stewardship Board review", "DefaultValueChanged"),
+            "source": ("1775678660583", "1775678867344"),
+        },
+        "Separate SDK package versus additional client": {
+            "query": ("same service", "version independently"),
+            "ground_truth": ("existing package", "maintenance"),
+            "source": ("1790198371681",),
+        },
+        "Resource-specific LRO monitor is allowed": {
+            "ground_truth": ("yes", "separate endpoints", "different resources"),
+            "source": ("1779411536613",),
+        },
+        "Scheduler role-like error does not justify elevation": {
+            "ground_truth": ("no additional permissions", "locked meeting slot", "backend fix"),
+            "source": ("1776726962353", "1776814126219"),
+        },
+        "Unknown InternalARMContracts synchronization rule": {
+            "ground_truth": ("ARM Office Hours", "does not establish"),
+            "source": ("1791914122933",),
+        },
+        "Additive preview versioning review and exception routing": {
+            "ground_truth": ("approved", "recordkeeping", "CPEX"),
+            "source": ("1788893117225",),
+        },
+        "New-version default change needs compatibility review": {
+            "query": ("upcoming API versions", "existing connections"),
+            "ground_truth": ("new API versions", "unchanged", "not approved"),
+            "source": ("no expert reply",),
+        },
+        "Published contract correction across main and release branches": {
+            "ground_truth": ("two PRs", "main", "release-", "SDK"),
+            "source": ("1788197041926", "1788201530309"),
+        },
+        "Multiple versions need explicit SDK generation and review": {
+            "query": ("MultipleNewApiVersions",),
+            "ground_truth": ("api-version", "tspconfig.yaml", "every SDK language"),
+            "source": ("1788326574286",),
+        },
+        "AFEC-gated limited preview is not public preview": {
+            "query": ("AFEC", "white-glove", "limited"),
+            "ground_truth": ("not public preview", "private preview", "feature flags"),
+            "source": ("1766001736240", "1766001828993"),
+        },
+        "Legacy meeting cancellation after async review": {
+            "ground_truth": ("manual cancellation", "scheduler", "not automatically"),
+            "source": ("1780421016315",),
+        },
+    }
+    for testcase, fields in expectations.items():
+        testcase_slug = re.sub(r"[^a-z0-9]+", "-", testcase.casefold()).strip("-")
+        for field, required in fields.items():
+            for text in required:
+                assert text.casefold() in cases[testcase_slug][field].casefold(), (testcase, field, text)
+
+
+def _run_completion_cli(*, scenario="apistewardshipboard", tenant_map=None, status=200):
+    from contextlib import ExitStack
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    import evals_run
+
+    posts = []
+
+    class Response:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def json(self):
+            return {"id": "content-filter", "answer": "advisory answer", "references": []}
+
+    class Session:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        def post(self, url, *, json, headers):
+            posts.append((url, json))
+            response = Response()
+            response.status = status
+            return response
+
+    project = MagicMock()
+    project.__enter__.return_value = project
+    client = MagicMock()
+    project.get_openai_client.return_value.__enter__.return_value = client
+    client.files.create.return_value = SimpleNamespace(id="file-local")
+    client.files.wait_for_processing.return_value = SimpleNamespace(id="file-local", status="processed")
+    client.evals.create.return_value = SimpleNamespace(id="eval-local")
+    client.evals.runs.create.return_value = SimpleNamespace(id="run-local")
+    records = [
+        {
+            "testcase": "001001-routing-first-case",
+            "query": "q1",
+            "ground_truth": "a",
+            "scenario": scenario,
+            "tenant": "ignored-row-tenant",
+            "reviewed": "pass",
+            "tags": ["core", "full"],
+        },
+        {
+            "testcase": "001002-routing-second-case",
+            "query": "q2",
+            "ground_truth": "a",
+            "scenario": scenario,
+            "tenant": "another-ignored-tenant",
+            "reviewed": "pass",
+            "tags": ["core", "full"],
+        },
+    ]
+    argv = ["--dataset", "evaluation_datasets/apistewardshipboard.jsonl", "--baseline_check", "False"]
+
+    with ExitStack() as stack:
+        stack.enter_context(patch.dict(os.environ, {
+            "AZURE_AI_PROJECT_ENDPOINT": "https://unused.invalid",
+            "AZURE_EVALUATION_MODEL_NAME": "unused-model",
+            "EVALUATE_THRESHOLD": "3",
+        }))
+        stack.enter_context(patch("azure.ai.projects.AIProjectClient", return_value=project))
+        stack.enter_context(patch("aiohttp.ClientSession", Session))
+        stack.enter_context(patch.object(evals_run, "load_dotenv"))
+        stack.enter_context(patch.object(evals_run, "credential_for", return_value=object()))
+        stack.enter_context(patch.object(evals_run, "resolve_bot_token", return_value=None))
+        stack.enter_context(patch.object(evals_run, "resolve_completion_url", return_value="http://unused.invalid/completion"))
+        stack.enter_context(patch.object(evals_run, "resolve_records", return_value=(records, scenario)))
+        stack.enter_context(patch.object(evals_run, "_load_suppression", return_value={"evaluators": [], "testcases": []}))
+        stack.enter_context(patch.object(evals_run.EvalsResult, "show_results"))
+        stack.enter_context(patch.object(FoundryEvalsRunner, "_poll_and_adapt", return_value={}))
+        lookup = stack.enter_context(patch.object(
+            evals_run,
+            "retrieve_channel_tenant_map",
+            return_value=tenant_map,
+        ))
+        exit_code = evals_run.main(argv)
+        assert lookup.call_count == 1
+
+    return exit_code, posts
+
+
+def test_cli_apistewardshipboard_channel_routing_reaches_real_completion_runner():
+    exit_code, posts = _run_completion_cli(
+        tenant_map={"API Stewardship Board - General": "api_stewardship_board_qa_bot"},
+    )
+    assert exit_code == 0
+    assert len(posts) == 2
+    assert all(url.endswith("/completion") for url, _ in posts)
+    assert all(payload["tenant_id"] == "api_stewardship_board_qa_bot" for _, payload in posts)
+    assert [payload["message"]["content"] for _, payload in posts] == ["q1", "q2"]
+    assert all(payload["with_full_context"] is True for _, payload in posts)
+
+
+def test_cli_default_routing_reaches_completion_unchanged():
+    for scenario, mapping, expected in [
+        ("typespec", {"TypeSpec Discussion": "tenant-ts", "default": "tenant-default"}, "tenant-ts"),
+        ("unknown", {"default": "tenant-default"}, "tenant-default"),
+        ("apistewardshipboard", None, "general_qa_bot"),
+    ]:
+        exit_code, posts = _run_completion_cli(scenario=scenario, tenant_map=mapping)
+        assert exit_code == 0
+        assert len(posts) == 2
+        assert all(payload["tenant_id"] == expected for _, payload in posts)
+
+
+def test_cli_rejected_tenant_does_not_fall_back():
+    exit_code, posts = _run_completion_cli(
+        tenant_map={"API Stewardship Board - General": "unregistered_tenant"},
+        status=400,
+    )
+    assert exit_code == 1
+    assert len(posts) == 2
+    assert all(payload["tenant_id"] == "unregistered_tenant" for _, payload in posts)
+
+
+def test_cli_warn_only_turns_eval_fail_into_warning_exit_zero(capsys):
+    from contextlib import ExitStack
+    from unittest.mock import MagicMock, patch
+
+    import evals_run
+    from _evals_result import VerificationResult
+
+    records = [{
+        "testcase": "001001-routing-warn-case",
+        "query": "q1",
+        "ground_truth": "a",
+        "scenario": "typespec",
+        "reviewed": "pass",
+        "tags": ["core", "full"],
+    }]
+    project = MagicMock()
+    project.__enter__.return_value = project
+    project.get_openai_client.return_value.__enter__.return_value = MagicMock()
+
+    def _run(warn_only: str) -> int:
+        with ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ, {
+                "AZURE_AI_PROJECT_ENDPOINT": "https://unused.invalid",
+                "AZURE_EVALUATION_MODEL_NAME": "unused-model",
+                "EVALUATE_THRESHOLD": "3",
+            }))
+            stack.enter_context(patch("azure.ai.projects.AIProjectClient", return_value=project))
+            stack.enter_context(patch.object(evals_run, "load_dotenv"))
+            stack.enter_context(patch.object(evals_run, "credential_for", return_value=object()))
+            stack.enter_context(patch.object(evals_run, "resolve_bot_token", return_value=None))
+            stack.enter_context(patch.object(evals_run, "resolve_completion_url", return_value="http://unused.invalid/completion"))
+            stack.enter_context(patch.object(evals_run, "resolve_records", return_value=(records, "typespec")))
+            stack.enter_context(patch.object(evals_run, "retrieve_channel_tenant_map", return_value=None))
+            stack.enter_context(patch.object(evals_run, "_load_suppression", return_value={"evaluators": [], "testcases": []}))
+            stack.enter_context(patch.object(evals_run.FoundryEvalsRunner, "evaluate_run_completion", return_value={}))
+            stack.enter_context(patch.object(evals_run.EvalsResult, "show_results"))
+            stack.enter_context(patch.object(evals_run.EvalsResult, "verify_results", return_value=VerificationResult.FAIL))
+            return evals_run.main([
+                "--dataset", "evaluation_datasets/typespec.jsonl",
+                "--baseline_check", "False",
+                "--warn_only", warn_only,
+            ])
+
+    assert _run("False") == 1
+    assert _run("True") == 0
+    captured = capsys.readouterr().out
+    assert "##vso[task.logissue type=warning]" in captured
+    assert "##vso[task.complete result=SucceededWithIssues;]" in captured
+
+
+def test_perf_pipeline_apistewardshipboard_uses_shared_dataset_invocation():
+    from pathlib import Path
+
+    import yaml
+
+    path = Path(__file__).resolve().parents[1] / "evaluation.yml"
+    pipeline = yaml.safe_load(path.read_text(encoding="utf-8"))
+    parameters = {parameter["name"]: parameter for parameter in pipeline["parameters"]}
+    scenarios = parameters["scenarios"]["default"]
+    assert scenarios == ["typespec", "onboarding", "python", "dotnet", "javascript", "go", "apispec", "general", "releasesupport", "authoring", "mcpserver", "sdkagent", "apistewardshipboard"]
+    jobs = pipeline["extends"]["parameters"]["stages"][0]["jobs"]
+    steps = jobs[0]["${{ each scenario in parameters.scenarios }}"][0]["steps"]
+    inputs = next(
+        step["inputs"]
+        for step in steps
+        if step.get("displayName") == "Run Evals (${{ scenario }}, ${{ parameters.scope }})"
+    )
+    script = inputs["inlineScript"]
+    assert '--dataset "qa-bot-${{ scenario }}:latest"' in script
+    assert '--scope "${{ parameters.scope }}"' in script
+    assert "--warn_only True" in script
+    assert "evaluation_datasets/" not in script
+    assert "--tenant-id" not in script
+
+
+def test_javascript_scenario_routes_to_configured_js_channel():
+    root = Path(__file__).resolve().parents[2]
+    config = yaml.safe_load(
+        (root / "azure-sdk-qa-bot" / "config" / "channel.yaml").read_text(encoding="utf-8")
+    )
+    channel = next(
+        item
+        for item in config["channels"]
+        if item["id"] == "19:344f6b5b36ba414daa15473942c7477b@thread.skype"
+    )
+    mapping = {"default": config["default"]["tenant"]}
+    mapping.update({item["name"]: item["tenant"] for item in config["channels"]})
+    assert resolve_tenant_for_scenario("javascript", mapping) == channel["tenant"]
+    assert resolve_tenant_for_scenario("unknown", mapping) == config["default"]["tenant"]
+
+
+def test_javascript_datasets_are_documentation_only_and_resolve_locally():
+    root = Path(__file__).resolve().parents[1]
+    queries = set()
+    historical_context = re.compile(
+        r"https?://|(?:\bPR|\bpull request|\bissue)\s*#?\d+\b"
+        r"|\b\d{4}-\d{2}-\d{2}\b|19:\S+@thread"
+        r"|\b(?:yesterday|last week|last month)\b",
+        re.IGNORECASE,
+    )
+    path = root / "evaluation_datasets" / "javascript.jsonl"
+    assert validate_file(path, require_reviewed=True) == 20
+    records, scenario = resolve_records(
+        "qa-bot-javascript:latest", script_dir=root
+    )
+    assert scenario == "javascript"
+    assert len(records) == 20
+    for case in records:
+        assert case["scenario"] == scenario
+        assert case["tenant"] is None
+        assert case["source"] == "manual:javascript-documentation"
+        assert case["expected_references"]
+        for field in ("query", "ground_truth"):
+            assert "dev-tool customization" not in case[field]
+        assert "http" not in case["query"]
+        for reference in case["expected_references"]:
+            assert "modular-customization.md" not in reference["link"]
+            assert reference["link"].startswith((
+                "https://github.com/Azure/azure-sdk-for-js/blob/main/",
+                "https://azure.github.io/typespec-azure/docs/emitters/clients/typespec-ts/",
+            ))
+        for field in ("testcase", "query", "ground_truth"):
+            assert not historical_context.search(case[field]), (path, field)
+        query = " ".join(case["query"].lower().split())
+        assert query not in queries
+        queries.add(query)
+
+
+def test_perf_pipeline_is_manual_and_covers_all_scenarios():
+    root = Path(__file__).resolve().parents[2]
+    pipeline = yaml.safe_load((root / "azure-sdk-qa-bot-evaluation" / "evaluation.yml").read_text(encoding="utf-8"))
+    assert pipeline["trigger"] == "none"
+    assert pipeline["pr"] == "none"
+    assert "schedules" not in pipeline
+    parameters = {parameter["name"]: parameter for parameter in pipeline["parameters"]}
+    assert parameters["scope"]["default"] == "core"
+    assert parameters["scope"]["values"] == ["core", "full"]
+    expected = {path.stem for path in (root / "azure-sdk-qa-bot-evaluation" / "evaluation_datasets").glob("*.jsonl")}
+    assert set(parameters["scenarios"]["default"]) == expected
+    for name in ("benchmark-evaluation.yml", "offline-evaluation.yml", "online-evaluation.yml", "perf-evaluation.yml"):
+        assert not (root / name).exists()
 
 
 def test_output_items_to_rows_completion_item_response():
@@ -483,6 +1389,359 @@ def test_record_run_result_empty_rows_no_crash():
     er = EvalsResult(metrics={"bot_evals": None}, suppressions=None)
     recorded = er.record_run_result({"rows": []})
     assert recorded[-1]["total_evals"] == 0
+
+
+def test_monitor_onboarding_case_has_no_live_issue_or_pr_dependencies():
+    records, _ = resolve_records(
+        "evaluation_datasets/mcpserver.jsonl",
+        script_dir=Path(__file__).resolve().parents[1],
+    )
+    case = next(
+        row for row in records
+        if row["testcase"] == "004009-onboarding-how-should-new-azure-monitor-traces-tools-be-onboarded-and-reviewed"
+    )
+    assert "http" not in case["query"]
+    for field in ("query", "ground_truth"):
+        assert not re.search(r"(?:/issues/|/pull/|#)\d+", case[field])
+        assert "Alan Zimmer" not in case[field]
+
+
+def test_main_passes_project_for_response_selected_agents():
+    from unittest.mock import MagicMock, call, patch
+    import evals_run
+    from _evals_result import VerificationResult
+
+    for tenant_id in (
+        "azure_mcp_server",
+        "python_channel_qa_bot",
+        None,
+    ):
+        project = MagicMock()
+        runner = MagicMock()
+        runner.evaluate_run_completion.return_value = {}
+        result = MagicMock()
+        result.verify_results.return_value = VerificationResult.PASS
+        environment = {
+            "AZURE_AI_PROJECT_ENDPOINT": "https://project.example",
+            "AZURE_EVALUATION_MODEL_NAME": "model",
+            "AI_FOUNDRY_AGENT_NAME": "must-not-be-used",
+            "AZURE_MCP_SERVER_AGENT_NAME": "must-not-be-used-either",
+        }
+        with (
+            patch.dict(os.environ, environment, clear=True),
+            patch.object(evals_run, "load_dotenv"),
+            patch.object(evals_run, "credential_for"),
+            patch.object(evals_run, "resolve_records", return_value=([{
+                "testcase": "001001-test-routing", "tags": ["core", "full"], "query": "question",
+                "ground_truth": "answer", "scenario": "mcpserver", "reviewed": "pass",
+            }], "mcpserver")),
+            patch.object(evals_run, "retrieve_channel_tenant_map", return_value={}),
+            patch.object(evals_run, "resolve_tenant_for_scenario", return_value=tenant_id),
+            patch.object(evals_run, "FoundryEvalsRunner", return_value=runner),
+            patch.object(evals_run, "EvalsResult", return_value=result),
+            patch("azure.ai.projects.AIProjectClient") as project_type,
+        ):
+            project_type.return_value.__enter__.return_value = project
+            assert evals_run.main([
+                "--dataset", "qa-bot-mcpserver:latest",
+                "--baseline_check", "False", "--is_ci", "False",
+            ]) == 0
+        assert project.get_openai_client.call_args_list == [call()]
+        assert runner.evaluate_run_completion.call_args.kwargs["tenant_id"] == tenant_id
+        assert runner.evaluate_run_completion.call_args.kwargs["project_client"] is project
+
+
+def test_asset_name_and_dataset_label_are_consistent():
+    from dataset.upload import asset_name
+    import evals_run
+
+    assert asset_name("typespec") == "qa-bot-typespec"
+    assert evals_run._dataset_label("evaluation_datasets/typespec.jsonl", "typespec") == "qa-bot-typespec"
+    assert evals_run._dataset_label("qa-bot-typespec:latest", "typespec") == "qa-bot-typespec"
+
+
+def test_retrieval_uses_each_response_agent_and_closes_clients():
+    from unittest.mock import MagicMock, call
+
+    project = MagicMock()
+    clients = {name: MagicMock() for name in ("first-agent", "second-agent")}
+    project.get_openai_client.side_effect = lambda *, agent_name: clients[agent_name]
+    for client in clients.values():
+        client.__enter__.return_value.responses.retrieve.return_value = {"output": []}
+    items = [
+        {"response_id": "response-1", "agent_name": "first-agent"},
+        {"response_id": "response-2", "agent_name": "second-agent"},
+        {"response_id": "response-3", "agent_name": "first-agent"},
+    ]
+
+    assert FoundryEvalsRunner._retrieve_tool_calls(project, items) == {
+        "response-1": [], "response-2": [], "response-3": [],
+    }
+    assert project.get_openai_client.call_args_list == [
+        call(agent_name="first-agent"), call(agent_name="second-agent"),
+    ]
+    for name, ids in (
+        ("first-agent", ["response-1", "response-3"]),
+        ("second-agent", ["response-2"]),
+    ):
+        assert clients[name].__enter__.return_value.responses.retrieve.call_args_list == [
+            call(response_id, include=["web_search_call.action.sources"]) for response_id in ids
+        ]
+        clients[name].__exit__.assert_called_once()
+        assert clients[name].__exit__.call_args.args[-3:] == (None, None, None)
+
+
+def test_retrieval_rejects_missing_agent_without_guessing():
+    from unittest.mock import MagicMock
+
+    for name in (None, "", "   ", 42):
+        project = MagicMock()
+        try:
+            FoundryEvalsRunner._retrieve_tool_calls(
+                project,
+                [{"testcase": "missing-agent", "response_id": "response-1", "agent_name": name}],
+            )
+        except ValueError as exc:
+            assert "missing-agent" in str(exc)
+            assert "no agent name" in str(exc)
+        else:
+            raise AssertionError("Missing agent name must fail explicitly")
+        project.get_openai_client.assert_not_called()
+
+
+def test_retrieval_propagates_errors_and_closes_client():
+    from unittest.mock import MagicMock
+
+    project = MagicMock()
+    client = project.get_openai_client.return_value
+    client.__exit__.return_value = False
+    client.__enter__.return_value.responses.retrieve.side_effect = RuntimeError("retrieval failed")
+    try:
+        FoundryEvalsRunner._retrieve_tool_calls(
+            project, [{"response_id": "response-1", "agent_name": "returned-agent"}],
+        )
+    except RuntimeError as exc:
+        assert str(exc) == "retrieval failed"
+    else:
+        raise AssertionError("Retrieval errors must propagate")
+    client.__exit__.assert_called_once()
+
+
+def test_agent_branch_prefix_preserves_evaluation_query():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    session = MagicMock()
+    session.__aenter__ = AsyncMock(return_value=session)
+    session.__aexit__ = AsyncMock(return_value=False)
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok", "agent_name": "returned-agent"}),
+    })())
+    for branch in ("feature/Case/path", "refs/heads/feature/Case/path"):
+        with patch.dict(os.environ, {"EVAL_AGENT_BRANCH": branch}):
+            collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+        for tenant in (None, "azure_mcp_server"):
+            asyncio.run(collector._call_bot_api("unchanged query", tenant, session))
+            request = session.post.call_args.kwargs
+            assert request["headers"] == {"Content-Type": "application/json; charset=utf8"}
+            assert request["json"]["message"]["content"] == "[branch:feature/Case/path] unchanged query"
+            assert request["json"]["tenant_id"] == (tenant or "general_qa_bot")
+    records = [{"testcase": "branch-test", "query": "unchanged query", "ground_truth": "expected"}]
+    with patch("aiohttp.ClientSession", return_value=session):
+        results = collector.collect(records, None)
+    assert results[0]["query"] == records[0]["query"] == "unchanged query"
+    assert results[0]["agent_name"] == "returned-agent"
+
+
+def test_without_eval_branch_keeps_message_unchanged():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    with patch.dict(os.environ, {"BUILD_SOURCEBRANCH": "refs/heads/main"}, clear=True):
+        collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+    session = MagicMock()
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200, "json": AsyncMock(return_value={"answer": "ok"}),
+    })())
+    asyncio.run(collector._call_bot_api("unchanged query", None, session))
+    assert session.post.call_args.kwargs["json"]["message"]["content"] == "unchanged query"
+
+
+def test_completion_collector_sends_channel_name_and_captures_route_fields():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from _evals_runner import CompletionCollector
+
+    session = MagicMock()
+    session.__aenter__ = AsyncMock(return_value=session)
+    session.__aexit__ = AsyncMock(return_value=False)
+    session.post.return_value.__aenter__ = AsyncMock(return_value=type("Response", (), {
+        "status": 200,
+        "json": AsyncMock(return_value={
+            "id": "resp-1",
+            "answer": "Please check with release support.",
+            "route_channel_name": "SDK release support",
+            "route_channel_link": "https://teams.microsoft.com/l/channel/19%3A0848/SDK",
+        }),
+    })())
+
+    collector = CompletionCollector(api_url="http://bot/completion", access_token=None)
+    records = [{
+        "testcase": "route-case",
+        "query": "Need manual release",
+        "ground_truth": "Route to SDK release support",
+        "expected_route_channel": "SDK release support",
+    }]
+    with patch("aiohttp.ClientSession", return_value=session):
+        results = collector.collect(records, "general_qa_bot", channel_name="General")
+
+    assert session.post.call_args.kwargs["json"]["channel_name"] == "General"
+    assert results[0]["expected_route_channel"] == "SDK release support"
+    assert results[0]["route_channel_name"] == "SDK release support"
+    assert results[0]["route_channel_link"] == "https://teams.microsoft.com/l/channel/19%3A0848/SDK"
+
+
+def test_output_items_to_rows_grades_route_channel():
+    from _evals_result import EvalsResult
+
+    output_items = [
+        {
+            "datasource_item": {
+                "testcase": "no-route-pass",
+                "query": "q1",
+                "ground_truth": "gt1",
+                "response": "answered",
+                "expected_route_channel": None,
+                "route_channel_name": None,
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "unexpected-route-fail",
+                "query": "q2",
+                "ground_truth": "gt2",
+                "response": "answered",
+                "expected_route_channel": None,
+                "route_channel_name": "Azure API Stewardship Board - General",
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "expected-route-pass",
+                "query": "q3",
+                "ground_truth": "gt3",
+                "response": "escalated",
+                "expected_route_channel": "SDK release support",
+                "route_channel_name": "sdk release support",
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "omitted-route-skipped",
+                "query": "q4",
+                "ground_truth": "gt4",
+                "response": "answered",
+                "route_channel_name": "TypeSpec Discussion",
+            },
+            "results": [],
+        },
+    ]
+    rows = output_items_to_rows(output_items, ["route_channel"])["rows"]
+    assert [r.get("outputs.route_channel.route_channel_result") for r in rows] == ["pass", "fail", "pass", None]
+    assert [r.get("outputs.route_channel.route_channel") for r in rows] == [1.0, 0.0, 1.0, None]
+
+    er = EvalsResult(metrics={"route_channel": ["route_channel", "route_channel_result"]}, suppressions=None)
+    recorded = er.record_run_result({"rows": rows})
+    summary = recorded[-1]
+    assert summary["total_evals"] == 4
+    assert summary["route_channel_pass_rate"] == 2
+    assert summary["route_channel_fail_rate"] == 1
+
+
+def test_route_channel_verdict_allows_skipped_and_fails_on_errors():
+    from _evals_result import EvalsResult, VerificationResult
+
+    er = EvalsResult(metrics={"route_channel": ["route_channel", "route_channel_result"]}, suppressions=None)
+
+    mixed_pass = er.record_run_result(output_items_to_rows([
+        {
+            "datasource_item": {
+                "testcase": "expected-route-pass",
+                "query": "q1",
+                "ground_truth": "gt1",
+                "response": "escalated",
+                "expected_route_channel": "SDK release support",
+                "route_channel_name": "SDK release support",
+            },
+            "results": [],
+        },
+        {
+            "datasource_item": {
+                "testcase": "omitted-route-skipped",
+                "query": "q2",
+                "ground_truth": "gt2",
+                "response": "answered",
+                "route_channel_name": "TypeSpec Discussion",
+            },
+            "results": [],
+        },
+    ], ["route_channel"]))
+    assert er.verify_results({"scenario": mixed_pass}, with_baseline=False) == VerificationResult.PASS
+
+    all_skipped = er.record_run_result(output_items_to_rows([
+        {
+            "datasource_item": {
+                "testcase": "omitted-only",
+                "query": "q3",
+                "ground_truth": "gt3",
+                "response": "answered",
+                "route_channel_name": "TypeSpec Discussion",
+            },
+            "results": [],
+        },
+    ], ["route_channel"]))
+    assert er.verify_results({"scenario": all_skipped}, with_baseline=False) == VerificationResult.PASS
+
+    runner = FoundryEvalsRunner(["route_channel"], er, model="gpt-4o")
+    failed_collection = er.record_run_result({"rows": [runner._failed_row({"testcase": "uncollected", "query": "q4"})]})
+    assert er.verify_results({"scenario": failed_collection}, with_baseline=False) == VerificationResult.FAIL
+
+
+def test_validate_case_expected_route_channel():
+    validate_case({
+        "testcase": "001001-routing-no-expected-channel",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "apispec",
+        "reviewed": "pass",
+        "expected_route_channel": None,
+    })
+    validate_case({
+        "testcase": "001002-routing-expected-channel",
+        "query": "q",
+        "ground_truth": "a",
+        "scenario": "general",
+        "reviewed": "pass",
+        "expected_route_channel": "SDK release support",
+    })
+    try:
+        validate_case({
+            "testcase": "001003-routing-blank-expected-channel",
+            "query": "q",
+            "ground_truth": "a",
+            "scenario": "general",
+            "reviewed": "pass",
+            "expected_route_channel": "  ",
+        })
+    except ValidationError as exc:
+        assert "expected_route_channel" in str(exc)
+    else:
+        raise AssertionError("expected ValidationError for blank expected_route_channel")
 
 
 def _run_all() -> int:

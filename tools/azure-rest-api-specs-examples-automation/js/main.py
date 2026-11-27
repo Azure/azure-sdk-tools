@@ -170,7 +170,7 @@ def format_js(lines: List[str]) -> List[str]:
     return new_lines
 
 
-def process_js_example(filepath: str, package_type: PackageType) -> List[JsExample]:
+def process_js_example(filepath: str, package_type: PackageType, namespace_cache=None) -> List[JsExample]:
     # process aggregated Js sample to examples
 
     filename = path.basename(filepath)
@@ -192,18 +192,16 @@ def process_js_example(filepath: str, package_type: PackageType) -> List[JsExamp
                 example_lines = aggregated_js_example.class_opening + js_example_method.content
 
                 example_filepath = js_example_method.example_relative_path
-                example_dir, example_filename = path.split(example_filepath)
-
                 try:
-                    example_dir = examples_dir.try_find_resource_manager_example(
-                        specs_path, sdk_package_path, example_dir, example_filename
+                    example_dir, example_filename = examples_dir.resolve_example_path(
+                        specs_path, sdk_package_path, example_filepath, namespace_cache
                     )
                 except NameError:
-                    pass
+                    example_dir, example_filename = path.split(example_filepath)
 
                 example_lines = format_js(example_lines)
 
-                filename = example_filename.split(".")[0]
+                filename = path.splitext(example_filename)[0]
                 # use the examples-js folder for Js example
                 md_dir = (
                     (example_dir + "-" + example_folder_extension)
@@ -293,8 +291,9 @@ def create_js_examples(
     package_type = get_package_type(release)
     logging.info(f"Processing SDK examples: {release.package}")
     js_examples = []
+    namespace_cache = {}
     for filepath in js_paths:
-        js_examples += process_js_example(filepath, package_type)
+        js_examples += process_js_example(filepath, package_type, namespace_cache)
 
     files = []
     if js_examples:

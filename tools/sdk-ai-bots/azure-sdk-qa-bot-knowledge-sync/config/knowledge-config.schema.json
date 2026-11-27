@@ -66,7 +66,7 @@
         "authType": {
           "type": "string",
           "description": "Authentication type for repository access",
-          "enum": ["public", "ssh", "token", "local"]
+          "enum": ["public", "ssh", "token", "local", "azure-devops"]
         },
         "sshHost": {
           "type": "string",
@@ -79,6 +79,10 @@
         "localPathEnv": {
           "type": "string",
           "description": "Environment variable containing local repository path (required for local auth)"
+        },
+        "issueTracker": {
+          "$ref": "#/$defs/IssueTracker",
+          "description": "Optional issue tracker for knowledge defects. Omit when the source cannot accept issues."
         }
       },
       "required": ["url", "branch", "authType"],
@@ -95,6 +99,48 @@
           "then": {
             "required": ["sshHost"]
           }
+        }
+      ]
+    },
+    "IssueTracker": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "const": "github"
+            },
+            "repository": {
+              "type": "string",
+              "pattern": "^[^/]+/[^/]+$",
+              "description": "GitHub owner/repository that accepts knowledge issues"
+            }
+          },
+          "required": ["provider", "repository"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "const": "azure-devops"
+            },
+            "organization": {
+              "type": "string",
+              "minLength": 1
+            },
+            "project": {
+              "type": "string",
+              "minLength": 1
+            },
+            "areaPath": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Azure Boards area path (e.g. Project\\Area) under which issues are created"
+            }
+          },
+          "required": ["provider", "organization", "project", "areaPath"],
+          "additionalProperties": false
         }
       ]
     },
@@ -121,14 +167,14 @@
         },
         "ignoredPaths": {
           "type": "array",
-          "description": "Paths to ignore during processing",
+          "description": "Paths to ignore relative to the configured source directory; generated sources match flattened filename prefixes",
           "items": {
             "type": "string"
           }
         },
         "relativeByRepoPath": {
           "type": "boolean",
-          "description": "Whether paths are relative to the repository root",
+          "description": "Whether citation filenames and metadata override paths are relative to the repository root; processing remains limited to the configured path",
           "default": false
         },
         "isGenerated": {

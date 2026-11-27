@@ -24,7 +24,7 @@ from tools import tool
 from utils.azure_ai_search import SearchClient, get_search_client
 from utils.azure_storage import BlobContent, download_blob, upload_blob
 from utils.knowledge_config import (
-    KbTarget,
+    KbIssueTarget,
     get_kb_targets,
     select_kb_target,
 )
@@ -78,11 +78,16 @@ _SEARCH_MODE_DESC = (
 class KbSourceView(BaseModel):
     folder: str
     resolved: bool
+    source_url: str | None = None
     owner: str | None = None
     repo: str | None = None
+    organization: str | None = None
+    project: str | None = None
+    ado_repository: str | None = None
     branch: str | None = None
     path: str | None = None
     scope: str | None = None
+    issue_target: KbIssueTarget | None = None
     reason: str | None = None  # populated when resolved=False
 
 
@@ -183,16 +188,17 @@ class KnowledgeTools:
             "The index embeds the full source body, so complete natural sentences "
             "retrieve far better than stripped keyword fragments. "
             "The search combines semantic/vector and BM25 keyword retrieval. "
-            "Provide the queries as an **exact-to-abstract ladder** — "
-            "start with the user's wording and get more abstract, so the set "
-            "covers both exact-wording recall and conceptual-topic recall. "
-            "QUERY 1 (REQUIRED) — the most exact version of the request. Preserve "
-            "the user's wording and concrete identifiers. If the request includes "
+            "Choose queries for the current question or evidence gap from the "
+            "conversation and retrieved context, preserving the user's goal. "
+            "Do not keep repeating the original request when new evidence "
+            "changes the problem to solve. "
+            "QUERY 1 (REQUIRED) — the most exact version of that question or gap. "
+            "Preserve relevant wording and concrete identifiers. If it includes "
             "a concise title or subject plus a longer description, use the title "
             "alone as one query and search the description separately. "
             "QUERY 2 (optional) — a standalone normalized restatement. Resolve "
             "follow-up context and obvious synonyms while retaining details needed "
-            "to identify the request. "
+            "to identify the current problem. "
             "QUERY 3 (optional) — the **most abstract / core question**: "
             "distill to the underlying concept the docs are titled by, as one "
             "short question or topic phrase. "
@@ -238,8 +244,8 @@ class KnowledgeTools:
 
         Each query runs vector and keyword search in parallel, plus agentic
         search in deep mode, then all results are merged and deduplicated. Use
-        multiple queries to cover different facets of the user's problem —
-        the original question, related concepts, and potential solutions.
+        multiple queries only for distinct relevant facets; choose follow-up
+        queries from the current evidence gaps, not a fixed opening search.
         """
         # Resolve sources: explicit list wins; otherwise fall back to the
         # tenant's configured sources, or the whole registry when no tenant.
@@ -286,7 +292,8 @@ class KnowledgeTools:
         )
 
         expand_tasks = [
-            search_client.expand_by_hierarchy(chunk) for chunk in unique_chunks
+            search_client.expand_by_hierarchy(chunk)
+            for chunk in unique_chunks
         ]
         expanded = await asyncio.gather(*expand_tasks)
 
@@ -484,28 +491,41 @@ class KnowledgeTools:
             "multiple repository paths use the same source folder.",
         ] = None,
     ) -> KbSourceView:
-        """Resolve a KB folder to its upstream ownership metadata.
+        """Resolve a KB folder to source ownership and issue routing metadata.
 
-        Returns the owner/repo/branch/path where the KB content lives, to
-        cite in a KB-gap issue. ``resolved=False`` when the folder is
-        unmapped or an ambiguous path cannot be selected.
+        Returns the configured GitHub or ADO source, document path, and
+        optional issue target. ``resolved=False`` when the folder is unmapped
+        or an ambiguous source cannot be selected.
         """
-        targets: tuple[KbTarget, ...] = ()
         try:
             targets = await get_kb_targets(folder)
         except Exception:
             logger.exception("knowledge_config lookup failed for %s", folder)
+            return KbSourceView(
+                folder=folder,
+                resolved=False,
+                reason="configuration_unavailable",
+            )
 
         target = select_kb_target(folder, blob_path, targets)
         if target is not None:
             return KbSourceView(
                 folder=folder,
                 resolved=True,
+                source_url=target.source_url,
                 owner=target.owner,
                 repo=target.repo,
+                organization=target.organization,
+                project=target.project,
+                ado_repository=target.ado_repository,
                 branch=target.branch,
-                path=target.path,
+                path=(
+                    target.path
+                    if blob_path is not None or len(targets) == 1
+                    else None
+                ),
                 scope=target.scope,
+                issue_target=target.issue_target,
             )
 
         if targets:
@@ -530,7 +550,7 @@ class KnowledgeTools:
         return KbSourceView(
             folder=folder,
             resolved=False,
-            reason="folder_unmapped_or_non_github",
+            reason="folder_unmapped",
         )
 
     @tool
@@ -556,7 +576,7 @@ class KnowledgeTools:
     ) -> SearchKnowledgeBaseResult:
         """Search wiki pages and their routed source chunks."""
         sources = _source_names(tenant_id, sources)
-        search_client = get_search_client()
+        search_client = self._get_search_client()
         source_filters = _resolve_source_filters(sources, tenant_id, None)
         wiki_page_filters = _wiki_page_filters(tenant_id, source_filters)
         capped_queries = queries[:3]
@@ -586,7 +606,10 @@ class KnowledgeTools:
         )
         combined = wiki_pages + routed
         expanded = await asyncio.gather(
-            *[search_client.expand_by_hierarchy(c) for c in combined]
+            *[
+                search_client.expand_by_hierarchy(c)
+                for c in combined
+            ]
         )
         page_count = len(wiki_pages)
         results = _refs_from_expanded(

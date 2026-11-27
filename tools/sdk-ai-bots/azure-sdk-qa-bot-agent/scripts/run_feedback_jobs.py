@@ -2,8 +2,8 @@
 
 The pipeline ingests active Teams threads, invokes the Agent to evaluate every
 eligible conversation, checks remediation issues, and invokes Agent validation
-after an issue closes. Conversation completion and correctness are judged only
-inside the Agent.
+after an issue closes. The Agent judges completion and correctness, except for
+automatic closure after 144 hours of inactivity regardless of user feedback.
 
 Usage::
 
@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -39,7 +40,7 @@ from models.feedback import (
 )
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
-from tools.github_mcp_tools import get_github_issue_state
+from tools.issue_tracker import get_issue_state
 from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
@@ -116,9 +117,16 @@ async def _run(args: argparse.Namespace) -> None:
         logger.info("Agent processing disabled; ingestion completed only")
         return
 
+    await evolution_service.recover_stale_jobs(
+        tenant_id=args.tenant, excluded_channels=excluded_channels
+    )
+    auto_closed = await qa_service.close_inactive_threads(
+        tenant_id=args.tenant, excluded_channels=excluded_channels
+    )
+
     counts = {
         "ongoing": 0,
-        "finished": 0,
+        "finished": auto_closed,
         "issues": 0,
         "waiting_validation": 0,
         "validated": 0,
@@ -141,7 +149,7 @@ async def _run(args: argparse.Namespace) -> None:
             counts["skipped"] += 1
             continue
         try:
-            issue_state = await get_github_issue_state(issue_url)
+            issue_state = await get_issue_state(issue_url)
         except Exception:
             logger.exception("Failed to read issue state for %s", record.id)
             counts["skipped"] += 1
@@ -187,10 +195,10 @@ async def _run(args: argparse.Namespace) -> None:
             )
         except Exception:
             logger.exception("Analysis persistence failed for %s", record.id)
-            counts["skipped"] += 1
+            counts["evolution_failed"] += 1
             continue
         if result is None:
-            counts["skipped"] += 1
+            counts["evolution_failed"] += 1
         elif result.outcome in (
             ChatbotEvolutionAgentOutcome.processing_failed,
             ChatbotEvolutionAgentOutcome.remediation_failed,
@@ -217,6 +225,16 @@ async def _run(args: argparse.Namespace) -> None:
         counts["evolution_failed"],
         counts["skipped"],
     )
+    failed_count = counts["evolution_failed"] + counts["validation_failed"]
+    if failed_count:
+        message = f"Evolution scan completed with {failed_count} failed job(s)."
+        logger.warning(message)
+        if os.environ.get("TF_BUILD", "").lower() == "true":
+            print(f"##vso[task.logissue type=warning]{message}", flush=True)
+            print(
+                f"##vso[task.complete result=SucceededWithIssues;]{message}",
+                flush=True,
+            )
 
 
 async def main() -> None:

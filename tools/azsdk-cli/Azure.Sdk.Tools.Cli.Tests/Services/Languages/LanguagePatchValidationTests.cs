@@ -216,7 +216,7 @@ public class LanguagePatchValidationTests(SdkLanguage language, int originalIter
         List<string> patchPaths = [Path.GetRelativePath(_root, _file)];
         return language switch
         {
-            SdkLanguage.DotNet => new DotnetErrorDrivenPatchTemplate(BuildContext, _directory.DirectoryPath, _root, readPaths, patchPaths).BuildPrompt(),
+            SdkLanguage.DotNet => new DotNetErrorDrivenPatchTemplate(BuildContext, _directory.DirectoryPath, _root, readPaths, patchPaths).BuildPrompt(),
             SdkLanguage.Java => new JavaErrorDrivenPatchTemplate(BuildContext, _directory.DirectoryPath, _root, readPaths, patchPaths).BuildPrompt(),
             SdkLanguage.JavaScript => new JavaScriptErrorDrivenPatchTemplate(BuildContext, _directory.DirectoryPath, _root, readPaths, patchPaths).BuildPrompt(),
             SdkLanguage.Python => new PythonErrorDrivenPatchTemplate(BuildContext, _directory.DirectoryPath, _root, readPaths, patchPaths).BuildPrompt(),
@@ -226,7 +226,7 @@ public class LanguagePatchValidationTests(SdkLanguage language, int originalIter
 
     private LanguageService CreateService() => language switch
     {
-        SdkLanguage.DotNet => new DotnetLanguageService(Mock.Of<IProcessHelper>(), Mock.Of<IPowershellHelper>(),
+        SdkLanguage.DotNet => new DotNetLanguageService(Mock.Of<IProcessHelper>(), Mock.Of<IPowershellHelper>(),
             _runner.Object, Mock.Of<IGitHelper>(), NullLogger<LanguageService>.Instance,
             Mock.Of<ICommonValidationHelpers>(), Mock.Of<IPackageInfoHelper>(), Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),

@@ -236,7 +236,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 else
                 {
-                    productOnboarding = await devOpsService.UpdateProductOnboardingAsync(productOnboarding.WorkItemId, status, ct, isTest);
+                    productOnboarding = await devOpsService.UpdateProductOnboardingAsync(productOnboarding, status, ct, isTest);
                 }
 
                 return productOnboarding.PopulateProductOnboardingResponse(new() { Message = "Successfully synced product onboarding status." });

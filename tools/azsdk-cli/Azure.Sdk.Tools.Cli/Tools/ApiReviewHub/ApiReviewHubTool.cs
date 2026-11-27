@@ -20,20 +20,36 @@ public class ApiReviewHubTool(
         ["python"] = "azure-sdk-for-python",
         ["java"] = "azure-sdk-for-java",
         ["csharp"] = "azure-sdk-for-net",
-        ["js"] = "azure-sdk-for-js",
+        ["javascript"] = "azure-sdk-for-js",
         ["go"] = "azure-sdk-for-go",
         ["cpp"] = "azure-sdk-for-cpp",
-        ["swift"] = "azure-sdk-for-ios",
         ["rust"] = "azure-sdk-for-rust"
+    };
+    private static readonly IReadOnlyDictionary<string, string> LanguageAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["net"] = "csharp",
+        [".net"] = "csharp",
+        ["dotnet"] = "csharp",
+        ["c#"] = "csharp",
+        ["cs"] = "csharp",
+        ["c++"] = "cpp",
+        ["js"] = "javascript",
+        ["typescript"] = "javascript",
+        ["ts"] = "javascript",
+        ["golang"] = "go",
+        ["py"] = "python"
     };
 
     private static readonly string[] SupportedLanguages = [.. DefaultTargetRepos.Keys.Order(StringComparer.OrdinalIgnoreCase)];
-    private static readonly string SupportedLanguagesDescription = string.Join(", ", SupportedLanguages);
+    private static readonly string SupportedLanguagesDescription = $"{string.Join(", ", SupportedLanguages)} (aliases such as js, ts, dotnet, and py are accepted)";
 
     private const string CreateCommandName = "create";
     private const string RequestReviewPullRequestToolName = "azsdk_apireviewhub_request_review_pr";
     private const string DefaultEndpoint = "https://api-review-hub.azurewebsites.net";
     private const string DefaultTargetOwner = "Azure";
+    private const string PipelineRefEnvironmentVariable = "AZSDK_API_REVIEW_PIPELINE_REF";
+    private const string ToolsRefEnvironmentVariable = "AZSDK_API_REVIEW_TOOLS_REF";
+    private const string LanguageToolsRefEnvironmentVariable = "AZSDK_API_REVIEW_LANGUAGE_TOOLS_REF";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ApiReviewHub];
 
@@ -44,6 +60,8 @@ public class ApiReviewHubTool(
         Description = "The package name.",
         Required = true
     };
+
+    private readonly Option<string> packageTypeOption = CreatePackageTypeOption();
 
     private readonly Option<string> baseTagOption = new("--base-tag")
     {
@@ -85,6 +103,7 @@ public class ApiReviewHubTool(
         {
             languageOption,
             packageNameOption,
+            packageTypeOption,
             baseTagOption,
             targetOwnerOption,
             targetRepoOption,
@@ -105,16 +124,28 @@ public class ApiReviewHubTool(
 
     private async Task<CommandResponse> HandleCreateCommand(ParseResult parseResult, CancellationToken ct)
     {
-        return await RequestReviewPullRequest(
-            parseResult.GetValue(languageOption) ?? string.Empty,
-            parseResult.GetValue(packageNameOption) ?? string.Empty,
-            parseResult.GetValue(targetOwnerOption) ?? string.Empty,
-            ResolveTargetRepo(parseResult.GetValue(languageOption), parseResult.GetValue(targetRepoOption)),
-            parseResult.GetValue(targetBranchOption) ?? string.Empty,
-            parseResult.GetValue(baseTagOption),
-            !parseResult.GetValue(noWaitOption),
-            parseResult.GetValue(pollIntervalSecondsOption),
-            ct);
+        var packageName = parseResult.GetValue(packageNameOption) ?? string.Empty;
+        try
+        {
+            return await RequestReviewPullRequestCore(
+                parseResult.GetValue(languageOption) ?? string.Empty,
+                packageName,
+                parseResult.GetValue(targetOwnerOption) ?? string.Empty,
+                parseResult.GetValue(targetRepoOption),
+                parseResult.GetValue(targetBranchOption) ?? string.Empty,
+                parseResult.GetValue(packageTypeOption),
+                parseResult.GetValue(baseTagOption),
+                !parseResult.GetValue(noWaitOption),
+                parseResult.GetValue(pollIntervalSecondsOption),
+                GetEnvironmentVariable(PipelineRefEnvironmentVariable),
+                GetEnvironmentVariable(ToolsRefEnvironmentVariable),
+                GetEnvironmentVariable(LanguageToolsRefEnvironmentVariable),
+                ct);
+        }
+        catch (Exception ex)
+        {
+            return CreateErrorResponse(ex, packageName);
+        }
     }
 
     [McpServerTool(Name = RequestReviewPullRequestToolName), Description("Request API Review Hub creation of a review pull request for a package API change.")]
@@ -124,6 +155,7 @@ public class ApiReviewHubTool(
         [Description("The GitHub owner for the target working branch.")] string targetOwner,
         [Description("The GitHub repository for the target working branch. By default, the command selects the appropriate repo based on the language.")] string targetRepo,
         [Description("The target working branch name.")] string targetBranch,
+        [Description("The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: mgmt, data, client, spring, functions. Client, spring, and functions are sent to API Review Hub as data packages.")] string? packageType = null,
         [Description("The optional release tag or ref used as the base API surface.")] string? baseTag = null,
         [Description("Poll API Review Hub until the operation completes.")] bool waitForCompletion = true,
         [Description("Seconds to wait between API Review Hub operation status polls.")] int pollIntervalSeconds = 10,
@@ -131,57 +163,95 @@ public class ApiReviewHubTool(
     {
         try
         {
-            var request = new ReviewPullRequestCreationRequest
-            {
-                Language = language,
-                PackageName = packageName,
-                BaseTag = baseTag ?? string.Empty,
-                TargetBranch = new GitBranchReference
-                {
-                    Owner = targetOwner,
-                    Repo = targetRepo,
-                    Name = targetBranch
-                }
-            };
-
-            var result = await apiReviewHubService.RequestReviewPullRequestAsync(
-                request,
-                DefaultEndpoint,
+            return await RequestReviewPullRequestCore(
+                language,
+                packageName,
+                targetOwner,
+                targetRepo,
+                targetBranch,
+                packageType,
+                baseTag,
                 waitForCompletion,
-                TimeSpan.FromSeconds(Math.Max(1, pollIntervalSeconds)),
+                pollIntervalSeconds,
+                null,
+                null,
+                null,
                 ct);
-
-            return new ApiReviewHubResponse
-            {
-                Result = result
-            };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to request API Review Hub review PR for {packageName}", packageName);
-            return new ApiReviewHubResponse
-            {
-                ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
-            };
+            return CreateErrorResponse(ex, packageName);
         }
     }
 
-    private static string ResolveTargetRepo(string? language, string? targetRepo)
+    private async Task<ApiReviewHubResponse> RequestReviewPullRequestCore(
+        string language,
+        string packageName,
+        string targetOwner,
+        string? targetRepo,
+        string targetBranch,
+        string? packageType,
+        string? baseTag,
+        bool waitForCompletion,
+        int pollIntervalSeconds,
+        string? pipelineRef,
+        string? toolsRef,
+        string? languageToolsRef,
+        CancellationToken ct)
     {
-        if (!string.IsNullOrWhiteSpace(targetRepo))
+        if (!TryResolveLanguage(language, out var reviewHubLanguage, out var defaultTargetRepo))
         {
-            return targetRepo;
+            throw new ArgumentException(
+                $"Unsupported language '{language}'. Supported values: {SupportedLanguagesDescription}.",
+                nameof(language));
         }
 
-        if (!string.IsNullOrWhiteSpace(language) && DefaultTargetRepos.TryGetValue(language, out var repo))
+        var request = new ReviewPullRequestCreationRequest
         {
-            return repo;
-        }
+            Language = reviewHubLanguage,
+            PackageName = packageName,
+            PackageType = string.IsNullOrWhiteSpace(packageType) ? null : ApiReviewPackageType.Normalize(packageType),
+            BaseTag = baseTag ?? string.Empty,
+            TargetBranch = new GitBranchReference
+            {
+                Owner = targetOwner,
+                Repo = string.IsNullOrWhiteSpace(targetRepo) ? defaultTargetRepo : targetRepo,
+                Name = targetBranch
+            },
+            PipelineRef = pipelineRef,
+            ToolsRef = toolsRef,
+            LanguageToolsRef = languageToolsRef
+        };
 
-        throw new ArgumentException($"Unsupported language '{language}'. Supported values: {string.Join(", ", SupportedLanguages)}.", nameof(language));
+        var result = await apiReviewHubService.RequestReviewPullRequestAsync(
+            request,
+            DefaultEndpoint,
+            waitForCompletion,
+            TimeSpan.FromSeconds(Math.Max(1, pollIntervalSeconds)),
+            ct);
+
+        return new ApiReviewHubResponse
+        {
+            Result = result
+        };
     }
 
-    private static Option<string> CreateLanguageOption()
+    private ApiReviewHubResponse CreateErrorResponse(Exception ex, string packageName)
+    {
+        logger.LogError(ex, "Failed to request API Review Hub review PR for {packageName}", packageName);
+        return new ApiReviewHubResponse
+        {
+            ResponseError = $"Failed to request API Review Hub review PR for {packageName}: {ex.Message}"
+        };
+    }
+
+    private static string? GetEnvironmentVariable(string name)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    internal static Option<string> CreateLanguageOption()
     {
         var option = new Option<string>("--language")
         {
@@ -197,13 +267,59 @@ public class ApiReviewHubTool(
                 return;
             }
 
-            if (!SupportedLanguages.Contains(value, StringComparer.OrdinalIgnoreCase))
+            if (ResolveLanguage(value) is null)
             {
                 result.AddError($"Invalid language '{value}'. Supported values: {SupportedLanguagesDescription}.");
             }
         });
 
         return option;
+    }
+
+    private static Option<string> CreatePackageTypeOption()
+    {
+        var option = new Option<string>("--package-type")
+        {
+            Description = $"The package SDK type. Required when the package does not exist in API Review Hub. If provided for an existing package, it must match. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}. Client, spring, and functions are sent to API Review Hub as data packages."
+        };
+
+        option.Validators.Add(result =>
+        {
+            string? value = result.GetValueOrDefault<string>();
+            if (!string.IsNullOrWhiteSpace(value) && !ApiReviewPackageType.SupportedValues.Contains(value, StringComparer.OrdinalIgnoreCase))
+            {
+                result.AddError($"Invalid package type '{value}'. Supported values: {string.Join(", ", ApiReviewPackageType.SupportedValues)}.");
+            }
+        });
+
+        return option;
+    }
+
+    /// <summary>Resolves a language or alias to its API Review Hub language name, or null if unsupported.</summary>
+    internal static string? ResolveLanguage(string language) =>
+        TryResolveLanguage(language, out var reviewHubLanguage, out _) ? reviewHubLanguage : null;
+
+    /// <summary>Resolves a language or alias to its API Review Hub language name and default SDK repository.</summary>
+    internal static bool TryResolveLanguage(string? language, out string reviewHubLanguage, out string defaultTargetRepo)
+    {
+        reviewHubLanguage = string.Empty;
+        defaultTargetRepo = string.Empty;
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return false;
+        }
+
+        string? canonical = DefaultTargetRepos.Keys.FirstOrDefault(
+            value => value.Equals(language, StringComparison.OrdinalIgnoreCase))
+            ?? LanguageAliases.GetValueOrDefault(language);
+        if (canonical is null)
+        {
+            return false;
+        }
+
+        reviewHubLanguage = canonical;
+        defaultTargetRepo = DefaultTargetRepos[canonical];
+        return true;
     }
 
 }

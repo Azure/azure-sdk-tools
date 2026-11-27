@@ -1,4 +1,5 @@
 variables:
+  EvalAzureSubscription: opensource-api-connection
   OfficialBuildId: $(Build.BuildNumber)
   skipComponentGovernanceDetection: true
   NotificationsCreatorVersion: '1.0.0-dev.20251124.1'

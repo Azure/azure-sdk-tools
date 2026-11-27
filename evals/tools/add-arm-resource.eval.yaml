@@ -18,7 +18,7 @@ environment: azsdk-mcp-mock
 defaults:
   runs: 1
   timeout: 30m
-  model: gpt-5.4
+  model: gpt-6.1-sol
   executor: copilot-sdk
 
 stimuli:
@@ -28,6 +28,17 @@ stimuli:
       specification/widget/resource-manager/Microsoft.Widget/Widget. Add a new
       tracked ARM resource called 'Asset' with the standard CRUD operations and
       make sure the TypeSpec project validates.
+
+      The API contract for this change is:
+        - Add Asset only in 2024-10-01-preview; leave the stable 2021-11-01 API
+          and the existing Employee resource unchanged.
+        - Make Asset a top-level, resource-group-scoped tracked resource with
+          collection segment assets and resource-name parameter assetName.
+        - AssetProperties has optional displayName and description string
+          properties, plus a read-only provisioningState using the existing
+          ProvisioningState union. No other business properties are needed.
+        - Match Employee's operation behavior: asynchronous PUT and DELETE,
+          synchronous PATCH, GET, list by resource group, and list by subscription.
     # Seed a minimal but valid Microsoft.Widget ARM TypeSpec project so the agent
     # can locate the project referenced in the prompt. Without this the agent
     # spends its turns hunting for a non-existent project and never gets to

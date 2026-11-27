@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { InvocationContext } from '@azure/functions';
-import { AzureCliCredential, ChainedTokenCredential, getBearerTokenProvider, ManagedIdentityCredential, WorkloadIdentityCredential } from '@azure/identity';
+import { AzureCliCredential, ChainedTokenCredential, getBearerTokenProvider, ManagedIdentityCredential } from '@azure/identity';
 import { AzureOpenAI} from "openai";
 
 // Retry configuration for OpenAI API calls
@@ -43,9 +43,8 @@ export class SpectorCaseProcessor {
         const apiVersion = "2024-12-01-preview";
         const endpoint = process.env.AOAI_CHAT_COMPLETIONS_ENDPOINT;
         const credential = new ChainedTokenCredential(
-            new ManagedIdentityCredential(),
-            new AzureCliCredential(),
-            new WorkloadIdentityCredential()
+            new ManagedIdentityCredential({ clientId: process.env.AZURE_CLIENT_ID }),
+            new AzureCliCredential()
         );
         const azureADTokenProvider = getBearerTokenProvider(
             credential,

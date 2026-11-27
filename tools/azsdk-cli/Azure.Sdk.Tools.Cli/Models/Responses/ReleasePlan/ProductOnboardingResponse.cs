@@ -63,6 +63,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
                 result.AppendLine($"Data Plane: {ProductOnboardingDetails.DataPlane}");
                 result.AppendLine($"Management Plane: {ProductOnboardingDetails.ManagementPlane}");
                 result.AppendLine($"Submitter: {ProductOnboardingDetails.Submitter}");
+                result.AppendLine();
+                result.AppendLine($"Data Plane Attestation Status: {ProductOnboardingDetails.DataPlaneAttestationStatus}");
+                result.AppendLine($"Management Plane Attestation Status: {ProductOnboardingDetails.ManagementPlaneAttestationStatus}");
             }
             else
             {

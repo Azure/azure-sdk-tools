@@ -67,12 +67,15 @@ namespace Azure.SDK.ChangelogGen
                         Logger.Log("Skip API comparison for preview version");
                     }
 
-                    Logger.Log("Start checking Swagger Tag");
-                    Logger.Log("  Check Autorest.md at: " + context.AutorestMdFile);
+                    SpecHelper.ValidateTypeSpecInput(context.TypeSpecLocationFile, context.MetadataFile);
+                    Logger.Log("Start checking TypeSpec API versions");
+                    Logger.Log("  Check metadata.json at: " + context.MetadataFile);
                     Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
-                    string curAutorestMd = File.ReadAllText(context.AutorestMdFile);
-                    string baseAutorestMd = baselineTree.GetFileContent(context.AutorestMdGithubKey);
-                    result.SpecVersionChange = CompareSpecVersionTag(curAutorestMd, baseAutorestMd, SpecHelper.GenerateGitHubPathToAutorestMd(context.AutorestMdGithubKey));
+                    string curMetadata = File.ReadAllText(context.MetadataFile);
+                    string? baseMetadata = baselineTree.TryGetFileContent(context.MetadataGithubKey, out string baselineMetadata)
+                        ? baselineMetadata
+                        : null;
+                    result.SpecVersionChanges = CompareApiVersions(curMetadata, baseMetadata);
 
                     Logger.Log("Start checking Azure Core");
                     Logger.Log("  Check AzureCore changelog at: " + context.AzureCoreChangeLogMdFile);
@@ -138,25 +141,44 @@ namespace Azure.SDK.ChangelogGen
             }
         }
 
-        private static StringValueChange? CompareSpecVersionTag(string curAutorestMd, string baseAutorestMd, string source)
+        public static List<StringValueChange> CompareApiVersions(string curMetadata, string? baseMetadata)
         {
-            string curVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(curAutorestMd, out string specPath));
-            string baselineVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(baseAutorestMd, out _));
+            if (baseMetadata == null)
+            {
+                Logger.Warning("Skip TypeSpec API version comparison because metadata.json was not found in the baseline tag");
+                return new List<StringValueChange>();
+            }
 
-            if (!string.IsNullOrEmpty(specPath))
-                source = specPath;
-            if (string.Equals(curVersionTag, baselineVersionTag, StringComparison.OrdinalIgnoreCase))
+            IReadOnlyDictionary<string, string> curApiVersions = SpecHelper.GetApiVersions(curMetadata);
+            IReadOnlyDictionary<string, string> baseApiVersions = SpecHelper.GetApiVersions(baseMetadata);
+            List<StringValueChange> changes = new List<StringValueChange>();
+            foreach (string apiName in curApiVersions.Keys.Union(baseApiVersions.Keys, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(apiName => apiName, StringComparer.OrdinalIgnoreCase))
             {
-                Logger.Log($"No change found in Spec Tag: {baselineVersionTag} -> {curVersionTag}\n" +
-                    $"Tag parsed from {source}");
-                return null;
+                bool hasCurrentVersion = curApiVersions.TryGetValue(apiName, out string? curVersion);
+                bool hasBaseVersion = baseApiVersions.TryGetValue(apiName, out string? baseVersion);
+                if (hasCurrentVersion && hasBaseVersion && string.Equals(curVersion, baseVersion, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                StringValueChange change = hasCurrentVersion && hasBaseVersion
+                    ? new StringValueChange($"{apiName}: {curVersion}", $"{apiName}: {baseVersion}",
+                        $"Upgraded {apiName} from {baseVersion} to {curVersion}")
+                    : hasCurrentVersion
+                        ? new StringValueChange($"{apiName}: {curVersion}", string.Empty,
+                            $"Added TypeSpec API version '{apiName}: {curVersion}'.", ChangeCatogory.Added)
+                        : new StringValueChange(string.Empty, $"{apiName}: {baseVersion}",
+                            $"Removed TypeSpec API version '{apiName}: {baseVersion}'.", ChangeCatogory.Removed);
+                changes.Add(change);
+                Logger.Log($"TypeSpec API version change detected: {change.Description}");
             }
-            else
+
+            if (changes.Count == 0)
             {
-                Logger.Log($"Spec Tag change detected: {baselineVersionTag} -> {curVersionTag}");
-                return new StringValueChange(curVersionTag, baselineVersionTag,
-                    $"Upgraded api-version tag from '{baselineVersionTag}' to '{curVersionTag}'. Tag detail available at {source}");
+                Logger.Log("No change found in TypeSpec API versions");
             }
+            return changes;
         }
 
         public static ChangeSet CompareApi(string curApiFileContent, string baselineApiFileContent)

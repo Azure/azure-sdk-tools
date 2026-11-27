@@ -111,10 +111,12 @@ def placeholder_chat(monkeypatch):
     service._save_bot_answer_to_conversation = AsyncMock()
     invoke = AsyncMock(return_value=("trace-id", SimpleNamespace(
         id="response-1", status="completed", output=[],
-        output_text=(
-            "{{mention:reviewer-a}}, please help. Contact: {{contact:reviewer-a}}."
-            "\n\n**References**\n- [Guide](https://example.test/guide)"
-        ),
+        output_text=ChatAgentOutput(
+            answer="{{mention:reviewer-a}}, please help. Contact: {{contact:reviewer-a}}.",
+            references=[
+                ChatAgentReference(title="Guide", link="https://example.test/guide"),
+            ],
+        ).model_dump_json(),
     )))
     monkeypatch.setattr(chat_service, "HostedAgentClient", lambda _: SimpleNamespace(invoke=invoke))
     tasks = []
@@ -271,11 +273,13 @@ async def test_backend_mentions_preserve_all_retrieved_evidence(placeholder_chat
         ])
     state.invoke.return_value = ("trace-id", SimpleNamespace(
         id="response-1", status="completed", output=output,
-        output_text=(
-            "{{mention:reviewer-a}}, please help.\n\n**References**\n"
-            "- [Guide](https://example.test/guide)\n"
-            "- [Wiki](https://example.test/wiki)"
-        ),
+        output_text=ChatAgentOutput(
+            answer="{{mention:reviewer-a}}, please help.",
+            references=[
+                ChatAgentReference(title="Guide", link="https://example.test/guide"),
+                ChatAgentReference(title="Wiki", link="https://example.test/wiki"),
+            ],
+        ).model_dump_json(),
     ))
     result = await state.service.chat(ChatRequest(
         tenant_id="azure_sdk_qa_bot", conversation_id="thread",
@@ -365,14 +369,16 @@ def test_references_and_full_context_use_all_search_calls(
             ),
             tool_output,
         ])
-    text = (
-        "Answer using retrieved evidence.\n\n**References**\n"
-        "- [Earlier section](https://example.test/shared)\n"
-        "- [Wiki guidance](https://example.test/wiki)\n"
-        "- [Repeated document](https://example.test/repeated)\n"
-        "- [Later section](https://example.test/shared)\n"
-        "- [Unmatched document](https://example.test/unmatched)"
-    )
+    text = ChatAgentOutput(
+        answer="Answer using retrieved evidence.",
+        references=[
+            ChatAgentReference(title="Earlier section", link="https://example.test/shared"),
+            ChatAgentReference(title="Wiki guidance", link="https://example.test/wiki"),
+            ChatAgentReference(title="Repeated document", link="https://example.test/repeated"),
+            ChatAgentReference(title="Later section", link="https://example.test/shared"),
+            ChatAgentReference(title="Unmatched document", link="https://example.test/unmatched"),
+        ],
+    ).model_dump_json()
     output.append(ResponseOutputMessage.model_construct(
         type="message", id="answer", role="assistant", status="completed",
         content=[ResponseOutputText.model_construct(
@@ -642,13 +648,10 @@ def test_postprocess_parses_structured_output_and_enriches_references() -> None:
     ]
 
 
-def test_postprocess_falls_back_to_markdown_references_for_plain_text() -> None:
+def test_postprocess_handles_plain_text_output_without_extracting_references() -> None:
     response = SimpleNamespace(
         id="response-1",
-        output_text=(
-            "Grounded answer.\n\n**References**\n"
-            "- [Supporting document](https://example.com/support)"
-        ),
+        output_text="I'm sorry, I can't assist with that.",
         output=[],
     )
     request = ChatRequest(
@@ -658,15 +661,8 @@ def test_postprocess_falls_back_to_markdown_references_for_plain_text() -> None:
 
     result = ChatService()._postprocess(request, response, None)
 
-    assert result.answer == "Grounded answer."
-    assert result.references == [
-        Reference(
-            title="Supporting document",
-            source="",
-            link="https://example.com/support",
-            content="",
-        )
-    ]
+    assert result.answer == "I'm sorry, I can't assist with that."
+    assert result.references is None
 
 
 def test_chat_agent_structured_output_schema_is_strict() -> None:
@@ -1142,7 +1138,6 @@ def test_loaded_skills_never_set_route_tenant() -> None:
     assert result.route_channel_link is None
 
 
-@pytest.mark.parametrize("placeholder_order", ["after_refs", "before_refs"])
 @pytest.mark.parametrize(
     ("current_channel", "expected_name"),
     [
@@ -1151,7 +1146,7 @@ def test_loaded_skills_never_set_route_tenant() -> None:
     ],
 )
 def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
-    placeholder_order, current_channel, expected_name
+    current_channel, expected_name
 ) -> None:
     from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
 
@@ -1161,13 +1156,13 @@ def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
         "SDK%20release%20support?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121"
         "&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"
     )
-    refs_block = "**References**\n- [Release Guide](https://example.test/release)"
     placeholder = "{{channel:sdk_release_support}}"
-    tail = (
-        f"{refs_block}\n\n{placeholder}"
-        if placeholder_order == "after_refs"
-        else f"{placeholder}\n\n{refs_block}"
-    )
+    structured = ChatAgentOutput(
+        answer=f"Please follow up with release support.\n\n{placeholder}",
+        references=[
+            ChatAgentReference(title="Release Guide", link="https://example.test/release"),
+        ],
+    ).model_dump_json()
 
     response = Response.model_construct(
         id="reply",
@@ -1180,7 +1175,7 @@ def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
                 content=[
                     ResponseOutputText.model_construct(
                         type="output_text",
-                        text=f"Please follow up with release support.\n\n{tail}",
+                        text=structured,
                         annotations=[],
                     )
                 ],

@@ -691,22 +691,18 @@ class ChatService:
         # Strip model citation artifacts (e.g. "citeturn0search0").
         output_text = _CITATION_RE.sub("", output_text)
 
-        # Extract any explicit {{channel:<key>}} handoff before **References**.
-        output_text, route_channel_name, route_channel_link = (
+        # Extract any explicit {{channel:<key>}} handoff placeholder.
+        answer, route_channel_name, route_channel_link = (
             self._extract_support_channel_from_text(output_text)
         )
 
-        if structured_output is not None:
-            answer = output_text
-            references = self._enrich_references(
+        references = (
+            self._enrich_references(
                 structured_output.references, retrieved_references
             )
-        else:
-            # Extract structured references from the agent's markdown output
-            # and strip the references section from the answer text.
-            answer, references = self._extract_references_from_text(
-                output_text, retrieved_references
-            )
+            if structured_output is not None
+            else []
+        )
 
         # Build full_context from every KB and wiki search when requested.
         # Keys use "document_" prefix for compatibility with the eval pipeline.
@@ -790,32 +786,6 @@ class ChatService:
         cleaned = _CHANNEL_PLACEHOLDER_RE.sub("", text)
         cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
         return cleaned, resolved_name, resolved_link
-
-    @staticmethod
-    def _extract_references_from_text(
-        text: str, retrieved_references: list[Reference] | None = None
-    ) -> tuple[str, list[Reference]]:
-        """Parse the **References** section from agent output text.
-
-        Returns ``(answer_without_references, extracted_references)``.
-        The extracted references are enriched with ``source`` and ``content``
-        from *retrieved_references* when a matching link or title is found,
-        preserving compatibility with the old backend response shape.
-        """
-        # Locate the **References** header
-        header_match = re.search(r"\n*\*\*References\*\*\s*\n", text)
-        if not header_match:
-            return text, []
-
-        answer = text[: header_match.start()].rstrip()
-        refs_block = text[header_match.end() :]
-        raw_references = [
-            ChatAgentReference(title=m.group(1), link=m.group(2))
-            for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block)
-        ]
-        return answer, ChatService._enrich_references(
-            raw_references, retrieved_references
-        )
 
     @staticmethod
     def _enrich_references(

@@ -1,4 +1,4 @@
-"""Middleware sanitizing sensitive content before outbound issue, PR, or comment writes."""
+"""Middleware sanitizing sensitive content in outbound tool arguments."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from agent_framework import FunctionInvocationContext, FunctionMiddleware
 from utils.content_sanitization import is_public_github_repo, sanitize_text
 
 
-class OutboundSanitizationMiddleware(FunctionMiddleware):
-    """Sanitize credentials, PII, and internal Teams links before outbound writes."""
+class ToolInputSanitizationMiddleware(FunctionMiddleware):
+    """Sanitize credentials, PII, and internal Teams links before outbound tool writes."""
 
     _DEFAULT_WRITE_TOOLS = frozenset(
         {

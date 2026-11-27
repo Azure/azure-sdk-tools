@@ -15,7 +15,7 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from middleware.outbound_sanitization import OutboundSanitizationMiddleware
+from middleware.tool_input_sanitization import ToolInputSanitizationMiddleware
 from utils.content_sanitization import (
     LogSanitizationFilter,
     install_log_sanitization,
@@ -83,7 +83,7 @@ def test_repo_visibility_helper():
 
 @pytest.mark.asyncio
 async def test_middleware_sanitizes_public_issue_and_pr_before_call():
-    mw = OutboundSanitizationMiddleware()
+    mw = ToolInputSanitizationMiddleware()
     called = 0
 
     async def call_next():
@@ -122,7 +122,7 @@ async def test_middleware_sanitizes_public_issue_and_pr_before_call():
 
 @pytest.mark.asyncio
 async def test_middleware_keeps_teams_link_for_private_repo():
-    mw = OutboundSanitizationMiddleware()
+    mw = ToolInputSanitizationMiddleware()
     called = False
 
     async def call_next():
@@ -147,7 +147,7 @@ async def test_middleware_keeps_teams_link_for_private_repo():
 
 @pytest.mark.asyncio
 async def test_middleware_redacts_secrets_and_proceeds():
-    mw = OutboundSanitizationMiddleware()
+    mw = ToolInputSanitizationMiddleware()
     secret_ctx = _make_context(
         "issue_write",
         {

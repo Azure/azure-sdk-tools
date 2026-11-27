@@ -6,8 +6,10 @@ the process.
 
 import asyncio
 import logging
+from pathlib import Path
 import re
 
+import yaml
 from agent_framework import TruncationStrategy
 from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
@@ -55,20 +57,16 @@ def create_openai_client(
 
 
 _MAX_WEB_SEARCH_ALLOWED_DOMAINS = 100
+_WEB_SEARCH_DOMAINS_PATH = (
+    Path(__file__).resolve().parents[1] / "config" / "web-search-domains.yaml"
+)
 
 
-def get_web_search_allowed_domains() -> list[str] | None:
-    """Return normalized allowed domains for Foundry web_search, or ``None`` if unset.
-
-    Reads ``WEB_SEARCH_ALLOWED_DOMAINS`` from App Configuration.
-    """
-    raw = cfg("WEB_SEARCH_ALLOWED_DOMAINS", "")
-    if not raw.strip():
-        return None
+def _normalize_domains(entries: list[str]) -> list[str] | None:
     domains: list[str] = []
     seen: set[str] = set()
-    for entry in raw.split(","):
-        domain = entry.strip().lower()
+    for entry in entries:
+        domain = str(entry).strip().lower()
         for prefix in ("https://", "http://"):
             if domain.startswith(prefix):
                 domain = domain[len(prefix):]
@@ -77,6 +75,18 @@ def get_web_search_allowed_domains() -> list[str] | None:
             seen.add(domain)
             domains.append(domain)
     return domains[:_MAX_WEB_SEARCH_ALLOWED_DOMAINS] or None
+
+
+def get_web_search_allowed_domains() -> list[str] | None:
+    """Return normalized allowed domains for Foundry web_search, or ``None`` if unset.
+
+    Loads ``config/web-search-domains.yaml``.
+    """
+    if not _WEB_SEARCH_DOMAINS_PATH.exists():
+        return None
+    data = yaml.safe_load(_WEB_SEARCH_DOMAINS_PATH.read_text(encoding="utf-8")) or {}
+    entries = data.get("allowed_domains") or []
+    return _normalize_domains(entries)
 
 
 def create_web_search_tool(agent_client: FoundryChatClient):

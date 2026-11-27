@@ -97,7 +97,7 @@ The three agents reuse the controls below where the corresponding tools are regi
 All three agents use Foundry's hosted `web_search` tool (`create_web_search_tool` in [azure_ai_foundry.py](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/azure_ai_foundry.py)) for public web retrieval rather than issuing direct outbound HTTP fetches from the agent container:
 
 - **No container SSRF surface**: With reasoning models, `web_search` performs `search`, `open_page`, and `find_in_page` on the Foundry/Web IQ backend, removing arbitrary-URL SSRF ([CWE-918](https://cwe.mitre.org/data/definitions/918.html)) from the agent container.
-- **Domain allowlist filtering**: Reads `WEB_SEARCH_ALLOWED_DOMAINS` from App Configuration and passes up to 100 normalized domains to `WebSearchToolFilters(allowed_domains=...)`.
+- **Domain allowlist filtering**: Loads the curated allowlist from [web-search-domains.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/web-search-domains.yaml) and passes up to 100 normalized domains to `WebSearchToolFilters(allowed_domains=...)`.
 - **Source auditing & query hygiene**: All three agents include `web_search_call.action.sources` in Responses output for source URL auditing, and agent instructions prohibit placing credentials, tokens, or sensitive internal-only text into `web_search` queries. Search queries still flow outside the Azure compliance boundary to Web IQ/Bing, so `allowed_domains` and prompt hygiene remain important defense-in-depth controls.
 
 ### C3 — GitHub authored-body filtering

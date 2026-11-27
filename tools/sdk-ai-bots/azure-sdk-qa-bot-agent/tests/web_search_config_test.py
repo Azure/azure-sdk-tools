@@ -16,21 +16,29 @@ from utils.azure_ai_foundry import (
 )
 
 
-def test_get_web_search_allowed_domains_normalizes_entries() -> None:
-    def fake_cfg(key: str, default: str = "") -> str:
-        if key == "WEB_SEARCH_ALLOWED_DOMAINS":
-            return "https://learn.microsoft.com/, .typespec.io, learn.microsoft.com"
-        return default
-
-    with patch("utils.azure_ai_foundry.cfg", side_effect=fake_cfg):
+def test_get_web_search_allowed_domains_normalizes_entries(tmp_path: Path) -> None:
+    cfg_file = tmp_path / "web-search-domains.yaml"
+    cfg_file.write_text(
+        "allowed_domains:\n  - https://learn.microsoft.com/\n  - .typespec.io\n  - learn.microsoft.com\n",
+        encoding="utf-8",
+    )
+    with patch("utils.azure_ai_foundry._WEB_SEARCH_DOMAINS_PATH", cfg_file):
         assert get_web_search_allowed_domains() == [
             "learn.microsoft.com",
             "typespec.io",
         ]
 
 
-def test_get_web_search_allowed_domains_returns_none_when_unset() -> None:
-    with patch("utils.azure_ai_foundry.cfg", return_value=""):
+def test_get_web_search_allowed_domains_reads_repo_yaml() -> None:
+    domains = get_web_search_allowed_domains()
+    assert domains is not None
+    assert "typespec.io" in domains
+    assert "microsoft.com" in domains
+    assert "pypi.org" in domains
+
+
+def test_get_web_search_allowed_domains_returns_none_when_file_missing(tmp_path: Path) -> None:
+    with patch("utils.azure_ai_foundry._WEB_SEARCH_DOMAINS_PATH", tmp_path / "missing.yaml"):
         assert get_web_search_allowed_domains() is None
 
 

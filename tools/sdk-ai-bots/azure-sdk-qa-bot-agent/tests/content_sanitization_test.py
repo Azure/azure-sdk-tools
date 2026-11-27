@@ -42,14 +42,14 @@ def test_sanitize_issue_text_redacts_secrets_and_ignores_trace_ids():
     )
     assert "ghp_" not in out_secret
     assert "1234567890abcdefghijklmnopqrstuvwxyzABCD" not in out_secret
-    assert "[redacted-secret]" in out_secret
+    assert "<CREDENTIAL_OR_SECRET>" in out_secret
 
     out_sas, _ = sanitize_issue_text(
         "https://acct.blob.core.windows.net/c/b?sv=2023-01-01&sig=AbCdEfGhIjKlMnOpQrStUvWxYz012345",
         is_public_target=True,
     )
     assert "AbCdEfGhIjKlMnOpQrStUvWxYz012345" not in out_sas
-    assert "[redacted-secret]" in out_sas
+    assert "<CREDENTIAL_OR_SECRET>" in out_sas
 
     # Normal OTel trace ID and GitHub link must not trigger false positives.
     clean = (
@@ -172,7 +172,7 @@ async def test_middleware_redacts_secrets_and_proceeds():
     await mw.process(secret_ctx, call_next)
     assert called is True
     assert "ghp_" not in secret_ctx.arguments["body"]
-    assert "[redacted-secret]" in secret_ctx.arguments["body"]
+    assert "<CREDENTIAL_OR_SECRET>" in secret_ctx.arguments["body"]
 
 
 def test_log_sanitization_filter_redacts_logger_records():

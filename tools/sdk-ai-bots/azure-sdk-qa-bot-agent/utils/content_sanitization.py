@@ -19,7 +19,6 @@ from presidio_analyzer.predefined_recognizers import (
     UsSsnRecognizer,
 )
 from presidio_anonymizer import AnonymizerEngine
-from presidio_anonymizer.entities import OperatorConfig
 
 # Azure/azure-sdk-pr is the only private GitHub issue target; all other GitHub repos are treated as public.
 _PRIVATE_GITHUB_REPOS = frozenset({"azure/azure-sdk-pr"})
@@ -80,10 +79,6 @@ def sanitize_issue_text(text: str, *, is_public_target: bool) -> tuple[str, list
         updated = anonymizer.anonymize(
             text=updated,
             analyzer_results=results,
-            operators={
-                "CREDENTIAL_OR_SECRET": OperatorConfig("replace", {"new_value": "[redacted-secret]"}),
-                "DEFAULT": OperatorConfig("replace", {"new_value": "[redacted-pii]"}),
-            },
         ).text
         redacted.extend(r.entity_type for r in results)
 

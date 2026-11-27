@@ -1,5 +1,17 @@
 # Release History
 
+## 0.2.3 (2026-11-25)
+
+### Features Added
+
+- Automatically reopen the linked GitHub/ADO issue when fix validation fails (`validation_failed`) while keeping `feedback.status = validation_failed` in Cosmos DB, and include `validation_failed` in `list_pending_validation()` so reopened issues wait while `open` and automatically re-validate once closed again.
+- Update Evolution Agent validation mode instructions to inspect the failed production `trace_id` via `fetch_chat_trace` and include the remaining root-cause diagnosis and concrete next fix when validation fails.
+
+### Bugs Fixed
+
+- Enforce the `api-spec-review` exclusion for TypeSpec authoring, API/resource modeling, and spec folder-layout questions by routing them to `typespec` and `TypeSpec Discussion` (`{{channel:typespec_discussion}}`).
+- Prevent unresolved human review threads or merge conflicts from replacing TypeSpec PR design reviews with PR triage or reviewer re-pings.
+
 ## 0.2.2 (2026-11-18)
 
 ### Features Added

@@ -40,7 +40,7 @@ from models.feedback import (
 )
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
-from tools.issue_tracker import get_issue_state
+from tools.issue_tracker import get_issue_state, reopen_issue
 from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
@@ -138,6 +138,7 @@ async def _run(args: argparse.Namespace) -> None:
 
     # 2. Validate fixes first. Newly created issues from this run wait until
     # the next daily scan before their closure is checked.
+    reopened_issues: set[str] = set()
     pending = await qa_service.list_pending_validation(tenant_id=args.tenant)
     for record in pending:
         if QARecordService.channel_key_of(record) in excluded_channels:
@@ -177,6 +178,18 @@ async def _run(args: argparse.Namespace) -> None:
             logger.info("Validation skipped for %s (%s)", record.id, issue_url)
         else:
             counts["validation_failed"] += 1
+            if (
+                result.outcome == ChatbotEvolutionAgentOutcome.validation_failed
+                and issue_url not in reopened_issues
+            ):
+                try:
+                    await reopen_issue(issue_url)
+                    reopened_issues.add(issue_url)
+                    logger.info(
+                        "Reopened issue after validation failure: %s", issue_url
+                    )
+                except Exception:
+                    logger.exception("Failed to reopen issue %s", issue_url)
 
     # 3. Ask the Evolution Agent to evaluate and, when necessary, diagnose
     # each conversation. The pipeline does not make either decision itself.

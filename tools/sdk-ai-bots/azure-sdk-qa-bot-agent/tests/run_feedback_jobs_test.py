@@ -170,6 +170,7 @@ async def test_run_invokes_agent_for_analysis_without_external_evaluator() -> No
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
     qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
     qa_service.close_inactive_threads = AsyncMock(return_value=0)
+    qa_service.list_validation_failed = AsyncMock(return_value=[])
     qa_service.list_pending_validation = AsyncMock(return_value=[])
     qa_service.list_analyzable = AsyncMock(
         return_value=[_record(qa_status=QAStatus.ongoing)]
@@ -298,6 +299,8 @@ async def test_run_validates_only_after_issue_closes(
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
     qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
     qa_service.close_inactive_threads = AsyncMock(return_value=0)
+    qa_service.list_validation_failed = AsyncMock(return_value=[])
+    qa_service.reset_to_pending_validation = AsyncMock()
     qa_service.list_pending_validation = AsyncMock(
         return_value=[
             _record(
@@ -331,12 +334,24 @@ async def test_run_validates_only_after_issue_closes(
             new=AsyncMock(return_value="closed"),
         ),
         patch.object(
+            run_feedback_jobs,
+            "reopen_issue",
+            new=AsyncMock(),
+        ) as reopen_mock,
+        patch.object(
             run_feedback_jobs.app_config,
             "get",
             return_value="true",
         ),
     ):
         await run_feedback_jobs._run(_args())
+
+    if outcome == ChatbotEvolutionAgentOutcome.validation_failed:
+        reopen_mock.assert_awaited_once_with(
+            "https://github.com/Azure/azure-sdk-pr/issues/123"
+        )
+    else:
+        reopen_mock.assert_not_awaited()
 
     assert (
         evolution.run_job.await_args.kwargs["mode"]
@@ -361,6 +376,7 @@ async def test_analysis_failures_warn_without_skipping_remaining_jobs(
     qa_service.get_messages_in_period = AsyncMock(return_value=[])
     qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
     qa_service.close_inactive_threads = AsyncMock(return_value=0)
+    qa_service.list_validation_failed = AsyncMock(return_value=[])
     qa_service.list_pending_validation = AsyncMock(return_value=[])
     qa_service.list_analyzable = AsyncMock(return_value=[
         _record(qa_status=QAStatus.ongoing),
@@ -385,3 +401,44 @@ async def test_analysis_failures_warn_without_skipping_remaining_jobs(
     output = capsys.readouterr().out
     assert "##vso[task.logissue type=warning]" in output
     assert "##vso[task.complete result=SucceededWithIssues;]" in output
+
+
+@pytest.mark.asyncio
+async def test_scan_retries_reopen_after_reopen_failure() -> None:
+    record_1 = _record(
+        qa_status=QAStatus.finished,
+        feedback_status=FeedbackStatus.pending_validation,
+    )
+    record_1.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
+    record_2 = _record(
+        qa_status=QAStatus.finished,
+        feedback_status=FeedbackStatus.pending_validation,
+    )
+    record_2.id = "teams_channel:conversation-2"
+    record_2.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/2958"
+
+    qa_service = MagicMock()
+    qa_service.get_messages_in_period = AsyncMock(return_value=[])
+    qa_service.upsert_threads_from_messages = AsyncMock(return_value=[])
+    qa_service.close_inactive_threads = AsyncMock(return_value=0)
+    qa_service.list_pending_validation = AsyncMock(return_value=[record_1, record_2])
+    qa_service.list_analyzable = AsyncMock(return_value=[])
+
+    evolution = MagicMock()
+    evolution.recover_stale_jobs = AsyncMock(return_value=0)
+    evolution.run_job = AsyncMock(
+        return_value=_result(ChatbotEvolutionAgentOutcome.validation_failed)
+    )
+    reopen_mock = AsyncMock(side_effect=[RuntimeError("patch failed"), None])
+
+    with (
+        patch.object(run_feedback_jobs, "QARecordService", return_value=qa_service),
+        patch.object(run_feedback_jobs, "ChatbotEvolutionAgentService", return_value=evolution),
+        patch.object(run_feedback_jobs, "_load_excluded_channels", new=AsyncMock(return_value=set())),
+        patch.object(run_feedback_jobs, "get_issue_state", new=AsyncMock(return_value="closed")),
+        patch.object(run_feedback_jobs, "reopen_issue", new=reopen_mock),
+        patch.object(run_feedback_jobs.app_config, "get", return_value="true"),
+    ):
+        await run_feedback_jobs._run(_args())
+
+    assert reopen_mock.await_count == 2

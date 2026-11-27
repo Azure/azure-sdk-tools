@@ -255,3 +255,30 @@ async def get_ado_work_item_state(issue_url: str) -> str:
 
     closed_state = cfg("ADO_ISSUE_CLOSED_STATE", "Closed") or "Closed"
     return "closed" if state.casefold() == closed_state.casefold() else "open"
+
+
+async def reopen_ado_work_item(issue_url: str) -> None:
+    """Reopen an Azure Boards work item by setting ``System.State``."""
+    reference = parse_issue_reference(issue_url)
+    if not isinstance(reference, AzureDevOpsIssueReference):
+        raise ValueError(f"Not an Azure Boards work item URL: {issue_url}")
+
+    access_token = await get_credential().get_token(_ADO_SCOPE)
+    api_url = (
+        f"https://dev.azure.com/{quote(reference.organization, safe='')}/"
+        f"{quote(reference.project, safe='')}"
+        f"/_apis/wit/workitems/{reference.work_item_id}?api-version=7.1"
+    )
+    reopen_state = cfg("ADO_ISSUE_REOPEN_STATE", "Active") or "Active"
+    headers = {
+        "Authorization": "Bearer " + access_token.token,
+        "Content-Type": "application/json-patch+json",
+        "Accept": "application/json",
+    }
+    async with httpx.AsyncClient(timeout=_ADO_API_TIMEOUT_SECS) as client:
+        response = await client.patch(
+            api_url,
+            headers=headers,
+            json=[{"op": "add", "path": "/fields/System.State", "value": reopen_state}],
+        )
+        response.raise_for_status()

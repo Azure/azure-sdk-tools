@@ -1081,7 +1081,7 @@ class GitHubIssueDetails(BaseModel):
     closed_at: datetime | None = None
 
 
-async def _get_github_issue_payload(issue_url: str) -> dict:
+def _parse_github_issue_url(issue_url: str) -> tuple[str, str, str]:
     parsed = urlparse(issue_url)
     match = (
         _ISSUE_PATH_RE.fullmatch(parsed.path)
@@ -1090,6 +1090,11 @@ async def _get_github_issue_payload(issue_url: str) -> dict:
     )
     if match is None:
         raise ValueError(f"Invalid GitHub issue URL: {issue_url}")
+    return match.group("owner"), match.group("repo"), match.group("number")
+
+
+async def _get_github_issue_payload(issue_url: str) -> dict:
+    owner, repo, number = _parse_github_issue_url(issue_url)
 
     token, _ = await _get_github_token()
     headers = {
@@ -1097,9 +1102,6 @@ async def _get_github_issue_payload(issue_url: str) -> dict:
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    owner = match.group("owner")
-    repo = match.group("repo")
-    number = match.group("number")
     async with httpx.AsyncClient(timeout=_GITHUB_API_TIMEOUT_SECS) as client:
         response = await client.get(
             f"{_GITHUB_API}/repos/{owner}/{repo}/issues/{number}",
@@ -1143,6 +1145,24 @@ async def get_github_issue_state(issue_url: str) -> str:
         await _get_github_issue_payload(issue_url),
         issue_url,
     )
+
+
+async def reopen_github_issue(issue_url: str) -> None:
+    """Reopen a GitHub issue by setting its state to ``open``."""
+    owner, repo, number = _parse_github_issue_url(issue_url)
+    token, _ = await _get_github_token()
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    async with httpx.AsyncClient(timeout=_GITHUB_API_TIMEOUT_SECS) as client:
+        response = await client.patch(
+            f"{_GITHUB_API}/repos/{owner}/{repo}/issues/{number}",
+            headers=headers,
+            json={"state": "open"},
+        )
+        response.raise_for_status()
 
 
 async def create_github_mcp_tool(

@@ -379,7 +379,7 @@ class QARecordService:
         *,
         tenant_id: str | None = None,
     ) -> list[QARecord]:
-        """Return pending and failed remediation-issue validations."""
+        """Return pending, failed, and validation-failed remediation validations."""
         docs = await query_qa_records_by_feedback_status(
             feedback_status=FeedbackStatus.pending_validation.value,
             tenant_id=tenant_id,
@@ -388,10 +388,15 @@ class QARecordService:
             feedback_status=FeedbackStatus.failed.value,
             tenant_id=tenant_id,
         )
+        validation_failed_docs = await query_qa_records_by_feedback_status(
+            feedback_status=FeedbackStatus.validation_failed.value,
+            tenant_id=tenant_id,
+        )
         records = {
             (record.tenant_id, record.id): record
             for record in (
-                QARecord.from_cosmos(doc) for doc in [*docs, *failed_docs]
+                QARecord.from_cosmos(doc)
+                for doc in [*docs, *failed_docs, *validation_failed_docs]
             )
         }.values()
         return [
@@ -400,7 +405,11 @@ class QARecordService:
             if record.feedback
             and record.feedback.issue_url
             and record.feedback.status
-            in (FeedbackStatus.pending_validation, FeedbackStatus.failed)
+            in (
+                FeedbackStatus.pending_validation,
+                FeedbackStatus.failed,
+                FeedbackStatus.validation_failed,
+            )
         ]
 
 

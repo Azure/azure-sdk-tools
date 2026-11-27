@@ -251,12 +251,13 @@ python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 Builds the backend API (FastAPI) container image and deploys to Azure App Service.
 
 - **Pipeline**: [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
-- **Parameters**: `environment` (dev/preview/prod), `deploymentTarget` (all/server/knowledge-sync/wiki-index; default: `all`)
+- **Parameters**: `environment` (dev/preview/prod), `deploymentTarget` (all/server/knowledge-sync/wiki-index/feedback-jobs; default: `all`)
 - **Deployment targets**:
-   - `all`: deploy the server, knowledge sync, and Wiki Index in that order. Each job must succeed before the next starts. Preview deploys only the server.
+   - `all`: deploy the server, knowledge sync, and Wiki Index in that order, followed by feedback jobs in prod only. Each job must succeed before the next starts. Preview deploys only the server.
    - `server`: deploy only the backend container.
    - `knowledge-sync`: build, test, and deploy only the knowledge sync WebJob in dev/prod.
    - `wiki-index`: package and deploy only the Wiki Index WebJob in dev/prod.
+   - `feedback-jobs`: build and deploy only the feedback jobs WebJob in prod. Direct dev and preview deployments are rejected.
 - **What it does**:
    1. `DeployServer` resolves the image tag from `_version.py` (preview/prod) or git short SHA (dev), builds and pushes to ACR (except prod, which reuses the image), validates the image, updates App Service, and checks server health.
    2. `DeployKnowledgeSync` builds, tests, packages and publishes the knowledge sync ZIP, and deploys the scheduled WebJob. With `all`, it runs after server success and provisions the SSH key; with `knowledge-sync`, it runs independently using existing settings. Preview omits this job.

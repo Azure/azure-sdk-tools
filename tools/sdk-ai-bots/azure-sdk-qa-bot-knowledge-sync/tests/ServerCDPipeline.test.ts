@@ -12,15 +12,18 @@ const webjobGroup = entries.find((entry: any) => entry["${{ if in(parameters.env
     ["${{ if in(parameters.environment, 'dev', 'prod') }}"];
 const knowledge = webjobGroup.find((job: any) => job.job === 'DeployKnowledgeSync');
 const wiki = webjobGroup.find((job: any) => job.job === 'DeployWikiIndex');
+const prodWebjobGroup = entries.find((entry: any) => entry["${{ if eq(parameters.environment, 'prod') }}"])
+    ["${{ if eq(parameters.environment, 'prod') }}"];
+const feedback = prodWebjobGroup.find((job: any) => job.job === 'DeployFeedbackJobs');
 
 describe('server CD job separation', () => {
     it('keeps the existing templates, one stage, Linux pools, and default combined deployment', () => {
-        expect(pipeline.parameters.find((parameter: any) => parameter.name === 'deploymentTarget')).toMatchObject({ type: 'string', default: 'all', values: ['all', 'server', 'knowledge-sync', 'wiki-index'] });
+        expect(pipeline.parameters.find((parameter: any) => parameter.name === 'deploymentTarget')).toMatchObject({ type: 'string', default: 'all', values: ['all', 'server', 'knowledge-sync', 'wiki-index', 'feedback-jobs'] });
         expect(JSON.stringify(pipeline)).not.toContain('webjobOnly');
         expect(pipeline.extends.template).toBe('/eng/pipelines/templates/stages/1es-redirect.yml');
         expect(stages).toHaveLength(1);
-        expect(entries).toHaveLength(3);
-        for (const job of [server, knowledge, wiki]) {
+        expect(entries).toHaveLength(5);
+        for (const job of [server, knowledge, wiki, feedback]) {
             expect(job.pool).toEqual({ name: '$(LINUXPOOL)', image: '$(LINUXVMIMAGE)', os: 'linux' });
             expect(job.steps[0].checkout).toBe('self');
         }
@@ -62,25 +65,30 @@ describe('server CD job separation', () => {
         expect(JSON.stringify(knowledge)).not.toMatch(/\$\((imageTag|imageName|appVersion)\)|outputs\[/);
     });
 
-    it.each(['all', 'server', 'knowledge-sync', 'wiki-index'])('gates WebJob dependency results (target=%s), including cancellation', (target) => {
-        for (const [job, jobTarget] of [[knowledge, 'knowledge-sync'], [wiki, 'wiki-index']] as const) {
+    it.each(['all', 'server', 'knowledge-sync', 'wiki-index', 'feedback-jobs'])('gates WebJob dependency results (target=%s), including cancellation', (target) => {
+        for (const [job, jobTarget, predecessors] of [
+            [knowledge, 'knowledge-sync', ['DeployServer']],
+            [wiki, 'wiki-index', ['DeployServer', 'DeployKnowledgeSync']],
+            [feedback, 'feedback-jobs', ['DeployServer', 'DeployKnowledgeSync', 'DeployWikiIndex']]
+        ] as const) {
             const condition = job.condition
                 .replace("${{ eq(parameters.deploymentTarget, 'all') }}", String(target === 'all'))
                 .replace(`\${{ eq(parameters.deploymentTarget, '${jobTarget}') }}`, String(target === jobTarget));
             const results = ['Succeeded', 'SucceededWithIssues', 'Skipped', 'Failed', 'Canceled'];
-            for (const serverResult of results) {
-                for (const knowledgeResult of jobTarget === 'wiki-index' ? results : [undefined]) {
-                    for (const canceled of [false, true]) {
-                        const actual = runInNewContext(condition, {
-                            and: (...values: boolean[]) => values.every(Boolean), or: (...values: boolean[]) => values.some(Boolean),
-                            not: (value: boolean) => !value, eq: (left: string, right: string) => left === right,
-                            canceled: () => canceled,
-                            dependencies: { DeployServer: { result: serverResult }, DeployKnowledgeSync: { result: knowledgeResult } }
-                        });
-                        const allReady = target === 'all' && serverResult === 'Succeeded' && (knowledgeResult === undefined || knowledgeResult === 'Succeeded');
-                        const standaloneReady = target === jobTarget && serverResult === 'Skipped' && (knowledgeResult === undefined || knowledgeResult === 'Skipped');
-                        expect(actual).toBe(!canceled && (allReady || standaloneReady));
-                    }
+            const combinations = predecessors.reduce<string[][]>(
+                (combinations, _) => combinations.flatMap(combination => results.map(result => [...combination, result])), [[]]
+            );
+            for (const combination of combinations) {
+                const dependencies = Object.fromEntries(predecessors.map((name, index) => [name, { result: combination[index] }]));
+                for (const canceled of [false, true]) {
+                    const actual = runInNewContext(condition, {
+                        and: (...values: boolean[]) => values.every(Boolean), or: (...values: boolean[]) => values.some(Boolean),
+                        not: (value: boolean) => !value, eq: (left: string, right: string) => left === right,
+                        canceled: () => canceled, dependencies
+                    });
+                    const allReady = target === 'all' && combination.every(result => result === 'Succeeded');
+                    const standaloneReady = target === jobTarget && combination.every(result => result === 'Skipped');
+                    expect(actual, `${jobTarget}: ${combination.join(', ')}; canceled=${canceled}`).toBe(!canceled && (allReady || standaloneReady));
                 }
             }
         }
@@ -105,5 +113,26 @@ describe('server CD job separation', () => {
                 WEBJOB_SETTINGS: '$(wikiWorkingDirectory)/webjob/settings.job'
             }
         });
+    });
+
+    it('deploys feedback jobs with their own schedule only in prod', () => {
+        expect(prodWebjobGroup.map((job: any) => job.job)).toEqual(['DeployFeedbackJobs']);
+        expect(feedback.dependsOn).toEqual(['DeployServer', 'DeployKnowledgeSync', 'DeployWikiIndex']);
+        expect(feedback.steps.at(-1)).toMatchObject({
+            inputs: { inlineScript: 'node "$(syncWorkingDirectory)/scripts/deploy-webjob.mjs"' },
+            env: {
+                WEBJOB_NAME: 'feedback-jobs',
+                WEBJOB_SETTINGS: '$(workingDirectory)/webjob/settings.job'
+            }
+        });
+    });
+
+    it('rejects direct feedback jobs deployments in dev and preview', () => {
+        const gate = "${{ if and(eq(parameters.deploymentTarget, 'feedback-jobs'), ne(parameters.environment, 'prod')) }}";
+        const validation = entries.find((entry: any) => entry[gate])[gate][0];
+        expect(validation.job).toBe('ValidateFeedbackJobsDeployment');
+        expect(validation.pool).toEqual(server.pool);
+        expect(validation.steps[0].checkout).toBe('none');
+        expect(validation.steps[1].bash).toContain('exit 1');
     });
 });

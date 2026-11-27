@@ -178,7 +178,9 @@ The feedback loop is driven by a **daily batch job** over a durable status table
 | **1 — QA lifecycle** | `qa_status` | `ongoing` → `finished` \| `failed` | `ongoing` while the thread is still open; `finished` once it concluded with a **correct** bot answer (archived); `failed` once it concluded with an **incorrect/unknown** bot answer (worth a feedback analysis). |
 | **2 — Feedback lifecycle** | `feedback.status` | `created` → `running` → `done` \| `pending_validation` → `validation_passed` \| `validation_failed`; operational errors → `failed` | Tracks Agent execution, issue remediation, and post-close validation. `done` and both validation outcomes are terminal; `failed` is retryable. |
 
-#### Daily scan (`scripts/run_feedback_jobs.py`, `pipelines/feedback-job.yml`)
+#### Daily scan (`scripts/run_feedback_jobs.py`)
+
+The production backend App Service runs `feedback-jobs` daily at 00:00 UTC. The backend CD pipeline deploys it as part of `all` in prod or through the prod-only `feedback-jobs` target.
 
 1. **Ingest** — read conversation messages active in the window, aggregate them by `conversation_id` into threads, and upsert one QA record per thread (new threads start `ongoing`). Threads in **testing channels** identified from their configured `channel.yaml` display names are excluded so the loop never files issues for test traffic.
 2. **Closed-item scan and validation** — read `pending_validation` records and retryable `failed` records with an issue URL, dispatch to GitHub or ADO according to the stored canonical URL, and find items in the provider's closed state. Item state, not labels or tags, determines validation eligibility. Validate each closed item's original bad case, comment with evidence through the matching provider, update presentation labels only for `Azure/azure-sdk-pr`, and persist terminal `feedback.status=validation_passed` or `feedback.status=validation_failed`; operational failures remain retryable. This relies on the successful knowledge-sync WebJob run scheduled after the previous feedback batch.

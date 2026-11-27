@@ -25,6 +25,7 @@ parameters:
       - server
       - knowledge-sync
       - wiki-index
+      - feedback-jobs
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -67,6 +68,20 @@ extends:
                     echo 'WebJob deployment is supported only for dev and prod.' >&2
                     exit 1
                   displayName: 'Reject WebJob Preview Deployment'
+
+          - ${{ if and(eq(parameters.deploymentTarget, 'feedback-jobs'), ne(parameters.environment, 'prod')) }}:
+            - job: ValidateFeedbackJobsDeployment
+              displayName: 'Reject Feedback Jobs Non-Prod Deployment'
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              steps:
+                - checkout: none
+                - bash: |
+                    echo 'Feedback jobs deployment is supported only for prod.' >&2
+                    exit 1
+                  displayName: 'Reject Feedback Jobs Non-Prod Deployment'
 
           - job: DeployServer
             displayName: 'Deploy Server'
@@ -390,3 +405,57 @@ extends:
                     APP_NAME: $(APP_NAME)
                     RESOURCE_GROUP: $(RESOURCE_GROUP)
                     WEBJOB_NAME: 'wiki-index'
+
+          - ${{ if eq(parameters.environment, 'prod') }}:
+            - job: DeployFeedbackJobs
+              displayName: 'Deploy Scheduled Feedback Jobs'
+              dependsOn:
+                - DeployServer
+                - DeployKnowledgeSync
+                - DeployWikiIndex
+              condition: and(not(canceled()), or(and(${{ eq(parameters.deploymentTarget, 'all') }}, eq(dependencies.DeployServer.result, 'Succeeded'), eq(dependencies.DeployKnowledgeSync.result, 'Succeeded'), eq(dependencies.DeployWikiIndex.result, 'Succeeded')), and(${{ eq(parameters.deploymentTarget, 'feedback-jobs') }}, eq(dependencies.DeployServer.result, 'Skipped'), eq(dependencies.DeployKnowledgeSync.result, 'Skipped'), eq(dependencies.DeployWikiIndex.result, 'Skipped'))))
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              templateContext:
+                outputs:
+                  - output: pipelineArtifact
+                    path: $(Build.ArtifactStagingDirectory)/feedback-jobs
+                    artifact: feedback-jobs
+                    displayName: 'Publish Scheduled Feedback Jobs ZIP'
+                    condition: succeededOrFailed()
+              steps:
+                - checkout: self
+                  displayName: 'Checkout repository'
+                  persistCredentials: true
+                  continueOnError: false
+
+                - task: NodeTool@0
+                  displayName: 'Use Node.js 24.x for Feedback Jobs Deployment'
+                  inputs:
+                    versionSpec: '24.x'
+
+                - task: PipAuthenticate@1
+                  displayName: 'Authenticate pip to Azure Artifacts'
+                  inputs:
+                    artifactFeeds: 'public/azure-sdk-for-python'
+
+                - bash: bash scripts/build-webjob.sh "$(Build.ArtifactStagingDirectory)/feedback-jobs/feedback-jobs.zip"
+                  displayName: 'Build and Package Scheduled Feedback Jobs'
+                  workingDirectory: $(workingDirectory)
+
+                - task: AzureCLI@2
+                  displayName: 'Deploy Scheduled Feedback Jobs WebJob'
+                  continueOnError: false
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: node "$(syncWorkingDirectory)/scripts/deploy-webjob.mjs"
+                  env:
+                    WEBJOB_ZIP: $(Build.ArtifactStagingDirectory)/feedback-jobs/feedback-jobs.zip
+                    WEBJOB_SETTINGS: $(workingDirectory)/webjob/settings.job
+                    APP_NAME: $(APP_NAME)
+                    RESOURCE_GROUP: $(RESOURCE_GROUP)
+                    WEBJOB_NAME: 'feedback-jobs'

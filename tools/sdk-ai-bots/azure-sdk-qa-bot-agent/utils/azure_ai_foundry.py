@@ -60,11 +60,9 @@ _MAX_WEB_SEARCH_ALLOWED_DOMAINS = 100
 def get_web_search_allowed_domains() -> list[str] | None:
     """Return normalized allowed domains for Foundry web_search, or ``None`` if unset.
 
-    Reads ``WEB_SEARCH_ALLOWED_DOMAINS`` from App Configuration and falls back
-    to ``WEB_FETCH_ALLOWED_DOMAINS`` so existing environment allowlists continue
-    to apply.
+    Reads ``WEB_SEARCH_ALLOWED_DOMAINS`` from App Configuration.
     """
-    raw = cfg("WEB_SEARCH_ALLOWED_DOMAINS", "") or cfg("WEB_FETCH_ALLOWED_DOMAINS", "")
+    raw = cfg("WEB_SEARCH_ALLOWED_DOMAINS", "")
     if not raw.strip():
         return None
     domains: list[str] = []

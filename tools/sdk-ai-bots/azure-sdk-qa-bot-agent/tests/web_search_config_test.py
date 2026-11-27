@@ -16,12 +16,10 @@ from utils.azure_ai_foundry import (
 )
 
 
-def test_get_web_search_allowed_domains_prefers_web_search_key() -> None:
+def test_get_web_search_allowed_domains_normalizes_entries() -> None:
     def fake_cfg(key: str, default: str = "") -> str:
         if key == "WEB_SEARCH_ALLOWED_DOMAINS":
             return "https://learn.microsoft.com/, .typespec.io, learn.microsoft.com"
-        if key == "WEB_FETCH_ALLOWED_DOMAINS":
-            return "github.com"
         return default
 
     with patch("utils.azure_ai_foundry.cfg", side_effect=fake_cfg):
@@ -31,18 +29,9 @@ def test_get_web_search_allowed_domains_prefers_web_search_key() -> None:
         ]
 
 
-def test_get_web_search_allowed_domains_falls_back_to_web_fetch_key() -> None:
-    def fake_cfg(key: str, default: str = "") -> str:
-        if key == "WEB_FETCH_ALLOWED_DOMAINS":
-            return "typespec.io, microsoft.com, pypi.org"
-        return default
-
-    with patch("utils.azure_ai_foundry.cfg", side_effect=fake_cfg):
-        assert get_web_search_allowed_domains() == [
-            "typespec.io",
-            "microsoft.com",
-            "pypi.org",
-        ]
+def test_get_web_search_allowed_domains_returns_none_when_unset() -> None:
+    with patch("utils.azure_ai_foundry.cfg", return_value=""):
+        assert get_web_search_allowed_domains() is None
 
 
 def test_create_web_search_tool_passes_allowed_domains_when_configured() -> None:

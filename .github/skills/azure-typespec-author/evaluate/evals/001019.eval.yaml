@@ -6,7 +6,8 @@ description: Version client-model accessibility without versioning the decorator
   case 105086; ready.
 version: "1.0"
 type: capability
-area: versioning
+tags:
+  area: versioning
 environment: azsdk-mcp
 defaults:
   runs: 1

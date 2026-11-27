@@ -5,7 +5,8 @@ name: azure-typespec-author-eval
 description: Version a bodyless action into an optional-body action. Source discussion case 104008; ready.
 version: "1.0"
 type: capability
-area: versioning
+tags:
+  area: versioning
 environment: azsdk-mcp
 defaults:
   runs: 1

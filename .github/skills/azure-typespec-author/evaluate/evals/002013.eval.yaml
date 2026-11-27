@@ -5,7 +5,8 @@ name: azure-typespec-author-eval
 description: Use the ARM-provided management endpoint. Source discussion case 104044; ready.
 version: "1.0"
 type: capability
-area: armtemplate
+tags:
+  area: armtemplate
 environment: azsdk-mcp
 defaults:
   runs: 1

@@ -6,7 +6,8 @@ description: Route a legacy resource without changing its nonstandard JSON envel
   discussion case 104026; ready.
 version: "1.0"
 type: capability
-area: armtemplate
+tags:
+  area: armtemplate
 environment: azsdk-mcp
 defaults:
   runs: 1

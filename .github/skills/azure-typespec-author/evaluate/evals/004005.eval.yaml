@@ -6,7 +6,8 @@ description: Require variant-specific fields under an explicit discriminator. So
   104029; ready.
 version: "1.0"
 type: capability
-area: decorators
+tags:
+  area: decorators
 environment: azsdk-mcp
 defaults:
   runs: 1

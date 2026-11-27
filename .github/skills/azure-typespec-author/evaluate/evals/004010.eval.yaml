@@ -6,7 +6,8 @@ description: Return a single-leaf polymorphic success base while preserving erro
   discussion case 105098; ready.
 version: "1.0"
 type: capability
-area: decorators
+tags:
+  area: decorators
 environment: azsdk-mcp
 defaults:
   runs: 1

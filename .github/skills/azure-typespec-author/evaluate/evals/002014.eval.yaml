@@ -6,7 +6,8 @@ description: Replace a finite parameter dictionary without changing string value
   case 105059; ready.
 version: "1.0"
 type: capability
-area: armtemplate
+tags:
+  area: armtemplate
 environment: azsdk-mcp
 defaults:
   runs: 1

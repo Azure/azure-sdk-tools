@@ -5,7 +5,8 @@ name: azure-typespec-author-eval
 description: Restore agreed public PATCH model names. Source discussion case 105071; ready.
 version: "1.0"
 type: capability
-area: armtemplate
+tags:
+  area: armtemplate
 environment: azsdk-mcp
 defaults:
   runs: 1

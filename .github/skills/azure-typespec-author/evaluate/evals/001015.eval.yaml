@@ -6,6 +6,7 @@ description: Document filtering availability across historical projections. Sour
   105057; ready.
 version: "1.0"
 type: capability
+tags:
 area: versioning
 environment: azsdk-mcp
 defaults:

@@ -5,7 +5,8 @@ name: azure-typespec-author-eval
 description: Correct a property docstring across historical projections. Source discussion case 105079; ready.
 version: "1.0"
 type: capability
-area: versioning
+tags:
+  area: versioning
 environment: azsdk-mcp
 defaults:
   runs: 1

@@ -6,7 +6,8 @@ description: Replace an undeclared custom decorator with standard versioning. So
   104045; ready.
 version: "1.0"
 type: capability
-area: decorators
+tags:
+  area: decorators
 environment: azsdk-mcp
 defaults:
   runs: 1

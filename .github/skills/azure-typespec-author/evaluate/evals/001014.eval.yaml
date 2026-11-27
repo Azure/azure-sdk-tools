@@ -5,7 +5,8 @@ name: azure-typespec-author-eval
 description: Remove an obsolete Azure.Core version dependency. Source discussion case 104039; ready.
 version: "1.0"
 type: capability
-area: versioning
+tags:
+  area: versioning
 environment: azsdk-mcp
 defaults:
   runs: 1

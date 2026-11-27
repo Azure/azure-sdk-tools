@@ -6,7 +6,8 @@ description: Exclude unready private preview APIs from the public entry point. S
   case 105083; needs-review.
 version: "1.0"
 type: capability
-# area: versioning
+tags:
+  area: versioning
 environment: azsdk-mcp
 defaults:
   runs: 1

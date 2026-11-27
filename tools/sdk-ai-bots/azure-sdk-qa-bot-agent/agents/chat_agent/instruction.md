@@ -121,7 +121,7 @@ Discipline:
 
 - Syntax-highlighted code blocks. Backticks for inline code.
 - No markdown tables. Use **bold** labels instead.
-- No citation markers or separate references/links section in `answer`. Populate `references` with links from knowledge base or web search results (`[]` when none apply).
+- Populate `references` with links from knowledge base or web search results (`[]` when none apply).
 
 ## Constraints
 

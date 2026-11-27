@@ -6,7 +6,15 @@ import {
   resolveCompilerOptions,
   resolvePath,
 } from "@typespec/compiler";
-import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
+import {
+  addSpecFiles,
+  canExpandSpecCheckout,
+  checkoutCommit,
+  cloneRepo,
+  getRepoRoot,
+  isPinnedSpecCheckout,
+  sparseCheckout,
+} from "./git.js";
 import {
   createTempDirectory,
   getEmitterFromRepoConfig,
@@ -235,26 +243,36 @@ export async function initCommand(argv: any) {
     const resolvedConfigUrl = resolveTspConfigUrl(tspConfigPath);
     const cloneDir = await makeSparseSpecDir(repoRoot);
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-    Logger.debug(`Cloning repo to ${cloneDir}`);
-    await cloneRepo(outputDir, cloneDir, `https://github.com/${resolvedConfigUrl.repo}.git`);
-    await sparseCheckout(cloneDir);
-    tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
-    await addSpecFiles(cloneDir, tspConfigPath);
-    await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
+    try {
+      Logger.debug(`Cloning repo to ${cloneDir}`);
+      await cloneRepo(outputDir, cloneDir, `https://github.com/${resolvedConfigUrl.repo}.git`);
+      await sparseCheckout(cloneDir);
+      tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
+      await addSpecFiles(cloneDir, tspConfigPath);
+      // Inspect the clone before checkout detaches HEAD or runs a configured hook.
+      const reusable =
+        !skipSyncAndGenerate && (await canExpandSpecCheckout(cloneDir).catch(() => false));
+      await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
 
-    tspLocationData.directory = resolvedConfigUrl.path;
-    tspLocationData.commit = resolvedConfigUrl.commit;
-    tspLocationData.repo = resolvedConfigUrl.repo;
+      tspLocationData.directory = resolvedConfigUrl.path;
+      tspLocationData.commit = resolvedConfigUrl.commit;
+      tspLocationData.repo = resolvedConfigUrl.repo;
 
-    outputDir = await initProcessDataAndWriteTspLocation(
-      outputDir,
-      repoRoot,
-      joinPaths(cloneDir, tspConfigPath),
-      tspLocationData,
-      argv,
-    );
-    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-    await removeDirectory(cloneDir);
+      outputDir = await initProcessDataAndWriteTspLocation(
+        outputDir,
+        repoRoot,
+        joinPaths(cloneDir, tspConfigPath),
+        tspLocationData,
+        argv,
+      );
+      if (!skipSyncAndGenerate) {
+        argv["output-dir"] = outputDir;
+        await syncCommandCore(argv, { cloneDir, repoRoot, reusable, ...resolvedConfigUrl });
+      }
+    } finally {
+      Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
+      await removeDirectory(cloneDir);
+    }
   } else {
     // Local directory scenario
     if (!tspConfigPath.endsWith("tspconfig.yaml")) {
@@ -286,8 +304,8 @@ export async function initCommand(argv: any) {
     if (!isUrl) {
       // If the local spec repo is provided, we need to update the local-spec-repo argument for syncing as well
       argv["local-spec-repo"] = tspConfigPath;
+      await syncCommand(argv);
     }
-    await syncCommand(argv);
     await generateCommand(argv);
   } else {
     // If skip-sync-and-generate is set, just check if we should create the tsp-client-metadata.yaml file.
@@ -302,6 +320,47 @@ export async function initCommand(argv: any) {
 }
 
 export async function syncCommand(argv: any) {
+  return syncCommandCore(argv);
+}
+
+interface InitCheckout {
+  cloneDir: string;
+  repoRoot: string;
+  reusable: boolean;
+  repo: string;
+  commit: string;
+  path: string;
+}
+
+async function expandInitCheckout(
+  checkout: InitCheckout | undefined,
+  location: TspLocation,
+  repoRoot: string,
+  paths: string[],
+): Promise<string | undefined> {
+  if (
+    !checkout?.reusable ||
+    checkout.repoRoot !== repoRoot ||
+    checkout.repo !== location.repo ||
+    checkout.commit !== location.commit ||
+    checkout.path !== location.directory ||
+    paths.some((path) => path.startsWith("-"))
+  ) {
+    return undefined;
+  }
+  try {
+    if (await isPinnedSpecCheckout(checkout.cloneDir, checkout.commit)) {
+      // One expansion lets Git request the missing objects for all paths together.
+      await addSpecFiles(checkout.cloneDir, ...paths);
+      return checkout.cloneDir;
+    }
+  } catch (error) {
+    Logger.debug(`Could not expand the init checkout; using a fresh clone: ${error}`);
+  }
+  return undefined;
+}
+
+async function syncCommandCore(argv: any, initCheckout?: InitCheckout) {
   let outputDir = argv["output-dir"];
   let localSpecRepo = argv["local-spec-repo"];
   const batch = argv["batch"] ?? false;
@@ -367,37 +426,46 @@ export async function syncCommand(argv: any) {
       );
     }
   } else {
-    const cloneDir = await makeSparseSpecDir(repoRoot);
-    Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-    Logger.debug(`Cloning repo to ${cloneDir}`);
-    await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
-    await sparseCheckout(cloneDir);
-    await addSpecFiles(cloneDir, tspLocation.directory);
-    for (const dir of tspLocation.additionalDirectories ?? []) {
-      Logger.info(`Processing additional directory: ${dir}`);
-      await addSpecFiles(cloneDir, dir);
+    const paths = [tspLocation.directory, ...(tspLocation.additionalDirectories ?? [])];
+    const reused = await expandInitCheckout(initCheckout, tspLocation, repoRoot, paths);
+    if (!reused && initCheckout) {
+      // Release the config checkout before downloading a second copy of the spec.
+      await removeDirectory(initCheckout.cloneDir);
     }
-    await checkoutCommit(cloneDir, tspLocation.commit);
-    const clonedTspProject = joinPaths(cloneDir, tspLocation.directory);
+    const cloneDir = reused ?? (await makeSparseSpecDir(repoRoot));
     try {
-      // Check if the cloned TypeSpec project exists
-      await stat(clonedTspProject);
-    } catch (err) {
-      Logger.error(
-        `Unexpected error reading the TypeSpec project directory after cloning the repository: '${clonedTspProject}'. Please verify that the TypeSpec directory path is correct and that it exists at the specified commit: '${tspLocation.commit}'.\n${err}`,
-      );
-      await removeDirectory(cloneDir);
-      process.exit(1);
+      for (const dir of paths.slice(1)) Logger.info(`Processing additional directory: ${dir}`);
+      if (!reused) {
+        Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
+        Logger.debug(`Cloning repo to ${cloneDir}`);
+        await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
+        await sparseCheckout(cloneDir);
+        for (const path of paths) await addSpecFiles(cloneDir, path);
+        await checkoutCommit(cloneDir, tspLocation.commit);
+      }
+      const clonedTspProject = joinPaths(cloneDir, tspLocation.directory);
+      try {
+        await stat(clonedTspProject);
+      } catch (err) {
+        Logger.error(
+          `Unexpected error reading the TypeSpec project directory after cloning the repository: '${clonedTspProject}'. Please verify that the TypeSpec directory path is correct and that it exists at the specified commit: '${tspLocation.commit}'.\n${err}`,
+        );
+        await removeDirectory(cloneDir);
+        process.exit(1);
+      }
+      await cp(clonedTspProject, srcDir, { recursive: true });
+      for (const dir of paths.slice(1)) {
+        Logger.info(`Syncing additional directory: ${dir}`);
+        await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), {
+          recursive: true,
+        });
+      }
+    } finally {
+      if (!reused) {
+        Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
+        await removeDirectory(cloneDir);
+      }
     }
-    await cp(clonedTspProject, srcDir, { recursive: true });
-    for (const dir of tspLocation.additionalDirectories!) {
-      Logger.info(`Syncing additional directory: ${dir}`);
-      await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), {
-        recursive: true,
-      });
-    }
-    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-    await removeDirectory(cloneDir);
   }
 
   try {

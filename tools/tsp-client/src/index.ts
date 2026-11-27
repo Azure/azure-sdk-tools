@@ -258,7 +258,7 @@ const parser = yargs(hideBin(process.argv))
   )
   .command(
     "generate-config-files",
-    "Generate emitter-package.json and emitter-package-lock.json files from a TypeSpec emitter's package.json",
+    "Generate the emitter manifest and dependency lock from a TypeSpec emitter's package.json",
     (yargs: any) => {
       return yargs
         .option("package-json", {
@@ -278,6 +278,11 @@ const parser = yargs(hideBin(process.argv))
           type: "string",
           description:
             'Pass space separated string of flags to the underlying npm install command, e.g. --npm-args="--force --legacy-peer-deps"',
+        })
+        .option("package-manager", {
+          choices: ["npm", "pnpm"],
+          description:
+            "Emitter dependency manager (defaults to the existing lockfile, otherwise npm)",
         })
         .option("use-npm-pinning", {
           type: "boolean",
@@ -302,6 +307,11 @@ const parser = yargs(hideBin(process.argv))
           type: "string",
           description:
             'Pass space separated string of flags to the underlying npm install command, e.g. --npm-args="--force --legacy-peer-deps"',
+        })
+        .option("package-manager", {
+          choices: ["npm", "pnpm"],
+          description:
+            "Emitter dependency manager (defaults to the existing lockfile, otherwise npm)",
         });
     },
     async (argv: any) => {

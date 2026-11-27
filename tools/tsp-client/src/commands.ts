@@ -13,8 +13,18 @@ import {
   readTspLocation,
   removeDirectory,
 } from "./fs.js";
-import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
+import { cp, lstat, mkdir, mkdtemp, readFile, rm, stat, unlink, writeFile } from "fs/promises";
+import { tmpdir } from "node:os";
+import { isDeepStrictEqual } from "node:util";
 import { npmCommand, npxCommand, npmViewPackageDevDependencies } from "./npm.js";
+import {
+  auditPnpmDependencies,
+  pnpmCommand,
+  pnpmEmitterLockPath,
+  pnpmLockExists,
+  pnpmWorkspaceContent,
+  publishEmitterFile,
+} from "./pnpm.js";
 import {
   compileTsp,
   discoverEntrypointFile,
@@ -400,14 +410,28 @@ export async function syncCommand(argv: any) {
     await removeDirectory(cloneDir);
   }
 
-  try {
-    let emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
-
-    // Copy the emitter lock file to the temp directory and rename it to package-lock.json so that npm can use it.
-    await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });
-  } catch (err) {
-    Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
-    Logger.debug("Will attempt look for emitter-package.json...");
+  const pnpmLock = pnpmEmitterLockPath(emitterPackageJsonPath);
+  if (await pnpmLockExists(pnpmLock)) {
+    const workspace = await pnpmWorkspaceContent(emitterPackageJsonPath);
+    for (const name of ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"]) {
+      await pnpmLockExists(joinPaths(tempRoot, name));
+    }
+    await removeStaleWorkspaceFile(joinPaths(tempRoot, "package-lock.json"));
+    await cp(pnpmLock, joinPaths(tempRoot, "pnpm-lock.yaml"));
+    await writeFile(joinPaths(tempRoot, "pnpm-workspace.yaml"), workspace);
+  } else {
+    // A previous --save-inputs run may have left a different manager's lock behind.
+    for (const name of ["pnpm-lock.yaml", "pnpm-workspace.yaml"]) {
+      await removeStaleWorkspaceFile(joinPaths(tempRoot, name));
+    }
+    const emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
+    const stagedLockPath = joinPaths(tempRoot, "package-lock.json");
+    try {
+      await cp(emitterLockPath, stagedLockPath, { dereference: true });
+    } catch (error: any) {
+      if (error.code !== "ENOENT") throw error;
+      await removeStaleWorkspaceFile(stagedLockPath);
+    }
   }
   try {
     await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"), { recursive: true });
@@ -440,6 +464,9 @@ export async function generateCommand(argv: any) {
   }
   const srcDir = joinPaths(tempRoot, projectName);
   const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
+  const pnpmLock = pnpmEmitterLockPath(emitterPackageJsonPath);
+  const usePnpm = await pnpmLockExists(pnpmLock);
+  if (usePnpm) await pnpmLockExists(emitterPackageJsonPath);
   const emitter = await getEmitterFromRepoConfig(emitterPackageJsonPath);
   if (!emitter) {
     throw new Error("emitter is undefined");
@@ -467,13 +494,46 @@ export async function generateCommand(argv: any) {
 
   if (skipInstall) {
     Logger.info("Skipping installation of dependencies");
+  } else if (usePnpm) {
+    const manifest = await readFile(emitterPackageJsonPath, "utf8");
+    const workspace = await pnpmWorkspaceContent(emitterPackageJsonPath, manifest);
+    const readStaged = async (name: string) => {
+      const path = joinPaths(tempRoot, name);
+      return (await pnpmLockExists(path)) ? readFile(path, "utf8") : undefined;
+    };
+    if (
+      (await readStaged("pnpm-lock.yaml")) !== (await readFile(pnpmLock, "utf8")) ||
+      (await readStaged("package.json")) !== manifest ||
+      (await readStaged("pnpm-workspace.yaml")) !== workspace
+    ) {
+      throw new Error(
+        "Staged emitter inputs are missing or out of date; run tsp-client sync before generate",
+      );
+    }
+    Logger.info("Installing emitter dependencies with pnpm...");
+    dotenvConfig({ path: resolve(repoRoot, ".env") });
+    const args = ["install", "--frozen-lockfile"];
+    if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") args.push("--force");
+    await pnpmCommand(tempRoot, args);
+    await auditPnpmDependencies(tempRoot);
   } else {
+    if (
+      await lstat(joinPaths(tempRoot, "pnpm-lock.yaml")).then(
+        (entry) => entry.isFile() || entry.isSymbolicLink(),
+        (error) => {
+          if (error.code !== "ENOENT") throw error;
+          return false;
+        },
+      )
+    ) {
+      throw new Error("Emitter package manager changed; run tsp-client sync before generate");
+    }
     Logger.info("Installing dependencies from npm...");
     const args: string[] = [];
     try {
       // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
-      await stat(joinPaths(tempRoot, "package-lock.json"));
-      args.push("ci");
+      const stagedLock = await stat(joinPaths(tempRoot, "package-lock.json"));
+      args.push(stagedLock.isFile() ? "ci" : "install");
     } catch (err) {
       // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
       args.push("install");
@@ -665,6 +725,15 @@ export async function generateConfigFilesCommand(argv: any) {
   const emitterPath =
     resolveEmitterPathFromArgs(argv) ??
     joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
+  const manager = await resolveEmitterManager(emitterPath, argv);
+  if (manager === "pnpm" && overridePath) {
+    throw new Error(
+      "--overrides uses npm override semantics; configure pnpm overrides in the emitter pnpm workspace file instead",
+    );
+  }
+  if (manager === "pnpm" && (await doesFileExist(emitterPath))) {
+    await pnpmWorkspaceContent(emitterPath);
+  }
 
   // Start with the existing emitter-package.json if it exists, otherwise create a new one
   let emitterPackageJson: Record<string, any>;
@@ -733,18 +802,46 @@ export async function generateConfigFilesCommand(argv: any) {
     emitterPackageJson["overrides"] = overrideJson;
   }
 
-  await writeFile(emitterPath, JSON.stringify(emitterPackageJson, null, 2));
+  const contents = JSON.stringify(emitterPackageJson, null, 2);
+  if (manager === "pnpm") {
+    await generateLockFileCommandCore(outputDir, emitterPath, [], manager, contents);
+  } else {
+    await writeFile(emitterPath, contents);
+    await generateEmitterLock(outputDir, emitterPath, argv);
+  }
   Logger.info(`${basename(emitterPath)} file generated in '${dirname(emitterPath)}' directory`);
+}
 
-  await generateLockFileCommandCore(outputDir, emitterPath, parseNpmArgs(argv["npm-args"]));
+async function resolveEmitterManager(emitterPath: string, argv: any): Promise<"npm" | "pnpm"> {
+  const hasPnpmLock = await pnpmLockExists(pnpmEmitterLockPath(emitterPath));
+  const manager = argv["package-manager"] ?? (hasPnpmLock ? "pnpm" : "npm");
+  if (manager !== "npm" && manager !== "pnpm")
+    throw new Error(`Unknown package manager: ${manager}`);
+  if (manager === "npm" && hasPnpmLock)
+    throw new Error("Remove the emitter pnpm lock before switching to npm");
+  if (manager === "pnpm" && argv["npm-args"])
+    throw new Error(
+      "--npm-args cannot be used with pnpm; configure the registry in your user .npmrc",
+    );
+  return manager;
+}
+
+async function generateEmitterLock(outputDir: string, emitterPath: string, argv: any) {
+  const manager = await resolveEmitterManager(emitterPath, argv);
+  await generateLockFileCommandCore(
+    outputDir,
+    emitterPath,
+    parseNpmArgs(argv["npm-args"]),
+    manager,
+  );
 }
 
 export async function generateLockFileCommand(argv: any) {
-  await generateLockFileCommandCore(
+  await generateEmitterLock(
     argv["output-dir"],
     resolveEmitterPathFromArgs(argv) ??
       joinPaths(await getRepoRoot(argv["output-dir"]), defaultRelativeEmitterPackageJsonPath),
-    parseNpmArgs(argv["npm-args"]),
+    argv,
   );
 }
 
@@ -752,6 +849,8 @@ export async function generateLockFileCommandCore(
   outputDir: string,
   emitterPackageJsonPath: string,
   npmArgs: string[] = [],
+  manager: "npm" | "pnpm" = "npm",
+  pendingManifest?: string,
 ) {
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
@@ -760,16 +859,67 @@ export async function generateLockFileCommandCore(
   }
   args.push(...npmArgs);
   if (npmArgs.length > 0) {
-    Logger.info("Passing additional npm flags to the `npm install` command.");
+    Logger.info(`Passing additional ${manager} flags to the install command.`);
+  }
+  if (manager === "pnpm") {
+    await pnpmLockExists(emitterPackageJsonPath);
+    const contents = pendingManifest ?? (await readFile(emitterPackageJsonPath, "utf8"));
+    const workspace = await pnpmWorkspaceContent(emitterPackageJsonPath, contents);
+    const emitterLockPath = pnpmEmitterLockPath(emitterPackageJsonPath);
+    const repoRoot = await getRepoRoot(outputDir ?? process.cwd()).catch(() => undefined);
+    if (repoRoot) dotenvConfig({ path: resolve(repoRoot, ".env") });
+    const tempRoot = await mkdtemp(joinPaths(tmpdir(), "tsp-emitter-lock-"));
+    try {
+      await writeFile(joinPaths(tempRoot, "package.json"), contents);
+      await writeFile(joinPaths(tempRoot, "pnpm-workspace.yaml"), workspace);
+      const previousLock = (await pnpmLockExists(emitterLockPath))
+        ? await readFile(emitterLockPath, "utf8")
+        : undefined;
+      if (previousLock !== undefined) {
+        await writeFile(joinPaths(tempRoot, "pnpm-lock.yaml"), previousLock);
+      }
+      await pnpmCommand(tempRoot, ["install", "--no-frozen-lockfile", ...args.slice(1)]);
+      const resultingPolicy = await readFile(joinPaths(tempRoot, "pnpm-workspace.yaml"), "utf8");
+      if (!isDeepStrictEqual(parseYaml(resultingPolicy), parseYaml(workspace))) {
+        throw new Error(
+          "pnpm changed the workspace policy while resolving dependencies; the emitter lockfile was not published",
+        );
+      }
+      await auditPnpmDependencies(tempRoot);
+      await publishEmitterFile(
+        emitterLockPath,
+        await readFile(joinPaths(tempRoot, "pnpm-lock.yaml"), "utf8"),
+      );
+      if (pendingManifest !== undefined) {
+        try {
+          await publishEmitterFile(emitterPackageJsonPath, pendingManifest);
+        } catch (error) {
+          try {
+            if (previousLock === undefined) await rm(emitterLockPath, { force: true });
+            else await publishEmitterFile(emitterLockPath, previousLock);
+          } catch (rollbackError) {
+            throw new AggregateError(
+              [error, rollbackError],
+              `Could not publish emitter manifest or restore ${emitterLockPath}`,
+            );
+          }
+          throw error;
+        }
+      }
+    } finally {
+      await removeDirectory(tempRoot).catch((error) => {
+        Logger.warn(`Could not clean up pnpm lock generation workspace: ${error}`);
+      });
+    }
+    Logger.info(`Lock file generated in ${emitterLockPath}`);
+    return;
   }
   const tempRoot = await createTempDirectory(outputDir);
   await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"));
   await npmCommand(tempRoot, args);
   const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
   const emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
-  if (lockFile.isFile()) {
-    await cp(joinPaths(tempRoot, "package-lock.json"), emitterLockPath);
-  }
+  if (lockFile.isFile()) await cp(joinPaths(tempRoot, "package-lock.json"), emitterLockPath);
   await removeDirectory(tempRoot);
   Logger.info(`Lock file generated in ${emitterLockPath}`);
 }
@@ -786,10 +936,34 @@ export async function installDependencies(argv: any) {
   }
 
   const args: string[] = [];
-  await cp(
-    joinPaths(repoRoot, "eng", "emitter-package.json"),
-    joinPaths(installPath, "package.json"),
-  );
+  const emitterManifest = joinPaths(repoRoot, "eng", "emitter-package.json");
+  const pnpmLock = pnpmEmitterLockPath(emitterManifest);
+  if (await pnpmLockExists(pnpmLock)) {
+    const workspace = await pnpmWorkspaceContent(emitterManifest);
+    const lockContents = await readFile(pnpmLock, "utf8");
+    await pnpmLockExists(joinPaths(installPath, "package.json"));
+    // Never overwrite an unrelated repository workspace or lockfile.
+    for (const [file, expected] of [
+      [joinPaths(installPath, "pnpm-workspace.yaml"), workspace],
+      [joinPaths(installPath, "pnpm-lock.yaml"), lockContents],
+    ] as const) {
+      if ((await pnpmLockExists(file)) && (await readFile(file, "utf8")) !== expected) {
+        throw new Error(
+          `Refusing to overwrite an existing ${file}; choose a separate install path`,
+        );
+      }
+    }
+    await cp(emitterManifest, joinPaths(installPath, "package.json"));
+    await writeFile(joinPaths(installPath, "pnpm-workspace.yaml"), workspace);
+    await writeFile(joinPaths(installPath, "pnpm-lock.yaml"), lockContents);
+    dotenvConfig({ path: resolve(repoRoot, ".env") });
+    const pnpmArgs = ["install", "--frozen-lockfile"];
+    if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") pnpmArgs.push("--force");
+    await pnpmCommand(installPath, pnpmArgs);
+    await auditPnpmDependencies(installPath);
+    return;
+  }
+  await cp(emitterManifest, joinPaths(installPath, "package.json"));
   try {
     // Check if emitter-package-lock.json exists, if it does, we'll install dependencies through `npm ci`
     const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
@@ -828,6 +1002,15 @@ export async function sortSwaggerCommand(argv: any): Promise<void> {
 function getEmitterPackageJsonPath(repoRoot: string, tspLocation: TspLocation): string {
   const relativePath = tspLocation.emitterPackageJsonPath ?? defaultRelativeEmitterPackageJsonPath;
   return joinPaths(repoRoot, relativePath);
+}
+
+async function removeStaleWorkspaceFile(path: string): Promise<void> {
+  try {
+    const entry = await lstat(path);
+    if (entry.isFile() || entry.isSymbolicLink()) await rm(path, { force: true });
+  } catch (error: any) {
+    if (error.code !== "ENOENT") throw error;
+  }
 }
 
 function getEmitterLockPath(emitterPackageJsonPath: string): string {

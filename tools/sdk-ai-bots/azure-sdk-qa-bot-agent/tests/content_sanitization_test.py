@@ -20,8 +20,7 @@ from utils.content_sanitization import (
     LogSanitizationFilter,
     install_log_sanitization,
     is_public_github_repo,
-    sanitize_issue_text,
-    sanitize_log_text,
+    sanitize_text,
 )
 
 
@@ -34,8 +33,8 @@ def _make_context(tool_name: str, arguments: dict, session=None):
     )
 
 
-def test_sanitize_issue_text_redacts_secrets_and_ignores_trace_ids():
-    out_secret = sanitize_issue_text(
+def test_sanitize_text_redacts_secrets_and_ignores_trace_ids():
+    out_secret = sanitize_text(
         "token = 'ghp_1234567890abcdefghijklmnopqrstuvwxyzABCD'",
         is_public_target=True,
     )
@@ -43,7 +42,7 @@ def test_sanitize_issue_text_redacts_secrets_and_ignores_trace_ids():
     assert "1234567890abcdefghijklmnopqrstuvwxyzABCD" not in out_secret
     assert "<CREDENTIAL_OR_SECRET>" in out_secret
 
-    out_sas = sanitize_issue_text(
+    out_sas = sanitize_text(
         "https://acct.blob.core.windows.net/c/b?sv=2023-01-01&sig=AbCdEfGhIjKlMnOpQrStUvWxYz012345",
         is_public_target=True,
     )
@@ -55,10 +54,10 @@ def test_sanitize_issue_text_redacts_secrets_and_ignores_trace_ids():
         "**Trace ID:** af58ea288fe9139d441ced9646bc73b2\n"
         "**Source:** https://github.com/Azure/azure-sdk-for-net/blob/main/doc/dev/SDKBreakingChanges.md"
     )
-    assert sanitize_issue_text(clean, is_public_target=True) == clean
+    assert sanitize_text(clean, is_public_target=True) == clean
 
 
-def test_sanitize_issue_text_redacts_public_vs_private_targets():
+def test_sanitize_text_redacts_public_vs_private_targets():
     teams_url = (
         "https://teams.microsoft.com/l/message/19%3Aabc%40thread.skype/1793894"
         "?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121"
@@ -66,25 +65,15 @@ def test_sanitize_issue_text_redacts_public_vs_private_targets():
     )
     body = f"User alice@microsoft.com asked a question.\nSee {teams_url}"
 
-    public_text = sanitize_issue_text(body, is_public_target=True)
+    public_text = sanitize_text(body, is_public_target=True)
     assert "alice@microsoft.com" not in public_text
     assert "<EMAIL_ADDRESS>" in public_text
     assert "teams.microsoft.com" not in public_text
     assert "n/a (internal Teams thread)" in public_text
 
-    private_text = sanitize_issue_text(body, is_public_target=False)
+    private_text = sanitize_text(body, is_public_target=False)
     assert "alice@microsoft.com" not in private_text
     assert "teams.microsoft.com" in private_text
-
-
-def test_sanitize_log_text():
-    log_out = sanitize_log_text(
-        "alice@microsoft.com sent token ghp_1234567890abcdefghijklmnopqrstuvwxyzABCD "
-        "from https://teams.microsoft.com/l/message/19%3Aabc/123"
-    )
-    assert "alice@microsoft.com" not in log_out
-    assert "ghp_" not in log_out
-    assert "teams.microsoft.com" not in log_out
 
 
 def test_repo_visibility_helper():

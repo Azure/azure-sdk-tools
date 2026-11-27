@@ -6,7 +6,7 @@ from collections.abc import Awaitable, Callable, Iterable, MutableMapping
 
 from agent_framework import FunctionInvocationContext, FunctionMiddleware
 
-from utils.content_sanitization import is_public_github_repo, sanitize_issue_text
+from utils.content_sanitization import is_public_github_repo, sanitize_text
 
 
 class OutboundSanitizationMiddleware(FunctionMiddleware):
@@ -62,7 +62,7 @@ class OutboundSanitizationMiddleware(FunctionMiddleware):
         for field in self._TEXT_FIELDS:
             val = context.arguments.get(field)
             if isinstance(val, str) and val:
-                context.arguments[field] = sanitize_issue_text(
+                context.arguments[field] = sanitize_text(
                     val, is_public_target=is_public
                 )
 

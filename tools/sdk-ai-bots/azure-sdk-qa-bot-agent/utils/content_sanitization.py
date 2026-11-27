@@ -60,7 +60,7 @@ def _presidio() -> tuple[AnalyzerEngine, AnonymizerEngine]:
     return AnalyzerEngine(registry=registry, nlp_engine=_BlankSpacyNlpEngine()), AnonymizerEngine()
 
 
-def sanitize_issue_text(text: str, *, is_public_target: bool) -> str:
+def sanitize_text(text: str, *, is_public_target: bool) -> str:
     """Redact credentials and PII via Presidio, plus Teams links for public targets."""
     if not text:
         return text
@@ -78,13 +78,6 @@ def sanitize_issue_text(text: str, *, is_public_target: bool) -> str:
         updated = _TEAMS_LINK_RE.sub("n/a (internal Teams thread)", updated)
 
     return updated
-
-
-def sanitize_log_text(text: str | None) -> str:
-    """Redact secrets, PII, and Teams links before writing to logs."""
-    if not text:
-        return ""
-    return sanitize_issue_text(text, is_public_target=True)
 
 
 def is_public_github_repo(owner: str | None, repo: str | None) -> bool:
@@ -112,10 +105,10 @@ class LogSanitizationFilter(logging.Filter):
                 message = record.getMessage()
             except Exception:
                 message = str(record.msg)
-            record.msg = sanitize_log_text(message)
+            record.msg = sanitize_text(message, is_public_target=True)
             record.args = ()
             if record.exc_text:
-                record.exc_text = sanitize_log_text(record.exc_text)
+                record.exc_text = sanitize_text(record.exc_text, is_public_target=True)
             return True
         finally:
             self._local.active = False

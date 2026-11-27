@@ -100,3 +100,17 @@ class ChatResponse(BaseModel):
     trace_id: str | None = None
     mentions: list[TeamsMention] | None = None
     agent_name: str | None = None
+
+
+class ChatAgentReference(BaseModel):
+    """Reference item in the hosted chat agent's structured output."""
+
+    title: str
+    link: str
+
+
+class ChatAgentOutput(BaseModel):
+    """Structured output returned by the hosted chat agent."""
+
+    answer: str
+    references: list[ChatAgentReference]

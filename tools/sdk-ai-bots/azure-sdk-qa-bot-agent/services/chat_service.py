@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 from datetime import datetime, timezone
 import json
 import logging
@@ -12,6 +13,7 @@ from urllib.parse import urlparse
 
 import httpx
 from azure.core.exceptions import AzureError
+from pydantic import ValidationError
 
 from config.app_config import Settings, get as cfg
 from config.tenant_config import (
@@ -23,6 +25,8 @@ from models.chat import (
     AdditionalInfo,
     AdditionalInfoType,
     AgentReferenceType,
+    ChatAgentOutput,
+    ChatAgentReference,
     ChatRequest,
     ChatResponse,
     ConversationItem,
@@ -677,19 +681,27 @@ class ChatService:
         ]
 
         output_text = response.output_text or ""
-
-        # Strip model citation artifacts (e.g. "citeturn0search0").
-        output_text = _CITATION_RE.sub("", output_text)
-
-        # Extract any explicit {{channel:<key>}} handoff before **References**.
-        output_text, route_channel_name, route_channel_link = (
-            self._extract_support_channel_from_text(output_text)
+        structured_output = self._parse_structured_output(output_text)
+        answer = (
+            structured_output.answer
+            if structured_output is not None
+            else output_text
         )
 
-        # Extract structured references from the agent's markdown output
-        # and strip the references section from the answer text.
-        answer, references = self._extract_references_from_text(
-            output_text, retrieved_references
+        # Strip model citation artifacts (e.g. "citeturn0search0").
+        answer = _CITATION_RE.sub("", answer)
+
+        # Extract any explicit {{channel:<key>}} handoff placeholder.
+        answer, route_channel_name, route_channel_link = (
+            self._extract_support_channel_from_text(answer)
+        )
+
+        references = (
+            self._enrich_references(
+                structured_output.references, retrieved_references
+            )
+            if structured_output is not None
+            else []
         )
 
         # Build full_context from every KB and wiki search when requested.
@@ -729,6 +741,20 @@ class ChatService:
             resp.route_channel_link = route_channel_link
         return resp
 
+    @staticmethod
+    def _parse_structured_output(raw_text: str) -> ChatAgentOutput | None:
+        """Parse structured JSON agent output when present."""
+        stripped = raw_text.strip()
+        if not stripped.startswith("{"):
+            return None
+        try:
+            return ChatAgentOutput.model_validate_json(stripped)
+        except ValidationError:
+            logger.warning(
+                "Agent output started with '{' but did not match ChatAgentOutput"
+            )
+            return None
+
     def _teams_mentions_enabled(self, req: ChatRequest) -> bool:
         return req.conversation_type == ConversationType.teams_channel and (
             self._settings("ENABLE_TEAMS_MENTION", "true") or "true"
@@ -762,24 +788,11 @@ class ChatService:
         return cleaned, resolved_name, resolved_link
 
     @staticmethod
-    def _extract_references_from_text(
-        text: str, retrieved_references: list[Reference] | None = None
-    ) -> tuple[str, list[Reference]]:
-        """Parse the **References** section from agent output text.
-
-        Returns ``(answer_without_references, extracted_references)``.
-        The extracted references are enriched with ``source`` and ``content``
-        from *retrieved_references* when a matching link or title is found,
-        preserving compatibility with the old backend response shape.
-        """
-        # Locate the **References** header
-        header_match = re.search(r"\n*\*\*References\*\*\s*\n", text)
-        if not header_match:
-            return text, []
-
-        answer = text[: header_match.start()].rstrip()
-        refs_block = text[header_match.end() :]
-
+    def _enrich_references(
+        raw_references: Sequence[ChatAgentReference],
+        retrieved_references: list[Reference] | None = None,
+    ) -> list[Reference]:
+        """Enrich agent references with metadata from retrieved KB/wiki results."""
         # Build lookups from the tool results for enrichment
         link_title_lookup: dict[tuple[str, str], Reference] = {}
         link_lookup: dict[str, Reference] = {}
@@ -811,11 +824,12 @@ class ChatService:
                     return matched
             return None
 
-        # Extract markdown links: - [title](link)
         extracted: list[Reference] = []
-        for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block):
-            title = m.group(1).strip()
-            link = m.group(2)
+        for item in raw_references:
+            title = item.title.strip()
+            link = item.link.strip()
+            if not title or not link:
+                continue
             matched = _match_reference(link, title)
             source = matched.source if matched else ""
             content = matched.content if matched else ""
@@ -832,7 +846,7 @@ class ChatService:
                 )
             )
 
-        return answer, extracted
+        return extracted
 
     @staticmethod
     def _unwrap_json(raw_output) -> str | None:

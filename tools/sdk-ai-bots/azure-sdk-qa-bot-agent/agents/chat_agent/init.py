@@ -32,6 +32,7 @@ from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
 from config.app_config import get as cfg
+from models.chat import ChatAgentOutput
 from skills import tenant_skills
 from skills.support_channels import create_support_channels_skill
 from skills.tenant_skills import create_tenant_skills
@@ -172,6 +173,7 @@ async def main() -> None:
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
             "include": ["web_search_call.action.sources"],
+            "response_format": ChatAgentOutput,
         },
     )
 

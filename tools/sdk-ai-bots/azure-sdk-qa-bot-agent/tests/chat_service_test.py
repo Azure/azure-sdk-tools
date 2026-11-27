@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,7 +14,14 @@ from azure.ai.projects.models import AgentVersionDetails
 from azure.core.async_paging import AsyncItemPaged
 
 from config.app_config import AppConfigSnapshot
-from models.chat import AdditionalInfo, ChatRequest, Message as ChatMessage
+from models.chat import (
+    AdditionalInfo,
+    ChatAgentOutput,
+    ChatAgentReference,
+    ChatRequest,
+    Message as ChatMessage,
+)
+from models.knowledge import Reference
 from services import chat_service
 from services.chat_service import ChatService
 
@@ -103,10 +111,12 @@ def placeholder_chat(monkeypatch):
     service._save_bot_answer_to_conversation = AsyncMock()
     invoke = AsyncMock(return_value=("trace-id", SimpleNamespace(
         id="response-1", status="completed", output=[],
-        output_text=(
-            "{{mention:reviewer-a}}, please help. Contact: {{contact:reviewer-a}}."
-            "\n\n**References**\n- [Guide](https://example.test/guide)"
-        ),
+        output_text=ChatAgentOutput(
+            answer="{{mention:reviewer-a}}, please help. Contact: {{contact:reviewer-a}}.",
+            references=[
+                ChatAgentReference(title="Guide", link="https://example.test/guide"),
+            ],
+        ).model_dump_json(),
     )))
     monkeypatch.setattr(chat_service, "HostedAgentClient", lambda _: SimpleNamespace(invoke=invoke))
     tasks = []
@@ -263,11 +273,13 @@ async def test_backend_mentions_preserve_all_retrieved_evidence(placeholder_chat
         ])
     state.invoke.return_value = ("trace-id", SimpleNamespace(
         id="response-1", status="completed", output=output,
-        output_text=(
-            "{{mention:reviewer-a}}, please help.\n\n**References**\n"
-            "- [Guide](https://example.test/guide)\n"
-            "- [Wiki](https://example.test/wiki)"
-        ),
+        output_text=ChatAgentOutput(
+            answer="{{mention:reviewer-a}}, please help.",
+            references=[
+                ChatAgentReference(title="Guide", link="https://example.test/guide"),
+                ChatAgentReference(title="Wiki", link="https://example.test/wiki"),
+            ],
+        ).model_dump_json(),
     ))
     result = await state.service.chat(ChatRequest(
         tenant_id="azure_sdk_qa_bot", conversation_id="thread",
@@ -357,14 +369,16 @@ def test_references_and_full_context_use_all_search_calls(
             ),
             tool_output,
         ])
-    text = (
-        "Answer using retrieved evidence.\n\n**References**\n"
-        "- [Earlier section](https://example.test/shared)\n"
-        "- [Wiki guidance](https://example.test/wiki)\n"
-        "- [Repeated document](https://example.test/repeated)\n"
-        "- [Later section](https://example.test/shared)\n"
-        "- [Unmatched document](https://example.test/unmatched)"
-    )
+    text = ChatAgentOutput(
+        answer="Answer using retrieved evidence.",
+        references=[
+            ChatAgentReference(title="Earlier section", link="https://example.test/shared"),
+            ChatAgentReference(title="Wiki guidance", link="https://example.test/wiki"),
+            ChatAgentReference(title="Repeated document", link="https://example.test/repeated"),
+            ChatAgentReference(title="Later section", link="https://example.test/shared"),
+            ChatAgentReference(title="Unmatched document", link="https://example.test/unmatched"),
+        ],
+    ).model_dump_json()
     output.append(ResponseOutputMessage.model_construct(
         type="message", id="answer", role="assistant", status="completed",
         content=[ResponseOutputText.model_construct(
@@ -559,6 +573,107 @@ def test_stateless_session_ids_are_isolated_by_agent() -> None:
     service._set_stateless_session_id("azure-sdk-agent", "1", None)
     assert service._get_stateless_session_id("azure-sdk-agent", "1") is None
     assert service._get_stateless_session_id("azure-sdk-agent", "2") == "sdk-session-v2"
+
+
+def test_postprocess_parses_structured_output_and_enriches_references() -> None:
+    from openai.types.responses import ResponseFunctionToolCall, ResponseFunctionToolCallOutputItem
+
+    from models.knowledge import SearchKnowledgeBaseResult
+
+    kb_ref = Reference(
+        title="Release Gate | Engineering Docs",
+        source="azure-sdk-docs-eng",
+        link="https://example.com/release-gate",
+        content="A 403 insufficientAppRole error means the calling identity lacks the ARH role.",
+    )
+    output = [
+        ResponseFunctionToolCall.model_construct(
+            type="function_call",
+            name="search_knowledge_base",
+            call_id="kb-1",
+            arguments="{}",
+        ),
+        ResponseFunctionToolCallOutputItem.model_construct(
+            type="function_call_output",
+            id="kb-1",
+            call_id="kb-1",
+            status="completed",
+            output=json.dumps([SearchKnowledgeBaseResult(results=[kb_ref]).model_dump_json()]),
+        ),
+    ]
+    structured = ChatAgentOutput(
+        answer=(
+            "Check the pipeline service connection role."
+            " \ue200cite\ue202turn0search0\ue201\n\n{{channel:sdk_release_support}}"
+        ),
+        references=[
+            ChatAgentReference(
+                title="Release Gate",
+                link="https://example.com/release-gate",
+            ),
+            ChatAgentReference(
+                title="GitHub Issue",
+                link="https://github.com/Azure/azure-sdk-tools/issues/16652",
+            ),
+            ChatAgentReference(
+                title="Empty link",
+                link="",
+            ),
+        ],
+    )
+    response = SimpleNamespace(
+        id="response-structured",
+        output_text=structured.model_dump_json(),
+        output=output,
+    )
+    request = ChatRequest(
+        tenant_id="azure_sdk_onboarding",
+        channel_name="Azure SDK Onboarding",
+        message=ChatMessage(role="user", content="Why did GA release fail with 403?"),
+    )
+
+    result = ChatService()._postprocess(request, response, "conv-1")
+
+    assert result.answer == "Check the pipeline service connection role."
+    assert result.route_channel_name == "SDK release support"
+    assert result.route_channel_link is not None
+    assert result.references == [
+        kb_ref,
+        Reference(
+            title="GitHub Issue",
+            source="",
+            link="https://github.com/Azure/azure-sdk-tools/issues/16652",
+            content="",
+        ),
+    ]
+
+
+def test_postprocess_handles_plain_text_output_without_extracting_references() -> None:
+    response = SimpleNamespace(
+        id="response-1",
+        output_text="I'm sorry, I can't assist with that.",
+        output=[],
+    )
+    request = ChatRequest(
+        tenant_id="azure_mcp_server",
+        message=ChatMessage(role="user", content="Question"),
+    )
+
+    result = ChatService()._postprocess(request, response, None)
+
+    assert result.answer == "I'm sorry, I can't assist with that."
+    assert result.references is None
+
+
+def test_chat_agent_structured_output_schema_is_strict() -> None:
+    from openai.lib._parsing._responses import type_to_text_format_param
+
+    format_param = type_to_text_format_param(ChatAgentOutput)
+    assert format_param["type"] == "json_schema"
+    assert format_param["strict"] is True
+    schema = format_param["schema"]
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == {"answer", "references"}
 
 
 def _version(version, branch="feature/foo", status="active"):
@@ -1023,7 +1138,6 @@ def test_loaded_skills_never_set_route_tenant() -> None:
     assert result.route_channel_link is None
 
 
-@pytest.mark.parametrize("placeholder_order", ["after_refs", "before_refs"])
 @pytest.mark.parametrize(
     ("current_channel", "expected_name"),
     [
@@ -1032,7 +1146,7 @@ def test_loaded_skills_never_set_route_tenant() -> None:
     ],
 )
 def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
-    placeholder_order, current_channel, expected_name
+    current_channel, expected_name
 ) -> None:
     from openai.types.responses import Response, ResponseOutputMessage, ResponseOutputText
 
@@ -1042,13 +1156,13 @@ def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
         "SDK%20release%20support?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121"
         "&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47"
     )
-    refs_block = "**References**\n- [Release Guide](https://example.test/release)"
     placeholder = "{{channel:sdk_release_support}}"
-    tail = (
-        f"{refs_block}\n\n{placeholder}"
-        if placeholder_order == "after_refs"
-        else f"{placeholder}\n\n{refs_block}"
-    )
+    structured = ChatAgentOutput(
+        answer=f"Please follow up with release support.\n\n{placeholder}",
+        references=[
+            ChatAgentReference(title="Release Guide", link="https://example.test/release"),
+        ],
+    ).model_dump_json()
 
     response = Response.model_construct(
         id="reply",
@@ -1061,7 +1175,7 @@ def test_channel_placeholder_maps_to_route_fields_without_breaking_references(
                 content=[
                     ResponseOutputText.model_construct(
                         type="output_text",
-                        text=f"Please follow up with release support.\n\n{tail}",
+                        text=structured,
                         annotations=[],
                     )
                 ],

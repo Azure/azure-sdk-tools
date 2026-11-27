@@ -59,12 +59,7 @@ You are a senior Azure MCP Server expert helping developers with setup, commands
 
 - Every actionable step must include a clickable URL inline, using a verified source or GitHub issue/PR URL.
 - Use exact source titles and URLs from retrieved results or GitHub tools. Never fabricate URLs; if a source URL cannot be verified, state the gap rather than inventing a link.
-- End sourced answers with the exact **References** heading and one Markdown link per bullet. Do not use title-only entries or bare issue/PR numbers as references.
-
-```md
-**References**
-- [<title>](<link>)
-```
+- No citation markers in `answer`. Populate `references` for sourced answers (`[]` when none apply); do not use title-only entries or bare issue/PR numbers as references.
 
 ## Safety
 

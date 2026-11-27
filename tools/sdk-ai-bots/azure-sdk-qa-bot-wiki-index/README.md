@@ -27,7 +27,7 @@ pip install -r requirements.txt
 python -m wiki_index.main
 ```
 
-`build_wiki.yml` runs this daily at 04:00 UTC, two hours after the knowledge sync that produces its input.
+The `wiki-index` App Service WebJob (`webjob/run.sh`, `webjob/settings.job`) runs this daily at 04:00 UTC, two hours after the knowledge sync that produces its input. Build the WebJob package on Linux x64 with `bash scripts/build-webjob.sh <output.zip>`, and deploy it via `server-cd.yml` (`deploymentTarget: wiki-index` or `all` for `dev` and `prod`).
 
 ### Incremental reconcile
 

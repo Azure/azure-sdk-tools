@@ -8,24 +8,26 @@ const pipeline = load(readFileSync(resolve(__dirname, '../../azure-sdk-qa-bot-ag
 const stages = pipeline.extends.parameters.stages;
 const entries = stages[0].jobs;
 const server = entries.find((entry: any) => entry.job === 'DeployServer');
-const knowledge = entries.find((entry: any) => entry["${{ if in(parameters.environment, 'dev', 'prod') }}"])
-    ["${{ if in(parameters.environment, 'dev', 'prod') }}"][0];
+const webjobGroup = entries.find((entry: any) => entry["${{ if in(parameters.environment, 'dev', 'prod') }}"])
+    ["${{ if in(parameters.environment, 'dev', 'prod') }}"];
+const knowledge = webjobGroup.find((job: any) => job.job === 'DeployKnowledgeSync');
+const wiki = webjobGroup.find((job: any) => job.job === 'DeployWikiIndex');
 
 describe('server CD job separation', () => {
     it('keeps the existing templates, one stage, Linux pools, and default combined deployment', () => {
-        expect(pipeline.parameters.find((parameter: any) => parameter.name === 'deploymentTarget')).toMatchObject({ type: 'string', default: 'all', values: ['all', 'server', 'knowledge-sync'] });
+        expect(pipeline.parameters.find((parameter: any) => parameter.name === 'deploymentTarget')).toMatchObject({ type: 'string', default: 'all', values: ['all', 'server', 'knowledge-sync', 'wiki-index'] });
         expect(JSON.stringify(pipeline)).not.toContain('webjobOnly');
         expect(pipeline.extends.template).toBe('/eng/pipelines/templates/stages/1es-redirect.yml');
         expect(stages).toHaveLength(1);
         expect(entries).toHaveLength(3);
-        for (const job of [server, knowledge]) {
+        for (const job of [server, knowledge, wiki]) {
             expect(job.pool).toEqual({ name: '$(LINUXPOOL)', image: '$(LINUXVMIMAGE)', os: 'linux' });
             expect(job.steps[0].checkout).toBe('self');
         }
     });
 
     it('runs server steps only for all or server targets', () => {
-        expect(server.condition).toBe("and(succeeded(), ${{ ne(parameters.deploymentTarget, 'knowledge-sync') }})");
+        expect(server.condition).toBe("and(succeeded(), ${{ in(parameters.deploymentTarget, 'all', 'server') }})");
         expect(server.steps.map((step: any) => step.displayName)).toEqual([
             'Checkout repository', 'Resolve Image Tag', 'Build & Push Image',
             'Validate Image Exists', 'Configure Agent Routing', 'Update App Service', 'Health Check'
@@ -60,29 +62,48 @@ describe('server CD job separation', () => {
         expect(JSON.stringify(knowledge)).not.toMatch(/\$\((imageTag|imageName|appVersion)\)|outputs\[/);
     });
 
-    it.each(['all', 'server', 'knowledge-sync'])('gates dependency results explicitly (target=%s), including cancellation', (target) => {
-        expect(knowledge.condition).toBe("and(not(canceled()), or(and(${{ eq(parameters.deploymentTarget, 'all') }}, eq(dependencies.DeployServer.result, 'Succeeded')), and(${{ eq(parameters.deploymentTarget, 'knowledge-sync') }}, eq(dependencies.DeployServer.result, 'Skipped'))))");
-        const condition = knowledge.condition
-            .replace("${{ eq(parameters.deploymentTarget, 'all') }}", String(target === 'all'))
-            .replace("${{ eq(parameters.deploymentTarget, 'knowledge-sync') }}", String(target === 'knowledge-sync'));
-        for (const result of ['Succeeded', 'SucceededWithIssues', 'Skipped', 'Failed', 'Canceled']) {
-            for (const canceled of [false, true]) {
-                const actual = runInNewContext(condition, {
-                    and: (...values: boolean[]) => values.every(Boolean), or: (...values: boolean[]) => values.some(Boolean),
-                    not: (value: boolean) => !value, eq: (left: string, right: string) => left === right,
-                    canceled: () => canceled, dependencies: { DeployServer: { result } }
-                });
-                expect(actual).toBe(!canceled && target !== 'server' && result === (target === 'knowledge-sync' ? 'Skipped' : 'Succeeded'));
+    it.each(['all', 'server', 'knowledge-sync', 'wiki-index'])('gates WebJob dependency results (target=%s), including cancellation', (target) => {
+        for (const [job, jobTarget] of [[knowledge, 'knowledge-sync'], [wiki, 'wiki-index']] as const) {
+            const condition = job.condition
+                .replace("${{ eq(parameters.deploymentTarget, 'all') }}", String(target === 'all'))
+                .replace(`\${{ eq(parameters.deploymentTarget, '${jobTarget}') }}`, String(target === jobTarget));
+            const results = ['Succeeded', 'SucceededWithIssues', 'Skipped', 'Failed', 'Canceled'];
+            for (const serverResult of results) {
+                for (const knowledgeResult of jobTarget === 'wiki-index' ? results : [undefined]) {
+                    for (const canceled of [false, true]) {
+                        const actual = runInNewContext(condition, {
+                            and: (...values: boolean[]) => values.every(Boolean), or: (...values: boolean[]) => values.some(Boolean),
+                            not: (value: boolean) => !value, eq: (left: string, right: string) => left === right,
+                            canceled: () => canceled,
+                            dependencies: { DeployServer: { result: serverResult }, DeployKnowledgeSync: { result: knowledgeResult } }
+                        });
+                        const allReady = target === 'all' && serverResult === 'Succeeded' && (knowledgeResult === undefined || knowledgeResult === 'Succeeded');
+                        const standaloneReady = target === jobTarget && serverResult === 'Skipped' && (knowledgeResult === undefined || knowledgeResult === 'Skipped');
+                        expect(actual).toBe(!canceled && (allReady || standaloneReady));
+                    }
+                }
             }
         }
     });
 
-    it('includes the failing validation job only for knowledge-sync preview', () => {
-        const validation = entries[0]["${{ if and(eq(parameters.deploymentTarget, 'knowledge-sync'), eq(parameters.environment, 'preview')) }}"][0];
+    it('rejects direct WebJob targets in preview', () => {
+        const validation = entries[0]["${{ if and(in(parameters.deploymentTarget, 'knowledge-sync', 'wiki-index'), eq(parameters.environment, 'preview')) }}"][0];
         expect(validation.job).toBe('ValidateDeployment');
         expect(validation.pool).toEqual(server.pool);
         expect(validation.steps[0].checkout).toBe('none');
-        expect(validation.steps[1].bash).toContain('Knowledge sync deployment is supported only for dev and prod.');
+        expect(validation.steps[1].bash).toContain('WebJob deployment is supported only for dev and prod.');
         expect(validation.steps[1].bash).toContain('exit 1');
+    });
+
+    it('deploys the Wiki Index with its own schedule only in dev and prod', () => {
+        expect(webjobGroup.map((job: any) => job.job)).toEqual(['DeployKnowledgeSync', 'DeployWikiIndex']);
+        expect(wiki.dependsOn).toEqual(['DeployServer', 'DeployKnowledgeSync']);
+        expect(wiki.steps.at(-1)).toMatchObject({
+            inputs: { inlineScript: 'node "$(syncWorkingDirectory)/scripts/deploy-webjob.mjs"' },
+            env: {
+                WEBJOB_NAME: 'wiki-index',
+                WEBJOB_SETTINGS: '$(wikiWorkingDirectory)/webjob/settings.job'
+            }
+        });
     });
 });

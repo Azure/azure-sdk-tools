@@ -24,6 +24,7 @@ parameters:
       - all
       - server
       - knowledge-sync
+      - wiki-index
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -40,6 +41,8 @@ variables:
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
   - name: syncWorkingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync'
+  - name: wikiWorkingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-wiki-index'
   - name: webjobName
     value: 'knowledge-sync'
 
@@ -51,9 +54,9 @@ extends:
       - stage: DeployPipeline
         displayName: 'Deploy ${{ parameters.deploymentTarget }} (${{ parameters.environment }})'
         jobs:
-          - ${{ if and(eq(parameters.deploymentTarget, 'knowledge-sync'), eq(parameters.environment, 'preview')) }}:
+          - ${{ if and(in(parameters.deploymentTarget, 'knowledge-sync', 'wiki-index'), eq(parameters.environment, 'preview')) }}:
             - job: ValidateDeployment
-              displayName: 'Reject Knowledge Sync Preview Deployment'
+              displayName: 'Reject WebJob Preview Deployment'
               pool:
                 name: $(LINUXPOOL)
                 image: $(LINUXVMIMAGE)
@@ -61,13 +64,13 @@ extends:
               steps:
                 - checkout: none
                 - bash: |
-                    echo 'Knowledge sync deployment is supported only for dev and prod.' >&2
+                    echo 'WebJob deployment is supported only for dev and prod.' >&2
                     exit 1
-                  displayName: 'Reject Knowledge Sync Preview Deployment'
+                  displayName: 'Reject WebJob Preview Deployment'
 
           - job: DeployServer
             displayName: 'Deploy Server'
-            condition: and(succeeded(), ${{ ne(parameters.deploymentTarget, 'knowledge-sync') }})
+            condition: and(succeeded(), ${{ in(parameters.deploymentTarget, 'all', 'server') }})
             pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
@@ -334,3 +337,56 @@ extends:
                     APP_NAME: $(APP_NAME)
                     RESOURCE_GROUP: $(RESOURCE_GROUP)
                     WEBJOB_NAME: $(webjobName)
+
+            - job: DeployWikiIndex
+              displayName: 'Deploy Scheduled Wiki Index'
+              # Both WebJob deployers write shared App Service settings.
+              dependsOn:
+                - DeployServer
+                - DeployKnowledgeSync
+              condition: and(not(canceled()), or(and(${{ eq(parameters.deploymentTarget, 'all') }}, eq(dependencies.DeployServer.result, 'Succeeded'), eq(dependencies.DeployKnowledgeSync.result, 'Succeeded')), and(${{ eq(parameters.deploymentTarget, 'wiki-index') }}, eq(dependencies.DeployServer.result, 'Skipped'), eq(dependencies.DeployKnowledgeSync.result, 'Skipped'))))
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              templateContext:
+                outputs:
+                  - output: pipelineArtifact
+                    path: $(Build.ArtifactStagingDirectory)/wiki-index
+                    artifact: wiki-index
+                    displayName: 'Publish Scheduled Wiki Index ZIP'
+                    condition: succeededOrFailed()
+              steps:
+                - checkout: self
+                  displayName: 'Checkout repository'
+                  persistCredentials: true
+                  continueOnError: false
+
+                - task: NodeTool@0
+                  displayName: 'Use Node.js 24.x for Wiki Index Deployment'
+                  inputs:
+                    versionSpec: '24.x'
+
+                - task: PipAuthenticate@1
+                  displayName: 'Authenticate pip to Azure Artifacts'
+                  inputs:
+                    artifactFeeds: 'public/azure-sdk-for-python'
+
+                - bash: bash scripts/build-webjob.sh "$(Build.ArtifactStagingDirectory)/wiki-index/wiki-index.zip"
+                  displayName: 'Build and Package Scheduled Wiki Index'
+                  workingDirectory: $(wikiWorkingDirectory)
+
+                - task: AzureCLI@2
+                  displayName: 'Deploy Scheduled Wiki Index WebJob'
+                  continueOnError: false
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: node "$(syncWorkingDirectory)/scripts/deploy-webjob.mjs"
+                  env:
+                    WEBJOB_ZIP: $(Build.ArtifactStagingDirectory)/wiki-index/wiki-index.zip
+                    WEBJOB_SETTINGS: $(wikiWorkingDirectory)/webjob/settings.job
+                    APP_NAME: $(APP_NAME)
+                    RESOURCE_GROUP: $(RESOURCE_GROUP)
+                    WEBJOB_NAME: 'wiki-index'

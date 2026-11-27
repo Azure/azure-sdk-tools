@@ -81,7 +81,8 @@ export async function deploy(env = process.env) {
     if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(env.WEBJOB_NAME ?? '')) throw new DeploymentError('Invalid WebJob name');
     const archive = await readFile(env.WEBJOB_ZIP);
     if (!archive.length) throw new DeploymentError('WebJob ZIP is empty');
-    const settings = JSON.parse(await readFile(new URL('../webjob/settings.job', import.meta.url), 'utf8'));
+    const settingsPath = env.WEBJOB_SETTINGS ? resolve(env.WEBJOB_SETTINGS) : new URL('../webjob/settings.job', import.meta.url);
+    const settings = JSON.parse(await readFile(settingsPath, 'utf8'));
     const target = ['--name', env.APP_NAME, '--resource-group', env.RESOURCE_GROUP];
     const site = JSON.parse(az(['webapp', 'show', ...target]));
     if (!site.reserved || !site.kind?.includes('container')) throw new DeploymentError('Expected Linux container App Service');
@@ -115,7 +116,7 @@ export async function deploy(env = process.env) {
     if (existing) await assertPausedAndDrained(job, token);
     try {
         await request(job, token, { method: 'PUT', contentType: 'application/zip', body: archive,
-            headers: { 'Content-Disposition': 'attachment; filename="knowledge-sync.zip"' } });
+            headers: { 'Content-Disposition': `attachment; filename="${env.WEBJOB_NAME}.zip"` } });
     } catch (error) {
         if (!error.forwardingTimeout) throw error;
         console.warn('Kudu upload forwarding timed out; waiting for WebJob discovery.');

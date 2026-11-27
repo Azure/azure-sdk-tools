@@ -18,6 +18,9 @@ from presidio_analyzer.predefined_recognizers import (
     UsSsnRecognizer,
 )
 from presidio_anonymizer import AnonymizerEngine
+from presidio_anonymizer.entities import (
+    RecognizerResult as AnonymizerRecognizerResult,
+)
 
 # Azure/azure-sdk-pr is the only private GitHub issue target; all other GitHub repos are treated as public.
 _PRIVATE_GITHUB_REPOS = frozenset({"azure/azure-sdk-pr"})
@@ -73,9 +76,18 @@ def sanitize_text(text: str, *, is_public_target: bool) -> str:
     analyzer, anonymizer = _presidio()
     results = analyzer.analyze(text=updated, language="en")
     if results:
+        anonymizer_results = [
+            AnonymizerRecognizerResult(
+                entity_type=r.entity_type,
+                start=r.start,
+                end=r.end,
+                score=r.score,
+            )
+            for r in results
+        ]
         updated = anonymizer.anonymize(
             text=updated,
-            analyzer_results=results,
+            analyzer_results=anonymizer_results,
         ).text
 
     if is_public_target:

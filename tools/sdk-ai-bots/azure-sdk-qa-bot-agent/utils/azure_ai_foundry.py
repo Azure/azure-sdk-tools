@@ -61,24 +61,32 @@ _WEB_SEARCH_DOMAINS_PATH = (
 )
 
 
-def get_web_search_allowed_domains() -> list[str] | None:
-    """Return allowed domains from ``config/web-search-domains.yaml``, or ``None`` if unset."""
+def get_web_search_allowed_domains() -> list[str]:
+    """Return allowed domains from ``config/web-search-domains.yaml``.
+
+    Fails closed if the allowlist file is missing or ``allowed_domains`` is empty.
+    """
     if not _WEB_SEARCH_DOMAINS_PATH.exists():
-        return None
+        raise FileNotFoundError(
+            f"Web search allowlist config not found: {_WEB_SEARCH_DOMAINS_PATH}"
+        )
     data = yaml.safe_load(_WEB_SEARCH_DOMAINS_PATH.read_text(encoding="utf-8")) or {}
-    return data.get("allowed_domains") or None
+    allowed_domains = data.get("allowed_domains") if isinstance(data, dict) else None
+    if not isinstance(allowed_domains, list) or not allowed_domains:
+        raise ValueError(
+            f"Web search allowlist must define a non-empty 'allowed_domains' list: {_WEB_SEARCH_DOMAINS_PATH}"
+        )
+    return allowed_domains
 
 
 def create_web_search_tool(agent_client: FoundryChatClient):
     """Create the Foundry hosted web_search tool with configured domain filters."""
     allowed_domains = get_web_search_allowed_domains()
-    if allowed_domains:
-        logger.info("Configuring web_search with %d allowed domains", len(allowed_domains))
-        return agent_client.get_web_search_tool(
-            search_context_size="medium",
-            allowed_domains=allowed_domains,
-        )
-    return agent_client.get_web_search_tool(search_context_size="medium")
+    logger.info("Configuring web_search with %d allowed domains", len(allowed_domains))
+    return agent_client.get_web_search_tool(
+        search_context_size="medium",
+        allowed_domains=allowed_domains,
+    )
 
 
 def get_agent_client() -> FoundryChatClient:

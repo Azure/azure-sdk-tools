@@ -5,6 +5,7 @@
 ### Features Added
 
 - Automatically reopen the linked GitHub/ADO issue when fix validation fails (`validation_failed`) while keeping `feedback.status = validation_failed` in Cosmos DB, and include `validation_failed` in `list_pending_validation()` so reopened issues wait while `open` and automatically re-validate once closed again.
+- Update Evolution Agent validation mode instructions to inspect the failed production `trace_id` via `fetch_chat_trace` and include the remaining root-cause diagnosis and concrete next fix when validation fails.
 
 ### Bugs Fixed
 

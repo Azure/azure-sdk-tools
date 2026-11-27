@@ -23,7 +23,7 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
     """Create an MCPStdioTool that launches the Azure SDK MCP server.
 
     The AZSDK org value is retained for prompt context and compatibility.
-    Only exposes read-only pipeline analysis and release plan tools.
+    Only exposes read-only pipeline, release plan, and API approval lookup tools.
     """
     org = _DEFAULT_AZSDK_ORG
     env = {**os.environ}
@@ -35,6 +35,8 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
         "azsdk_get_pipeline_status",
         "azsdk_get_pipeline_llm_artifacts",
         "azsdk_get_release_plan",
+        "azsdk_package_get_approval_status",
+        "azsdk_apiview_get_review_url",
     ]
 
     return MCPStdioTool(
@@ -48,6 +50,7 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
         description=(
             "Read-only Azure SDK MCP server tools. Use to analyze Azure Pipelines "
             "failures, get pipeline status and LLM artifacts, and look up "
-            "release plans (by work item ID, release plan ID, or spec PR URL)"
+            "release plans (by work item ID, release plan ID, or spec PR URL), "
+            "check package API approval status, and find APIView review links"
         ),
     )

@@ -43,8 +43,10 @@ namespace Azure.SDK.ChangelogGen
         public string PackageFolder => PackageDir.FullName;
         public string PackageName => PackageDir.Name;
 
-        public string AutorestMdFile => Path.Combine(PackageFolder, "src/autorest.md");
-        public string AutorestMdGithubKey => GetGithubKey(AutorestMdFile);
+        public string TypeSpecLocationFile => Path.Combine(PackageFolder, "tsp-location.yaml");
+
+        public string MetadataFile => Path.Combine(PackageFolder, "metadata.json");
+        public string MetadataGithubKey => GetGithubKey(MetadataFile);
 
         public string AzureCoreChangeLogGithubKey => "sdk/core/Azure.Core/CHANGELOG.md";
         public string AzureCoreChangeLogMdFile => Path.Combine(RepoRoot, AzureCoreChangeLogGithubKey);

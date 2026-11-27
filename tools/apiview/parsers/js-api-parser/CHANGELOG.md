@@ -1,3 +1,9 @@
+# 2.0.12
+
+## Other Changes
+
+- Require Node.js 22 or later
+
 # 2.0.11
 
 ## New Features

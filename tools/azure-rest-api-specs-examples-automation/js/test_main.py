@@ -1,4 +1,8 @@
 import unittest
+import sys
+from os import path
+from unittest.mock import patch
+import main
 from main import (
     get_js_example_method,
     get_sample_version,
@@ -10,8 +14,42 @@ from main import (
     PackageType,
 )
 
+sys.path.append(path.abspath("../directory"))
+from test_examples_dir import create_mock_unified_test_folder
+
 
 class TestMain(unittest.TestCase):
+
+    def test_unified_example_preserves_nested_output_path(self):
+        code = """const { client } = require("example");
+/**
+ * x-ms-original-file: Compute/examples/VirtualMachines.yaml#virtualMachineExamples/Foo
+ */
+async function main() {
+  console.log(client);
+}
+"""
+        with create_mock_unified_test_folder() as temporary:
+            filename = path.join(temporary, "sample.js")
+            with open(filename, "w", encoding="utf-8") as fout:
+                fout.write(code)
+            for package_type in PackageType:
+                with self.subTest(package_type=package_type):
+                    with patch.multiple(
+                        main,
+                        specs_path=path.join(temporary, "specs"),
+                        sdk_package_path=path.join(temporary, "sdk"),
+                        create=True,
+                    ):
+                        examples = main.process_js_example(filename, package_type)
+                    self.assertEqual(1, len(examples))
+                    self.assertEqual("Foo", examples[0].target_filename)
+                    extension = main.get_example_folder_extension(package_type)
+                    self.assertEqual(
+                        "specification/compute/resource-manager/Microsoft.Compute/Compute/"
+                        f"stable/2026-04-01/examples-{extension}/virtualMachineExamples",
+                        examples[0].target_dir,
+                    )
 
     def test_get_sample_version(self):
         self.assertEqual("v3", get_sample_version("3.0.0"))

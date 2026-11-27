@@ -15,7 +15,7 @@ public static class ProductTypeExtensions
 {
     private const string AdoOffering = "Offering";
     private const string AdoFeature = "Feature";
-    private const string AdoSku = "SKU";
+    private const string AdoSku = "Sku";
 
     /// <summary>
     /// Converts a user-supplied string to a ProductType enum value (case-insensitive).

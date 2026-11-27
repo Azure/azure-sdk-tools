@@ -1,0 +1,31 @@
+diff --git a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/PackagePollingService.cs b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/PackagePollingService.cs
+--- a/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/PackagePollingService.cs
++++ b/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Services/PackagePollingService.cs
+@@ -20,26 +20,26 @@ public sealed class PackagePollingService(PackagePollingClient client)
+     public async Task WaitAsync(CancellationToken ct)
+     {
+-        await client.WaitForCompletionAsync(ct).WaitAsync(TimeSpan.FromMinutes(5), ct);
++        await client.WaitForCompletionAsync(ct);
+     }
+ }
+ 
+ internal sealed class PackagePollingClient(IPackageStatusClient sdk)
+ {
+     public async Task WaitForCompletionAsync(CancellationToken ct)
+     {
+         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
+         deadline.CancelAfter(TimeSpan.FromMinutes(5));
+ 
+         while (true)
+         {
+             deadline.Token.ThrowIfCancellationRequested();
+             var status = await sdk.GetStatusAsync(deadline.Token);
+             if (status == PackageStatus.Completed)
+             {
+                 return;
+             }
+ 
+             await Task.Delay(TimeSpan.FromSeconds(1), deadline.Token);
+         }
+     }
+ }

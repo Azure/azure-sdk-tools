@@ -43,20 +43,23 @@ class BotConfigService:
         logger.info("No channel-specific tenant configured for channel: %s", channel_id)
         return ChannelConfigResponse(channel_id=channel_id, tenant_id=default_tenant)
 
-    async def get_bot_settings(
-        self, conversation_id: str | None, channel_id: str | None = None
-    ) -> BotSettings:
-        thread_channel = (
+    async def get_bot_settings(self, conversation_id: str | None) -> BotSettings:
+        channel_id = (
             conversation_id.split(";messageid=", 1)[0]
             if conversation_id and ";messageid=" in conversation_id
             else None
         )
-        if channel_id and thread_channel and channel_id != thread_channel:
-            raise ValueError("Channel ID does not match conversation ID")
-        resolved = thread_channel or channel_id
-        if not resolved:
+        if not channel_id:
             return BotSettings()
-        return (await self.get_channel_config(resolved)).bot_settings
+        return (await self.get_channel_config(channel_id)).bot_settings
+
+    async def get_channels(self) -> dict[str, str]:
+        """Return configured channel IDs mapped to display labels."""
+        parsed = await self._get_config()
+        return {
+            entry["id"]: entry.get("name") or entry["id"]
+            for entry in parsed.get("channels", []) or []
+        }
 
     async def _get_config(self) -> dict[str, Any]:
         now = time.monotonic()
@@ -83,13 +86,15 @@ class BotConfigService:
         except (AzureError, TimeoutError, RuntimeError):
             logger.exception(
                 "Cannot retrieve channel settings from %s/%s; using default settings with optional features disabled",
-                container, blob,
+                container,
+                blob,
             )
             return None
         if not data:
             logger.warning(
                 "Channel config blob is empty or missing: %s/%s; using default settings with optional features disabled",
-                container, blob,
+                container,
+                blob,
             )
             return None
 

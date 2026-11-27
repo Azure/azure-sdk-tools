@@ -25,7 +25,6 @@ from models.conversation import (
     ConversationMessage,
     ConversationMessageItem,
     ConversationType,
-    ExpertNotificationAttempt,
     Role,
 )
 from utils.azure_cosmosdb import (
@@ -199,7 +198,7 @@ class ConversationService:
         conversation_type: ConversationType | None,
         agent_conversation_id: str,
         *,
-        confidence_enabled: bool,
+        confidence_enabled: bool = False,
         create_only: bool = False,
     ) -> ConversationMappingItem | None:
         """Save the mapping relationship in the local store.
@@ -264,7 +263,7 @@ class ConversationService:
             message.sender_role,
         )
         # Only ingress model fields are accepted, even if a persistence-model
-        # instance was passed. Notification attempts are server-owned metadata.
+        # instance was passed.
         ingress = message.model_dump(
             mode="json", include=set(ConversationMessage.model_fields)
         )
@@ -319,44 +318,6 @@ class ConversationService:
             "Recorded should_reply=%s for message %s",
             should_reply,
             message_id,
-        )
-
-    @staticmethod
-    def _root_message_id(conversation_id: str) -> str | None:
-        channel, separator, root_id = conversation_id.partition(";messageid=")
-        if not channel or not separator or not root_id or ";" in root_id:
-            logger.warning("Cannot identify root message for %s", conversation_id)
-            return None
-        return root_id
-
-    async def reserve_expert_notification(
-        self,
-        conversation_id: str,
-        conversation_type: ConversationType,
-        response_id: str,
-    ) -> bool:
-        """Reserve the thread's only notification attempt on its existing root.
-
-        Once reserved, even the same response cannot reserve again. A lost
-        completion response or failed Teams send does not release the attempt.
-        """
-        if not response_id.strip():
-            return False
-        root_id = self._root_message_id(conversation_id)
-        if not root_id:
-            return False
-
-        def update(raw: dict) -> bool:
-            if raw.get("expert_notification") is not None:
-                return False
-            raw["expert_notification"] = ExpertNotificationAttempt(
-                response_id=response_id,
-                reserved_at=datetime.now(timezone.utc),
-            ).model_dump(mode="json")
-            return True
-
-        return await self._write_message_document(
-            root_id, f"{conversation_type.value}:{conversation_id}", update
         )
 
     async def has_expert_reply(

@@ -53,6 +53,7 @@ public class CreateReleasePlanHandler : IMockToolHandler
                 ActiveSpecPullRequest = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()
                     ?? "https://github.com/Azure/azure-rest-api-specs/pull/12345",
                 APISpecProjectPath = typespecPath,
+                SpecCommitSHA = arguments?.GetValueOrDefault("specCommitSha")?.ToString() ?? "",
                 SDKReleaseType = "beta",
                 SDKInfo =
                 [

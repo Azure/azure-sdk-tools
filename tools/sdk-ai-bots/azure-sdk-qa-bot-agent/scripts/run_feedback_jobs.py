@@ -2,8 +2,8 @@
 
 The pipeline ingests active Teams threads, invokes the Agent to evaluate every
 eligible conversation, checks remediation issues, and invokes Agent validation
-after an issue closes. Conversation completion and correctness are judged only
-inside the Agent.
+after an issue closes. The Agent judges completion and correctness, except for
+automatic closure after 144 hours of inactivity regardless of user feedback.
 
 Usage::
 
@@ -19,7 +19,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
-import re
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -40,27 +40,14 @@ from models.feedback import (
 )
 from services.chatbot_evolution_agent_service import ChatbotEvolutionAgentService
 from services.qa_record_service import QARecordService
-from tools.github_mcp_tools import get_github_issue_state
+from tools.issue_tracker import get_issue_state
 from utils.azure_ai_foundry import close_clients as close_ai_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
 from utils.azure_storage import close_storage_client, download_blob
+from utils.channel_policy import is_testing_channel
 
 logger = logging.getLogger("run_feedback_jobs")
-
-_TESTING_CHANNEL_PATTERN = re.compile(r"\btesting\b", re.IGNORECASE)
-_TESTING_CHANNEL_NAMES = {
-    "azure sdk qa bot - auto reply - test",
-    "smoke-tests",
-}
-
-
-def _is_testing_channel(name: str) -> bool:
-    normalized = name.strip().casefold()
-    return (
-        _TESTING_CHANNEL_PATTERN.search(normalized) is not None
-        or normalized in _TESTING_CHANNEL_NAMES
-    )
 
 
 async def _load_excluded_channels() -> set[str]:
@@ -80,7 +67,7 @@ async def _load_excluded_channels() -> set[str]:
     for entry in parsed.get("channels", []) or []:
         channel_id = entry.get("id")
         name = entry.get("name") or ""
-        if channel_id and _is_testing_channel(name):
+        if channel_id and is_testing_channel(name):
             excluded.add(channel_id)
     return excluded
 
@@ -130,13 +117,21 @@ async def _run(args: argparse.Namespace) -> None:
         logger.info("Agent processing disabled; ingestion completed only")
         return
 
+    await evolution_service.recover_stale_jobs(
+        tenant_id=args.tenant, excluded_channels=excluded_channels
+    )
+    auto_closed = await qa_service.close_inactive_threads(
+        tenant_id=args.tenant, excluded_channels=excluded_channels
+    )
+
     counts = {
         "ongoing": 0,
-        "finished": 0,
+        "finished": auto_closed,
         "issues": 0,
         "waiting_validation": 0,
         "validated": 0,
         "validation_failed": 0,
+        "validation_skipped": 0,
         "evolution_failed": 0,
         "skipped": 0,
     }
@@ -154,7 +149,7 @@ async def _run(args: argparse.Namespace) -> None:
             counts["skipped"] += 1
             continue
         try:
-            issue_state = await get_github_issue_state(issue_url)
+            issue_state = await get_issue_state(issue_url)
         except Exception:
             logger.exception("Failed to read issue state for %s", record.id)
             counts["skipped"] += 1
@@ -177,6 +172,9 @@ async def _run(args: argparse.Namespace) -> None:
             counts["validation_failed"] += 1
         elif result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
             counts["validated"] += 1
+        elif result.outcome == ChatbotEvolutionAgentOutcome.validation_skipped:
+            counts["validation_skipped"] += 1
+            logger.info("Validation skipped for %s (%s)", record.id, issue_url)
         else:
             counts["validation_failed"] += 1
 
@@ -197,10 +195,10 @@ async def _run(args: argparse.Namespace) -> None:
             )
         except Exception:
             logger.exception("Analysis persistence failed for %s", record.id)
-            counts["skipped"] += 1
+            counts["evolution_failed"] += 1
             continue
         if result is None:
-            counts["skipped"] += 1
+            counts["evolution_failed"] += 1
         elif result.outcome in (
             ChatbotEvolutionAgentOutcome.processing_failed,
             ChatbotEvolutionAgentOutcome.remediation_failed,
@@ -216,16 +214,27 @@ async def _run(args: argparse.Namespace) -> None:
     logger.info(
         "Evolution scan complete: ongoing=%d finished=%d issues=%d "
         "waiting-validation=%d validated=%d validation-failed=%d "
-        "evolution-failed=%d skipped=%d",
+        "validation-skipped=%d evolution-failed=%d skipped=%d",
         counts["ongoing"],
         counts["finished"],
         counts["issues"],
         counts["waiting_validation"],
         counts["validated"],
         counts["validation_failed"],
+        counts["validation_skipped"],
         counts["evolution_failed"],
         counts["skipped"],
     )
+    failed_count = counts["evolution_failed"] + counts["validation_failed"]
+    if failed_count:
+        message = f"Evolution scan completed with {failed_count} failed job(s)."
+        logger.warning(message)
+        if os.environ.get("TF_BUILD", "").lower() == "true":
+            print(f"##vso[task.logissue type=warning]{message}", flush=True)
+            print(
+                f"##vso[task.complete result=SucceededWithIssues;]{message}",
+                flush=True,
+            )
 
 
 async def main() -> None:

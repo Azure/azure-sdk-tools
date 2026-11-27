@@ -63,7 +63,7 @@ public class APIViewReleaseStatusService(
     {
         return language.ToLowerInvariant() switch
         {
-            "js" => "JavaScript",
+            "javascript" or "js" => "JavaScript",
             "csharp" => "C#",
             "java" => "Java",
             "python" => "Python",

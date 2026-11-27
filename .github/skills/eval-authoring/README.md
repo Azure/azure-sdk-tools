@@ -86,7 +86,7 @@ Plain-English definitions of the eval fields and CLI options you'll actually tou
 | **trajectory**               | The full recorded sequence of tool calls and messages the agent produced for a stimulus. Graders inspect this, not just the final reply.                                                                                      |
 | **turns**                    | An ordered list of prompts within one stimulus, for scenarios where a later request depends on earlier session context. Omit it and use a single `prompt` unless you specifically need that.                                  |
 | **timeout**                  | Max wall-clock time one stimulus run may take before it's failed as timed out. Live/orchestration-heavy stimuli need more headroom than a single tool call.                                                                   |
-| **model**                    | Which LLM executes the stimulus (e.g. `claude-opus-4.6`, `gpt-5.4`). Use a stronger model where judgment matters; a cheaper/faster one is fine for high-volume routing suites.                                                |
+| **model**                    | Which LLM executes the stimulus (e.g. `claude-opus-4.6`, `gpt-6.1-sol`). Use a stronger model where judgment matters; a cheaper/faster one is fine for high-volume routing suites.                                                |
 | **executor**                 | The harness driving the model + tools for a stimulus. `copilot-sdk` is the real Copilot Chat SDK loop used across this repo's suites.                                                                                         |
 | **defaults**                 | Eval-wide execution defaults such as `runs`, `timeout`, `model`, and `executor`. Use `defaults:`, not the deprecated top-level `config:` alias.                                                                               |
 | **environment**              | A named MCP server + skill/file/git configuration (e.g. `azsdk-mcp-mock` vs `azsdk-mcp-live`). Vally validates every named environment at load time, even unused ones.                                                        |
@@ -180,7 +180,7 @@ environment: azsdk-mcp-mock
 defaults:
   runs: 1
   timeout: "120s"
-  model: gpt-5.4
+  model: gpt-6.1-sol
   executor: copilot-sdk
 scoring:
   threshold: 0.8
@@ -258,7 +258,7 @@ tags:
 defaults:
   runs: 1
   timeout: "180s"
-  model: gpt-5.4
+  model: gpt-6.1-sol
   executor: copilot-sdk
 scoring:
   threshold: 0.8

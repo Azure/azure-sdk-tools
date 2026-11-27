@@ -65,17 +65,6 @@ union ConfidenceLevel {
   Low: "low",
 }
 
-/** A configured expert's Teams mention identity. */
-model ExpertIdentity {
-  /** Entra object ID or UPN accepted by Teams mentions. */
-  @minLength(1)
-  id: string;
-
-  /** Display name used in the mention. */
-  @minLength(1)
-  name: string;
-}
-
 /** Individual channel feature opt-ins; absent settings preserve existing behavior. */
 model BotSettings {
   /** Opt in to displaying confidence labels. */
@@ -83,15 +72,6 @@ model BotSettings {
 
   /** Opt in to answering independent questions after humans join. */
   allow_replies_after_humans?: boolean = false;
-
-  /** Opt in to policy-approved expert notification attempts. */
-  allow_notify_experts?: boolean = false;
-
-  /** Notify below this confidence level or for explicit expert need; not an opt-in itself. */
-  expert_help_threshold?: ConfidenceLevel = "high";
-
-  /** Approved notification recipients; a roster alone does not enable notifications. */
-  experts?: ExpertIdentity[] = #[];
 }
 
 /** Channel routing and participation settings resolved by the backend. */
@@ -102,13 +82,10 @@ model ChannelConfigResponse {
   /** Tenant to which the channel is routed, when configured. */
   tenant_id?: string | null;
 
-  /** Defaults keep participation disabled for existing channels. */
+  /** Defaults keep confidence and post-human replies disabled for existing channels. */
   bot_settings?: BotSettings = #{
     show_confidence_label: false,
     allow_replies_after_humans: false,
-    allow_notify_experts: false,
-    expert_help_threshold: "high",
-    experts: #[],
   };
 }
 
@@ -164,14 +141,14 @@ model ChatRequest {
   @doc("The tenant ID")
   tenant_id: string;
 
+  @doc("Current Teams channel display name")
+  channel_name?: string;
+
   @doc("Existing conversation identifier, if continuing a conversation")
   conversation_id?: string;
 
   @doc("The conversation type")
   conversation_type?: ConversationType;
-
-  /** Teams channel used to resolve participation settings. */
-  channel_id?: string | null;
 
   @doc("The message to send to the agent")
   message: Message;
@@ -188,6 +165,9 @@ model ChatResponse {
   @doc("The unique ID of the response")
   id: string;
 
+  @doc("The name of the hosted agent that generated the response")
+  agent_name?: string;
+
   @doc("The answer from the agent")
   answer: string;
 
@@ -200,23 +180,23 @@ model ChatResponse {
   @doc("Whether the agent produced a non-empty answer")
   has_result: boolean;
 
-  @doc("The tenant ID the question is routed to")
+  @doc("Deprecated: use route_channel_name and route_channel_link instead.")
   route_tenant?: string;
 
-  /** Agent conversation identifier, when available. */
-  agent_conversation_id?: string | null;
+  @doc("The Teams channel name the question is routed to")
+  route_channel_name?: string;
 
-  /** Trace identifier for diagnostics, when available. */
-  trace_id?: string | null;
+  @doc("The Teams channel link the question is routed to")
+  route_channel_link?: string;
 
   /** Assessment produced with the answer, never by a separate evaluator. */
   confidence?: ConfidenceAssessment | null;
 
-  /** True only when this response reserves the post's single expert-notification attempt. */
-  notify_experts?: boolean = false;
+  @doc("Verified Teams mention metadata for AT markup already present in the answer")
+  mentions?: TeamsMention[];
 }
 
-/** The answering model's confidence in its guidance and independent need for expert help. */
+/** The answering model's confidence in its guidance. */
 model ConfidenceAssessment {
   /** Self-assessed confidence in the provided guidance, not verified correctness or complete resolution. */
   level: ConfidenceLevel;
@@ -227,9 +207,24 @@ model ConfidenceAssessment {
 
   /** Needs the answer cannot resolve. */
   unresolved_needs: string[];
+}
 
-  /** Whether specialized human knowledge, investigation, or authorized action is needed, independently of confidence. */
-  needs_expert_help: boolean;
+@doc("Verified Teams mention metadata")
+model TeamsMention {
+  @doc("The exact AT markup included in the answer")
+  text: string;
+
+  @doc("The Teams account being mentioned")
+  mentioned: TeamsUser;
+}
+
+@doc("A Teams user account")
+model TeamsUser {
+  @doc("The Teams user identifier, such as a Microsoft Entra object ID")
+  id: string;
+
+  @doc("The account display name")
+  name: string;
 }
 
 // ── Feedback Models ──────────────────────────────────────────

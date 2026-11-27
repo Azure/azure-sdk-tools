@@ -25,6 +25,11 @@
       // SDK release type.
       "type": "string"
     },
+    "typespecEmitter": {
+      // Optional TypeSpec emitter package name supplied by the caller.
+      // When omitted, language automation retains its existing emitter selection.
+      "type": "string"
+    },
     "changedFiles": {
       // Changed file list in spec PR.
       "type": "array",

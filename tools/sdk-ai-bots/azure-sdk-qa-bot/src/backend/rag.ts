@@ -2,6 +2,7 @@ import axios from 'axios';
 import { logger } from '../logging/logger.js';
 import { ragApiPaths } from '../config/config.js';
 import { TokenCredential } from '@azure/identity';
+import type { TeamsMention } from '../common/mentions.js';
 
 export interface RAGOptions {
   endpoint: string;
@@ -12,7 +13,7 @@ export interface RAGOptions {
 export type Source =
   | 'typespec_docs'
   | 'typespec_azure_docs'
-  | 'azure_rest_api_specs_wiki'
+  | 'azure_rest_api_specs_docs'
   | 'azure_sdk_for_python_docs'
   | 'azure_sdk_for_python_wiki'
   | 'static_typespec_qa'
@@ -52,6 +53,7 @@ export interface AdditionalInfo {
 // Completion request interface
 export interface CompletionRequestPayload {
   tenant_id: string;
+  channel_name?: string;
   message: Message;
   with_full_context?: boolean; // default is false
   additional_infos?: AdditionalInfo[];
@@ -77,17 +79,19 @@ export interface CompletionResponsePayload {
   intension?: IntensionResult;
   Category?: string;
   ReasoningProgress?: string;
+  /** @deprecated Use route_channel_name and route_channel_link instead. */
   route_tenant?: string;
+  route_channel_name?: string;
+  route_channel_link?: string;
   trace_id?: string;
   confidence?: Confidence | null;
-  notify_experts?: boolean;
+  mentions?: TeamsMention[] | null;
 }
 
 export interface Confidence {
   level: 'high' | 'medium' | 'low';
   summary: string;
   unresolved_needs: string[];
-  needs_expert_help: boolean;
 }
 
 export function isCompletionResponsePayload(
@@ -159,7 +163,15 @@ export async function getRAGReply(
     meta
   );
   try {
-    logger.info('Completion payload:', { payload });
+    logger.info('Completion payload:', {
+      payload: {
+        ...payload,
+        additional_infos: payload.additional_infos?.map((info) => ({
+          ...info,
+          link: info.link.startsWith('data:') ? '[inline image omitted]' : info.link,
+        })),
+      },
+    });
     let headers = {
         'Content-Type': 'application/json; charset=utf-8',
     };
@@ -176,7 +188,12 @@ export async function getRAGReply(
     logger.info('Get response from RAG', { responseBody: response.data, meta });
     return response.data;
   } catch (error) {
-    logger.warn('Failed to get reply from RAG:', { error, meta });
+    logger.warn('Failed to get reply from RAG:', {
+      error: axios.isAxiosError(error)
+        ? { name: error.name, message: error.message, status: error.response?.status }
+        : error,
+      meta,
+    });
     return undefined;
   }
 }

@@ -349,7 +349,7 @@ machine-readable output:
 
 ```powershell
 & $vally eval -e tools/prompt-to-tool-typespec.eval.yaml `
-  --runs 5 --workers 2 --model gpt-5.4 `
+  --runs 5 --workers 2 --model gpt-6.1-sol `
   --output jsonl --output-dir vally-results
 ```
 

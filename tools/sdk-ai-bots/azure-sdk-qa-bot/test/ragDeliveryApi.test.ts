@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import axios from 'axios';
 import { getRAGReply } from '../src/backend/rag.js';
 
-vi.mock('axios', () => ({ default: { get: vi.fn(), post: vi.fn() } }));
+vi.mock('axios', () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+    isAxiosError: vi.fn().mockReturnValue(false),
+  },
+}));
 vi.mock('../src/config/config.js', () => ({ ragApiPaths: { completion: '/completion' } }));
 vi.mock('../src/logging/logger.js', () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
@@ -15,8 +21,17 @@ describe('completion API', () => {
   };
   beforeEach(() => vi.clearAllMocks());
 
-  it('receives notification permission with one completion request and no configuration request', async () => {
-    const response = { id: 'answer', answer: 'Answer', has_result: true, notify_experts: true };
+  it('receives confidence with one completion request and no configuration request', async () => {
+    const response = {
+      id: 'answer',
+      answer: 'Answer',
+      has_result: true,
+      confidence: {
+        level: 'high',
+        summary: 'Well supported.',
+        unresolved_needs: [],
+      },
+    };
     vi.mocked(axios.post).mockResolvedValue({ status: 200, data: response });
     await expect(getRAGReply(request, options, {})).resolves.toEqual(response);
     expect(axios.post).toHaveBeenCalledExactlyOnceWith('https://backend/completion', request, expect.anything());

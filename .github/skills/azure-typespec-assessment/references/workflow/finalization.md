@@ -3,7 +3,7 @@
 After materialization, run:
 
 ```powershell
-node (Join-Path $Skill "scripts\finalize-assessment.mjs") --work $Work
+node (Join-Path $Skill "scripts\finalize-assessment.ts") --work $Work
 ```
 
 The finalizer re-verifies canonical artifact hashes; validates inference,
@@ -17,7 +17,7 @@ After rendering, start the report server through the host's attached background
 or long-lived process mechanism:
 
 ```powershell
-node (Join-Path $Skill "scripts\serve-assessment.mjs") `
+node (Join-Path $Skill "scripts\serve-assessment.ts") `
   --file (Join-Path $Work "assessment.html")
 ```
 
@@ -26,6 +26,12 @@ Do not detach at shell level. Wait for startup output, then provide its
 report** link and the absolute `assessment.json` path for structured results.
 Keep the server running while viewed. Do not use relative Markdown or `file:`
 URLs.
+
+For an asynchronous or background host process, read its startup output
+immediately with the host's process-output reader. Do not wait for process
+completion or a completion notification: successful report serving is a
+long-lived process and therefore does not exit while the report remains
+available.
 
 Standalone rendering accepts an explicitly selected matching graph artifact:
 append `--downstream-input (Join-Path $Work

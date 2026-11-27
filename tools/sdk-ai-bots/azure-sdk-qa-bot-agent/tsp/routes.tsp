@@ -10,7 +10,7 @@ interface Health {
 
 @route("/agent")
 interface Agent {
-  /** Generate an answer, apply reply policy, and reserve eligible expert-notification attempts. */
+  /** Generate an answer and optional confidence assessment. */
   @route("/chat")
   @post
   chat(@body body: ChatRequest): ChatResponse;
@@ -58,7 +58,7 @@ interface Knowledge {
 /** Legacy endpoints kept for backward compatibility. */
 @route("/")
 interface Legacy {
-  /** Alias of /agent/chat, including confidence and participation decisions. */
+  /** Alias of /agent/chat, including optional confidence assessment. */
   @route("completion")
   @post
   completion(@body body: ChatRequest): ChatResponse;

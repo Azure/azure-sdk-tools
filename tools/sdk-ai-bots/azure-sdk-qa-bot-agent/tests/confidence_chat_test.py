@@ -7,13 +7,11 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from azure.core.exceptions import AzureError
 
-from models.bot_config import BotSettings, ExpertIdentity
-from models.chat import AdditionalInfo, AdditionalInfoType, ChatRequest
+from models.bot_config import BotSettings
+from models.chat import AdditionalInfo, AdditionalInfoType, AssessedAnswer, ChatRequest
 from services.chat_service import ChatService
 from utils.azure_ai_foundry_agent import ConversationBrokenError
-from expert_notification_policy_test import assessment
 
 
 CONFIDENCE_PROMPT = (
@@ -21,7 +19,18 @@ CONFIDENCE_PROMPT = (
 ).read_text(encoding="utf-8")
 
 
-def setup_chat(monkeypatch, *, level="medium", needs_expert_help=False, bot_settings=None):
+def assessment(level="medium") -> AssessedAnswer:
+    return AssessedAnswer.model_validate({
+        "answer": "Useful guidance",
+        "confidence": {
+            "level": level,
+            "summary": "Some uncertainty remains.",
+            "unresolved_needs": ["Confirm the exception."],
+        },
+    })
+
+
+def setup_chat(monkeypatch, *, level="medium", bot_settings=None):
     service = ChatService(
         project_client=MagicMock(), openai_client=MagicMock(),
         settings=lambda key, default=None: default,
@@ -30,13 +39,10 @@ def setup_chat(monkeypatch, *, level="medium", needs_expert_help=False, bot_sett
     service._conversation_service.get_messages_by_conversation_id = AsyncMock(
         side_effect=AssertionError("Ordinary generation must not load a Cosmos transcript")
     )
-    service._conversation_service.reserve_expert_notification = AsyncMock(return_value=True)
     service._save_bot_answer_to_conversation = AsyncMock()
     settings = BotSettings.model_validate(bot_settings) if bot_settings is not None else BotSettings(
         show_confidence_label=True,
         allow_replies_after_humans=True,
-        allow_notify_experts=True,
-        experts=[ExpertIdentity(id="expert", name="Expert")],
     )
     service._resolve_conversation = AsyncMock(
         return_value=("mapped-thread", False, settings.requires_confidence)
@@ -44,7 +50,7 @@ def setup_chat(monkeypatch, *, level="medium", needs_expert_help=False, bot_sett
     output = SimpleNamespace(
         id="response", status="completed", output=[],
         output_text=(
-            assessment(level, needs_expert_help=needs_expert_help).model_dump_json()
+            assessment(level).model_dump_json()
             if settings.requires_confidence else "Plain answer"
         ),
     )
@@ -68,7 +74,6 @@ async def test_assessed_answer_reuses_mapped_conversation_and_saves(monkeypatch)
     await asyncio.sleep(0)
     assert result.answer == "Useful guidance"
     assert result.confidence.level == "medium"
-    assert result.notify_experts is True
     assert result.agent_conversation_id == "mapped-thread"
     assert invoke.call_args.kwargs["agent_conversation_id"] == "mapped-thread"
     service._resolve_conversation.assert_awaited_once()
@@ -76,27 +81,17 @@ async def test_assessed_answer_reuses_mapped_conversation_and_saves(monkeypatch)
     service._save_bot_answer_to_conversation.assert_awaited_once_with(
         req, output.id, result.answer, "trace"
     )
-    service._conversation_service.reserve_expert_notification.assert_awaited_once_with(
-        req.conversation_id, req.conversation_type, result.id
-    )
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("level,needs_help,notify", [
-    ("low", False, True),
-    ("medium", False, True),
-    ("high", False, False),
-    ("high", True, True),
-])
-async def test_every_confidence_level_returns_and_saves_the_answer(monkeypatch, level, needs_help, notify):
-    service, req, _, _ = setup_chat(monkeypatch, level=level, needs_expert_help=needs_help)
+@pytest.mark.parametrize("level", ["low", "medium", "high"])
+async def test_every_confidence_level_returns_and_saves_the_answer(monkeypatch, level):
+    service, req, _, _ = setup_chat(monkeypatch, level=level)
     req.message.id = None
     result = await service.chat(req)
     await asyncio.sleep(0)
     assert result.answer == "Useful guidance"
     assert result.confidence.level == level
-    assert result.confidence.needs_expert_help is needs_help
-    assert result.notify_experts is notify
     service._save_bot_answer_to_conversation.assert_awaited_once()
     service._conversation_service.get_messages_by_conversation_id.assert_not_awaited()
 
@@ -113,10 +108,8 @@ async def test_settings_without_confidence_flags_keep_plain_generation(monkeypat
     await asyncio.sleep(0)
     assert result.answer == "Plain answer"
     assert result.confidence is None
-    assert not result.notify_experts
     assert invoke.call_args.kwargs["agent_conversation_id"] == "mapped-thread"
     service._conversation_service.get_messages_by_conversation_id.assert_not_awaited()
-    service._conversation_service.reserve_expert_notification.assert_not_awaited()
     service._save_bot_answer_to_conversation.assert_awaited_once()
 
 
@@ -128,17 +121,14 @@ async def test_non_teams_and_stateless_keep_original_path(monkeypatch, coordinat
     service, req, output, invoke = setup_chat(monkeypatch)
     req.conversation_id, req.conversation_type = coordinates
     req.message.id = None
-    req.channel_id = "channel"
     service._resolve_conversation.return_value = ("mapped-thread", False, False)
     output.output_text = "Plain answer"
     result = await service.chat(req)
     await asyncio.sleep(0)
     assert result.answer == "Plain answer"
     assert result.confidence is None
-    assert not result.notify_experts
     service._bot_config_service.get_bot_settings.assert_not_awaited()
     service._conversation_service.get_messages_by_conversation_id.assert_not_awaited()
-    service._conversation_service.reserve_expert_notification.assert_not_awaited()
     assert invoke.call_args.kwargs["agent_conversation_id"] == (
         "mapped-thread" if req.conversation_id else None
     )
@@ -157,7 +147,7 @@ async def test_non_teams_and_stateless_keep_original_path(monkeypatch, coordinat
     ("completed", "", ""),
     ("completed", None, ""),
 ])
-async def test_invalid_assessment_preserves_available_answer_without_notification(
+async def test_invalid_assessment_preserves_available_answer_without_confidence(
     monkeypatch, caplog, status, text, expected
 ):
     service, req, output, _ = setup_chat(monkeypatch)
@@ -173,12 +163,9 @@ async def test_invalid_assessment_preserves_available_answer_without_notificatio
     assert result.answer == expected
     assert result.has_result is bool(expected.strip())
     assert result.confidence is None
-    assert not result.notify_experts
     assert result.trace_id == "trace"
     assert result.agent_conversation_id == "mapped-thread"
     assert "returning available answer without confidence" in caplog.text
-    service._bot_config_service.get_bot_settings.assert_not_awaited()
-    service._conversation_service.reserve_expert_notification.assert_not_awaited()
     service._save_bot_answer_to_conversation.assert_awaited_once_with(
         req, output.id, expected, "trace"
     )
@@ -198,9 +185,7 @@ async def test_invalid_assessment_keeps_answer_reference_processing(monkeypatch,
     assert result.answer == "Useful guidance"
     assert result.references[0].link == "https://example.com/guide"
     assert result.confidence is None
-    assert not result.notify_experts
     assert "returning available answer without confidence" in caplog.text
-    service._conversation_service.reserve_expert_notification.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -240,35 +225,9 @@ async def test_noncompleted_response_logs_and_processes_available_answer(
     assert result.has_result
     assert result.trace_id == "trace"
     assert (result.confidence is not None) is confidence_enabled
-    assert result.notify_experts is confidence_enabled
     service._save_bot_answer_to_conversation.assert_awaited_once_with(
         req, output.id, result.answer, "trace"
     )
-    if confidence_enabled:
-        service._conversation_service.reserve_expert_notification.assert_awaited_once()
-    else:
-        service._conversation_service.reserve_expert_notification.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("change", [
-    {"experts": []},
-    {"allow_notify_experts": False},
-    {"show_confidence_label": False, "allow_notify_experts": False, "allow_replies_after_humans": False},
-])
-async def test_current_notification_optout_never_hides_answer(monkeypatch, change):
-    service, req, _, _ = setup_chat(monkeypatch)
-    settings = service._bot_config_service.get_bot_settings.return_value
-    service._bot_config_service.get_bot_settings.return_value = settings.model_copy(update=change)
-    result = await service.chat(req)
-    await asyncio.sleep(0)
-    assert result.answer == "Useful guidance"
-    assert result.confidence is not None
-    assert not result.notify_experts
-    service._conversation_service.reserve_expert_notification.assert_not_awaited()
-    service._save_bot_answer_to_conversation.assert_awaited_once()
-
-
 @pytest.mark.asyncio
 async def test_posthuman_flag_change_does_not_hide_answer(monkeypatch):
     service, req, _, _ = setup_chat(monkeypatch)
@@ -279,44 +238,9 @@ async def test_posthuman_flag_change_does_not_hide_answer(monkeypatch):
     result = await service.chat(req)
     await asyncio.sleep(0)
     assert result.answer == "Useful guidance"
-    assert result.notify_experts
+    assert result.confidence is not None
     service._conversation_service.get_messages_by_conversation_id.assert_not_awaited()
     service._save_bot_answer_to_conversation.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("needs_help", [False, True])
-async def test_current_backend_threshold_or_explicit_need_controls_notification(monkeypatch, needs_help):
-    service, req, _, _ = setup_chat(monkeypatch, level="medium", needs_expert_help=needs_help)
-    settings = service._bot_config_service.get_bot_settings.return_value
-    service._bot_config_service.get_bot_settings.return_value = settings.model_copy(
-        update={"expert_help_threshold": "low"}
-    )
-    result = await service.chat(req)
-    await asyncio.sleep(0)
-    assert result.answer == "Useful guidance"
-    assert result.notify_experts is needs_help
-    if needs_help:
-        service._conversation_service.reserve_expert_notification.assert_awaited_once()
-    else:
-        service._conversation_service.reserve_expert_notification.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("failure", [TimeoutError("lost acknowledgement"), AzureError("Azure unavailable")])
-async def test_reservation_failure_logs_returns_and_saves_without_retry(monkeypatch, caplog, failure):
-    service, req, _, _ = setup_chat(monkeypatch)
-    service._conversation_service.reserve_expert_notification.side_effect = failure
-    result = await service.chat(req)
-    await asyncio.sleep(0)
-    assert result.answer == "Useful guidance"
-    assert not result.notify_experts
-    service._conversation_service.reserve_expert_notification.assert_awaited_once()
-    service._save_bot_answer_to_conversation.assert_awaited_once()
-    assert any(
-        "expert" in record.getMessage().lower() or "notification" in record.getMessage().lower()
-        for record in caplog.records
-    )
 
 
 @pytest.mark.asyncio

@@ -1,0 +1,618 @@
+openapi: 3.0.0
+info:
+  title: Azure SDK QA Bot Agent Service
+  version: 0.1.0
+tags: []
+paths:
+  /agent/chat:
+    post:
+      operationId: Agent_chat
+      description: Generate an answer and optional confidence assessment.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+  /agent/feedback:
+    post:
+      operationId: Agent_feedback
+      description: Process user feedback through the feedback workflow.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+  /completion:
+    post:
+      operationId: Legacy_completion
+      description: Alias of /agent/chat, including optional confidence assessment.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+  /config/channel:
+    get:
+      operationId: Config_channel
+      description: Resolve channel settings with backward-compatible defaults.
+      parameters:
+        - name: channel_id
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelConfigResponse'
+  /conversation/save:
+    post:
+      operationId: Conversation_save
+      description: Save a conversation message.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationMessage'
+  /feedback:
+    post:
+      operationId: Legacy_feedbackLegacy
+      description: Legacy feedback endpoint (use /agent/feedback instead).
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+  /knowledge/retrieve:
+    post:
+      operationId: Knowledge_retrieve
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeRetrieveResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeRetrieveRequest'
+  /message/intention:
+    post:
+      operationId: Message_intention
+      description: Classify whether the bot should auto-reply to a message.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntentionResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntentionRequest'
+  /ping:
+    get:
+      operationId: Health_ping
+      description: Health check endpoint used by App Service and the deploy pipeline.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+components:
+  schemas:
+    AdditionalInfo:
+      type: object
+      required:
+        - type
+        - content
+      properties:
+        type:
+          allOf:
+            - $ref: '#/components/schemas/AdditionalInfoType'
+          description: The type of the additional information
+        content:
+          type: string
+          description: The content of the additional information
+        link:
+          type: string
+          description: The link to the additional information, required if type is link
+      description: Additional information to provide to the agent
+    AdditionalInfoType:
+      type: string
+      enum:
+        - link
+        - image
+        - text
+      description: Types of additional information
+    BotSettings:
+      type: object
+      properties:
+        show_confidence_label:
+          type: boolean
+          description: Opt in to displaying confidence labels.
+          default: false
+        allow_replies_after_humans:
+          type: boolean
+          description: Opt in to answering independent questions after humans join.
+          default: false
+      description: Individual channel feature opt-ins; absent settings preserve existing behavior.
+    ChannelConfigResponse:
+      type: object
+      required:
+        - channel_id
+      properties:
+        channel_id:
+          type: string
+          description: Teams channel identifier.
+        tenant_id:
+          type: string
+          nullable: true
+          description: Tenant to which the channel is routed, when configured.
+        bot_settings:
+          allOf:
+            - $ref: '#/components/schemas/BotSettings'
+          description: Defaults keep confidence and post-human replies disabled for existing channels.
+          default:
+            show_confidence_label: false
+            allow_replies_after_humans: false
+      description: Channel routing and participation settings resolved by the backend.
+    ChatRequest:
+      type: object
+      required:
+        - tenant_id
+        - message
+      properties:
+        tenant_id:
+          type: string
+          description: The tenant ID
+        channel_name:
+          type: string
+          description: Current Teams channel display name
+        conversation_id:
+          type: string
+          description: Existing conversation identifier, if continuing a conversation
+        conversation_type:
+          allOf:
+            - $ref: '#/components/schemas/ConversationType'
+          description: The conversation type
+        message:
+          allOf:
+            - $ref: '#/components/schemas/Message'
+          description: The message to send to the agent
+        with_full_context:
+          type: boolean
+          description: Whether to include full context in the response. Default is false
+        additional_infos:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdditionalInfo'
+          description: Additional information to provide to the agent, such as links or images
+      description: Request for chat completion
+    ChatResponse:
+      type: object
+      required:
+        - id
+        - answer
+        - has_result
+      properties:
+        id:
+          type: string
+          description: The unique ID of the response
+        agent_name:
+          type: string
+          description: The name of the hosted agent that generated the response
+        answer:
+          type: string
+          description: The answer from the agent
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+          description: The references to the documents used to generate the answer
+        full_context:
+          type: string
+          description: The full context used to generate the answer
+        has_result:
+          type: boolean
+          description: Whether the agent produced a non-empty answer
+        route_tenant:
+          type: string
+          description: 'Deprecated: use route_channel_name and route_channel_link instead.'
+        route_channel_name:
+          type: string
+          description: The Teams channel name the question is routed to
+        route_channel_link:
+          type: string
+          description: The Teams channel link the question is routed to
+        confidence:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/ConfidenceAssessment'
+          nullable: true
+          description: Assessment produced with the answer, never by a separate evaluator.
+        mentions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamsMention'
+          description: Verified Teams mention metadata for AT markup already present in the answer
+      description: Response from chat completion
+    ConfidenceAssessment:
+      type: object
+      required:
+        - level
+        - summary
+        - unresolved_needs
+      properties:
+        level:
+          allOf:
+            - $ref: '#/components/schemas/ConfidenceLevel'
+          description: Self-assessed confidence in the provided guidance, not verified correctness or complete resolution.
+        summary:
+          type: string
+          minLength: 1
+          description: Brief explanation of the assessment and its limits.
+        unresolved_needs:
+          type: array
+          items:
+            type: string
+          description: Needs the answer cannot resolve.
+      description: The answering model's confidence in its guidance.
+    ConfidenceLevel:
+      type: string
+      enum:
+        - high
+        - medium
+        - low
+      description: Confidence in addressing the whole current request, not a correctness grade.
+    ConversationMessage:
+      type: object
+      required:
+        - id
+        - sender_role
+        - sender_id
+        - sender_name
+        - content
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Message identifier (from Teams)
+        tenant_id:
+          type: string
+          description: Tenant identifier
+        sender_role:
+          allOf:
+            - $ref: '#/components/schemas/Role'
+          description: Role of the sender
+        sender_id:
+          type: string
+          description: Sender's user identifier
+        sender_name:
+          type: string
+          description: Sender's display name
+        content:
+          type: string
+          description: Message content
+        created_at:
+          type: string
+          format: date-time
+          description: UTC timestamp when the message was created
+        conversation_id:
+          type: string
+          description: Customer conversation identifier
+        conversation_type:
+          allOf:
+            - $ref: '#/components/schemas/ConversationType'
+          description: Conversation type
+        should_reply:
+          type: boolean
+          description: Whether the message passed intention recognition (in bot scope)
+        extra_info:
+          allOf:
+            - $ref: '#/components/schemas/ConversationMessageExtraInfo'
+          description: Additional message metadata
+      description: A conversation message to save
+    ConversationMessageExtraInfo:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          description: Teams channel identifier
+        message_link:
+          type: string
+          description: Direct link to the message
+      description: Extra metadata for a conversation message
+    ConversationType:
+      type: string
+      enum:
+        - teams_channel
+      description: Conversation type
+    FeedbackRequest:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          description: Teams channel identifier
+        tenant_id:
+          type: string
+          description: The tenant ID
+        conversation_id:
+          type: string
+          description: Exact conversation/thread identifier used to store messages
+        conversation_type:
+          allOf:
+            - $ref: '#/components/schemas/ConversationType'
+          description: The conversation type
+        reaction:
+          allOf:
+            - $ref: '#/components/schemas/Reaction'
+          description: User's reaction to the conversation
+        comment:
+          type: string
+          description: Optional comment from the user about the conversation
+        reasons:
+          type: array
+          items:
+            type: string
+          description: Optional reasons for the feedback
+        link:
+          type: string
+          description: Optional link to the conversation for further reference
+        user_name:
+          type: string
+          description: Optional user name
+      description: Request for submitting feedback
+    FeedbackResponse:
+      type: object
+      properties:
+        saved:
+          type: boolean
+          description: Whether the feedback was persisted
+        issue_url:
+          type: string
+          description: URL of the GitHub issue created from the feedback, if any
+      description: Response for feedback submission
+    IntentionRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          allOf:
+            - $ref: '#/components/schemas/Message'
+          description: The message to classify
+        conversation_id:
+          type: string
+          description: Existing conversation identifier
+        conversation_type:
+          allOf:
+            - $ref: '#/components/schemas/ConversationType'
+          description: The conversation type
+      description: Request for intention classification
+    IntentionResponse:
+      type: object
+      required:
+        - should_respond
+        - reason
+      properties:
+        should_respond:
+          type: boolean
+          description: Whether the bot should auto-reply to the message
+        reason:
+          type: string
+          description: The reason for the classification decision
+      description: Response from intention classification
+    KnowledgeRetrieveRequest:
+      type: object
+      required:
+        - tenant_id
+        - query
+      properties:
+        tenant_id:
+          type: string
+          description: The tenant ID
+        query:
+          type: string
+          description: The user query
+        serviceType:
+          type: string
+          description: The service type, it can be management-plane or data-plane
+        searchModel:
+          type: string
+          description: The search mode, it can be quick or deep.
+        userId:
+          type: string
+          description: Optional user id
+        sources:
+          type: array
+          items:
+            type: string
+          description: List of knowledge source to search.
+        top_k:
+          type: integer
+          format: int32
+          description: The top K number of knowledge items to retrieve
+      description: Request for knowledge retrieval
+    KnowledgeRetrieveResponse:
+      type: object
+      required:
+        - has_result
+      properties:
+        has_result:
+          type: boolean
+          description: Whether the agent response with knowledge
+        knowledge_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+          description: The knowledge list retrieved.
+      description: Response from knowledge retrieval.
+    Message:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        id:
+          type: string
+          description: Optional message identifier
+        role:
+          allOf:
+            - $ref: '#/components/schemas/Role'
+          description: The role of the message sender
+        content:
+          type: string
+          description: The content of the message
+        user_name:
+          type: string
+          description: Optional display name of the user
+        user_id:
+          type: string
+          description: Optional user identifier
+      description: A message in the conversation
+    PingResponse:
+      type: object
+      required:
+        - status
+        - version
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+          description: Service status
+        version:
+          type: string
+          description: Service version
+      description: Health check response
+    Reaction:
+      type: string
+      enum:
+        - good
+        - bad
+        - unknown
+      description: User reaction types for feedback
+    Reference:
+      type: object
+      required:
+        - title
+        - source
+        - link
+        - content
+      properties:
+        title:
+          type: string
+          description: The title of the document
+        source:
+          type: string
+          description: The source of the document
+        link:
+          type: string
+          description: The link to the document
+        content:
+          type: string
+          description: The content of the document
+      description: A reference to a document used to generate the answer
+    Role:
+      anyOf:
+        - type: string
+        - type: string
+          enum:
+            - user
+            - assistant
+            - system
+            - developer
+      description: Message roles in the conversation
+    TeamsMention:
+      type: object
+      required:
+        - text
+        - mentioned
+      properties:
+        text:
+          type: string
+          description: The exact AT markup included in the answer
+        mentioned:
+          allOf:
+            - $ref: '#/components/schemas/TeamsUser'
+          description: The Teams account being mentioned
+      description: Verified Teams mention metadata
+    TeamsUser:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: The Teams user identifier, such as a Microsoft Entra object ID
+        name:
+          type: string
+          description: The account display name
+      description: A Teams user account
+    Versions:
+      type: string
+      enum:
+        - 0.1.0
+      description: The API versions for the Azure SDK QA Bot Agent Service
+servers:
+  - url: http://localhost:8089
+    description: Local development server
+    variables: {}

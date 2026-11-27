@@ -245,23 +245,15 @@ describe('ChannelConfigManager', () => {
   });
 
   describe('Bot settings', () => {
-    const defaults = { show_confidence_label: false, allow_notify_experts: false, experts: [] };
+    const defaults = { show_confidence_label: false };
     const configuredYaml = `${mockConfigYaml}
   - id: configured
     name: Configured channel
     bot_settings:
       show_confidence_label: true
-      allow_notify_experts: true
-      experts:
-        - id: expert-id
-          name: Expert Name
       backend_only_setting: ignored
 `;
-    const enabled = {
-      show_confidence_label: true,
-      allow_notify_experts: true,
-      experts: [{ id: 'expert-id', name: 'Expert Name' }],
-    };
+    const enabled = { show_confidence_label: true };
 
     async function load(yaml: string = configuredYaml) {
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(yaml);
@@ -284,8 +276,6 @@ describe('ChannelConfigManager', () => {
       expect(manager.getBotSettings('unknown')).toEqual(defaults);
       expect(manager.getBotSettings('null-settings')).toEqual(defaults);
       expect(manager.getBotSettings('partial-settings')).toEqual({ ...defaults, show_confidence_label: true });
-      manager.getBotSettings('channel1').experts.push({ id: 'changed', name: 'Changed' });
-      expect(manager.getBotSettings('channel1')).toEqual(defaults);
     });
 
     it('exposes configured settings while preserving routing fallback and ignores backend-only fields', async () => {
@@ -297,9 +287,6 @@ describe('ChannelConfigManager', () => {
         endpoint: 'https://default.endpoint.com',
         bot_settings: { ...enabled, backend_only_setting: 'ignored' },
       });
-      expect(manager.getBotSettings('configured')).toEqual(enabled);
-      const settings = manager.getBotSettings('configured');
-      settings.experts[0].name = 'Changed';
       expect(manager.getBotSettings('configured')).toEqual(enabled);
       expect(manager.getRagTenant('unknown')).toBe('default-tenant');
       expect(manager.getBotSettings('unknown')).toEqual(defaults);

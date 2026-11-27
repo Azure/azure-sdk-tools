@@ -4,10 +4,24 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from models.bot_config import BotSettings
+from models.conversation import Role
 from models.intention import IntentionRequest, IntentionResponse
 from services.bot_config_service import BotConfigService
 from services.intention_service import IntentionService
-from expert_notification_policy_test import message
+
+
+def message(
+    message_id: str = "root",
+    sender_id: str = "author",
+    content: str = "Question",
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        id=message_id,
+        sender_role=Role.User,
+        sender_id=sender_id,
+        sender_name=sender_id,
+        content=content,
+    )
 
 
 def setup_intention(settings=None):
@@ -33,9 +47,6 @@ def setup_intention(settings=None):
 @pytest.mark.parametrize("settings,allowed", [
     ({}, False),
     ({"show_confidence_label": True}, False),
-    ({"allow_notify_experts": True}, False),
-    ({"experts": [{"id": "expert", "name": "Expert"}]}, False),
-    ({"expert_help_threshold": "low"}, False),
     ({"allow_replies_after_humans": True}, True),
     ({"show_confidence_label": True, "allow_replies_after_humans": True}, True),
 ])
@@ -183,11 +194,8 @@ async def test_enhanced_classifier_receives_sender_context_once(monkeypatch):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("settings,enhanced", [
     ({}, False),
-    ({"expert_help_threshold": "low"}, False),
     ({"show_confidence_label": True}, True),
     ({"allow_replies_after_humans": True}, True),
-    ({"allow_notify_experts": True}, True),
-    ({"experts": [{"id": "expert", "name": "Expert"}]}, False),
 ])
 async def test_intention_uses_same_optin_rule_before_humans(settings, enhanced):
     service, req = setup_intention(settings)

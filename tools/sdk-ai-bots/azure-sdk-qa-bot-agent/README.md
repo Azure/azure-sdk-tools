@@ -115,11 +115,6 @@ channels:
     bot_settings:
       show_confidence_label: true
       allow_replies_after_humans: true
-      allow_notify_experts: true
-      expert_help_threshold: high
-      experts:
-        - id: "<Entra object ID or UPN>"
-          name: "<Expert display name>"
 ```
 
 Features are independently opt-in:
@@ -128,21 +123,16 @@ Features are independently opt-in:
 | --- | --- | --- |
 | `show_confidence_label` | `false` | Display the model's confidence label. |
 | `allow_replies_after_humans` | `false` | Let intention classification approve new questions after humans join. |
-| `allow_notify_experts` | `false` | Allow eligible expert mentions. |
-| `expert_help_threshold` | `high` | Notify below this confidence level (`low < medium < high`), or when `needs_expert_help=true`. |
-| `experts` | `[]` | Approved mention recipients; an empty roster prevents notification. |
 
-The answering model supplies confidence; no separate evaluator runs. Confidence describes the provided guidance, not verified correctness. `needs_expert_help` separately identifies a need for human expertise or action. Intention decides whether to answer automatic requests before generation; low confidence does not suppress an answer.
+The answering model supplies confidence; no separate evaluator runs. Confidence describes the provided guidance, not verified correctness. Intention decides whether to answer automatic requests before generation; low confidence does not suppress an answer.
 
-Enabling labels or notifications selects assessed answers for **new posts only**. Each post keeps its answer format across replies, while labels and notification permissions follow channel settings. Older conversations remain plain.
+Enabling labels selects assessed answers for **new posts only**. Each post keeps its answer format across replies, while label visibility follows current channel settings. Older conversations remain plain.
 
 Missing settings use the defaults above. Retrieval failures are logged and disable optional features without caching the fallback; invalid settings are rejected. Configuration is normally cached for 300 seconds.
 
-Expert notification requires opt-in, a nonempty roster, and **one reserved attempt per root post and all its replies**. Failed delivery still consumes that attempt. A missing root or reservation failure prevents mentions, not the answer. Keep root message records while their threads remain active.
+Completion returns the answer and optional `confidence`. Invalid assessment output is logged and returned as available answer text without confidence. Message-storage failures are logged without failing the request; a successful `/conversation/save` response does not guarantee persistence.
 
-Completion returns the answer, optional `confidence`, and `notify_experts`. Invalid assessment output is logged and returned as available answer text without confidence or mentions. Message-storage failures are logged without failing the request; a successful `/conversation/save` response does not guarantee persistence.
-
-Deploy the backend and frontend before enabling features. Agree on expert rosters with channel owners. See the [design document](../docs/confidence-aware-participation-design.md) for storage, concurrency, and delivery details.
+Deploy the backend and frontend before enabling features. See the [design document](../docs/confidence-aware-participation-design.md) for persistence and delivery details.
 
 ### Debugging the Chat Agent
 
@@ -186,12 +176,19 @@ Same AI Toolkit workflow as the chat agent, just pointed at the chatbot evolutio
 }
 ```
 
-The agent derives `tenant_id` from `fetch_conversation`, then calls
-`fetch_chat_trace` / `search_knowledge_base` and may file a real GitHub issue — use a throwaway conversation when iterating.
+The agent derives `tenant_id` from `fetch_conversation`, then calls `fetch_chat_trace` / `search_knowledge_base` and may file a real GitHub issue or ADO work item — use a throwaway conversation when iterating.
 
 **2. Debug the feedback loop end-to-end.**
 
-`ChatbotEvolutionAgentService` runs the hosted chatbot evolution agent synchronously against the *deployed* Foundry agent. Its settings (`AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_NAME`, `AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_VERSION`, `CHATBOT_EVOLUTION_AGENT_ENABLED`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+`ChatbotEvolutionAgentService` runs the hosted chatbot evolution agent synchronously against the *deployed* Foundry agent, using the chat agent's shared streaming response client with a 600-second job limit and a 40-tool-call budget. For explicit HTTP 424 `session_not_ready` rejections, the wrapper allows up to three readiness attempts with 10- and 20-second backoffs. These additional retries apply only before stream acceptance; the OpenAI SDK's default HTTP retry policy is unchanged. Its settings (`AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_NAME`, `AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_VERSION`, `CHATBOT_EVOLUTION_AGENT_ENABLED`, `AGENT_APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+
+The daily poller treats the global `ADO_ISSUE_CLOSED_STATE` App Configuration value as terminal, defaulting to `Closed`.
+
+Trace lookup searches retained history rather than only the last 30 days. Partial batch failures are counted as failures, not skips, and mark Azure Pipelines scans `SucceededWithIssues` after all cases have been processed.
+
+The scan refreshes ongoing thread metadata after human-only replies as well as bot replies. Before processing enabled Agent jobs, it recovers `created`/`running` feedback inactive for at least 20 minutes into retryable `failed` state; conditional writes prevent overwriting concurrent updates.
+
+Ongoing threads without an active feedback workflow are automatically marked `finished`/`correct` after at least 144 hours since the latest conversation message, without invoking the Evolution Agent and regardless of user feedback. The scan verifies the actual transcript. Automatic closures are marked with `auto_closed_at`; a newer reply reopens them on ingestion and restarts the inactivity clock, including replies persisted while closure was in progress. Agent-assessed conclusions remain immutable to message ingestion. The recorded reasoning identifies automatic closure, and no confidence score is assigned. Negative feedback is still saved, but does not reopen automatically closed records; it can reopen Agent-assessed correct records. Dry runs and disabled Agent processing do not auto-close records.
 
 To exercise the loop locally:
 
@@ -284,11 +281,17 @@ python scripts/deploy_hosted_agent.py chatbot_evolution_agent --tag <image-tag>
 Builds the backend API (FastAPI) container image and deploys to Azure App Service.
 
 - **Pipeline**: [server-cd.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-agent/pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
-- **Parameters**: `environment` (dev/preview/prod), `slot` (default/agent)
+- **Parameters**: `environment` (dev/preview/prod), `deploymentTarget` (all/server/knowledge-sync; default: `all`)
+- **Deployment targets**:
+   - `all`: deploy the server, then knowledge sync. Preview deploys only the server.
+   - `server`: deploy only the backend container.
+   - `knowledge-sync`: build, test, and deploy only the knowledge sync WebJob in dev/prod.
 - **What it does**:
-  1. Resolves image tag from `_version.py` (prod) or git short SHA (dev)
-  2. Builds and pushes image to ACR via `az acr build`
-  3. Deploys to App Service using container image reference
+   1. `DeployServer` resolves the image tag from `_version.py` (preview/prod) or git short SHA (dev), builds and pushes to ACR (except prod, which reuses the image), validates the image, updates App Service, and checks server health.
+   2. `DeployKnowledgeSync` builds, tests, packages and publishes the knowledge sync ZIP, and deploys the scheduled WebJob. With `all`, it runs after server success and provisions the SSH key; with `knowledge-sync`, it runs independently using existing settings. Preview omits this job.
+
+WebJob deployment may restart the backend when applying App Service prerequisites,
+even when its container image is unchanged. See the [knowledge sync deployment guide](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/README.md).
 
 ### Logic App Deploy
 

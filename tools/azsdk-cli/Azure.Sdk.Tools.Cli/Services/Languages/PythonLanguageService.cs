@@ -78,6 +78,8 @@ public sealed partial class PythonLanguageService : LanguageService
             SdkType = sdkType
         };
 
+        await GeneratedSdkMetadataHelper.PopulateApiVersionsAsync(model, logger, ct);
+
         logger.LogDebug("Resolved Python package: {sdkType} {packageName} v{packageVersion} at {relativePath}",
             sdkType, packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
 
@@ -333,7 +335,7 @@ public sealed partial class PythonLanguageService : LanguageService
     /// Runs pylint and mypy as the "build" step for Python packages (Python has no compiler).
     /// </summary>
     public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(
-        string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        string packagePath, string? additionalArguments = null, int timeoutMinutes = 30, CancellationToken ct = default)
     {
         var packageInfo = await GetPackageInfo(packagePath, ct);
         var check = await LintCode(packagePath, cancellationToken: ct);
@@ -342,11 +344,20 @@ public sealed partial class PythonLanguageService : LanguageService
             : (false, check.CheckStatusDetails, packageInfo);
     }
 
-    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+    public override Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
         string buildContext,
         CancellationToken ct)
+        => ApplyPatchesAsync(customizationRoot, packagePath, buildContext, ct, 1, null);
+
+    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+        string customizationRoot,
+        string packagePath,
+        string buildContext,
+        CancellationToken ct,
+        int maxAttempts,
+        Func<IReadOnlyList<AppliedPatch>, Task<CopilotAgentValidationResult>>? validateResult)
     {
         try
         {
@@ -369,7 +380,8 @@ public sealed partial class PythonLanguageService : LanguageService
             var agent = new CopilotAgent<string>
             {
                 Instructions = prompt,
-                MaxIterations = 25,
+                MaxIterations = 25 + maxAttempts - 1,
+                ValidateResult = validateResult == null ? null : _ => validateResult(patchLog.ToList()),
                 Tools =
                 [
                     FileTools.CreateGrepSearchTool(packagePath,
@@ -398,6 +410,7 @@ public sealed partial class PythonLanguageService : LanguageService
             logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
             return appliedPatches;
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to apply patches");

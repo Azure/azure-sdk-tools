@@ -12,7 +12,9 @@
 #include <clang/Tooling/Tooling.h>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <ostream>
+#include <sstream>
 #include <string_view>
 
 using namespace nlohmann::literals;
@@ -644,6 +646,84 @@ TEST_F(TestParser, TestDocuments)
 
   NsDumper dumper;
   db->DumpClassDatabase(&dumper);
+
+  JsonDumper jsonDumper("Documentation test", "Test service", "test-package");
+  db->DumpClassDatabase(&jsonDumper);
+  bool hasDocumentation = false;
+  for (auto const& token : jsonDumper.GetJson()["Tokens"])
+  {
+    if (token["Kind"] == 10)
+    {
+      auto text = token["Value"].get<std::string>();
+      EXPECT_EQ(text.find("DocumentationTests.cpp:"), std::string::npos);
+      hasDocumentation
+          |= text.find("demonstrates all the doxygen special commands") != std::string::npos;
+    }
+  }
+  EXPECT_TRUE(hasDocumentation);
+
+  std::ostringstream output;
+  TextDumper consoleDumper(output);
+  db->DumpClassDatabase(&consoleDumper);
+  EXPECT_NE(output.str().find("DocumentationTests.cpp:"), std::string::npos);
+}
+
+TEST_F(TestParser, IncludesPubliclyExposedDetailTypes)
+{
+  for (bool includeDetail : {false, true})
+  {
+    auto settings = R"({
+      "sourceFilesToProcess": ["ExposedDetailTypes.hpp"],
+      "filterNamespace": "Azure::Storage"
+    })"_json;
+    settings["includeDetail"] = includeDetail;
+    ApiViewProcessor processor("tests", settings);
+    ASSERT_EQ(processor.ProcessApiView(), 0);
+    auto const& db = processor.GetClassesDatabase();
+
+    JsonDumper dumper("Exposed detail types", "Test service", "test-package");
+    db->DumpClassDatabase(&dumper);
+    std::ostringstream jsonOutput;
+    EXPECT_NO_THROW(dumper.DumpToFile(jsonOutput));
+    EXPECT_TRUE(dumper.GetJson().contains("Tokens"));
+    EXPECT_FALSE(dumper.GetJson().contains("ReviewLines"));
+
+    std::map<std::string, size_t> definitions;
+    bool hasDocumentation = false;
+    for (auto const& token : dumper.GetJson()["Tokens"])
+    {
+      if (token.contains("DefinitionId") && token["DefinitionId"].is_string())
+      {
+        ++definitions[token["DefinitionId"].get<std::string>()];
+      }
+      if (token["Kind"] == 10)
+      {
+        hasDocumentation |= token["Value"].get<std::string>().find("A publicly exposed detail type")
+            != std::string::npos;
+      }
+    }
+    EXPECT_EQ(definitions["Azure::Storage::_detail::Foo"], 1u);
+    EXPECT_EQ(definitions["Azure::Storage::_detail::Foo::Value"], 1u);
+    EXPECT_EQ(definitions["void Azure::Storage::_detail::Foo::DoSomething()"], 1u);
+    EXPECT_EQ(definitions["Azure::Storage::_detail::Foo::PrivateValue"], 0u);
+    EXPECT_EQ(definitions["Azure::Storage::_detail::Mode"], 1u);
+    EXPECT_EQ(definitions["Azure::Storage::_detail::Imported"], 1u);
+    EXPECT_EQ(definitions["Azure::Storage::Foo"], 1u);
+    EXPECT_EQ(definitions["Azure::Storage::AnotherFoo"], 1u);
+    EXPECT_EQ(definitions["Azure::Storage::Mode"], 1u);
+    EXPECT_EQ(definitions["Azure::Storage::_detail::Hidden"], includeDetail ? 1u : 0u);
+    EXPECT_EQ(definitions["Azure::Storage::_detail::Unused"], includeDetail ? 1u : 0u);
+    EXPECT_EQ(definitions["Azure::Storage::_detail::HiddenAlias"], includeDetail ? 1u : 0u);
+    EXPECT_TRUE(hasDocumentation);
+    if (includeDetail)
+    {
+      EXPECT_TRUE(SyntaxCheckClassDb(db, "ExposedDetailTypesAll.cpp"));
+    }
+    else
+    {
+      EXPECT_TRUE(SyntaxCheckClassDb(db, "ExposedDetailTypesPublic.cpp"));
+    }
+  }
 }
 
 #if 0

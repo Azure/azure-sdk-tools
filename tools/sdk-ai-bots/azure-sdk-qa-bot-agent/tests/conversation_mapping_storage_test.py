@@ -160,7 +160,7 @@ async def test_new_mapping_saves_format_without_initial_messages(mapping_contain
     assert mapping_container.items[THREAD]["confidence_enabled"] is enabled
     assert mapping_container.upserts == 0
     service._bot_config_service.get_bot_settings.assert_awaited_once_with(
-        request.conversation_id, request.channel_id
+        request.conversation_id
     )
 
 
@@ -255,17 +255,13 @@ async def test_settings_outage_allows_completion_without_optins_and_preserves_sa
     monkeypatch.setattr(
         "services.bot_config_service.download_blob", AsyncMock(side_effect=TimeoutError("Blob unavailable"))
     )
-    service._conversation_service.reserve_expert_notification = AsyncMock()
-
     result = await service.chat(request)
     await asyncio.sleep(0)
 
     assert result.answer == ("Useful guidance" if saved_pin else "Plain answer")
     assert (result.confidence is not None) is bool(saved_pin)
-    assert not result.notify_experts
     invoke.assert_awaited_once()
     assert mapping_container.items[THREAD]["confidence_enabled"] is bool(saved_pin)
-    service._conversation_service.reserve_expert_notification.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -365,7 +361,9 @@ async def test_actual_chat_keeps_format_after_toggle_with_prompt_only_on_first_i
     ] == ["[memory_scope] value=user_author"]
     assert mapping_container.creates == 1
     assert mapping_container.upserts == 0
-    service._build_tenant_system_message.assert_called_once_with(request.tenant_id)
+    service._build_tenant_system_message.assert_called_once_with(
+        request.tenant_id, request.channel_name
+    )
     service._conversation_service.get_messages_by_conversation_id.assert_not_awaited()
 
 

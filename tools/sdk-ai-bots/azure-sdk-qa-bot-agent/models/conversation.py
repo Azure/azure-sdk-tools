@@ -66,19 +66,11 @@ class ConversationMappingItem(BaseModel):
     )
 
 
-class ExpertNotificationAttempt(BaseModel):
-    """One reserved notification attempt for a thread, not confirmed delivery."""
-
-    response_id: str
-    reserved_at: datetime
-
-
 class ConversationMessageItem(ConversationMessage):
     conversation_partition: str
     document_type: ConversationDocumentType = Field(
         default=ConversationDocumentType.message
     )
-    expert_notification: ExpertNotificationAttempt | None = None
 
 
 class SaveConversationMessageResponse(BaseModel):

@@ -4,15 +4,8 @@ import { logger } from '../logging/logger.js';
 import { BlobClientManager } from './blobClient.js';
 import config from './config.js';
 
-export interface Expert {
-  id: string;
-  name: string;
-}
-
 export interface ChannelBotSettings {
   show_confidence_label: boolean;
-  allow_notify_experts: boolean;
-  experts: Expert[];
 }
 
 export interface ChannelItem {
@@ -103,8 +96,6 @@ class ChannelConfigManager {
     const settings = this.config?.channels.find((ch) => ch.id === channelId)?.bot_settings;
     return {
       show_confidence_label: settings?.show_confidence_label ?? false,
-      allow_notify_experts: settings?.allow_notify_experts ?? false,
-      experts: settings?.experts?.map(({ id, name }) => ({ id, name })) ?? [],
     };
   }
 

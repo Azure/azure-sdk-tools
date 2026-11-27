@@ -85,11 +85,9 @@ Type question in Microsoft 365 Agents Playground
 
 Features default off. The existing `ChannelConfigManager` reads optional `bot_settings` from `channel.yaml` alongside routing configuration and checks for changes every five seconds; no extra configuration request is made per reply. See [channel configuration](../azure-sdk-qa-bot-agent/README.md#confidence-aware-teams-replies) for settings and an example.
 
-Intention decides whether to answer automatic requests before generation. All answers update the existing Thinking activity, including references, confidence details, an optional label such as **Confidence: Low**, and authorized mention text/entities. Low confidence does not suppress an answer. Whether adding mentions through an update triggers Teams notifications still requires live verification.
+Intention decides whether to answer automatic requests before generation. Replies include references, confidence details, and an optional label such as **Confidence: Low**. Low confidence does not suppress an answer.
 
-Each conversation keeps its original answer format, so enabling features does not add confidence to older plain conversations. Label visibility and mention recipients come from the channel settings loaded for the request. Invalid confidence/notification metadata is logged and the answer is displayed without confidence or mentions; an empty expert roster skips mentions without blocking the answer.
-
-Teams mentions require backend `notify_experts=true`, local `allow_notify_experts=true`, and configured recipients. The backend reserves **one notification attempt per root post and all its replies**. Delivery uses the existing update helper, which retries only HTTP 429 responses, not timeouts. Failed delivery can consume the attempt; no fallback message is sent.
+Each conversation keeps its original answer format, so enabling confidence does not change older plain conversations. Label visibility comes from the channel settings loaded for the request. Invalid confidence metadata is logged and the answer is displayed without confidence.
 
 Failed configuration refreshes are logged and retain the last loaded configuration, including bot settings and tenant/endpoint routing. Missing bot settings default off; supplied settings are trusted like the existing routing fields, without runtime schema validation. Successful Teams deliveries are saved to TableStorage; history-write failures are logged without sending another reply.
 
@@ -98,7 +96,7 @@ See the [design document](../docs/confidence-aware-participation-design.md) for 
 Run focused frontend coverage and typechecking from this directory:
 
 ```powershell
-npx vitest run test\confidenceDelivery.test.ts test\ragParticipation.test.ts test\ragDeliveryApi.test.ts test\thinkingHandler.test.ts
+npx vitest run test\confidenceDelivery.test.ts test\ragParticipation.test.ts test\ragDeliveryApi.test.ts test\replyHandler.test.ts
 npx tsc --noEmit
 ```
 

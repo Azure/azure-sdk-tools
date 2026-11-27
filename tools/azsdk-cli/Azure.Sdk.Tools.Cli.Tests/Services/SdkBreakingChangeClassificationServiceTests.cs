@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockPythonHelper.Object, _mockAgentRunner.Object, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
                 new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, Mock.Of<ICopilotAgentRunner>(), _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
                 new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
-                new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, Mock.Of<ICopilotAgentRunner>(), _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+                new DotNetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, Mock.Of<ICopilotAgentRunner>(), _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
                 new RustLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>())
             ];
         }
@@ -163,7 +163,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var ct = CancellationToken.None;
             var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
             var tspProjectFile = Path.Combine(_typeSpecProjectPath, "tspconfig.yaml");
-            var classifyResult = await service.ClassifySdkBreakingChangesAsync(sdkchanges, sdkBreakingPattern, languageService.Language.ToString(), _typeSpecProjectPath, ct);
+            var classifyResult = await service.ClassifySdkBreakingChangesAsync(sdkchanges, sdkBreakingPattern, languageService.Language.ToString(), _typeSpecProjectPath, null, ct);
             Assert.IsNotNull(classifyResult);
             Assert.IsInstanceOf<SdkBreakingChangeDetectionResult>(classifyResult);
             Assert.That(classifyResult.BreakingChanges, Has.Count.EqualTo(1));

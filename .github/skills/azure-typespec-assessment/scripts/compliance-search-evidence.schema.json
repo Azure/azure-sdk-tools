@@ -67,13 +67,7 @@
     "score": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "exactSymbol",
-        "patternCategory",
-        "servicePlane",
-        "changeContext",
-        "total"
-      ],
+      "required": ["exactSymbol", "patternCategory", "servicePlane", "changeContext", "total"],
       "properties": {
         "exactSymbol": { "enum": [0, 4] },
         "patternCategory": { "enum": [0, 3] },
@@ -85,14 +79,7 @@
     "rankedCatalogEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "rank",
-        "catalogOrder",
-        "title",
-        "canonicalUrl",
-        "score",
-        "selectionRationale"
-      ],
+      "required": ["rank", "catalogOrder", "title", "canonicalUrl", "score", "selectionRationale"],
       "properties": {
         "rank": { "type": "integer", "minimum": 1 },
         "catalogOrder": { "type": "integer", "minimum": 1 },
@@ -105,13 +92,7 @@
     "guidance": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "section",
-        "excerpt",
-        "queryTerms",
-        "examples",
-        "applicableDeclarationIds"
-      ],
+      "required": ["section", "excerpt", "queryTerms", "examples", "applicableDeclarationIds"],
       "properties": {
         "section": { "type": "string", "minLength": 1 },
         "excerpt": { "type": "string", "minLength": 1 },

@@ -49,6 +49,25 @@ def test_sanitize_text_redacts_secrets_and_ignores_trace_ids():
     assert "AbCdEfGhIjKlMnOpQrStUvWxYz012345" not in out_sas
     assert "<CREDENTIAL_OR_SECRET>" in out_sas
 
+    pem_full = (
+        "key:\n"
+        "-----BEGIN RSA PRIVATE KEY-----\n"
+        "MIIEpAIBAAKCAQEAsomeSecretKeyBodyLine1\n"
+        "MIIEpAIBAAKCAQEAsomeSecretKeyBodyLine2\n"
+        "-----END RSA PRIVATE KEY-----\n"
+        "after"
+    )
+    out_pem = sanitize_text(pem_full, is_public_target=True)
+    assert "someSecretKeyBodyLine1" not in out_pem
+    assert "END RSA PRIVATE KEY" not in out_pem
+    assert "<CREDENTIAL_OR_SECRET>" in out_pem
+    assert "after" in out_pem
+
+    pem_truncated = "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcw"
+    out_trunc = sanitize_text(pem_truncated, is_public_target=True)
+    assert "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcw" not in out_trunc
+    assert "<CREDENTIAL_OR_SECRET>" in out_trunc
+
     # Normal OTel trace ID and GitHub link must not trigger false positives.
     clean = (
         "**Trace ID:** af58ea288fe9139d441ced9646bc73b2\n"
@@ -194,4 +213,19 @@ def test_log_sanitization_filter_redacts_logger_records():
     assert "alice@microsoft.com" not in output
     assert "ghp_" not in output
     assert "teams.microsoft.com" not in output
+
+    stream.truncate(0)
+    stream.seek(0)
+    try:
+        raise RuntimeError(
+            "Failed for alice@microsoft.com with ghp_1234567890abcdefghijklmnopqrstuvwxyzABCD"
+        )
+    except RuntimeError:
+        test_logger.exception("Unhandled error")
+    exc_output = stream.getvalue()
+    assert "RuntimeError" in exc_output
+    assert "alice@microsoft.com" not in exc_output
+    assert "ghp_" not in exc_output
+    assert "<EMAIL_ADDRESS>" in exc_output
+    assert "<CREDENTIAL_OR_SECRET>" in exc_output
 

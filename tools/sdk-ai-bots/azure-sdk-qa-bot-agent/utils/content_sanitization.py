@@ -51,7 +51,11 @@ def _presidio() -> tuple[AnalyzerEngine, AnonymizerEngine]:
             supported_entity="CREDENTIAL_OR_SECRET",
             patterns=[
                 Pattern("github_token", r"\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,})\b", 0.95),
-                Pattern("private_key", r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----", 0.95),
+                Pattern(
+                    "private_key",
+                    r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z0-9 ]*PRIVATE KEY-----|\Z)",
+                    0.95,
+                ),
                 Pattern("azure_key_or_sas", r"(?i)(?:AccountKey|SharedAccessSignature)=[^;\s]+|[?&]sig=[A-Za-z0-9%+/=]{16,}", 0.9),
                 Pattern("bearer_or_jwt", r"\bBearer\s+[A-Za-z0-9\-._~+/]{16,}=*|\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b", 0.9),
             ],
@@ -107,6 +111,10 @@ class LogSanitizationFilter(logging.Filter):
                 message = str(record.msg)
             record.msg = sanitize_text(message, is_public_target=True)
             record.args = ()
+            if record.exc_info and not record.exc_text:
+                record.exc_text = logging.Formatter().formatException(record.exc_info)
+            # Clear exc_info after sanitizing exc_text so formatters and exporters cannot read raw exception data.
+            record.exc_info = None
             if record.exc_text:
                 record.exc_text = sanitize_text(record.exc_text, is_public_target=True)
             return True

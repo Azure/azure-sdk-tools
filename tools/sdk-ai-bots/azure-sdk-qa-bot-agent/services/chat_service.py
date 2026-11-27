@@ -680,12 +680,12 @@ class ChatService:
             for ref in result.results
         ]
 
-        raw_output_text = response.output_text or ""
-        structured_output = self._parse_structured_output(raw_output_text)
+        output_text = response.output_text or ""
+        structured_output = self._parse_structured_output(output_text)
         answer = (
             structured_output.answer
             if structured_output is not None
-            else raw_output_text
+            else output_text
         )
 
         # Strip model citation artifacts (e.g. "citeturn0search0").

@@ -40,6 +40,7 @@ from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from utils.azure_ai_foundry import (
+    create_web_search_tool,
     get_agent_client,
     get_project_client,
 )
@@ -97,9 +98,7 @@ async def main() -> None:
 
     # Init Tools (synchronous / instant)
     knowledge_tools = KnowledgeTools()
-    web_search_tool = agent_client.get_web_search_tool(
-        search_context_size="medium",
-    )
+    web_search_tool = create_web_search_tool(agent_client)
 
     tools = [
         knowledge_tools.search_knowledge_base,

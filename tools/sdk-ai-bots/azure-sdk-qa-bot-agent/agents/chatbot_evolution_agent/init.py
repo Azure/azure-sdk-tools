@@ -45,6 +45,7 @@ from services.chat_service import ChatService
 from utils.azure_ai_search import SearchClient
 from utils.azure_ai_foundry import (
     create_project_client,
+    create_web_search_tool,
     get_agent_client,
     get_project_client,
 )
@@ -115,9 +116,7 @@ async def main() -> None:
         search_client=SearchClient(candidate_config.get),
         blob_client=create_blob_service_client(candidate_config.get),
     )
-    web_search_tool = agent_client.get_web_search_tool(
-        search_context_size="medium",
-    )
+    web_search_tool = create_web_search_tool(agent_client)
 
     tools = [
         monitor_tools.fetch_chat_trace,
@@ -170,6 +169,7 @@ async def main() -> None:
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
+            "include": ["web_search_call.action.sources"],
         },
     )
 

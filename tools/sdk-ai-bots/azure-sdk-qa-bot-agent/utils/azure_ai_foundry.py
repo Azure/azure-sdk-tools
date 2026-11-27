@@ -54,6 +54,45 @@ def create_openai_client(
     return project_client.get_openai_client(agent_name=agent_name)
 
 
+_MAX_WEB_SEARCH_ALLOWED_DOMAINS = 100
+
+
+def get_web_search_allowed_domains() -> list[str] | None:
+    """Return normalized allowed domains for Foundry web_search, or ``None`` if unset.
+
+    Reads ``WEB_SEARCH_ALLOWED_DOMAINS`` from App Configuration and falls back
+    to ``WEB_FETCH_ALLOWED_DOMAINS`` so existing environment allowlists continue
+    to apply.
+    """
+    raw = cfg("WEB_SEARCH_ALLOWED_DOMAINS", "") or cfg("WEB_FETCH_ALLOWED_DOMAINS", "")
+    if not raw.strip():
+        return None
+    domains: list[str] = []
+    seen: set[str] = set()
+    for entry in raw.split(","):
+        domain = entry.strip().lower()
+        for prefix in ("https://", "http://"):
+            if domain.startswith(prefix):
+                domain = domain[len(prefix):]
+        domain = domain.strip("/").lstrip(".")
+        if domain and domain not in seen:
+            seen.add(domain)
+            domains.append(domain)
+    return domains[:_MAX_WEB_SEARCH_ALLOWED_DOMAINS] or None
+
+
+def create_web_search_tool(agent_client: FoundryChatClient):
+    """Create the Foundry hosted web_search tool with configured domain filters."""
+    allowed_domains = get_web_search_allowed_domains()
+    if allowed_domains:
+        logger.info("Configuring web_search with %d allowed domains", len(allowed_domains))
+        return agent_client.get_web_search_tool(
+            search_context_size="medium",
+            allowed_domains=allowed_domains,
+        )
+    return agent_client.get_web_search_tool(search_context_size="medium")
+
+
 def get_agent_client() -> FoundryChatClient:
     """Return the shared FoundryChatClient (created once on first call)."""
     global _agent_client

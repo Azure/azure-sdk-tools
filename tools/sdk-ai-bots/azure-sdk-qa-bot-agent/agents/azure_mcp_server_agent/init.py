@@ -30,7 +30,11 @@ from skills.tenant_skills import create_tenant_skills
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.knowledge_tools import KnowledgeTools
 from tools.mslearn_mcp_tools import create_mslearn_mcp_tool
-from utils.azure_ai_foundry import get_agent_client, get_project_client
+from utils.azure_ai_foundry import (
+    create_web_search_tool,
+    get_agent_client,
+    get_project_client,
+)
 from utils.azure_memory_store import ensure_user_memory_store
 from utils.memory_context_provider import MemoryContextProvider
 from utils.tool_security import ToolOutputSecurityMiddleware
@@ -68,7 +72,7 @@ async def main() -> None:
 
     project_client = get_project_client()
     knowledge_tools = KnowledgeTools()
-    web_search_tool = agent_client.get_web_search_tool(search_context_size="medium")
+    web_search_tool = create_web_search_tool(agent_client)
     tools = [
         knowledge_tools.search_knowledge_base,
         knowledge_tools.wiki_search,

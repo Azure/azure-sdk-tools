@@ -86,7 +86,7 @@ Discipline:
 
 **Azure DevOps MCP** — `mcp_ado_pipelines_get_build_definitions` for pipeline lookup. The `name` parameter supports `*` wildcards: use `* - *<service>*` for all languages (e.g. `* - *network*`), or scope to one (e.g. `go - *network*`). Confirm service name first. Set `includeLatestBuilds` to `false` for link-only lookups.
 
-**Web Search** — Use proactively for time-sensitive info and when `search_knowledge_base` returns insufficient results. Rely on authoritative opened-page results rather than unverified snippet text. Use GitHub MCP for GitHub content rather than web search.
+**Web Search** — Use proactively for time-sensitive info and when `search_knowledge_base` returns insufficient results. Rely on authoritative opened-page results rather than unverified snippet text. Use GitHub MCP for GitHub content rather than web search. Never include credentials, tokens, connection strings, or sensitive internal-only text in `web_search` queries.
 
 **Tool Failure Handling** — When a tool call fails or returns no results, explain what happened briefly and try an alternative path (e.g., fall back from GitHub MCP to web search, or refine the search query). If no alternative is available, ask the user a follow-up question.
 

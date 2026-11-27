@@ -682,18 +682,18 @@ class ChatService:
 
         raw_output_text = response.output_text or ""
         structured_output = self._parse_structured_output(raw_output_text)
-        output_text = (
+        answer = (
             structured_output.answer
             if structured_output is not None
             else raw_output_text
         )
 
         # Strip model citation artifacts (e.g. "citeturn0search0").
-        output_text = _CITATION_RE.sub("", output_text)
+        answer = _CITATION_RE.sub("", answer)
 
         # Extract any explicit {{channel:<key>}} handoff placeholder.
         answer, route_channel_name, route_channel_link = (
-            self._extract_support_channel_from_text(output_text)
+            self._extract_support_channel_from_text(answer)
         )
 
         references = (

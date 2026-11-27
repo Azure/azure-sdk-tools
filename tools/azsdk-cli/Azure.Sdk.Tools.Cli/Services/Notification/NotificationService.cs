@@ -27,6 +27,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
     public interface INotificationService
     {
         /// <summary>
+        /// True when the notification service URL is configured, so callers can skip work that only feeds an email.
+        /// </summary>
+        bool IsEnabled { get; }
+
+        /// <summary>
         /// Sends the email described by <paramref name="payload"/>.
         /// Returns the delivery outcome so callers can surface failures. Notifications that are
         /// disabled or have no valid recipients are reported as skipped outcomes, not failures.
@@ -44,6 +49,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
+
+        public bool IsEnabled => IsNotificationEnabled(out _);
 
         public async Task<NotificationResult> SendEmailNotificationAsync(EmailPayload payload, CancellationToken ct = default)
         {

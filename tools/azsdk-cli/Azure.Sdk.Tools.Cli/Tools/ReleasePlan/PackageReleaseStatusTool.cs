@@ -329,44 +329,114 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             logger.LogInformation("Successfully updated release status to {releaseStatus} for package {packageName} in release plan {workItemId}", releaseStatus, packageName, releasePlan.WorkItemId);
             response.ReleaseStatus = releaseStatus;
 
-            if (string.Equals(releaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(releaseStatus, "Released", StringComparison.OrdinalIgnoreCase) && IsReleasePlanComplete(WithReleasedLanguage(releasePlan, languageId)))
             {
-                var currentLanguageName = DevOpsService.MapLanguageIdToName(languageId);
-                var sdkInfo = releasePlan.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, currentLanguageName, StringComparison.OrdinalIgnoreCase));
-                if (sdkInfo != null)
-                {
-                    sdkInfo.ReleaseStatus = releaseStatus;
-                }
-
-                if (IsReleasePlanComplete(releasePlan))
-                {
-                    try
-                    {
-                        logger.LogInformation("All required languages are complete for release plan {workItemId}. Marking as Finished.", releasePlan.WorkItemId);
-                        await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
-                        {
-                            { "System.State", "Finished" }
-                        }, ct);
-                        response.ReleasePlanFinished = true;
-                    }
-                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Failed to mark release plan {workItemId} as Finished", releasePlan.WorkItemId);
-                        response.Message = "Release status updated successfully but failed to auto-finish the release plan.";
-                    }
-
-                    if (response.ReleasePlanFinished)
-                    {
-                        await QueueNextReleasePlanAsync(releasePlan, response, ct);
-                    }
-                }
+                // Reread with a revision check so concurrent invocations cannot both finish the plan.
+                await TryFinishReleasePlanAsync(releasePlan, response, ct);
             }
 
             return response;
+        }
+
+        private static ReleasePlanWorkItem WithReleasedLanguage(ReleasePlanWorkItem releasePlan, string languageId)
+        {
+            var currentLanguageName = DevOpsService.MapLanguageIdToName(languageId);
+            var sdkInfo = releasePlan.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, currentLanguageName, StringComparison.OrdinalIgnoreCase));
+            if (sdkInfo != null)
+            {
+                sdkInfo.ReleaseStatus = "Released";
+            }
+            return releasePlan;
+        }
+
+        private async Task NotifyReleasePlanFinishedAsync(ReleasePlanWorkItem releasePlan, ReleaseStatusUpdateResponse response, CancellationToken ct)
+        {
+            if (releasePlan.ApiReleaseType is not (ApiReleaseType.PublicPreview or ApiReleaseType.GA) || !notificationService.IsEnabled)
+            {
+                return;
+            }
+
+            try
+            {
+                var serviceName = await GetOnboardedServiceNameAsync(releasePlan, ct);
+                var packageMetadata = await GetReleasedPackageMetadataAsync(releasePlan, ct);
+                var result = await notificationService.SendEmailNotificationAsync(
+                    new FinishedReleasePlanEmail(releasePlan, DateTimeOffset.UtcNow, packageMetadata, serviceName), ct);
+                if (result.IsFailure || result.Status == NotificationStatus.SkippedNoRecipients)
+                {
+                    var error = result.ErrorMessage ?? "No valid release plan owner email address was recorded.";
+                    logger.LogWarning("Release plan {releasePlanId} is Finished, but its completion email failed: {error}",
+                        releasePlan.ReleasePlanId, error);
+                    (response.Warnings ??= []).Add($"Release plan is Finished, but its completion email was not sent: {error}");
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to send the completion email for release plan {releasePlanId}.", releasePlan.ReleasePlanId);
+                (response.Warnings ??= []).Add($"Release plan is Finished, but its completion email failed: {ex.Message}");
+            }
+        }
+
+        private async Task<string> GetOnboardedServiceNameAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
+        {
+            if (!Guid.TryParse(releasePlan.ProductTreeId, out var productId) || !Guid.TryParse(releasePlan.ServiceTreeId, out var serviceId))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                var onboarding = await devOpsService.GetProductOnboardingAsync(productId, serviceId, ct, releasePlan.IsTestReleasePlan);
+                return onboarding?.ServiceName ?? string.Empty;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to get the product onboarding record for release plan {releasePlanId}; the completion email will use the package service name.",
+                    releasePlan.ReleasePlanId);
+                return string.Empty;
+            }
+        }
+
+        private async Task<Dictionary<string, ReleasedPackageMetadata>> GetReleasedPackageMetadataAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct)
+        {
+            var metadata = new Dictionary<string, ReleasedPackageMetadata>(StringComparer.OrdinalIgnoreCase);
+            foreach (var sdk in releasePlan.SDKInfo.Where(s =>
+                string.Equals(s.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(s.PackageName) && !string.IsNullOrWhiteSpace(s.Language)))
+            {
+                try
+                {
+                    var packageWorkItem = await devOpsService.GetPackageWorkItemAsync(sdk.PackageName, sdk.Language, ct: ct);
+                    if (packageWorkItem?.Fields == null)
+                    {
+                        continue;
+                    }
+                    metadata[sdk.Language] = new ReleasedPackageMetadata(
+                        GetField(packageWorkItem.Fields, "Custom.ServiceName"),
+                        GetField(packageWorkItem.Fields, "Custom.GroupId"));
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to get the package work item for {language} package {packageName}; the completion email will omit its service and registry details.",
+                        sdk.Language, sdk.PackageName);
+                }
+            }
+            return metadata;
+
+            static string GetField(Dictionary<string, object> fields, string name) =>
+                fields.TryGetValue(name, out var value) ? value?.ToString() ?? string.Empty : string.Empty;
         }
 
         private async Task QueueNextReleasePlanAsync(ReleasePlanWorkItem finishedReleasePlan, ReleaseStatusUpdateResponse response, CancellationToken ct)
@@ -590,6 +660,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         { "System.State", "Finished" }
                     }, currentPlan.Revision, ct);
                     response.ReleasePlanFinished = true;
+                    await NotifyReleasePlanFinishedAsync(currentPlan, response, ct);
                     await QueueNextReleasePlanAsync(currentPlan, response, ct);
                 }
             }

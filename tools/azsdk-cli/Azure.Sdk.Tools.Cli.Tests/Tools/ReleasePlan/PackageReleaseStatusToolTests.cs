@@ -60,6 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 })
                 .ReturnsAsync(() => new WorkItem { Id = _plan.WorkItemId, Rev = _plan.Revision });
             var notificationService = new Mock<INotificationService>();
+            notificationService.SetupGet(s => s.IsEnabled).Returns(true);
             notificationService.Setup(s => s.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(NotificationResult.Sent);
             _tool = new PackageReleaseStatusTool(_devOps.Object, new TestLogger<PackageReleaseStatusTool>(), notificationService.Object);

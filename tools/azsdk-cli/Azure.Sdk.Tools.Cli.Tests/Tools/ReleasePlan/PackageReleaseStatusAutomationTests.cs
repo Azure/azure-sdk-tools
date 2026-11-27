@@ -71,6 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .Callback(() => _calls.Add("queue"))
                 .ReturnsAsync(new Build { Id = 9876 });
             _notifications = new Mock<INotificationService>();
+            _notifications.SetupGet(s => s.IsEnabled).Returns(true);
             _notifications.Setup(s => s.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()))
                 .Callback(() => _calls.Add("notify"))
                 .ReturnsAsync(NotificationResult.Sent);

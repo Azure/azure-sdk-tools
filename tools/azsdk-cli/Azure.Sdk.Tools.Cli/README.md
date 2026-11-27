@@ -117,6 +117,19 @@ For automatic releases, the existing resolver already passes the selected SDK PR
 
 This uses existing ADO metadata, not a new tracking system or immutable generation snapshot. Historical incorrect dashboard data is not repaired automatically.
 
+When this command marks a Public Preview or GA plan Finished, it emails the release plan submitter
+through the existing notification service, enabled only when `AZSDKTOOLS_NOTIFICATION_SERVICE_URL`
+is set. The shared `mark-release-completion.yml` step passes `$(AzureSDKEmailerSasURL)` as that
+environment variable. Private Preview and unrecognized plan types do not receive completion emails.
+The email uses the completion template from #17658 and includes recorded release details and released
+SDK versions, with the feedback survey only for management-plane plans. The service name comes from the
+plan's product onboarding record, falling back to the released SDKs' Azure DevOps package work items
+(`Custom.ServiceName`). The Java group ID comes from the package work item (`Custom.GroupId`),
+and package links point to the language's public registry (NuGet, PyPI, npm, Maven Central, pkg.go.dev
+with the `/vN` module suffix for major versions 2 and later, crates.io). Details that cannot be found are shown as "Not recorded". The completion time is UTC.
+Notification failures are reported as warnings
+without undoing the Finished state; retries on an already finished plan do not send another email.
+
 ## Retained customization repair attempts
 
 `azsdk tsp client customized-update` / `azsdk_customized_code_update` accepts `--max-attempts` / `maxAttempts` (1..10, default 1). Multiple attempts currently require `CustomCode`; `All` and `SpecInputs` retain their single-pass behavior.

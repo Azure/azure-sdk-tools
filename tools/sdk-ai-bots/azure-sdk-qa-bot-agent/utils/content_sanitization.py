@@ -1,4 +1,4 @@
-"""Sanitization and log-redaction helpers backed by Presidio and detect-secrets."""
+"""Sanitization and log-redaction helpers backed by Microsoft Presidio."""
 
 from __future__ import annotations
 
@@ -9,13 +9,7 @@ import threading
 from functools import lru_cache
 
 import spacy
-from detect_secrets.plugins.azure_storage_key import AzureStorageKeyDetector
-from detect_secrets.plugins.basic_auth import BasicAuthDetector
-from detect_secrets.plugins.github_token import GitHubTokenDetector
-from detect_secrets.plugins.jwt import JwtTokenDetector
-from detect_secrets.plugins.keyword import KeywordDetector
-from detect_secrets.plugins.private_key import PrivateKeyDetector
-from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
+from presidio_analyzer import AnalyzerEngine, Pattern, PatternRecognizer, RecognizerRegistry
 from presidio_analyzer.nlp_engine import SpacyNlpEngine
 from presidio_analyzer.predefined_recognizers import (
     CreditCardRecognizer,
@@ -52,20 +46,20 @@ def _presidio() -> tuple[AnalyzerEngine, AnonymizerEngine]:
         UsSsnRecognizer,
     ):
         registry.add_recognizer(recognizer_cls())
-    return AnalyzerEngine(registry=registry, nlp_engine=_BlankSpacyNlpEngine()), AnonymizerEngine()
 
-
-@lru_cache(maxsize=1)
-def _secret_plugins():
-    # Cache secret detectors once per process for thread-safe reuse.
-    return (
-        GitHubTokenDetector(),
-        AzureStorageKeyDetector(),
-        PrivateKeyDetector(),
-        JwtTokenDetector(),
-        BasicAuthDetector(),
-        KeywordDetector(),
+    # Add a Presidio PatternRecognizer for credentials so all redaction runs through Presidio.
+    registry.add_recognizer(
+        PatternRecognizer(
+            supported_entity="CREDENTIAL_OR_SECRET",
+            patterns=[
+                Pattern("github_token", r"\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,})\b", 0.95),
+                Pattern("private_key", r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----", 0.95),
+                Pattern("azure_key_or_sas", r"(?i)(?:AccountKey|SharedAccessSignature)=[^;\s]+|[?&]sig=[A-Za-z0-9%+/=]{16,}", 0.9),
+                Pattern("bearer_or_jwt", r"\bBearer\s+[A-Za-z0-9\-._~+/]{16,}=*|\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b", 0.9),
+            ],
+        )
     )
+    return AnalyzerEngine(registry=registry, nlp_engine=_BlankSpacyNlpEngine()), AnonymizerEngine()
 
 
 def mask_identifier(value: str | None) -> str:
@@ -74,37 +68,22 @@ def mask_identifier(value: str | None) -> str:
 
 
 def sanitize_issue_text(text: str, *, is_public_target: bool) -> tuple[str, list[str]]:
-    """Redact secrets via ``detect-secrets``, PII via Presidio, and Teams links for public targets."""
+    """Redact credentials and PII via Presidio, plus Teams links for public targets."""
     if not text:
         return text, []
 
     redacted: list[str] = []
-    plugins = _secret_plugins()
-    new_lines: list[str] = []
-    for line in text.splitlines():
-        for plugin in plugins:
-            for secret in plugin.analyze_line("<inline>", line):
-                if secret.secret_value:
-                    # GitHubTokenDetector's capturing group yields only the prefix (e.g. 'ghp'); redact the full token.
-                    if secret.type == "GitHub Token":
-                        line = re.sub(
-                            rf"\b{re.escape(secret.secret_value)}_[A-Za-z0-9_]+\b",
-                            "[redacted-secret]",
-                            line,
-                        )
-                    else:
-                        line = line.replace(secret.secret_value, "[redacted-secret]")
-                    redacted.append(secret.type)
-        new_lines.append(line)
-    updated = "\n".join(new_lines)
-
+    updated = text
     analyzer, anonymizer = _presidio()
     results = analyzer.analyze(text=updated, language="en")
     if results:
         updated = anonymizer.anonymize(
             text=updated,
             analyzer_results=results,
-            operators={"DEFAULT": OperatorConfig("replace", {"new_value": "[redacted-pii]"})},
+            operators={
+                "CREDENTIAL_OR_SECRET": OperatorConfig("replace", {"new_value": "[redacted-secret]"}),
+                "DEFAULT": OperatorConfig("replace", {"new_value": "[redacted-pii]"}),
+            },
         ).text
         redacted.extend(r.entity_type for r in results)
 
@@ -140,7 +119,7 @@ class LogSanitizationFilter(logging.Filter):
         self._local = threading.local()
 
     def filter(self, record: logging.LogRecord) -> bool:
-        # Guard against re-entrant logging from Presidio/detect-secrets during sanitization.
+        # Guard against re-entrant logging from Presidio during sanitization.
         if getattr(self._local, "active", False):
             return True
         self._local.active = True

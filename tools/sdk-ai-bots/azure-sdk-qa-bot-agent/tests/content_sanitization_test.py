@@ -44,6 +44,13 @@ def test_sanitize_issue_text_redacts_secrets_and_ignores_trace_ids():
     assert "1234567890abcdefghijklmnopqrstuvwxyzABCD" not in out_secret
     assert "[redacted-secret]" in out_secret
 
+    out_sas, _ = sanitize_issue_text(
+        "https://acct.blob.core.windows.net/c/b?sv=2023-01-01&sig=AbCdEfGhIjKlMnOpQrStUvWxYz012345",
+        is_public_target=True,
+    )
+    assert "AbCdEfGhIjKlMnOpQrStUvWxYz012345" not in out_sas
+    assert "[redacted-secret]" in out_sas
+
     # Normal OTel trace ID and GitHub link must not trigger false positives.
     clean = (
         "**Trace ID:** af58ea288fe9139d441ced9646bc73b2\n"

@@ -182,6 +182,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             return tmpPath;
         }
 
+        /// <summary>
+        /// Returns the root of the git repository containing the test binaries, or the current directory outside of one.
+        /// Protocol detection runs "git remote -v" there, and Test Proxy's git commands don't search parent directories.
+        /// </summary>
+        public static string GetCurrentRepositoryRoot()
+        {
+            for (var directory = new DirectoryInfo(Directory.GetCurrentDirectory()); directory != null; directory = directory.Parent)
+            {
+                string gitPath = Path.Join(directory.FullName, ".git");
+                if (Directory.Exists(gitPath) || File.Exists(gitPath))
+                {
+                    return directory.FullName;
+                }
+            }
+
+            return Directory.GetCurrentDirectory();
+        }
+
         public static string DescribeTestFolder(Assets assets, string[] sampleFiles, string malformedJson = null, bool ignoreEmptyAssetsJson = false, bool isPushTest = false)
         {
             string localAssetsJsonContent = JsonSerializer.Serialize(assets);
@@ -268,7 +286,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             GitProcessHandler GitHandler = new GitProcessHandler();
             GitHandler.Run($"init -q", tmpPath);
             // set a dummy git remote, used for protocol detection
-            string gitCloneUrl = GitStore.GetCloneUrl("testrepo", Directory.GetCurrentDirectory());
+            string gitCloneUrl = GitStore.GetCloneUrl("testrepo", GetCurrentRepositoryRoot());
             GitHandler.Run($"remote add test {gitCloneUrl}", tmpPath);
 
             return testFolder.ToString();
@@ -520,7 +538,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 Directory.CreateDirectory(tmpPath);
                 GitProcessHandler GitHandler = new GitProcessHandler();
-                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
+                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, GetCurrentRepositoryRoot());
                 GitHandler.Run($"clone --filter=blob:none {gitCloneUrl} .", tmpPath);
                 GitHandler.Run($"push origin --delete {assets.Tag}", tmpPath);
             }
@@ -561,7 +579,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static bool CheckExistenceOfTag(Assets assets, string workingDirectory)
         {
             GitProcessHandler GitHandler = new GitProcessHandler();
-            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
+            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, GetCurrentRepositoryRoot());
             CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
             return result.StdOut.Trim().Length > 0;
         }

@@ -85,8 +85,10 @@ For a more detailed explanation of how the test proxy works, along with links to
 
 ## Installation
 
-Git **2.51.0 or newer** must be installed and available on `PATH`, whether using
-the .NET tool or a standalone executable.
+Git **2.45.4 or newer** must be installed and available on `PATH`, whether using
+the .NET tool or a standalone executable. On Windows, use Git for Windows 2.46.0 or
+newer, as there is no Git for Windows 2.45.4 release. Newer Git versions enable
+[additional improvements](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/documentation/asset-sync/README.md#git-requirements-and-checkout-performance).
 
 ### Via Local Compile or .NET
 

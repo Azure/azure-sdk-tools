@@ -44,7 +44,25 @@ The combination of the the `assets.json` context and the original test-path will
 
 ## Git requirements and checkout performance
 
-Git **2.51.0 or newer** is required on `PATH`.
+Git **2.45.4 or newer** is required on `PATH`. On Windows, use Git for Windows 2.46.0 or newer, as there is no Git for
+Windows 2.45.4 release. Features of newer Git versions are used when available:
+
+- Git 2.54.0 or newer retries HTTP 429 (Too Many Requests) responses when it connects to the assets repository,
+  including in the fetches that checkout runs for recording contents. The proxy sets `GIT_HTTP_MAX_RETRIES=3`,
+  `GIT_HTTP_RETRY_AFTER=5`, and `GIT_HTTP_MAX_RETRY_TIME=60` unless they're already set, so Git honors a `Retry-After`
+  of up to 60 seconds. With older versions, the proxy re-runs the failed Git command instead.
+- With Git 2.56.0 or newer, new asset repositories are created by `git clone --revision`. Older versions run `git init`
+  and fetch the tag explicitly, which downloads the same objects. `clone --revision` exists since Git 2.49.0, but before
+  2.56.0 it can crash when the connection falls back to protocol v0, as it does over SSH with PuTTY or plink.
+
+Newer versions also include improvements that apply automatically, for example:
+
+- 2.52.0: `git fetch` no longer mistakes objects in a partial clone for missing while another process repacks it.
+- 2.53.0: faster enumeration of promisor objects in partial clones.
+- 2.55.0: more robust lazy loading of trees from the commit-graph, and a faster `git index-pack`.
+- 2.56.0: `git status`, which runs before each push, enumerates untracked and ignored files in O(n log n) rather than
+  O(n²). Config file writes retry for up to a second when another process holds the lock; with older versions, the
+  proxy re-runs the Git command instead.
 
 Asset repositories use:
 
@@ -63,6 +81,22 @@ Asset repositories use:
 
 Existing caches are upgraded in place on their first restore. Successful setup is recorded by a versioned marker in the
 repository's Git metadata, so later proxy instances reuse that configuration without running setup commands again.
+If the initial clone or tag fetch fails, nothing is left behind. An asset repository that was deleted, or whose creation
+was interrupted, such as by a failed checkout, is created again on the next restore, even if the breadcrumb still lists
+it. An incomplete repository is discarded first, including any files it already checked out. If the repository's
+directory contains other files but no repository, for example after only its `.git` directory was deleted, restore fails
+without changing them; move out any recordings you want to keep, delete the directory, and restore again. Git commands
+only use the repository in their working directory, so they never fall back to the language repository that contains
+`.assets`.
+
+Restores, pushes, and resets of an asset repository run one at a time, including in separate Test Proxy processes that
+share a storage location, such as when `go test ./...` tests packages in parallel. Each holds a lock on the file
+`.assets/<hash>.lock`, next to the repository's `.assets/<hash>` directory, from before it inspects the repository until
+it's done. Restore and Reset re-read `assets.json` after acquiring the lock and switch locks if the target repository
+changed. Reset releases the lock while asking for confirmation and asks again if there are still pending changes but
+the target or changes to discard are different. The OS releases the lock if its process exits. Others report that
+they're waiting, and give up after 10 minutes.
+
 Restoring the same tag preserves staged, unstaged, and untracked recordings, without cleaning or checking out the tag
 again. Existing objects are retained, and subsequent fetches use the blobless filter; old trees that were not
 downloaded previously can still require lazy fetching. Switching to a different tag retains the existing behavior of

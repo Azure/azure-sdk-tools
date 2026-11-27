@@ -54,6 +54,7 @@ from utils.azure_monitor import (
     record_chat_duration,
 )
 from utils.background_tasks import BackgroundTaskTracker
+from utils.content_sanitization import install_log_sanitization
 from utils.dashboard_identity import DashboardIdentity, get_dashboard_identity
 import config.app_config as app_config
 from config.tenant_config import TenantID
@@ -93,6 +94,8 @@ def _configure_logging() -> None:
         for handler in uvicorn_logger.handlers:
             handler.setFormatter(formatter)
             handler.addFilter(request_id_filter)
+
+    install_log_sanitization("uvicorn", "uvicorn.error", "uvicorn.access")
 
     # Suppress noisy Azure SDK HTTP / credential / telemetry loggers
     for noisy in (

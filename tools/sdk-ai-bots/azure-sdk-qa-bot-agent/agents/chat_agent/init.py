@@ -48,6 +48,7 @@ from utils.azure_memory_store import (
     ensure_user_memory_store,
 )
 from utils.memory_context_provider import MemoryContextProvider
+from utils.content_sanitization import install_log_sanitization
 from utils.tool_security import ToolOutputSecurityMiddleware
 
 logger = logging.getLogger(__name__)
@@ -197,6 +198,7 @@ if __name__ == "__main__":
         ("microsoft.opentelemetry._distro", logging.ERROR),  # benign "No module named 'agents'" (openai-agents SDK unused)
     ]:
         logging.getLogger(noisy_logger).setLevel(level)
+    install_log_sanitization()
 
     logger.info("Agent container starting...")
 

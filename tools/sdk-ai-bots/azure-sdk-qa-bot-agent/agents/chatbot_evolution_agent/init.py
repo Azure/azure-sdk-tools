@@ -49,7 +49,9 @@ from utils.azure_ai_foundry import (
     get_agent_client,
     get_project_client,
 )
+from middleware.issue_publication_guard import IssuePublicationGuardMiddleware
 from utils.azure_storage import create_blob_service_client
+from utils.content_sanitization import install_log_sanitization
 from utils.tool_security import ToolOutputSecurityMiddleware
 
 logger = logging.getLogger(__name__)
@@ -165,7 +167,10 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         context_providers=[compaction_provider],
-        middleware=[ToolOutputSecurityMiddleware()],
+        middleware=[
+            ToolOutputSecurityMiddleware(),
+            IssuePublicationGuardMiddleware(),
+        ],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
@@ -191,6 +196,7 @@ if __name__ == "__main__":
         "uvicorn",
     ]:
         logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+    install_log_sanitization()
 
     # Re-use the project_client init pattern so cold-start failures surface
     # before the server starts accepting traffic.

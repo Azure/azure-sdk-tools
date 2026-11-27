@@ -15,7 +15,7 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from middleware.issue_publication_guard import IssuePublicationGuardMiddleware
+from middleware.outbound_sanitization import OutboundSanitizationMiddleware
 from utils.content_sanitization import (
     LogSanitizationFilter,
     install_log_sanitization,
@@ -93,13 +93,13 @@ def test_repo_visibility_helper():
 
 
 @pytest.mark.asyncio
-async def test_middleware_sanitizes_public_issue_before_call():
-    mw = IssuePublicationGuardMiddleware()
-    called = False
+async def test_middleware_sanitizes_public_issue_and_pr_before_call():
+    mw = OutboundSanitizationMiddleware()
+    called = 0
 
     async def call_next():
         nonlocal called
-        called = True
+        called += 1
 
     write_ctx = _make_context(
         "issue_write",
@@ -112,15 +112,28 @@ async def test_middleware_sanitizes_public_issue_before_call():
     )
     await mw.process(write_ctx, call_next)
 
-    assert called is True
+    pr_ctx = _make_context(
+        "create_pull_request",
+        {
+            "owner": "Azure",
+            "repo": "azure-sdk-for-net",
+            "title": "Fix doc for alice@microsoft.com",
+            "body": "See https://teams.microsoft.com/l/message/19%3Aabc/123",
+        },
+    )
+    await mw.process(pr_ctx, call_next)
+
+    assert called == 2
     assert "alice@microsoft.com" not in write_ctx.arguments["title"]
     assert "teams.microsoft.com" not in write_ctx.arguments["body"]
     assert "n/a (internal Teams thread)" in write_ctx.arguments["body"]
+    assert "alice@microsoft.com" not in pr_ctx.arguments["title"]
+    assert "n/a (internal Teams thread)" in pr_ctx.arguments["body"]
 
 
 @pytest.mark.asyncio
 async def test_middleware_keeps_teams_link_for_private_repo():
-    mw = IssuePublicationGuardMiddleware()
+    mw = OutboundSanitizationMiddleware()
     called = False
 
     async def call_next():
@@ -145,7 +158,7 @@ async def test_middleware_keeps_teams_link_for_private_repo():
 
 @pytest.mark.asyncio
 async def test_middleware_redacts_secrets_and_proceeds():
-    mw = IssuePublicationGuardMiddleware()
+    mw = OutboundSanitizationMiddleware()
     secret_ctx = _make_context(
         "issue_write",
         {

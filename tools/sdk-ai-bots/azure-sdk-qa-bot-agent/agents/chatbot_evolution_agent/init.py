@@ -49,7 +49,7 @@ from utils.azure_ai_foundry import (
     get_agent_client,
     get_project_client,
 )
-from middleware.issue_publication_guard import IssuePublicationGuardMiddleware
+from middleware.outbound_sanitization import OutboundSanitizationMiddleware
 from utils.azure_storage import create_blob_service_client
 from utils.content_sanitization import install_log_sanitization
 from utils.tool_security import ToolOutputSecurityMiddleware
@@ -169,7 +169,7 @@ async def main() -> None:
         context_providers=[compaction_provider],
         middleware=[
             ToolOutputSecurityMiddleware(),
-            IssuePublicationGuardMiddleware(),
+            OutboundSanitizationMiddleware(),
         ],
         default_options={
             "reasoning": {"effort": reasoning_effort},

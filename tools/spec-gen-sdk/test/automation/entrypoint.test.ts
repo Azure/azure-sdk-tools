@@ -56,7 +56,11 @@ vi.mock('../../src/utils/utils', () => ({
   extractPathFromSpecConfig: vi.fn(() => 'test-prefix')
 }));
 
-vi.mock('../../src/utils/workflowUtils', () => ({
+// Only the config *loading* is stubbed here. `resolveRepoRelativePath` keeps its
+// real implementation so these tests still exercise the containment check that
+// guards the automation config path.
+vi.mock('../../src/utils/workflowUtils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/utils/workflowUtils')>()),
   loadConfigContent: vi.fn(() => ({})),
   getSdkRepoConfig: vi.fn(() => ({
     configFilePath: 'swagger_to_sdk_config.json',

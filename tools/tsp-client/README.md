@@ -12,7 +12,7 @@
 npm install -g @azure-tools/typespec-client-generator-cli
 ```
 
-> NOTE: Repo owners should follow the steps in the [tsp-client repo setup](./repo_setup.md) doc.
+> NOTE: Repo owners should follow the steps in the [tsp-client repo setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/repo_setup.md) doc.
 
 ## Usage
 
@@ -223,9 +223,23 @@ Any additional npm flags can be forwarded to the underlying `npm install` comman
 tsp-client generate-lock-file --npm-args="--registry=https://my-registry --legacy-peer-deps"
 ```
 
+#### Using pnpm for emitter dependencies
+
+Repositories may migrate an emitter to pnpm by creating and committing its pnpm lockfile:
+
+```bash
+tsp-client generate-lock-file --package-manager pnpm
+```
+
+This produces `eng/emitter-package-pnpm-lock.yaml`. For a custom `eng/example.json`, the lock is `eng/example-pnpm-lock.yaml`. `generate-config-files` also accepts `--package-manager pnpm`. Once the pnpm lock exists, sync and generation select it over an npm lock and install with the pinned pnpm version and `--frozen-lockfile`. Existing repositories without a pnpm lock continue using npm. Lock generation chooses the existing pnpm lock when present; remove it before explicitly switching back to npm. npm-specific `--npm-args` cannot be combined with pnpm. pnpm is an optional `tsp-client` dependency so npm-only consumers do not require its native runtime; pnpm users must install optional dependencies on a supported platform. Rerun `sync` after changing the emitter inputs before a standalone `generate`; `--skip-install` does not validate the staged installation.
+
+Review dependency versions, peer resolution, integrity, sources and generated output when migrating; pnpm does not automatically preserve an npm dependency graph. Configure the same registry and authentication at lock generation and installation (for example through a user `.npmrc` or `NPM_CONFIG_USERCONFIG`); pnpm lockfiles do not necessarily record registry URLs. A repository-level `.npmrc` is not automatically inherited by the isolated emitter workspace, and pnpm 12 does not honor `npm_config_registry` like npm. Do not commit credentials. Provision a pnpm store cache in CI if warm-store performance is desired; this tool does not configure CI caching.
+
+Optional per-emitter settings may be committed as `eng/emitter-package-pnpm-workspace.yaml` (or `eng/example-pnpm-workspace.yaml` for a custom manifest). Settings are used in an isolated single-project workspace. The sidecar supports `overrides` and `allowBuilds`; local dependency paths, patches, and other settings that require files outside this workspace are not supported. Unapproved dependency build scripts fail the install and side-effects caching is disabled; explicitly configure `allowBuilds` to approve required scripts. pnpm audit runs after installation and reports findings or registry failures without failing generation, as npm install does. pnpm and npm audit results and script policies are not identical. npm `overrides` and `--overrides` are not automatically translated; migrate them explicitly to pnpm workspace overrides before generating a pnpm lock.
+
 ### install-dependencies
 
-Install the dependencies pinned in emitter-package.json and emitter-package-lock.json (if it exists) at the root of the repository by default. The command supports a positional path parameter if the dependencies need to be installed in an alternate directory.
+Install the dependencies from the default `eng/emitter-package.json` and corresponding pnpm or npm lock (if present). The destination defaults to the repository root; a positional path can select an alternate directory. This command writes `package.json` in the destination. For pnpm, use a dedicated destination when possible: it refuses to overwrite different pnpm lock or workspace files. When refreshing a changed pnpm lock or policy, choose a fresh destination or remove the previously staged files from your dedicated destination before reinstalling. Do not remove files owned by another project.
 
 > IMPORTANT: The node_modules/ directory needs to be installed in a path where basic npm commands will be able to use it. Typically within the same directory path as the target TypeSpec project to compile.
 

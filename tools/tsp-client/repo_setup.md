@@ -23,7 +23,7 @@ This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec projec
 
 ### emitter-package.json (Required)
 
-`emitter-package.json` will be used the same as a `package.json` file. If the is no `emitter-package-lock.json` file, the tool will run `npm install` on the contents of `emitter-package.json`. This file allows each repository to pin the version of their emitter and other dependencies to be used when generating client libraries.
+`emitter-package.json` will be used the same as a `package.json` file. If neither a pnpm nor an npm emitter lockfile exists, the tool will run `npm install` on the contents of `emitter-package.json`. This file allows each repository to pin the version of their emitter and other dependencies to be used when generating client libraries.
 The file should be checked into this location `<root of repo>/eng/emitter-package.json`
 
 Example:
@@ -46,4 +46,8 @@ This file replaces the package.json checked into the `azure-rest-api-spec` repos
 `emitter-package-lock.json` will be used the same as a `package-lock.json`. The tool will run a clean npm installation before generating client libraries. This file allows consistent dependency trees and allows each repository to control their dependency installation.
 The file should be checked into this location: `<root of repo>/eng/emitter-package-lock.json`
 
-> NOTE: The tool will run `npm ci` to install dependencies, so ensure that the `emitter-package-lock.json` and `emitter-package.json` files both exist and are in sync with each other.
+> NOTE: Unless a pnpm emitter lock is present, the tool runs `npm ci`, so ensure the lock and manifest are in sync.
+
+### emitter-package-pnpm-lock.yaml (Optional)
+
+To use pnpm, generate and commit `eng/emitter-package-pnpm-lock.yaml` with `tsp-client generate-lock-file --package-manager pnpm`. When present, it takes precedence over the npm lock and is installed frozen. See “Using pnpm for emitter dependencies” in the [tsp-client README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for workspace policies, registry configuration, and migration limitations.

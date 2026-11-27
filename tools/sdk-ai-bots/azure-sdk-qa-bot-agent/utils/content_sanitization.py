@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import re
 import threading
@@ -61,17 +60,11 @@ def _presidio() -> tuple[AnalyzerEngine, AnonymizerEngine]:
     return AnalyzerEngine(registry=registry, nlp_engine=_BlankSpacyNlpEngine()), AnonymizerEngine()
 
 
-def mask_identifier(value: str | None) -> str:
-    """Return a non-PII short hash token for log correlation."""
-    return f"id:{hashlib.sha256(value.encode()).hexdigest()[:10]}" if value else "none"
-
-
-def sanitize_issue_text(text: str, *, is_public_target: bool) -> tuple[str, list[str]]:
+def sanitize_issue_text(text: str, *, is_public_target: bool) -> str:
     """Redact credentials and PII via Presidio, plus Teams links for public targets."""
     if not text:
-        return text, []
+        return text
 
-    redacted: list[str] = []
     updated = text
     analyzer, anonymizer = _presidio()
     results = analyzer.analyze(text=updated, language="en")
@@ -80,21 +73,18 @@ def sanitize_issue_text(text: str, *, is_public_target: bool) -> tuple[str, list
             text=updated,
             analyzer_results=results,
         ).text
-        redacted.extend(r.entity_type for r in results)
 
     if is_public_target:
-        updated, count = _TEAMS_LINK_RE.subn("n/a (internal Teams thread)", updated)
-        if count:
-            redacted.append("teams_link")
+        updated = _TEAMS_LINK_RE.sub("n/a (internal Teams thread)", updated)
 
-    return updated, sorted(set(redacted))
+    return updated
 
 
 def sanitize_log_text(text: str | None, *, max_length: int = 200) -> str:
     """Redact secrets, PII, and Teams links before writing to logs."""
     if not text:
         return ""
-    sanitized, _ = sanitize_issue_text(text, is_public_target=True)
+    sanitized = sanitize_issue_text(text, is_public_target=True)
     return sanitized[:max_length] + "...[truncated]" if len(sanitized) > max_length else sanitized
 
 

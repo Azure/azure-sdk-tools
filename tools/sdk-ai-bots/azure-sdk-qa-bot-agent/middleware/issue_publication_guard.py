@@ -50,10 +50,9 @@ class IssuePublicationGuardMiddleware(FunctionMiddleware):
         # Mutate arguments in-place so the downstream tool receives sanitized text.
         for field in self._TEXT_FIELDS:
             val = context.arguments.get(field)
-            if not isinstance(val, str) or not val:
-                continue
-            sanitized, redactions = sanitize_issue_text(val, is_public_target=is_public)
-            if redactions:
-                context.arguments[field] = sanitized
+            if isinstance(val, str) and val:
+                context.arguments[field] = sanitize_issue_text(
+                    val, is_public_target=is_public
+                )
 
         await call_next()

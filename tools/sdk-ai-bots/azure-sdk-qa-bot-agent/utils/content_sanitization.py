@@ -41,6 +41,7 @@ class _BlankSpacyNlpEngine(SpacyNlpEngine):
 
 @lru_cache(maxsize=1)
 def _presidio() -> tuple[AnalyzerEngine, AnonymizerEngine]:
+    logging.getLogger("presidio-analyzer").setLevel(logging.WARNING)
     registry = RecognizerRegistry()
     # Register only the PII recognizers needed for developer/SDK text so URLs, dates, and UUIDs stay intact.
     for recognizer_cls in (
@@ -84,7 +85,15 @@ def sanitize_issue_text(text: str, *, is_public_target: bool) -> tuple[str, list
         for plugin in plugins:
             for secret in plugin.analyze_line("<inline>", line):
                 if secret.secret_value:
-                    line = line.replace(secret.secret_value, "[redacted-secret]")
+                    # GitHubTokenDetector's capturing group yields only the prefix (e.g. 'ghp'); redact the full token.
+                    if secret.type == "GitHub Token":
+                        line = re.sub(
+                            rf"\b{re.escape(secret.secret_value)}_[A-Za-z0-9_]+\b",
+                            "[redacted-secret]",
+                            line,
+                        )
+                    else:
+                        line = line.replace(secret.secret_value, "[redacted-secret]")
                     redacted.append(secret.type)
         new_lines.append(line)
     updated = "\n".join(new_lines)

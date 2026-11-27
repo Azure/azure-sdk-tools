@@ -41,6 +41,7 @@ def test_sanitize_issue_text_redacts_secrets_and_ignores_trace_ids():
         is_public_target=True,
     )
     assert "ghp_" not in out_secret
+    assert "1234567890abcdefghijklmnopqrstuvwxyzABCD" not in out_secret
     assert "[redacted-secret]" in out_secret
 
     # Normal OTel trace ID and GitHub link must not trigger false positives.

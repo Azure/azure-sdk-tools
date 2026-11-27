@@ -6,8 +6,10 @@ the process.
 
 import asyncio
 import logging
+from pathlib import Path
 import re
 
+import yaml
 from agent_framework import TruncationStrategy
 from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
@@ -52,6 +54,39 @@ def create_openai_client(
     """Create a hosted-agent OpenAI client from an explicit config scope."""
     agent_name = settings("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
     return project_client.get_openai_client(agent_name=agent_name)
+
+
+_WEB_SEARCH_DOMAINS_PATH = (
+    Path(__file__).resolve().parents[1] / "config" / "web-search-domains.yaml"
+)
+
+
+def get_web_search_allowed_domains() -> list[str]:
+    """Return allowed domains from ``config/web-search-domains.yaml``.
+
+    Fails closed if the allowlist file is missing or ``allowed_domains`` is empty.
+    """
+    if not _WEB_SEARCH_DOMAINS_PATH.exists():
+        raise FileNotFoundError(
+            f"Web search allowlist config not found: {_WEB_SEARCH_DOMAINS_PATH}"
+        )
+    data = yaml.safe_load(_WEB_SEARCH_DOMAINS_PATH.read_text(encoding="utf-8")) or {}
+    allowed_domains = data.get("allowed_domains") if isinstance(data, dict) else None
+    if not isinstance(allowed_domains, list) or not allowed_domains:
+        raise ValueError(
+            f"Web search allowlist must define a non-empty 'allowed_domains' list: {_WEB_SEARCH_DOMAINS_PATH}"
+        )
+    return allowed_domains
+
+
+def create_web_search_tool(agent_client: FoundryChatClient):
+    """Create the Foundry hosted web_search tool with configured domain filters."""
+    allowed_domains = get_web_search_allowed_domains()
+    logger.info("Configuring web_search with %d allowed domains", len(allowed_domains))
+    return agent_client.get_web_search_tool(
+        search_context_size="medium",
+        allowed_domains=allowed_domains,
+    )
 
 
 def get_agent_client() -> FoundryChatClient:

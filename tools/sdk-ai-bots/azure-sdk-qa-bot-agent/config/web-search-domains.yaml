@@ -1,0 +1,16 @@
+# Allowed public domains for Foundry hosted web_search (WebSearchToolFilters).
+# Subdomains are automatically included by the Responses API (max 100 entries).
+allowed_domains:
+  - typespec.io
+  - github.io
+  - github.com
+  - microsoft.com
+  - nuget.org
+  - repo.maven.apache.org
+  - central.sonatype.com
+  - registry.npmjs.org
+  - npmjs.com
+  - pypi.org
+  - python.org
+  - proxy.golang.org
+  - go.dev

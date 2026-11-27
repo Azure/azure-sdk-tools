@@ -56,37 +56,17 @@ def create_openai_client(
     return project_client.get_openai_client(agent_name=agent_name)
 
 
-_MAX_WEB_SEARCH_ALLOWED_DOMAINS = 100
 _WEB_SEARCH_DOMAINS_PATH = (
     Path(__file__).resolve().parents[1] / "config" / "web-search-domains.yaml"
 )
 
 
-def _normalize_domains(entries: list[str]) -> list[str] | None:
-    domains: list[str] = []
-    seen: set[str] = set()
-    for entry in entries:
-        domain = str(entry).strip().lower()
-        for prefix in ("https://", "http://"):
-            if domain.startswith(prefix):
-                domain = domain[len(prefix):]
-        domain = domain.strip("/").lstrip(".")
-        if domain and domain not in seen:
-            seen.add(domain)
-            domains.append(domain)
-    return domains[:_MAX_WEB_SEARCH_ALLOWED_DOMAINS] or None
-
-
 def get_web_search_allowed_domains() -> list[str] | None:
-    """Return normalized allowed domains for Foundry web_search, or ``None`` if unset.
-
-    Loads ``config/web-search-domains.yaml``.
-    """
+    """Return allowed domains from ``config/web-search-domains.yaml``, or ``None`` if unset."""
     if not _WEB_SEARCH_DOMAINS_PATH.exists():
         return None
     data = yaml.safe_load(_WEB_SEARCH_DOMAINS_PATH.read_text(encoding="utf-8")) or {}
-    entries = data.get("allowed_domains") or []
-    return _normalize_domains(entries)
+    return data.get("allowed_domains") or None
 
 
 def create_web_search_tool(agent_client: FoundryChatClient):

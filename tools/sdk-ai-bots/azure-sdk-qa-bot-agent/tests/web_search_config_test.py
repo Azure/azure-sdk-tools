@@ -16,19 +16,6 @@ from utils.azure_ai_foundry import (
 )
 
 
-def test_get_web_search_allowed_domains_normalizes_entries(tmp_path: Path) -> None:
-    cfg_file = tmp_path / "web-search-domains.yaml"
-    cfg_file.write_text(
-        "allowed_domains:\n  - https://learn.microsoft.com/\n  - .typespec.io\n  - learn.microsoft.com\n",
-        encoding="utf-8",
-    )
-    with patch("utils.azure_ai_foundry._WEB_SEARCH_DOMAINS_PATH", cfg_file):
-        assert get_web_search_allowed_domains() == [
-            "learn.microsoft.com",
-            "typespec.io",
-        ]
-
-
 def test_get_web_search_allowed_domains_reads_repo_yaml() -> None:
     domains = get_web_search_allowed_domains()
     assert domains is not None
